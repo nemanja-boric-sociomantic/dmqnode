@@ -1,0 +1,18 @@
+// -----------------------------------------------------
+//
+// Queue Server Daemon: config.ini
+//
+// -----------------------------------------------------
+
+
+[Server]
+
+address   = 192.168.2.222
+port      = 33333
+pidfile   = var/server.pid
+
+[Log]
+
+error         = log/error.log
+trace         = log/trace.log
+trace_enable  = 1
