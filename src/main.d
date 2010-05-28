@@ -68,16 +68,16 @@ void printUsage()
 {
     Stdout.formatln("
     Usage:
-        queued [-d]
+        dhtnosed [-d]
                 
     Description:
-        distributed queue server daemon
+        dht node server daemon
 
     Parameter:
-        -d, --daemon         start local queue server
+        -d, --daemon         start local dht node server
                 
     Example:
-        queued -d
+        dhtnosed -d
     ");
 }
 
