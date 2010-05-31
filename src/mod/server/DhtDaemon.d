@@ -25,31 +25,33 @@ private     import      core.config.MainConfig;
 private     import      swarm.dht.DhtNode;
 
 private     import      swarm.dht.storage.model.Storage;
-/*
+
 private     import      swarm.dht.storage.Hashtable;
-private     import      swarm.dht.storage.Filesystem;
-*/
+//private     import      swarm.dht.storage.Filesystem;
+
 
 private     import      tango.util.log.Log, tango.util.log.AppendConsole;
 
+debug private import tango.util.log.Trace;
 
-/*******************************************************************************
+/******************************************************************************
 
-    QueueDaemon
+    DhtDaemon
 
-********************************************************************************/
+ ******************************************************************************/
 
-class DhtDaemon ( S : Storage, Args ... )
+class DhtDaemon
 {
-    private DhtNode!(S, Args)   node;
+    private DhtNode!(Hashtable, Hashtable.TuneOptions)   node;
     
-    /***************************************************************************
+    
+    /**************************************************************************
     
          Constructor
 
-     ***************************************************************************/
+     **************************************************************************/
     
-    public this ( Args args )
+    public this ( )
     {
         DhtConst.NodeItem item;
         
@@ -57,7 +59,7 @@ class DhtDaemon ( S : Storage, Args ... )
         item.MaxValue = 0xF;
         item.Address  = Config.getChar("Server", "address");
         item.Port     = Config.getInt("Server", "port");
-
+        
         auto log = Log.getLogger("dht.persist");
         
         log.add(new AppendConsole);
@@ -65,13 +67,11 @@ class DhtDaemon ( S : Storage, Args ... )
         
         uint n_threads = DhtConst.CONNTHREADS;
         
-        Config.get(n_threads, "Options", "connection_threads");
-        
-        this.node = new DhtNode!(S, Args)(item, n_threads, "data", args);
+        this.node = new DhtNode!(Hashtable, Hashtable.TuneOptions)(item, n_threads, "data", this.getTuneOptions());
     }    
     
     
-    /***************************************************************************
+    /**************************************************************************
         
         Runs the DHT node
            
@@ -85,17 +85,33 @@ class DhtDaemon ( S : Storage, Args ... )
         return true;
     }
     
-    /***************************************************************************
+    /**************************************************************************
     
         Shuts down the DHT node
            
     ***************************************************************************/
 
-    void shutdown ( )
+    public void shutdown ( )
     {
         return this.node.shutdown();
     }
     
+    /**************************************************************************
+    
+        Reads the Hashtable tune options from configuration, using default
+        values for parameters not specified in configuration.
+           
+    ***************************************************************************/
 
+    private Hashtable.TuneOptions getTuneOptions ( )
+    {
+        Hashtable.TuneOptions tune_options;
+        
+        Config.get(tune_options.bnum, "Options", "bnum");
+        Config.get(tune_options.apow, "Options", "apow");
+        Config.get(tune_options.fpow, "Options", "fpow");
+        
+        return tune_options;
+    }
 }
 

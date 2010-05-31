@@ -18,10 +18,7 @@ private import mod.server.DhtDaemon;
 private import ocean.sys.Daemon;
 private import ocean.sys.SignalHandler;
 
-private import swarm.dht.storage.Filesystem;
-private import swarm.dht.storage.Hashtable;
-
-private import tango.util.log.Trace;
+debug private import tango.util.log.Trace;
 
 /*******************************************************************************
 
@@ -52,10 +49,7 @@ struct DhtNodeServer
 {
     static const Signals = [SignalHandler.SIGINT, SignalHandler.SIGTERM];
     
-    alias DhtDaemon!(Hashtable)  Daemon;
-    //alias DhtDaemon!(Filesystem)  Daemon;
-    
-    static Daemon dht;
+    static DhtDaemon dht;
     
     /**
      * Queue Server Daemon
@@ -70,14 +64,14 @@ struct DhtNodeServer
     
     static this ( )
     {
-        this.dht = new Daemon;
+        this.dht = new DhtDaemon;
         
         SignalHandler.set(this.Signals, &shutdown);
     }
     
     extern (C) private static void shutdown ( int code )
     {
-        Trace.formatln('\n' ~ SignalHandler.getId(code));
+        debug Trace.formatln('\n' ~ SignalHandler.getId(code));
         
         this.dht.shutdown();
     }
