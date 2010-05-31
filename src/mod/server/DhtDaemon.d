@@ -24,11 +24,8 @@ private     import      core.config.MainConfig;
 
 private     import      swarm.dht.DhtNode;
 
-private     import      swarm.dht.storage.model.Storage;
-
 private     import      swarm.dht.storage.Hashtable;
 //private     import      swarm.dht.storage.Filesystem;
-
 
 private     import      tango.util.log.Log, tango.util.log.AppendConsole;
 
