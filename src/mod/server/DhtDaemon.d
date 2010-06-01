@@ -62,7 +62,7 @@ class DhtDaemon
         log.add(new AppendConsole);
         log.level = Level.Trace;
         
-        uint n_threads = DhtConst.CONNTHREADS;
+        uint n_threads = Config.get!(uint)("Options", "connection_threads");
         
         this.node = new DhtNode!(Hashtable, Hashtable.TuneOptions)(item, n_threads, "data", this.getTuneOptions());
     }    
