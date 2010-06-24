@@ -1,6 +1,6 @@
 /*******************************************************************************
 
-    Distributed QueueServer Daemon
+    DHT Node Server Daemon
 
     copyright:      Copyright (c) 2009 sociomantic labs. All rights reserved
 

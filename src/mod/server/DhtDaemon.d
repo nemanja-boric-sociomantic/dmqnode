@@ -1,14 +1,13 @@
 /*******************************************************************************
 
-        Queue Server Daemon
+        DHT Node Server Daemon
     
         copyright:      Copyright (c) 2009 sociomantic labs. All rights reserved
     
         version:        Jun 2009: Initial release
     
         authors:        Thomas Nicolai & Lars Kirchhoff
-        
-
+ 
 ********************************************************************************/
 
 module  mod.server.DhtDaemon;
