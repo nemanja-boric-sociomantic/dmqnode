@@ -168,7 +168,7 @@ class NodeMonDaemon : DhtClient
 
 	protected void getAllChannels ( out char[][] channel_names )
     {
-    	this.addNode(this.node_address, this.node_port, 0x0, 0xF);
+    	this.addNode(this.node_address, this.node_port);
     	
     	char[][] node_channels;
 		this.getChannels(this.node_address, this.node_port, node_channels);

@@ -22,6 +22,7 @@ module  mod.server.DhtDaemon;
 private     import      core.config.MainConfig;
 
 private     import      swarm.dht.DhtNode;
+private     import      swarm.dht.DhtHash;
 
 private     import      swarm.dht.storage.Hashtable;
 //private     import      swarm.dht.storage.Filesystem;
@@ -39,22 +40,22 @@ debug private import tango.util.log.Trace;
 class DhtDaemon
 {
     private DhtNode!(Hashtable, Hashtable.TuneOptions)   node;
-    
-    
+
+
     /**************************************************************************
     
          Constructor
 
      **************************************************************************/
-    
+
     public this ( )
     {
         DhtConst.NodeItem item;
-        
-        item.MinValue = 0x0;
-        item.MaxValue = 0xF;
+
         item.Address  = Config.getChar("Server", "address");
         item.Port     = Config.getInt("Server", "port");
+        item.MinValue = DhtHash.hashRangeStart(Config.getChar("Server", "minval"));
+        item.MaxValue = DhtHash.hashRangeEnd(Config.getChar("Server", "maxval"));
         
         auto log = Log.getLogger("dht.persist");
         
