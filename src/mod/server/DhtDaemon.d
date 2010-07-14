@@ -54,8 +54,8 @@ class DhtDaemon
 
         item.Address  = Config.getChar("Server", "address");
         item.Port     = Config.getInt("Server", "port");
-        item.MinValue = DhtHash.hashRangeStart(Config.getChar("Server", "minval"));
-        item.MaxValue = DhtHash.hashRangeEnd(Config.getChar("Server", "maxval"));
+        item.MinValue = DhtHash.toHashRangeStart(Config.getChar("Server", "minval"));
+        item.MaxValue = DhtHash.toHashRangeEnd(Config.getChar("Server", "maxval"));
         
         auto log = Log.getLogger("dht.persist");
         
