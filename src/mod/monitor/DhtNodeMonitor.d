@@ -101,6 +101,10 @@ class NodeMonDaemon : DhtClient
 	protected char[][] channels;
 
 
+	// TODO
+	protected char[] buf;
+
+
 	/***************************************************************************
 
 		Constructor
@@ -155,7 +159,8 @@ class NodeMonDaemon : DhtClient
     		
     		this.getChannelSize(this.node_address, this.node_port, channel, records, bytes);
 
-    		Trace.formatln("{,20}: {,12} = {,6}M", channel, records, cast(double)records / 1000_000.0);
+
+    		Trace.formatln("{,20}: {,15}", channel, typeof(this).formatCommaNumber(records, this.buf));
     	}
     }
     
@@ -180,6 +185,52 @@ class NodeMonDaemon : DhtClient
     			channel_names ~= channel;
 			}
 		}
+    }
+
+	/***************************************************************************
+
+		Formats a number to a string, with comma separation every 3 digits
+	
+	***************************************************************************/
+
+	protected static char[] formatCommaNumber ( T ) ( T num, out char[] str )
+    {
+    	auto string = Integer.toString(num);
+
+    	bool comma;
+		size_t left = 0;
+		size_t right = left + 3;
+		size_t first_comma;
+
+		if ( string.length > 3 )
+		{
+			comma = true;
+			first_comma = string.length % 3;
+
+			if ( first_comma > 0 )
+			{
+				right = first_comma;
+			}
+		}
+
+		do
+		{
+			if ( right >= string.length )
+			{
+				right = string.length;
+				comma = false;
+			}
+			str ~= string[left..right];
+			if ( comma )
+			{
+				str ~= ",";
+			}
+			
+			left = right;
+			right = left + 3;
+		} while( left < string.length );
+
+		return str;
     }
 }
 
