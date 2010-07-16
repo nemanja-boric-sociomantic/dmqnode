@@ -119,8 +119,6 @@ class NodeMonDaemon : DhtClient
         this.node_port     = Config.getInt("Server", "port");
 
         Trace.formatln("Monitoring DHT node at {}:{}", this.node_address, this.node_port);
-
-        this.getAllChannels(this.channels);
     }
 
 
@@ -151,7 +149,9 @@ class NodeMonDaemon : DhtClient
 
 	protected void update ( )
     {
-		Trace.formatln("-----------------------------------------------------");
+        this.getAllChannels(this.channels);
+
+        Trace.formatln("-----------------------------------------------------");
     	foreach ( channel; this.channels )
     	{
     		ulong records;
