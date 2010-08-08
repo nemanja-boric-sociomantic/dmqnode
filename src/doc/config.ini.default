@@ -19,9 +19,12 @@
 ; port                  port on which the server should be listening
 ; pidfile               name of the PID file
 ; connection_threads    number of threads for incoming connections
+; data_dir              directory where the data is stored
 ; storage_engine        storage engine that should be used (only one can be used)
 ;                       [hashtable, btree, filesystem, memory]
-; data_dir              directory where the data is stored
+; size_limit			size limit for storage engine (should to be adequat for
+;						the choosen storage engine). If set to 0 no limit is 
+;						applied. size limit is set in bytes.		
 ;
 
 [Server]
@@ -30,8 +33,9 @@ address                 = 192.168.2.222
 port                    = 10011
 pidfile                 = var/server.pid
 connection_threads      = 40
-storage_engine          = hashtable
 data_dir                = data
+storage_engine          = hashtable
+size_limit				= 3000000000
 
 
 
