@@ -36,6 +36,8 @@ private     import      swarm.dht.storage.Btree;
 //private     import      swarm.dht.storage.Filesystem;
 private     import      swarm.dht.storage.Memory;
 
+private		import		swarm.dht.node.model.IDhtNode;
+
 private     import      tango.util.log.Log, tango.util.log.AppendConsole;
 
 debug private import tango.util.log.Trace;
@@ -127,7 +129,9 @@ class DhtDaemon
         this.setLogger();
         
         uint    number_threads  = Config.get!(uint)("Server", "connection_threads");
+        uint 	size_limit		= Config.get!(uint)("Server", "size_limit");
         char[]  data_dir        = Config.get!(char[])("Server", "data_dir");
+        
         Storage storage         = this.getStorageConfiguration();
         
         if (storage == DhtConst.Storage.None)
@@ -138,19 +142,19 @@ class DhtDaemon
         switch (storage)
         {
             case DhtConst.Storage.HashTable :
-                this.node = new HashTableNode   (node_item, number_threads, data_dir, this.getHashTableTuneOptions());
+                this.node = new HashTableNode   (node_item, number_threads, size_limit, data_dir, this.getHashTableTuneOptions());
                 break;
                 
             case DhtConst.Storage.Btree :
-                this.node = new BTreeNode       (node_item, number_threads, data_dir, this.getBTreeTuneOptions());
+                this.node = new BTreeNode       (node_item, number_threads, size_limit, data_dir, this.getBTreeTuneOptions());
                 break;
                 
             case DhtConst.Storage.Memory :
-                this.node = new MemoryNode      (node_item, number_threads, data_dir);
+                this.node = new MemoryNode      (node_item, number_threads, size_limit, data_dir);
                 break;
             
             default: 
-                this.node = new HashTableNode   (node_item, number_threads, data_dir, this.getHashTableTuneOptions());
+                this.node = new HashTableNode   (node_item, number_threads, size_limit, data_dir, this.getHashTableTuneOptions());
                 break;            
         }
     }
