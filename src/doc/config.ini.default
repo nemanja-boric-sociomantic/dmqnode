@@ -36,6 +36,8 @@ connection_threads      = 40
 data_dir                = data
 storage_engine          = hashtable
 size_limit				= 3000000000
+minval                  = 0x0
+maxval                  = 0xf
 
 
 
