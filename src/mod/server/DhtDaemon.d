@@ -8,13 +8,7 @@
     
         authors:        David Eckardt, Gavin Norman 
                         Thomas Nicolai, Lars Kirchhoff
-            
-        --
-        
-        Description:
-        
-            
- 
+     
  ******************************************************************************/
 
 module  mod.server.DhtDaemon;
@@ -26,23 +20,25 @@ module  mod.server.DhtDaemon;
 
  ******************************************************************************/
 
-private     import      core.config.MainConfig;
+private	import  core.config.MainConfig;
 
-private     import      swarm.dht.DhtNode;
-private     import      swarm.dht.DhtHash;
+private import  swarm.dht.DhtNode;
+private import  swarm.dht.DhtHash;
 
-private     import      swarm.dht.storage.Hashtable;
-private     import      swarm.dht.storage.Btree;
-//private     import      swarm.dht.storage.Filesystem;
-private     import      swarm.dht.storage.Memory;
+private import  swarm.dht.storage.Hashtable;
+private import  swarm.dht.storage.Btree;
+private import  swarm.dht.storage.Filesystem;
+private import  swarm.dht.storage.Memory;
 
-private		import		swarm.dht.node.model.IDhtNode;
+private	import	swarm.dht.node.model.IDhtNode;
 
-private     import      tango.util.log.Log, tango.util.log.AppendConsole;
+private import	tango.util.log.Log, tango.util.log.AppendConsole;
 
 debug private import tango.util.log.Trace;
 
-/******************************************************************************
+
+
+/*******************************************************************************
 
     DhtDaemon
 
@@ -72,7 +68,7 @@ class DhtDaemon
     
      **************************************************************************/
     
-//    alias       DhtNode!(Filesystem)                            FileSystemNode;
+    alias       DhtNode!(Filesystem) 			FileSystemNode;
     
     /***************************************************************************
     
@@ -80,7 +76,7 @@ class DhtDaemon
     
      **************************************************************************/
         
-    alias       DhtNode!(Memory)                    			MemoryNode;
+    alias       DhtNode!(Memory)				MemoryNode;
     
     /***************************************************************************
     
@@ -88,7 +84,7 @@ class DhtDaemon
 
      **************************************************************************/
 
-    alias       DhtConst.NodeItem                               NodeItem;
+    alias       DhtConst.NodeItem				NodeItem;
     
     /***************************************************************************
     
@@ -96,7 +92,7 @@ class DhtDaemon
     
      **************************************************************************/
 
-    alias       DhtConst.Storage                                Storage;
+    alias       DhtConst.Storage				Storage;
     
     /***************************************************************************
          
@@ -104,7 +100,7 @@ class DhtDaemon
      
      **************************************************************************/
     
-    private     HashTableNode               hashtable_node;
+    private     HashTableNode					hashtable_node;
     
     /***************************************************************************
     
@@ -112,7 +108,7 @@ class DhtDaemon
             
      **************************************************************************/
    
-    private         IDhtNode         node;
+    private 	IDhtNode						node;
     
     
 
@@ -147,6 +143,10 @@ class DhtDaemon
                 
             case DhtConst.Storage.Btree :
                 this.node = new BTreeNode       (node_item, number_threads, size_limit, data_dir, this.getBTreeTuneOptions());
+                break;
+                
+            case DhtConst.Storage.FileSystem :
+                this.node = new FileSystemNode  (node_item, number_threads, size_limit, data_dir);
                 break;
                 
             case DhtConst.Storage.Memory :
