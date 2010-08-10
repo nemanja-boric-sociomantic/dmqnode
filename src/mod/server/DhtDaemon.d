@@ -125,7 +125,7 @@ class DhtDaemon
         this.setLogger();
         
         uint    number_threads  = Config.get!(uint)("Server", "connection_threads");
-        uint 	size_limit		= Config.get!(uint)("Server", "size_limit");
+        ulong	size_limit		= Config.get!(ulong)("Server", "size_limit");
         char[]  data_dir        = Config.get!(char[])("Server", "data_dir");
         
         Storage storage         = this.getStorageConfiguration();
