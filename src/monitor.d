@@ -43,9 +43,19 @@ bool isArgument( char[][] arguments )
     args.prefixShort = ["-"];
     args.prefixLong  = ["--"];
 
+    args.define("d").parameters(0).aka("daemon");
+    args.define("h").parameters(0).aka("help");
+    
     args.parse(arguments);
 
-    return OceanException.run(&DhtNodeMonitor.run);
+    if (args.contains("h"))
+    {
+        return false;
+    }
+    else
+    {
+        return OceanException.run(&DhtNodeMonitor.run, args);
+    }
 }
 
 
@@ -55,33 +65,33 @@ bool isArgument( char[][] arguments )
 
 ********************************************************************************/
 
-/**
- * Prints usage to Stdout
- *
- */
 void printUsage()
 {
     Stdout.formatln("
     Usage:
-    	dhtnomon
-
+    	./dhtnomon [-d | -h] 
+    
+            -d      runs monitor in daemon mode (updates display every 60seconds)        
+            -h      prints this help
+        
     Description:
-    	dht node monitor - displays the number of records in each channel");
+        DHT node monitor    
+                
+    	Displays runtime information about the node including the 
+        number of records and bytes in each channel.
+    ");
 }
 
 
 /*******************************************************************************
 
     Main (Start)
+    
+    Params:
+        args = command line arguments
 
 ********************************************************************************/
 
-/**
- * Main.
- *
- * Params:
- *     args = command line arguments
- */
 void main ( char[][] args )
 {
     if ( !isArgument(args) ) printUsage();
