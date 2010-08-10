@@ -8,12 +8,12 @@
 
     authors:        Gavin Norman
 
---
+    --
 
 	Displays an updating count of the number of records in each channel of the
 	DHT node specified in the config file.
 
-*******************************************************************************/
+ ******************************************************************************/
 
 module src.mod.monitor.DhtNodeMonitor;
 
@@ -23,17 +23,23 @@ module src.mod.monitor.DhtNodeMonitor;
 
 	Imports
 
-*******************************************************************************/
+ ******************************************************************************/
 
-private import core.config.MainConfig;
+private import  core.config.MainConfig;
 
-private import tango.core.Thread;
+private import  swarm.dht.DhtClient;
 
-private import tango.core.Array;
+private import  swarm.dht.DhtHash;
 
-private import swarm.dht.DhtClient;
+private import  tango.core.Thread;
 
-private import tango.util.log.Trace;
+private import  tango.core.Array;
+
+private import  tango.time.Clock;
+
+private import  tango.util.Arguments;
+
+private import  tango.util.log.Trace;
 
 
 
@@ -41,16 +47,25 @@ private import tango.util.log.Trace;
 
 	DhtNodeMonitor - starts the monitor daemon
 
-*******************************************************************************/
+ ******************************************************************************/
 
 struct DhtNodeMonitor
 {
 	static NodeMonDaemon daemon;
 	
-	static bool run ( )
+	public static bool run ( Arguments args )
     {
 		daemon = new NodeMonDaemon();
-		daemon.run();
+        
+        if (args.contains("d"))
+        {
+    		daemon.run();
+        }
+        else
+        {
+            daemon.update();
+        }
+        
 		return true;
     }
 }
@@ -61,7 +76,7 @@ struct DhtNodeMonitor
 
 	DHT node monitor daemon
 
-*******************************************************************************/
+ ******************************************************************************/
 
 class NodeMonDaemon : DhtClient
 {
@@ -69,7 +84,7 @@ class NodeMonDaemon : DhtClient
 
 		Number of seconds between display updates
 
-	***************************************************************************/
+	 **************************************************************************/
 
 	static public const WAIT_TIME = 60;
 
@@ -78,7 +93,7 @@ class NodeMonDaemon : DhtClient
 
 		DHT node address - read from config file by constructor
 
-	***************************************************************************/
+	 **************************************************************************/
 
 	protected char[] node_address;
 
@@ -87,7 +102,7 @@ class NodeMonDaemon : DhtClient
 
 		DHT node port - read from config file by constructor
 
-	***************************************************************************/
+	 **************************************************************************/
 
 	protected ushort node_port;
     
@@ -96,29 +111,66 @@ class NodeMonDaemon : DhtClient
 
 		List of channels in DHT node - created by constructor
 
-	***************************************************************************/
+	 **************************************************************************/
 
 	protected char[][] channels;
 
+    /***************************************************************************
+
+        Total number of records for all channels
+    
+     **************************************************************************/
+        
+    protected ulong t_records;
+    
+    /***************************************************************************
+
+        Minimum value for responsible range
+    
+     **************************************************************************/
+        
+    protected char[] range_min;
+    
+    /***************************************************************************
+
+        Maximum value for responsible range
+    
+     **************************************************************************/
+    
+    protected char[] range_max;
+    
+    /***************************************************************************
+
+        Total number of bytes for all channels
+    
+     **************************************************************************/
+    protected ulong t_bytes;
 
 	// TODO
 	protected char[] buf;
+
 
 
 	/***************************************************************************
 
 		Constructor
 	
-	***************************************************************************/
+	 **************************************************************************/
 
 	public this ( )
     {
+        hash_t range_min, range_max;
+        
     	new Thread(&this.run);
-
+        
     	this.node_address  = Config.getChar("Server", "address");
         this.node_port     = Config.getInt("Server", "port");
 
-        Trace.formatln("Monitoring DHT node at {}:{}", this.node_address, this.node_port);
+        this.addNode(this.node_address, this.node_port);
+        
+        this.getResponsibleRange(this.node_address, this.node_port, range_min, range_max);
+        this.range_min = DhtHash.toHashStr(range_min);
+        this.range_max = DhtHash.toHashStr(range_max);
     }
 
 
@@ -131,7 +183,7 @@ class NodeMonDaemon : DhtClient
 
 	public void run ( )
     {
-    	while ( true )
+    	while (true)
     	{
     		this.update();
 
@@ -149,40 +201,58 @@ class NodeMonDaemon : DhtClient
 
 	protected void update ( )
     {
-        this.getAllChannels(this.channels);
+        this.getAllChannels();
 
-        Trace.formatln("-----------------------------------------------------");
-    	foreach ( channel; this.channels )
+		this.t_records = 0;
+		this.t_bytes = 0;
+		
+        Trace.formatln("-----------------------------------------------------------------");
+        Trace.formatln("Node: \t\t\t{}:{}", this.node_address, this.node_port);
+        Trace.formatln("Responsible Key Range: \t{} - {}", this.range_min, this.range_max);
+        Trace.formatln("Time: \t\t\t{}", Clock.now());
+        Trace.formatln("-----------------------------------------------------------------");
+        Trace.formatln("\n{,21} {,15} {,26}", "Channel", "Items", "Size");
+        Trace.formatln("-----------------------------------------------------------------");
+        
+    	foreach (channel; this.channels)
     	{
     		ulong records;
     		ulong bytes;
     		
-    		this.getChannelSize(this.node_address, this.node_port, channel, records, bytes);
+    		this.getChannelSize(this.node_address, this.node_port, channel, records, bytes);            
 
-
-    		Trace.formatln("{,20}: {,15}", channel, typeof(this).formatCommaNumber(records, this.buf));
+            this.t_records  += records;
+            this.t_bytes    += bytes;
+            
+            Trace.formatln("{,20}: {,15} {,20} bytes", channel, 
+                    typeof(this).formatCommaNumber(records, this.buf),
+                    typeof(this).formatCommaNumber(bytes, this.buf));            
     	}
+        
+        Trace.formatln("-----------------------------------------------------------------");
+        Trace.formatln("{,20}  {,15} {,20} bytes", "", 
+                typeof(this).formatCommaNumber(this.t_records, this.buf), 
+                typeof(this).formatCommaNumber(this.t_bytes, this.buf));
+        Trace.formatln("-----------------------------------------------------------------\n");
     }
     
 
 	/***************************************************************************
 
 		Creates the list of channels in the DHT node.
-	
-	***************************************************************************/
+       
+	 **************************************************************************/
 
-	protected void getAllChannels ( out char[][] channel_names )
+	protected void getAllChannels ()
     {
-    	this.addNode(this.node_address, this.node_port);
-    	
     	char[][] node_channels;
 		this.getChannels(this.node_address, this.node_port, node_channels);
 		
-		foreach ( channel; node_channels )
+		foreach (channel; node_channels)
 		{
-			if ( !channel_names.contains(channel) )
+			if (!this.channels.contains(channel))
 			{
-    			channel_names ~= channel;
+    			this.channels ~= channel;
 			}
 		}
     }
@@ -191,7 +261,7 @@ class NodeMonDaemon : DhtClient
 
 		Formats a number to a string, with comma separation every 3 digits
 	
-	***************************************************************************/
+	 **************************************************************************/
 
 	protected static char[] formatCommaNumber ( T ) ( T num, out char[] str )
     {
