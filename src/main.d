@@ -8,33 +8,43 @@
 
     authors:        Thomas Nicolai & Lars Kirchhoff
 
-*******************************************************************************/
+ ******************************************************************************/
 
 module  main;
 
-private import tango.util.Arguments;
 
-private import tango.io.Stdout;
 
-private import ocean.util.OceanException;
+/*******************************************************************************
+ 
+    Imports 
+    
+ ******************************************************************************/
 
-private import mod.server.DhtNodeServer;
+private import  tango.util.Arguments;
+
+private import  tango.io.Stdout;
+
+private import  ocean.util.OceanException;
+
+private import  mod.server.DhtNodeServer;
+
+
 
 /*******************************************************************************
 
     Arguments Handler
 
-********************************************************************************/
+    Checks if command line argument is valid and starts module
 
-/**
- * Checks if command line argument is valid and starts module
- *
- * Params:
- *     arguments = array of command line arguments
- *
- * Returns: false if no or wrong argument is given
- */
-bool isArgument( char[][] arguments )
+    Params:
+        arguments = array of command line arguments
+
+    Returns: 
+        false if no or wrong argument is given
+
+ ******************************************************************************/
+
+bool isArgument ( char[][] arguments )
 {
     Arguments args = new Arguments;
 
@@ -54,17 +64,14 @@ bool isArgument( char[][] arguments )
 }
 
 
+
 /*******************************************************************************
 
-    Usage
+    Print usage
 
-********************************************************************************/
+ ******************************************************************************/
 
-/**
- * Prints usage to Stdout
- *
- */
-void printUsage()
+void printUsage ()
 {
     Stdout.formatln("
     Usage:
@@ -86,36 +93,16 @@ void printUsage()
 
     Main (Start)
 
-********************************************************************************/
+    Param:
+        args = command line arguments
+    
+ ******************************************************************************/
 
-/**
- * Main.
- *
- * Params:
- *     args = command line arguments
- */
 void main ( char[][] args )
 {
-    /*
-    int[char[]] x;
-    
-    x["Apfel"] = 0;
-    x["Birne"] = 0;
-    x["Citrone"] = 0;
-    x["Erdbeere"] = 0;
-    
-    Stderr.formatln("{}", x);
-    
-    foreach (key; x.keys)
+    if (!isArgument(args))
     {
-        Stderr.formatln("\t{:X2}", cast (ubyte[]) key);
-        
-        x.remove(key);
+        printUsage();
     }
-    
-    return;
-    */
-    
-    if ( !isArgument(args) ) printUsage();
 }
 

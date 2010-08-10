@@ -8,34 +8,41 @@
 
     authors:        Gavin Norman
 
-*******************************************************************************/
+ ******************************************************************************/
 
 module src.monitor;
 
-private import tango.util.Arguments;
 
-private import tango.io.Stdout;
 
-private import ocean.util.OceanException;
+/*******************************************************************************
+ 
+    Imports
+    
+ ******************************************************************************/
 
-private import mod.monitor.DhtNodeMonitor;
+private import  tango.util.Arguments;
+
+private import  tango.io.Stdout;
+
+private import  ocean.util.OceanException;
+
+private import  mod.monitor.DhtNodeMonitor;
 
 
 
 /*******************************************************************************
 
     Arguments Handler
+   
+    Checks if command line argument is valid and starts module
+ 
+    Params:
+        arguments = array of command line arguments
 
-********************************************************************************/
+    Returns: false if no or wrong argument is given
 
-/**
- * Checks if command line argument is valid and starts module
- *
- * Params:
- *     arguments = array of command line arguments
- *
- * Returns: false if no or wrong argument is given
- */
+ ******************************************************************************/
+
 bool isArgument( char[][] arguments )
 {
     Arguments args = new Arguments;
@@ -59,13 +66,14 @@ bool isArgument( char[][] arguments )
 }
 
 
+
 /*******************************************************************************
 
     Usage
 
-********************************************************************************/
+ ******************************************************************************/
 
-void printUsage()
+void printUsage ()
 {
     Stdout.formatln("
     Usage:
@@ -83,6 +91,7 @@ void printUsage()
 }
 
 
+
 /*******************************************************************************
 
     Main (Start)
@@ -90,10 +99,13 @@ void printUsage()
     Params:
         args = command line arguments
 
-********************************************************************************/
+ ******************************************************************************/
 
 void main ( char[][] args )
 {
-    if ( !isArgument(args) ) printUsage();
+    if (!isArgument(args)) 
+    {
+        printUsage();
+    }
 }
 
