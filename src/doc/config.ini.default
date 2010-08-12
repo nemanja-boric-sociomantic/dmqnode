@@ -59,6 +59,8 @@ maxval                  = 0xf
 ;                       block pool by power of 2. If it is negative, the default
 ;                       value is specified. The default value is 10 standing
 ;                       for 2^10=1024.
+; compression_mode      compression mode for hashtable storage. 
+;                       Available options are: none, deflate, bzip, tcbs  
 ;
 
 [Options_Hashtable]
@@ -66,6 +68,7 @@ maxval                  = 0xf
 bnum                    = 131071
 apow                    = 4
 fpow                    = 10
+compression_mode        = none
 
 
 
@@ -95,6 +98,8 @@ fpow                    = 10
 ; nmemb                 specifies the number of members in each non-leaf page.
 ;                       If it is not more than 0, the default value is specified.
 ;                       The default value is 256.
+; compression_mode      compression mode for hashtable storage. 
+;                       Available options are: none, deflate, bzip, tcbs  
 ;
 
 [Options_Btree]
@@ -104,6 +109,7 @@ apow                    = 8
 fpow                    = 10
 lmemb                   = 128
 nmemb                   = 256
+compression_mode        = none
 
 
 

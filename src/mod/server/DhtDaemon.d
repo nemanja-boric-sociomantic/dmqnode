@@ -260,11 +260,22 @@ class DhtDaemon
 
     private Hashtable.TuneOptions getHashTableTuneOptions ()
     {
+        char[] compression_mode;
+        
         Hashtable.TuneOptions tune_options;
         
         Config.get(tune_options.bnum,   "Options_Hashtable",    "bnum");
         Config.get(tune_options.apow,   "Options_Hashtable",    "apow");
         Config.get(tune_options.fpow,   "Options_Hashtable",    "fpow");
+        Config.get(compression_mode,    "Options_Hashtable",    "compression_mode");
+        
+        switch (compression_mode)
+        {
+            case "deflate" :    tune_options.opts = tune_options.opts.Deflate;  break;            
+            case "bzip" :       tune_options.opts = tune_options.opts.Bzip;     break; 
+            case "tcbs" :       tune_options.opts = tune_options.opts.Tcbs;     break;
+            default :           break;
+        }
         
         return tune_options;
     }
@@ -278,6 +289,8 @@ class DhtDaemon
         
     private Btree.TuneOptions getBTreeTuneOptions ()
     {
+        char[] compression_mode;
+        
         Btree.TuneOptions tune_options;
         
         Config.get(tune_options.bnum,   "Options_Btree",        "bnum");
@@ -285,6 +298,15 @@ class DhtDaemon
         Config.get(tune_options.fpow,   "Options_Btree",        "fpow");
         Config.get(tune_options.lmemb,  "Options_Btree",        "lmemb");
         Config.get(tune_options.nmemb,  "Options_Btree",        "nmemb");
+        Config.get(compression_mode,    "Options_Hashtable",    "compression_mode");
+        
+        switch (compression_mode)
+        {
+            case "deflate" :    tune_options.opts = tune_options.opts.Deflate;  break;            
+            case "bzip" :       tune_options.opts = tune_options.opts.Bzip;     break; 
+            case "tcbs" :       tune_options.opts = tune_options.opts.Tcbs;     break;
+            default :           break;
+        }
         
         return tune_options;
     }    
