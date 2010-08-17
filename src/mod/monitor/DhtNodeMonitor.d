@@ -27,7 +27,7 @@ module src.mod.monitor.DhtNodeMonitor;
 
 private import  core.config.MainConfig;
 
-private import  swarm.dht.DhtClient;
+private import  swarm.dht.async.AsyncDhtClient;
 
 private import  swarm.dht.DhtHash;
 
@@ -78,7 +78,7 @@ struct DhtNodeMonitor
 
  ******************************************************************************/
 
-class NodeMonDaemon : DhtClient
+class NodeMonDaemon : AsyncDhtClient
 {
 	/***************************************************************************
 
@@ -160,6 +160,7 @@ class NodeMonDaemon : DhtClient
 	public this ( )
     {
         hash_t range_min, range_max;
+        DhtHash.HexDigest hash;
         
     	new Thread(&this.run);
         
@@ -168,9 +169,10 @@ class NodeMonDaemon : DhtClient
 
         this.addNode(this.node_address, this.node_port);
         
-        this.getResponsibleRange(this.node_address, this.node_port, range_min, range_max);
-        this.range_min = DhtHash.toHashStr(range_min);
-        this.range_max = DhtHash.toHashStr(range_max);
+//        this.getResponsibleRange(this.node_address, this.node_port, range_min, range_max);
+//        
+//        this.range_min = DhtHash.toHashStr(range_min, hash).dup;
+//        this.range_max = DhtHash.toHashStr(range_max, hash).dup;
     }
 
 
@@ -216,17 +218,17 @@ class NodeMonDaemon : DhtClient
         
     	foreach (channel; this.channels)
     	{
-    		ulong records;
-    		ulong bytes;
+    		ulong[] info;
     		
-    		this.getChannelSize(this.node_address, this.node_port, channel, records, bytes);            
+    		this.getChannelSize(channel, info);  
+            this.eventLoop();
 
-            this.t_records  += records;
-            this.t_bytes    += bytes;
+            this.t_records  += info[0];
+            this.t_bytes    += info[1];
             
             Trace.formatln("{,20}: {,15} {,20} bytes", channel, 
-                    typeof(this).formatCommaNumber(records, this.buf),
-                    typeof(this).formatCommaNumber(bytes, this.buf));            
+                    typeof(this).formatCommaNumber(info[0], this.buf),
+                    typeof(this).formatCommaNumber(info[1], this.buf));            
     	}
         
         Trace.formatln("-----------------------------------------------------------------");
@@ -246,7 +248,8 @@ class NodeMonDaemon : DhtClient
 	protected void getAllChannels ()
     {
     	char[][] node_channels;
-		this.getChannels(this.node_address, this.node_port, node_channels);
+		this.getChannels(node_channels);
+        this.eventLoop();
 		
 		foreach (channel; node_channels)
 		{
