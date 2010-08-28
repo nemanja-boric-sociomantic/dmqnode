@@ -29,7 +29,7 @@ private import  core.config.MainConfig;
 
 private import  swarm.dht.async.AsyncDhtClient;
 
-private import  swarm.dht.DhtHash;
+private import  swarm.dht.DhtHash, swarm.dht.DhtConst;
 
 private import  tango.core.Thread;
 
@@ -40,6 +40,8 @@ private import  tango.time.Clock;
 private import  tango.util.Arguments;
 
 private import  tango.util.log.Trace;
+
+private import  Integer = tango.text.convert.Integer;
 
 
 
@@ -80,6 +82,14 @@ struct DhtNodeMonitor
 
 class NodeMonDaemon : AsyncDhtClient
 {
+    /***************************************************************************
+
+        DHT configuration file 
+    
+     **************************************************************************/
+    
+    const char[][] DhtNodeCfg     = ["etc", "dhtnodes.xml"];
+    
 	/***************************************************************************
 
 		Number of seconds between display updates
@@ -114,14 +124,6 @@ class NodeMonDaemon : AsyncDhtClient
 	 **************************************************************************/
 
 	protected char[][] channels;
-
-    /***************************************************************************
-
-        Total number of records for all channels
-    
-     **************************************************************************/
-        
-    protected ulong t_records;
     
     /***************************************************************************
 
@@ -141,125 +143,249 @@ class NodeMonDaemon : AsyncDhtClient
     
     /***************************************************************************
 
+        Number of bytes for a channel
+    
+     **************************************************************************/
+    
+    protected ulong c_bytes[char[]][char[]];
+    
+    /***************************************************************************
+    
+        Number of records for a channel
+    
+     **************************************************************************/
+        
+    protected ulong c_records[char[]][char[]];
+    
+    protected uint node_index = 0;
+    
+    /***************************************************************************
+
         Total number of bytes for all channels
     
      **************************************************************************/
-    protected ulong t_bytes;
+    
+    protected ulong t_bytes[char[]];
 
-	// TODO
+    /***************************************************************************
+
+        Total number of records for all channels
+    
+     **************************************************************************/
+        
+    protected ulong t_records[char[]];
+    
+    protected char[] node_id;
+    
+    /***************************************************************************
+
+        Buffer for thousand separator method
+        
+        TODO
+    
+     **************************************************************************/
+    
 	protected char[] buf;
-
-
 
 	/***************************************************************************
 
 		Constructor
+        
+        Params:
+            exepath = path to running executable as given by command line
+                      argument 0
 	
 	 **************************************************************************/
 
-	public this ( )
+	public this ()
     {
         hash_t range_min, range_max;
         DhtHash.HexDigest hash;
         
     	new Thread(&this.run);
         
-    	this.node_address  = Config.getChar("Server", "address");
+        this.node_address  = Config.getChar("Server", "address");
         this.node_port     = Config.getInt("Server", "port");
-
-        this.addNode(this.node_address, this.node_port);
         
-//        this.getResponsibleRange(this.node_address, this.node_port, range_min, range_max);
-//        
-//        this.range_min = DhtHash.toHashStr(range_min, hash).dup;
-//        this.range_max = DhtHash.toHashStr(range_max, hash).dup;
+        foreach (node; MainConfig.getDhtNodeItems())
+        {
+            this.addNode(node.Address, node.Port);
+        }
     }
-
 
 	/***************************************************************************
 
 		Daemon main loop. Updates the display, then sleeps a while - on infinite
 		loop.
 	
+        Returns:
+            void
+            
 	***************************************************************************/
 
-	public void run ( )
+	public void run ()
     {
     	while (true)
     	{
     		this.update();
-
     		Thread.sleep(WAIT_TIME);
     	}
     }
-
 
 	/***************************************************************************
 
 		Updates the display. Queries the DHT node for the number of records in
 		all channels.
+        
+        Returns:
+            void
 	
 	***************************************************************************/
 
-	protected void update ( )
+	protected void update ()
     {
-        this.getAllChannels();
-
-		this.t_records = 0;
-		this.t_bytes = 0;
+        this.getChannels(&this.addChannels);
+        this.eventLoop();
 		
-        Trace.formatln("-----------------------------------------------------------------");
-        Trace.formatln("Node: \t\t\t{}:{}", this.node_address, this.node_port);
-        Trace.formatln("Responsible Key Range: \t{} - {}", this.range_min, this.range_max);
-        Trace.formatln("Time: \t\t\t{}", Clock.now());
-        Trace.formatln("-----------------------------------------------------------------");
-        Trace.formatln("\n{,21} {,15} {,26}", "Channel", "Items", "Size");
-        Trace.formatln("-----------------------------------------------------------------");
-        
     	foreach (channel; this.channels)
-    	{
-    		ulong[] info;
-    		
-    		this.getChannelSize(channel, info);  
+    	{	
+    		this.getChannelSize(channel, &this.addChannelSize);  
             this.eventLoop();
-
-            this.t_records  += info[0];
-            this.t_bytes    += info[1];
-            
-            Trace.formatln("{,20}: {,15} {,20} bytes", channel, 
-                    typeof(this).formatCommaNumber(info[0], this.buf),
-                    typeof(this).formatCommaNumber(info[1], this.buf));            
     	}
-        
-        Trace.formatln("-----------------------------------------------------------------");
-        Trace.formatln("{,20}  {,15} {,20} bytes", "", 
-                typeof(this).formatCommaNumber(this.t_records, this.buf), 
-                typeof(this).formatCommaNumber(this.t_bytes, this.buf));
-        Trace.formatln("-----------------------------------------------------------------\n");
+
+        this.print();
     }
     
-
+    
+    private void print ()
+    {  
+        uint i = 0;
+    
+        this.printLine();
+        
+        // Trace.formatln("Responsible Key Range: \t{} - {}", this.range_min, this.range_max);
+        
+        Trace.formatln(" Time: {}", Clock.now());
+        
+        this.printLine();
+        
+        Trace.format("{,21} |", "");
+        
+        foreach (node; MainConfig.getDhtNodeItems())
+        {
+            this.node_id = node.Address ~ ":" ~ Integer.toString(node.Port);
+            Trace.format("{,33} |", this.node_id);
+        }
+        Trace.formatln("");        
+        
+        this.printLine();
+        
+        Trace.format("{,21} |", "Channel");
+        
+        foreach (node; MainConfig.getDhtNodeItems())
+        {
+            Trace.format("{,11} | {,19} |", "Items", "Size");
+        }
+        
+        Trace.formatln("");        
+        
+        this.printLine();
+            
+        foreach (channel; this.channels)
+        {
+            Trace.format("{,21} |", channel);
+            
+            foreach (node; MainConfig.getDhtNodeItems())
+            {
+                this.node_id = node.Address ~ ":" ~ Integer.toString(node.Port);
+                
+                Trace.format("{,11} | {,13} bytes |",
+                        typeof(this).formatCommaNumber(this.c_records[this.node_id][channel], this.buf),
+                        typeof(this).formatCommaNumber(this.c_bytes[this.node_id][channel], this.buf));         
+                
+                this.t_records[this.node_id]  += this.c_records[this.node_id][channel];
+                this.t_bytes[this.node_id]    += this.c_bytes[this.node_id][channel];                
+            }
+            Trace.formatln("");
+        }
+        
+        this.printLine();
+        
+        Trace.format("{,21} |", "Total"); 
+        
+        foreach (node; MainConfig.getDhtNodeItems())
+        {
+            this.node_id = node.Address ~ ":" ~ Integer.toString(node.Port);
+            
+            Trace.format("{,11} | {,13} bytes |",
+                typeof(this).formatCommaNumber(this.t_records[this.node_id], this.buf), 
+                typeof(this).formatCommaNumber(this.t_bytes[this.node_id], this.buf));
+        }
+        Trace.formatln("");
+        this.printLine();    
+    }
+    
+    
+    
+    private void printLine ()
+    {
+        Trace.format("-----------------------");   
+        
+        foreach (node; MainConfig.getDhtNodeItems())
+        {
+            Trace.format("-----------------------------------");   
+        }
+        Trace.formatln("");
+    }
+    
 	/***************************************************************************
 
-		Creates the list of channels in the DHT node.
+		Creates the list of channels in the DHT node. The method is
+        called by AsyncDhtClient.getChannel.
+        
+        Param:
+            channel = name of the channel
+            
+        Returns:
+            void
        
 	 **************************************************************************/
 
-	protected void getAllChannels ()
-    {
-    	char[][] node_channels;
-		this.getChannels(node_channels);
-        this.eventLoop();
-		
-		foreach (channel; node_channels)
-		{
-			if (!this.channels.contains(channel))
-			{
-    			this.channels ~= channel;
-			}
+	protected void addChannels ( char[] channel )
+    {	
+        if (!this.channels.contains(channel))
+		{            
+    		this.channels ~= channel.dup;		
 		}
     }
 
+    /***************************************************************************
+
+        Retrieves information about the node. This method is called by
+        AsyncDhtClient.getChannelSize
+        
+        Params:
+            address = node IP address
+            port = node port
+            channel = node channel name 
+            records = number of records
+            bytes = number of bytes
+            
+        Returns:
+            void            
+
+     **************************************************************************/
+    
+    private void addChannelSize ( char[] address, ushort port, char[] channel, 
+            ulong records, ulong bytes )
+    {
+        this.node_id = address ~ ":" ~ Integer.toString(port);
+        
+        this.c_bytes[node_id][channel] = bytes;
+        this.c_records[node_id][channel] = records;
+    }
+    
+    
 	/***************************************************************************
 
 		Formats a number to a string, with comma separation every 3 digits
