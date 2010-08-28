@@ -314,4 +314,3 @@ class DhtDaemon
         return tune_options;
     }    
 }
-

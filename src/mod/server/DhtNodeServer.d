@@ -13,21 +13,18 @@
 
 module  mod.server.DhtNodeServer;
 
+/*******************************************************************************
+
+    Imports 
+
+******************************************************************************/
+
 private import mod.server.DhtDaemon;
 
 private import ocean.sys.Daemon;
 private import ocean.sys.SignalHandler;
 
 debug private import tango.util.log.Trace;
-
-/*******************************************************************************
-
-    Initialize Main Configuration
-
-********************************************************************************/
-
-private import core.config.MainConfig;
-
 
 /*******************************************************************************
 
@@ -59,13 +56,12 @@ struct DhtNodeServer
      */
     public static bool run ( )
     {
+        this.dht = new DhtDaemon();
         return !!this.dht.run();
     }
     
     static this ( )
     {
-        this.dht = new DhtDaemon;
-        
         SignalHandler.set(this.Signals, &shutdown);
     }
     

@@ -12,23 +12,21 @@
 
 module  main;
 
-
-
 /*******************************************************************************
  
     Imports 
     
  ******************************************************************************/
 
-private import  tango.util.Arguments;
-
-private import  tango.io.Stdout;
-
-private import  ocean.util.OceanException;
+private import  core.config.MainConfig;
 
 private import  mod.server.DhtNodeServer;
+//
+private import  ocean.util.OceanException;
+//
+private import  tango.io.Stdout;
 
-
+private import  tango.util.Arguments;
 
 /*******************************************************************************
 
@@ -63,8 +61,6 @@ bool isArgument ( char[][] arguments )
     return false;
 }
 
-
-
 /*******************************************************************************
 
     Print usage
@@ -88,7 +84,6 @@ void printUsage ()
     ");
 }
 
-
 /*******************************************************************************
 
     Main (Start)
@@ -100,9 +95,10 @@ void printUsage ()
 
 void main ( char[][] args )
 {
+    MainConfig.init(args[0]);
+    
     if (!isArgument(args))
     {
         printUsage();
     }
 }
-
