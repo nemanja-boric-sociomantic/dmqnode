@@ -98,25 +98,6 @@ class NodeMonDaemon : AsyncDhtClient
 
 	static public const WAIT_TIME = 60;
 
-
-	/***************************************************************************
-
-		DHT node address - read from config file by constructor
-
-	 **************************************************************************/
-
-	protected char[] node_address;
-
-
-	/***************************************************************************
-
-		DHT node port - read from config file by constructor
-
-	 **************************************************************************/
-
-	protected ushort node_port;
-    
-
 	/***************************************************************************
 
 		List of channels in DHT node - created by constructor
@@ -157,8 +138,6 @@ class NodeMonDaemon : AsyncDhtClient
         
     protected ulong c_records[char[]][char[]];
     
-    protected uint node_index = 0;
-    
     /***************************************************************************
 
         Total number of bytes for all channels
@@ -175,6 +154,12 @@ class NodeMonDaemon : AsyncDhtClient
         
     protected ulong t_records[char[]];
     
+    /***************************************************************************
+
+        Buffer for node id
+    
+     **************************************************************************/
+        
     protected char[] node_id;
     
     /***************************************************************************
@@ -189,12 +174,8 @@ class NodeMonDaemon : AsyncDhtClient
 
 	/***************************************************************************
 
-		Constructor
-        
-        Params:
-            exepath = path to running executable as given by command line
-                      argument 0
-	
+		Constructor        
+       
 	 **************************************************************************/
 
 	public this ()
@@ -203,10 +184,7 @@ class NodeMonDaemon : AsyncDhtClient
         DhtHash.HexDigest hash;
         
     	new Thread(&this.run);
-        
-        this.node_address  = Config.getChar("Server", "address");
-        this.node_port     = Config.getInt("Server", "port");
-        
+             
         foreach (node; MainConfig.getDhtNodeItems())
         {
             this.addNode(node.Address, node.Port);
@@ -256,7 +234,15 @@ class NodeMonDaemon : AsyncDhtClient
         this.print();
     }
     
+    /***************************************************************************
+
+        Prints the all fetched data to Stdout.
+        
+        Returns:
+            void
     
+    ***************************************************************************/
+        
     private void print ()
     {  
         uint i = 0;
@@ -269,12 +255,17 @@ class NodeMonDaemon : AsyncDhtClient
         
         this.printLine();
         
-        Trace.format("{,21} |", "");
-        
-        foreach (node; MainConfig.getDhtNodeItems())
+        Trace.format("{,21} |", "");        
+        foreach (node; super)
         {
-            this.node_id = node.Address ~ ":" ~ Integer.toString(node.Port);
-            Trace.format("{,33} |", this.node_id);
+            Trace.format("{,33} |", node.Address ~ ":" ~ Integer.toString(node.Port));            
+        }
+        Trace.formatln("");        
+
+        Trace.format("{,21} |", "");
+        foreach (node; super)
+        {
+            Trace.format("{,22:X8} - {:X8} |", node.MinValue, node.MaxValue);            
         }
         Trace.formatln("");        
         
@@ -327,6 +318,15 @@ class NodeMonDaemon : AsyncDhtClient
     
     
     
+    /***************************************************************************
+
+        Prints a horizontal line
+        
+        Returns:
+            void
+    
+    ***************************************************************************/
+        
     private void printLine ()
     {
         Trace.format("-----------------------");   
@@ -384,11 +384,12 @@ class NodeMonDaemon : AsyncDhtClient
         this.c_bytes[node_id][channel] = bytes;
         this.c_records[node_id][channel] = records;
     }
-    
-    
+        
 	/***************************************************************************
 
 		Formats a number to a string, with comma separation every 3 digits
+        
+        TODO: Should be moved to tango tango.text.convert.Layout
 	
 	 **************************************************************************/
 
