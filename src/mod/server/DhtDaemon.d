@@ -29,6 +29,7 @@ private import  swarm.dht.storage.Hashtable;
 private import  swarm.dht.storage.Btree;
 private import  swarm.dht.storage.Filesystem;
 private import  swarm.dht.storage.Memory;
+private import  swarm.dht.storage.LogFiles;
 
 private	import	swarm.dht.node.model.IDhtNode;
 
@@ -68,7 +69,15 @@ class DhtDaemon
     
      **************************************************************************/
     
-    alias       DhtNode!(Filesystem) 			FileSystemNode;
+    alias       DhtNode!(Filesystem)             FileSystemNode;
+    
+    /***************************************************************************
+    
+        alias for Memory node 
+    
+     **************************************************************************/
+    
+    alias       DhtNode!(Memory)                MemoryNode;
     
     /***************************************************************************
     
@@ -76,7 +85,7 @@ class DhtDaemon
     
      **************************************************************************/
         
-    alias       DhtNode!(Memory)				MemoryNode;
+    alias       DhtNode!(LogFiles, size_t)        LogFilesNode;
     
     /***************************************************************************
     
@@ -84,7 +93,7 @@ class DhtDaemon
 
      **************************************************************************/
 
-    alias       DhtConst.NodeItem				NodeItem;
+    alias       DhtConst.NodeItem                NodeItem;
     
     /***************************************************************************
     
@@ -92,7 +101,7 @@ class DhtDaemon
     
      **************************************************************************/
 
-    alias       DhtConst.Storage				Storage;
+    alias       DhtConst.Storage                Storage;
     
     /***************************************************************************
          
@@ -100,7 +109,7 @@ class DhtDaemon
      
      **************************************************************************/
     
-    private     HashTableNode					hashtable_node;
+    private     HashTableNode                    hashtable_node;
     
     /***************************************************************************
     
@@ -108,7 +117,7 @@ class DhtDaemon
             
      **************************************************************************/
    
-    private 	IDhtNode						node;
+    private     IDhtNode                        node;
     
     
 
@@ -125,7 +134,7 @@ class DhtDaemon
         this.setLogger();
         
         uint    number_threads  = Config.get!(uint)("Server", "connection_threads");
-        ulong	size_limit		= Config.get!(ulong)("Server", "size_limit");
+        ulong   size_limit      = Config.get!(ulong)("Server", "size_limit");
         char[]  data_dir        = Config.get!(char[])("Server", "data_dir");
         
         Storage storage         = this.getStorageConfiguration();
@@ -151,6 +160,10 @@ class DhtDaemon
                 
             case DhtConst.Storage.Memory :
                 this.node = new MemoryNode      (node_item, number_threads, size_limit, data_dir);
+                break;
+                
+            case DhtConst.Storage.LogFiles :
+                this.node = new LogFilesNode    (node_item, number_threads, size_limit, data_dir, this.getLogFilesWriteBuffer());
                 break;
             
             default: 
@@ -226,29 +239,24 @@ class DhtDaemon
     
     private Storage getStorageConfiguration ()
     {
-        char[] storage =  Config.get!(char[])("Server", "storage_engine");
-        
-        switch (storage)
+        switch (Config.get!(char[])("Server", "storage_engine"))
         {
             case "hashtable" :
                 return DhtConst.Storage.HashTable;
-                break;
                 
             case "btree" : 
                 return DhtConst.Storage.Btree;
-                break;
                 
             case "filesystem" : 
                 return DhtConst.Storage.FileSystem;
-                break;
                 
             case "memory" : 
                 return DhtConst.Storage.Memory;
-                break;
+                
+            case "logfiles" :
+                return DhtConst.Storage.LogFiles;
                 
             default :
-                return DhtConst.Storage.None;
-                break;
         }
         
         return DhtConst.Storage.None;
@@ -289,7 +297,7 @@ class DhtDaemon
         values for parameters not specified in configuration.
            
      **************************************************************************/
-        
+    
     private Btree.TuneOptions getBTreeTuneOptions ()
     {
         char[] compression_mode;
@@ -312,5 +320,21 @@ class DhtDaemon
         }
         
         return tune_options;
+    }    
+    
+    /***************************************************************************
+    
+        Reads the file output write buffer size for the LogFiles storage engine,
+        using the default if not specified in configuration.
+           
+     **************************************************************************/
+        
+    private size_t getLogFilesWriteBuffer ()
+    {
+        size_t wbs = LogFiles.DefaultWriteBufferSize;
+        
+        Config.get(wbs, "Options_LogFiles", "write_buffer_size");
+        
+        return wbs;
     }    
 }
