@@ -171,6 +171,24 @@ class NodeMonDaemon : AsyncDhtClient
      **************************************************************************/
     
 	protected char[] buf;
+    
+   
+    /***************************************************************************
+
+        NodeItems for display method
+
+     **************************************************************************/
+    
+    protected DhtConst.NodeItem[]   nodeItems;
+
+    
+    /***************************************************************************
+
+        Number of columns to display
+
+     **************************************************************************/
+
+    protected uint  display_cols;    
 
 	/***************************************************************************
 
@@ -191,7 +209,7 @@ class NodeMonDaemon : AsyncDhtClient
         }
     }
 
-	/***************************************************************************
+ 	/***************************************************************************
 
 		Daemon main loop. Updates the display, then sleeps a while - on infinite
 		loop.
@@ -209,6 +227,7 @@ class NodeMonDaemon : AsyncDhtClient
     		Thread.sleep(WAIT_TIME);
     	}
     }
+    
 
 	/***************************************************************************
 
@@ -236,61 +255,107 @@ class NodeMonDaemon : AsyncDhtClient
     
     /***************************************************************************
 
-        Prints the all fetched data to Stdout.
+        Prints all fetched data to Stdout.
         
         Returns:
             void
     
     ***************************************************************************/
-        
-    private void print ()
-    {  
-        uint i = 0;
-    
-        this.printLine();
-        
-        // Trace.formatln("Responsible Key Range: \t{} - {}", this.range_min, this.range_max);
-        
-        Trace.formatln(" Time: {}", Clock.now());
-        
-        this.printLine();
-        
-        Trace.format("{,21} |", "");        
-        foreach (node; super)
-        {
-            Trace.format("{,33} |", node.Address ~ ":" ~ Integer.toString(node.Port));            
-        }
-        Trace.formatln("");        
 
-        Trace.format("{,21} |", "");
+    private void print ()
+    {
+        uint i,t    = 0;
+        
+        this.getDisplayColumns();
+
+        this.printTime();
+         
         foreach (node; super)
         {
-            Trace.format("{,22:X8} - {:X8} |", node.MinValue, node.MaxValue);            
+
+           i++,t++;
+           this.nodeItems ~= node;
+         
+           if ( (i==this.display_cols)
+                || ( (MainConfig.getDhtNodeItems().length-t)+i < this.display_cols) )
+            {
+                Trace.formatln("");
+                i=0;
+            } else
+                continue;
+           this.printRow();
+           this.nodeItems.length=0; 
         }
-        Trace.formatln("");        
+         
+    }
+
+    /***************************************************************************
+
+        Prints one row of data. Row length is determined by the 
+        "Monitor : display_cols" configuration setting.
         
-        this.printLine();
+        Returns:
+            void
+    
+    ***************************************************************************/
+
+    private void printRow () {
+
+       this.printBoxLine();
+       
+       this.printNodeInfo();
+       
+       this.printNodeRange();
+       
+       this.printNodeInfoHeaders();
+           
+       this.printNodeChannels();
+       
+       this.printNodeTotal();
+       
+    }
+    
+    /***************************************************************************
+    
+        Prints the current time and number of nodes.
+    
+        Returns:
+            void
+    
+    ***************************************************************************/
+    
+    private void printTime ()
+    {
+       this.printLine();
         
-        Trace.format("{,21} |", "Channel");
+        Trace.formatln(" Time: {}            Number of Nodes: {}", 
+                Clock.now(), MainConfig.getDhtNodeItems().length);
         
-        foreach (node; MainConfig.getDhtNodeItems())
-        {
-            Trace.format("{,11} | {,19} |", "Items", "Size");
-        }
+        this.printLine();      
+    }
+    
+    /***************************************************************************
+    
+        Prints a list of channels.
+    
+        Returns:
+            void
+    
+    ***************************************************************************/
+    
+    private void printNodeChannels () 
+    {
         
-        Trace.formatln("");        
-        
-        this.printLine();
-            
         foreach (channel; this.channels)
         {
+            
             Trace.format("{,21} |", channel);
             
-            foreach (node; MainConfig.getDhtNodeItems())
+            foreach (node; this.nodeItems)
             {
                 this.node_id = node.Address ~ ":" ~ Integer.toString(node.Port);
                 
-                Trace.format("{,11} | {,13} bytes |",
+                Trace.format(" | {,11} | {,13} bytes  |",
                         typeof(this).formatCommaNumber(this.c_records[this.node_id][channel], this.buf),
                         typeof(this).formatCommaNumber(this.c_bytes[this.node_id][channel], this.buf));         
                 
@@ -298,25 +363,145 @@ class NodeMonDaemon : AsyncDhtClient
                 this.t_bytes[this.node_id]    += this.c_bytes[this.node_id][channel];                
             }
             Trace.formatln("");
-        }
+            this.printBoxLine();
+         }
         
-        this.printLine();
+        this.printBoxLine();  
         
-        Trace.format("{,21} |", "Total"); 
-        
-        foreach (node; MainConfig.getDhtNodeItems())
-        {
-            this.node_id = node.Address ~ ":" ~ Integer.toString(node.Port);
-            
-            Trace.format("{,11} | {,13} bytes |",
-                typeof(this).formatCommaNumber(this.t_records[this.node_id], this.buf), 
-                typeof(this).formatCommaNumber(this.t_bytes[this.node_id], this.buf));
-        }
-        Trace.formatln("");
-        this.printLine();    
     }
     
+    /***************************************************************************
+
+        Prints the total items and size of all channels for a paticular node.
     
+        Returns:
+            void
+    
+    ***************************************************************************/
+    private void printNodeTotal () 
+    {
+        
+        Trace.format("{,21} |", "Total"); 
+
+        foreach (node; this.nodeItems)
+        {
+
+            this.node_id = node.Address ~ ":" ~ Integer.toString(node.Port);
+            Trace.format("{,14} | {,14} bytes |",
+            typeof(this).formatCommaNumber(this.t_records[this.node_id], this.buf), 
+            typeof(this).formatCommaNumber(this.t_bytes[this.node_id], this.buf));
+        }
+        
+        Trace.formatln("");
+        this.printBoxLine(); 
+       
+    }
+    
+    /***************************************************************************
+
+        Prints the Node info.
+    
+        Returns:
+            void
+    
+    ***************************************************************************/
+    private void printNodeInfo ()
+    {
+        uint i = 0;
+        
+        foreach (node; this.nodeItems)
+        {
+            i++;
+            
+            if (i==1) {
+                Trace.format("{,23} |", "");  
+                Trace.format("{,35} |", node.Address ~ ":" ~ Integer.toString(node.Port));  
+            } else {
+                Trace.format(" |"); 
+                Trace.format("{,35} |", node.Address ~ ":" ~ Integer.toString(node.Port));
+            }
+        }  
+        Trace.formatln(""); 
+        this.printBoxLine();
+        
+    }    
+    
+    /***************************************************************************
+
+        Prints the Node info headers - Items,Size.
+    
+        Returns:
+            void
+
+    ***************************************************************************/
+    private void printNodeInfoHeaders ()
+    {
+        uint i = 0;
+        
+        foreach (node; this.nodeItems)
+        {
+            i++;
+
+            if (i==1) {
+                Trace.format("{,21} |", "Channel");
+                Trace.format(" | {,11} |  {,19} |", "Items", "Size");
+            } else {
+                Trace.format(" | {,11} |  {,19} |", "Items", "Size");
+            }
+
+         }
+
+        Trace.formatln("");        
+        this.printBoxLine();
+        
+    }
+    
+    /***************************************************************************
+
+        Prints the Node Range.
+    
+        Returns:
+            void
+    
+    ***************************************************************************/
+    private void printNodeRange ()
+    {
+        uint i = 0;
+        
+        foreach (node; this.nodeItems)
+        {
+            i++;
+            
+            if (i==1) {
+                Trace.format("{,23} |", "");  
+                Trace.format("{,24:X8} - {:X8} |", node.MinValue, node.MaxValue);
+            } else {
+                Trace.format(" |"); 
+                Trace.format("{,24:X8} - {:X8} |", node.MinValue, node.MaxValue); 
+            }
+        }  
+        Trace.formatln(""); 
+        this.printBoxLine();
+    } 
+    
+    /***************************************************************************
+
+        Gets the number of columns to display from the main configuration.
+        
+        Returns:
+            void
+    
+    ***************************************************************************/
+
+    private void getDisplayColumns ()
+    {
+        this.display_cols = Config.get!(uint)("Monitor", "display_cols");
+        
+        if (this.display_cols>=MainConfig.getDhtNodeItems().length) 
+        {
+            this.display_cols = MainConfig.getDhtNodeItems().length;
+        } 
+    }
     
     /***************************************************************************
 
@@ -333,10 +518,31 @@ class NodeMonDaemon : AsyncDhtClient
         
         foreach (node; MainConfig.getDhtNodeItems())
         {
-            Trace.format("-----------------------------------");   
+            Trace.format("-----------------------------------"); 
         }
         Trace.formatln("");
     }
+    
+    /***************************************************************************
+
+        Prints a horizontal line with spaces.
+    
+        Returns:
+            void
+
+    ***************************************************************************/
+    
+    private void printBoxLine ()
+    {
+        Trace.format("-----------------------");   
+        
+        foreach (node; this.nodeItems)
+        {
+            Trace.format(" --------------------------------------"); 
+        }
+
+        Trace.formatln("");
+    }    
     
 	/***************************************************************************
 
