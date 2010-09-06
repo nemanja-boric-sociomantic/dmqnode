@@ -10,8 +10,8 @@
 
     --
 
-	Displays an updating count of the number of records in each channel of the
-	DHT node specified in the config file.
+    Displays an updating count of the number of records in each channel of the
+    DHT node specified in the config file.
 
  ******************************************************************************/
 
@@ -21,7 +21,7 @@ module src.mod.monitor.DhtNodeMonitor;
 
 /*******************************************************************************
 
-	Imports
+    Imports
 
  ******************************************************************************/
 
@@ -47,28 +47,28 @@ private import  Integer = tango.text.convert.Integer;
 
 /*******************************************************************************
 
-	DhtNodeMonitor - starts the monitor daemon
+    DhtNodeMonitor - starts the monitor daemon
 
  ******************************************************************************/
 
 struct DhtNodeMonitor
 {
-	static NodeMonDaemon daemon;
-	
-	public static bool run ( Arguments args )
+    static NodeMonDaemon daemon;
+
+    public static bool run ( Arguments args )
     {
-		daemon = new NodeMonDaemon();
-        
+        daemon = new NodeMonDaemon();
+
         if (args.contains("d"))
         {
-    		daemon.run();
+            daemon.run();
         }
         else
         {
             daemon.update();
         }
         
-		return true;
+        return true;
     }
 }
 
@@ -76,7 +76,7 @@ struct DhtNodeMonitor
 
 /*******************************************************************************
 
-	DHT node monitor daemon
+    DHT node monitor daemon
 
  ******************************************************************************/
 
@@ -85,351 +85,358 @@ class NodeMonDaemon : AsyncDhtClient
     /***************************************************************************
 
         DHT configuration file 
-    
+
      **************************************************************************/
-    
+
     const char[][] DhtNodeCfg     = ["etc", "dhtnodes.xml"];
-    
-	/***************************************************************************
 
-		Number of seconds between display updates
+    /***************************************************************************
 
-	 **************************************************************************/
+        Number of seconds between display updates
 
-	static public const WAIT_TIME = 60;
+     **************************************************************************/
 
-	/***************************************************************************
+    static public const WAIT_TIME = 60;
 
-		List of channels in DHT node - created by constructor
+    /***************************************************************************
 
-	 **************************************************************************/
+        List of channels in DHT node - created by constructor
 
-	protected char[][] channels;
-    
+     **************************************************************************/
+
+    protected char[][] channels;
+
     /***************************************************************************
 
         Minimum value for responsible range
-    
+
      **************************************************************************/
-        
+
     protected char[] range_min;
-    
+
     /***************************************************************************
 
         Maximum value for responsible range
-    
+
      **************************************************************************/
-    
+
     protected char[] range_max;
-    
+
     /***************************************************************************
 
         Number of bytes for a channel
-    
+
      **************************************************************************/
-    
+
     protected ulong c_bytes[char[]][char[]];
-    
+
     /***************************************************************************
-    
+
         Number of records for a channel
-    
+
      **************************************************************************/
-        
+
     protected ulong c_records[char[]][char[]];
-    
+
     /***************************************************************************
 
         Total number of bytes for all channels
-    
+
      **************************************************************************/
-    
+
     protected ulong t_bytes[char[]];
 
     /***************************************************************************
 
         Total number of records for all channels
-    
+
      **************************************************************************/
-        
+
     protected ulong t_records[char[]];
-    
+
     /***************************************************************************
 
         Buffer for node id
-    
+
      **************************************************************************/
-        
+
     protected char[] node_id;
-    
+
     /***************************************************************************
 
         Buffer for thousand separator method
-        
+
         TODO
-    
+
      **************************************************************************/
-    
-	protected char[] buf;
-    
-   
+
+    protected char[] buf;
+
     /***************************************************************************
 
         NodeItems for display method
 
      **************************************************************************/
-    
+
     protected DhtConst.NodeItem[]   nodeItems;
 
-    
     /***************************************************************************
 
         Number of columns to display
 
      **************************************************************************/
 
-    protected uint  display_cols;    
+    protected uint  display_cols;
 
-	/***************************************************************************
+    /***************************************************************************
 
-		Constructor        
-       
-	 **************************************************************************/
+        Constructor
 
-	public this ()
+     **************************************************************************/
+
+    public this ()
     {
         hash_t range_min, range_max;
         DhtHash.HexDigest hash;
-        
-    	new Thread(&this.run);
-             
+
+        new Thread(&this.run);
+
         foreach (node; MainConfig.getDhtNodeItems())
         {
             this.addNode(node.Address, node.Port);
         }
     }
 
- 	/***************************************************************************
+    /***************************************************************************
 
-		Daemon main loop. Updates the display, then sleeps a while - on infinite
-		loop.
-	
+        Daemon main loop. Updates the display, then sleeps a while - on infinite
+        loop.
+
         Returns:
             void
-            
-	***************************************************************************/
 
-	public void run ()
+    ***************************************************************************/
+
+    public void run ()
     {
-    	while (true)
-    	{
-    		this.update();
-    		Thread.sleep(WAIT_TIME);
-    	}
+        while (true)
+        {
+            this.update();
+            Thread.sleep(WAIT_TIME);
+        }
     }
-    
 
-	/***************************************************************************
+    /***************************************************************************
 
-		Updates the display. Queries the DHT node for the number of records in
-		all channels.
-        
+        Updates the display. Queries the DHT node for the number of records in
+        all channels.
+
         Returns:
             void
-	
-	***************************************************************************/
 
-	protected void update ()
+    ***************************************************************************/
+
+    protected void update ()
     {
         this.getChannels(&this.addChannels);
         this.eventLoop();
-		
-    	foreach (channel; this.channels)
-    	{	
-    		this.getChannelSize(channel, &this.addChannelSize);  
+
+        foreach (channel; this.channels)
+        {
+            this.getChannelSize(channel, &this.addChannelSize);
             this.eventLoop();
-    	}
+        }
 
         this.print();
     }
-    
+
     /***************************************************************************
 
         Prints all fetched data to Stdout.
-        
+
         Returns:
             void
-    
+
     ***************************************************************************/
 
     private void print ()
     {
         uint i,t    = 0;
-        
+
         this.getDisplayColumns();
 
         this.printTime();
-         
+
         foreach (node; super)
         {
 
-           i++,t++;
-           this.nodeItems ~= node;
-         
-           if ( (i==this.display_cols)
-                || ( (MainConfig.getDhtNodeItems().length-t)+i < this.display_cols) )
+            i++, t++;
+            this.nodeItems ~= node;
+
+            if ((i==this.display_cols) || 
+                ( (MainConfig.getDhtNodeItems().length-t)+i < this.display_cols))
             {
                 Trace.formatln("");
                 i=0;
-            } else
+            }
+            else
+            {
                 continue;
-           this.printRow();
-           this.nodeItems.length=0; 
+            }
+
+            this.printRow();
+            this.nodeItems.length=0;
         }
-         
     }
 
     /***************************************************************************
 
         Prints one row of data. Row length is determined by the 
         "Monitor : display_cols" configuration setting.
-        
+
         Returns:
             void
-    
+
     ***************************************************************************/
 
     private void printRow () {
 
-       this.printBoxLine();
-       
+       this.printBoxLine(false);
+
        this.printNodeInfo();
-       
+
        this.printNodeRange();
-       
+
        this.printNodeInfoHeaders();
-           
+
        this.printNodeChannels();
-       
+
        this.printNodeTotal();
-       
+
     }
-    
+
     /***************************************************************************
-    
+
         Prints the current time and number of nodes.
-    
+
         Returns:
             void
-    
+
     ***************************************************************************/
-    
+
     private void printTime ()
     {
-       this.printLine();
-        
-        Trace.formatln(" Time: {}            Number of Nodes: {}", 
+       this.printHeadLine();
+
+        Trace.formatln(" Time: {}            Number of Nodes: {}",
                 Clock.now(), MainConfig.getDhtNodeItems().length);
-        
-        this.printLine();      
+
+        this.printHeadLine();
     }
-    
+
     /***************************************************************************
-    
+
         Prints a list of channels.
-    
+
         Returns:
             void
-    
+
     ***************************************************************************/
-    
+
     private void printNodeChannels () 
     {
-        
+
         foreach (channel; this.channels)
         {
-            
+
             Trace.format("{,21} |", channel);
-            
+
             foreach (node; this.nodeItems)
             {
                 this.node_id = node.Address ~ ":" ~ Integer.toString(node.Port);
-                
+
                 Trace.format(" | {,11} | {,13} bytes  |",
                         typeof(this).formatCommaNumber(this.c_records[this.node_id][channel], this.buf),
-                        typeof(this).formatCommaNumber(this.c_bytes[this.node_id][channel], this.buf));         
-                
+                        typeof(this).formatCommaNumber(this.c_bytes[this.node_id][channel], this.buf));
+
                 this.t_records[this.node_id]  += this.c_records[this.node_id][channel];
-                this.t_bytes[this.node_id]    += this.c_bytes[this.node_id][channel];                
+                this.t_bytes[this.node_id]    += this.c_bytes[this.node_id][channel];
             }
+
             Trace.formatln("");
             this.printBoxLine();
          }
-        
-        this.printBoxLine();  
-        
+
+        this.printBoxLine();
+
     }
-    
+
     /***************************************************************************
 
         Prints the total items and size of all channels for a paticular node.
-    
+
         Returns:
             void
-    
+
     ***************************************************************************/
     private void printNodeTotal () 
     {
-        
-        Trace.format("{,21} |", "Total"); 
 
-        foreach (node; this.nodeItems)
+        Trace.format("{,21} |", "Total");
+
+        if (this.t_records.length)
         {
-
-            this.node_id = node.Address ~ ":" ~ Integer.toString(node.Port);
-            Trace.format("{,14} | {,14} bytes |",
-            typeof(this).formatCommaNumber(this.t_records[this.node_id], this.buf), 
-            typeof(this).formatCommaNumber(this.t_bytes[this.node_id], this.buf));
+            foreach (node; this.nodeItems)
+            {
+                this.node_id = node.Address ~ ":" ~ Integer.toString(node.Port);
+                Trace.format("{,14} | {,14} bytes |",
+                typeof(this).formatCommaNumber(this.t_records[this.node_id], this.buf), 
+                typeof(this).formatCommaNumber(this.t_bytes[this.node_id], this.buf));
+            }
         }
-        
+
         Trace.formatln("");
-        this.printBoxLine(); 
-       
+        this.printBoxLine();
+
     }
-    
+
     /***************************************************************************
 
         Prints the Node info.
-    
+
         Returns:
             void
-    
+
     ***************************************************************************/
     private void printNodeInfo ()
     {
         uint i = 0;
-        
+
         foreach (node; this.nodeItems)
         {
             i++;
-            
-            if (i==1) {
-                Trace.format("{,23} |", "");  
-                Trace.format("{,35} |", node.Address ~ ":" ~ Integer.toString(node.Port));  
-            } else {
+
+            if (i==1) 
+            {
+                Trace.format("{,23} |", "");
+                Trace.format("{,35} |", node.Address ~ ":" ~ Integer.toString(node.Port));
+            } 
+            else 
+            {
                 Trace.format(" |"); 
                 Trace.format("{,35} |", node.Address ~ ":" ~ Integer.toString(node.Port));
             }
-        }  
-        Trace.formatln(""); 
-        this.printBoxLine();
+        }
         
-    }    
-    
+        Trace.formatln("");
+//        this.printBoxLine();
+
+    }
+
     /***************************************************************************
 
         Prints the Node info headers - Items,Size.
-    
+
         Returns:
             void
 
@@ -437,132 +444,166 @@ class NodeMonDaemon : AsyncDhtClient
     private void printNodeInfoHeaders ()
     {
         uint i = 0;
-        
+
         foreach (node; this.nodeItems)
         {
             i++;
 
-            if (i==1) {
+            if (i==1) 
+            {
                 Trace.format("{,21} |", "Channel");
                 Trace.format(" | {,11} |  {,19} |", "Items", "Size");
-            } else {
+            }
+            else
+            {
                 Trace.format(" | {,11} |  {,19} |", "Items", "Size");
             }
 
          }
 
-        Trace.formatln("");        
+        Trace.formatln("");
         this.printBoxLine();
         
     }
-    
+
     /***************************************************************************
 
         Prints the Node Range.
-    
+
         Returns:
             void
-    
+
     ***************************************************************************/
     private void printNodeRange ()
     {
         uint i = 0;
-        
+
         foreach (node; this.nodeItems)
         {
             i++;
             
-            if (i==1) {
-                Trace.format("{,23} |", "");  
+            if (i==1) 
+            {
+                Trace.format("{,23} |", "");
                 Trace.format("{,24:X8} - {:X8} |", node.MinValue, node.MaxValue);
-            } else {
+            } 
+            else 
+            {
                 Trace.format(" |"); 
-                Trace.format("{,24:X8} - {:X8} |", node.MinValue, node.MaxValue); 
+                Trace.format("{,24:X8} - {:X8} |", node.MinValue, node.MaxValue);
             }
-        }  
-        Trace.formatln(""); 
+        }
+
+        Trace.formatln("");
         this.printBoxLine();
-    } 
-    
+    }
+
     /***************************************************************************
 
         Gets the number of columns to display from the main configuration.
-        
+
         Returns:
             void
-    
+
     ***************************************************************************/
 
     private void getDisplayColumns ()
     {
         this.display_cols = Config.get!(uint)("Monitor", "display_cols");
-        
+
         if (this.display_cols>=MainConfig.getDhtNodeItems().length) 
         {
             this.display_cols = MainConfig.getDhtNodeItems().length;
-        } 
+        }
     }
-    
+
     /***************************************************************************
 
         Prints a horizontal line
-        
+
         Returns:
             void
-    
+
+     ***************************************************************************/
+
+        private void printHeadLine ()
+        {
+            Trace.format("-----------------------");
+
+            for (uint i=0; i<this.display_cols; i++)
+            {
+                Trace.format("---------------------------------------");
+            }
+            Trace.formatln("");
+}
+
+    /***************************************************************************
+
+        Prints a horizontal line
+
+        Returns:
+            void
+
     ***************************************************************************/
-        
+
     private void printLine ()
     {
-        Trace.format("-----------------------");   
-        
+        Trace.format("-----------------------");
+
         foreach (node; MainConfig.getDhtNodeItems())
         {
-            Trace.format("-----------------------------------"); 
+            Trace.format("---------------------------------------");
         }
         Trace.formatln("");
     }
-    
+
     /***************************************************************************
 
         Prints a horizontal line with spaces.
-    
+
         Returns:
             void
 
     ***************************************************************************/
-    
-    private void printBoxLine ()
+
+    private void printBoxLine ( bool start = true )
     {
-        Trace.format("-----------------------");   
-        
+        if (start)
+        {
+            Trace.format("-----------------------");
+        }
+        else
+        {
+            Trace.format("                       ");
+        }
+
         foreach (node; this.nodeItems)
         {
-            Trace.format(" --------------------------------------"); 
+            Trace.format(" --------------------------------------");
         }
 
         Trace.formatln("");
-    }    
-    
-	/***************************************************************************
+    }
 
-		Creates the list of channels in the DHT node. The method is
+    /***************************************************************************
+
+        Creates the list of channels in the DHT node. The method is
         called by AsyncDhtClient.getChannel.
-        
+
         Param:
             channel = name of the channel
-            
+
         Returns:
             void
-       
-	 **************************************************************************/
 
-	protected void addChannels ( char[] channel )
-    {	
+     **************************************************************************/
+
+    protected void addChannels ( char[] channel )
+    {
         if (!this.channels.contains(channel))
-		{            
-    		this.channels ~= channel.dup;		
-		}
+        {
+            this.channels ~= channel.dup;
+        }
     }
 
     /***************************************************************************
@@ -591,52 +632,52 @@ class NodeMonDaemon : AsyncDhtClient
         this.c_records[node_id][channel] = records;
     }
         
-	/***************************************************************************
+    /***************************************************************************
 
-		Formats a number to a string, with comma separation every 3 digits
-        
+        Formats a number to a string, with comma separation every 3 digits
+
         TODO: Should be moved to tango tango.text.convert.Layout
-	
-	 **************************************************************************/
 
-	protected static char[] formatCommaNumber ( T ) ( T num, out char[] str )
+     **************************************************************************/
+
+    protected static char[] formatCommaNumber ( T ) ( T num, out char[] str )
     {
-    	auto string = Integer.toString(num);
+        auto string = Integer.toString(num);
 
-    	bool comma;
-		size_t left = 0;
-		size_t right = left + 3;
-		size_t first_comma;
+        bool comma;
+        size_t left = 0;
+        size_t right = left + 3;
+        size_t first_comma;
 
-		if ( string.length > 3 )
-		{
-			comma = true;
-			first_comma = string.length % 3;
+        if ( string.length > 3 )
+        {
+            comma = true;
+            first_comma = string.length % 3;
 
-			if ( first_comma > 0 )
-			{
-				right = first_comma;
-			}
-		}
+            if ( first_comma > 0 )
+            {
+                right = first_comma;
+            }
+        }
 
-		do
-		{
-			if ( right >= string.length )
-			{
-				right = string.length;
-				comma = false;
-			}
-			str ~= string[left..right];
-			if ( comma )
-			{
-				str ~= ",";
-			}
-			
-			left = right;
-			right = left + 3;
-		} while( left < string.length );
+        do
+        {
+            if ( right >= string.length )
+            {
+                right = string.length;
+                comma = false;
+            }
+            str ~= string[left..right];
+            if ( comma )
+            {
+                str ~= ",";
+            }
 
-		return str;
+            left = right;
+            right = left + 3;
+        } while( left < string.length );
+
+        return str;
     }
 }
 
