@@ -9,8 +9,9 @@
 ; (c) 2009-2010 sociomantic labs GmbH. All rights reserved
 ;               david.eckardt@sociomantic.com
 ;               thomas.nicolai@sociomantic.com
-;				lars.kirchhoff@sociomantic.com
+;               lars.kirchhoff@sociomantic.com
 ;
+
 
 
 ; Basic server configuration
@@ -21,10 +22,10 @@
 ; connection_threads    number of threads for incoming connections
 ; data_dir              directory where the data is stored
 ; storage_engine        storage engine that should be used (only one can be used)
-;                       [hashtable, btree, filesystem, memory]
-; size_limit			size limit for storage engine (should to be adequat for
-;						the choosen storage engine). If set to 0 no limit is 
-;						applied. size limit is set in bytes.		
+;                       [hashtable, btree, filesystem, memory, logfile]
+; size_limit            size limit for storage engine (should to be adequat for
+;                       the choosen storage engine). If set to 0 no limit is 
+;                       applied. size limit is set in bytes.
 ;
 
 [Server]
@@ -35,7 +36,7 @@ pidfile                 = var/server.pid
 connection_threads      = 40
 data_dir                = data
 storage_engine          = hashtable
-size_limit				= 3000000000
+size_limit              = 3000000000
 minval                  = 0x0
 maxval                  = 0xf
 
@@ -60,7 +61,7 @@ maxval                  = 0xf
 ;                       value is specified. The default value is 10 standing
 ;                       for 2^10=1024.
 ; compression_mode      compression mode for hashtable storage. 
-;                       Available options are: none, deflate, bzip, tcbs  
+;                       Available options are: none, deflate, bzip, tcbs
 ;
 
 [Options_Hashtable]
@@ -99,7 +100,7 @@ compression_mode        = none
 ;                       If it is not more than 0, the default value is specified.
 ;                       The default value is 256.
 ; compression_mode      compression mode for hashtable storage. 
-;                       Available options are: none, deflate, bzip, tcbs  
+;                       Available options are: none, deflate, bzip, tcbs
 ;
 
 [Options_Btree]
@@ -128,7 +129,6 @@ bnum                    = 32749
 
 
 
-
 ; LogFiles storage engine configuration
 ;
 ; write_buffer_size     specifies the file output buffer size in bytes; default
@@ -139,14 +139,16 @@ bnum                    = 32749
 write_buffer_size       = 65536
 
 
+
 ; Monitor Configuration
 ;
-; display_cols		Number of node columns to display in a single row before breaking.
+; display_cols          Number of node columns to display in a single row before breaking.
 ;
 
 [Monitor]
 
-display_cols		= 3
+display_cols            = 3
+
 
 
 ; Logging Configuration
