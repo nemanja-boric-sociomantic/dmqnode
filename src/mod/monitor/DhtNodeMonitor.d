@@ -598,7 +598,7 @@ class NodeMonDaemon : AsyncDhtClient
 
      **************************************************************************/
 
-    protected void addChannels ( char[] channel )
+    protected void addChannels ( uint id, char[] channel )
     {
         if (!this.channels.contains(channel))
         {
@@ -623,7 +623,7 @@ class NodeMonDaemon : AsyncDhtClient
 
      **************************************************************************/
     
-    private void addChannelSize ( char[] address, ushort port, char[] channel, 
+    private void addChannelSize ( uint id, char[] address, ushort port, char[] channel, 
             ulong records, ulong bytes )
     {
         this.node_id = address ~ ":" ~ Integer.toString(port);
