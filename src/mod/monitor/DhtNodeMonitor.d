@@ -271,7 +271,7 @@ class NodeMonDaemon : AsyncDhtClient
         {
 
             i++, t++;
-            this.nodeItems ~= node;
+            this.nodeItems ~= node.nodeitem;
 
             if ((i==this.display_cols) || 
                 ( (MainConfig.getDhtNodeItems().length-t)+i < this.display_cols))
