@@ -27,7 +27,7 @@ module src.mod.monitor.DhtNodeMonitor;
 
 private import  core.config.MainConfig;
 
-private import  swarm.dht.async.AsyncDhtClient;
+private import  swarm.dht.DhtClient;
 
 private import  swarm.dht.DhtHash, swarm.dht.DhtConst;
 
@@ -80,7 +80,7 @@ struct DhtNodeMonitor
 
  ******************************************************************************/
 
-class NodeMonDaemon : AsyncDhtClient
+class NodeMonDaemon : DhtClient
 {
     /***************************************************************************
 
