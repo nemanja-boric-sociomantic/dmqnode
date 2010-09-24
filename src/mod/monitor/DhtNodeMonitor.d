@@ -96,7 +96,7 @@ class NodeMonDaemon : DhtClient
 
      **************************************************************************/
 
-    static public const WAIT_TIME = 60;
+    static public const WAIT_TIME = 10;
 
     /***************************************************************************
 
@@ -105,6 +105,13 @@ class NodeMonDaemon : DhtClient
      **************************************************************************/
 
     protected char[][] channels;
+    
+    /***************************************************************************
+
+        Array of error messages, node ip and port are key.
+    
+     **************************************************************************/
+    protected char[][ char[] ] errors;
 
     /***************************************************************************
 
@@ -205,8 +212,34 @@ class NodeMonDaemon : DhtClient
         {
             this.addNode(node.Address, node.Port);
         }
-    }
+        
+        super.queryNodeRanges().eventLoop();
 
+        super.error_callback = &this.onConnectionError;
+
+    }
+    
+    
+    
+    /***************************************************************************
+    
+        Receives error information from the DhtClient
+    
+        Returns:
+            void
+    
+    ***************************************************************************/    
+        void onConnectionError ( DhtClient.ErrorInfo info )
+    {
+            char[] node_id = info.nodeitem.Address ~ ":" 
+                                ~ Integer.toString(info.nodeitem.Port);
+            if (!(node_id in this.errors))
+            {
+                this.errors[info.nodeitem.Address ~ ":" 
+                        ~ Integer.toString(info.nodeitem.Port)]  = info.message;
+            }
+    }
+    
     /***************************************************************************
 
         Daemon main loop. Updates the display, then sleeps a while - on infinite
@@ -238,6 +271,15 @@ class NodeMonDaemon : DhtClient
 
     protected void update ()
     {
+        
+        foreach (k;this.errors.keys)this.errors.remove(k);
+        foreach (k;this.c_bytes.keys)this.c_bytes.remove(k);
+        foreach (k;this.t_bytes.keys)this.t_bytes.remove(k);
+        foreach (k;this.c_records.keys)this.c_records.remove(k);
+        foreach (k;this.t_records.keys)this.t_records.remove(k);
+
+        
+        
         this.getChannels(&this.addChannels);
         this.eventLoop();
 
@@ -287,6 +329,7 @@ class NodeMonDaemon : DhtClient
             this.printRow();
             this.nodeItems.length=0;
         }
+        
     }
 
     /***************************************************************************
@@ -353,14 +396,20 @@ class NodeMonDaemon : DhtClient
 
             foreach (node; this.nodeItems)
             {
-                this.node_id = node.Address ~ ":" ~ Integer.toString(node.Port);
-
-                Trace.format(" | {,11} | {,13} bytes  |",
-                        typeof(this).formatCommaNumber(this.c_records[this.node_id][channel], this.buf),
-                        typeof(this).formatCommaNumber(this.c_bytes[this.node_id][channel], this.buf));
-
-                this.t_records[this.node_id]  += this.c_records[this.node_id][channel];
-                this.t_bytes[this.node_id]    += this.c_bytes[this.node_id][channel];
+                try {
+                    this.node_id = node.Address ~ ":" ~ Integer.toString(node.Port);
+                    
+                    this.printError(this.node_id);
+                    
+                    Trace.format(" | {,11} | {,13} bytes  |",
+                            typeof(this).formatCommaNumber(this.c_records[this.node_id][channel], this.buf),
+                            typeof(this).formatCommaNumber(this.c_bytes[this.node_id][channel], this.buf));
+                    this.t_records[this.node_id]  += this.c_records[this.node_id][channel];
+                    this.t_bytes[this.node_id]    += this.c_bytes[this.node_id][channel];
+                } 
+                catch ( Exception e )
+                {
+                }
             }
 
             Trace.formatln("");
@@ -386,12 +435,26 @@ class NodeMonDaemon : DhtClient
 
         if (this.t_records.length)
         {
+            
             foreach (node; this.nodeItems)
             {
                 this.node_id = node.Address ~ ":" ~ Integer.toString(node.Port);
-                Trace.format("{,14} | {,14} bytes |",
-                typeof(this).formatCommaNumber(this.t_records[this.node_id], this.buf), 
-                typeof(this).formatCommaNumber(this.t_bytes[this.node_id], this.buf));
+                if (!(this.node_id in this.errors))
+                {
+                    try
+                    {
+                        Trace.format(" |{,13}|{,14} bytes  |",
+                        typeof(this).formatCommaNumber(this.t_records[this.node_id], this.buf), 
+                        typeof(this).formatCommaNumber(this.t_bytes[this.node_id], this.buf));
+                    } 
+                    catch ( Exception e)
+                    {
+                    }
+                }
+                else
+                {
+                    Trace.format(" |{,13}   {,14}      |","","");
+                }
             }
         }
 
@@ -429,8 +492,6 @@ class NodeMonDaemon : DhtClient
         }
         
         Trace.formatln("");
-//        this.printBoxLine();
-
     }
 
     /***************************************************************************
@@ -497,6 +558,29 @@ class NodeMonDaemon : DhtClient
         Trace.formatln("");
         this.printBoxLine();
     }
+    
+    
+    
+    /***************************************************************************
+    
+        Prints the error associated with the node id.
+        
+        Param:
+        node_id = address:port of node.
+
+        Returns:
+            void
+    
+    ***************************************************************************/
+ 
+    private void printError ( char[] node_id )
+    {
+        if (node_id in this.errors)
+        {
+            Trace.format(" | {,30}     |", this.errors[node_id]);
+        }
+    }
+    
 
     /***************************************************************************
 
