@@ -44,8 +44,6 @@ debug private import tango.util.log.Trace;
 
 struct DhtNodeServer
 {
-    static const Signals = [SignalHandler.SIGINT, SignalHandler.SIGTERM];
-    
     static DhtDaemon dht;
     
     /**
@@ -62,14 +60,16 @@ struct DhtNodeServer
     
     static this ( )
     {
-        SignalHandler.set(this.Signals, &shutdown);
+        SignalHandler.register(SignalHandler.AppTermination, &shutdown);
     }
     
-    extern (C) private static void shutdown ( int code )
+    private static bool shutdown ( int code )
     {
         debug Trace.formatln('\n' ~ SignalHandler.getId(code));
         
         this.dht.shutdown();
+        
+        return true;
     }
 }
 
