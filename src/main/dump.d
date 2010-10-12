@@ -1,12 +1,21 @@
 /*******************************************************************************
 
-    DHT Node Dump tool
-
+    DHT node dump
+    
     copyright:      Copyright (c) 2010 sociomantic labs. All rights reserved
-
+    
     version:        October 2010: Initial release
-
+    
     authors:        Gavin Norman
+    
+    Reads records from one or more dht nodes and outputs them to stdout.
+    
+    Command line parameters:
+        -h = display help
+        -s = start of range to query (hash value - defaults to 0x00000000)
+        -e = end of range to query   (hash value - defaults to 0xFFFFFFFF)
+        -c = channel name to query
+        -A = query all channels
 
 *******************************************************************************/
 
