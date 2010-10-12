@@ -42,6 +42,14 @@ private import tango.io.Stdout;
 private import ocean.text.Arguments;
 
 
+
+/*******************************************************************************
+
+    Dht dump struct - initialises and executes a dht dump from command line
+    arguments.
+
+*******************************************************************************/
+
 struct DhtDump
 {
 static:
