@@ -15,6 +15,7 @@
         -s = start of range to query (hash value - defaults to 0x00000000)
         -e = end of range to query   (hash value - defaults to 0xFFFFFFFF)
         -c = channel name to query
+        -n = count records, do not dump contents
         -A = query all channels
 
 *******************************************************************************/
@@ -88,6 +89,7 @@ bool parseArgs ( Arguments args, char[][] arguments )
     args("end").params(1).defaults("0xffffffff").aliased('e').help("end of range to query (hash value - defaults to 0xFFFFFFFF)");
     args("channel").conflicts("all_channels").params(1).aliased('c').help("channel name to query");
     args("all_channels").conflicts("channel").aliased('A').help("query all channels");
+    args("count").aliased('n').help("count records, do not dump contents");
 
     // Parse aguments
     if ( !args.parse(arguments) )

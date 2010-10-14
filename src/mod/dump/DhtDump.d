@@ -41,6 +41,10 @@ private import tango.io.Stdout;
 
 private import ocean.text.Arguments;
 
+private import ocean.core.Array;
+
+debug private import tango.util.log.Trace;
+
 
 
 /*******************************************************************************
@@ -53,6 +57,14 @@ private import ocean.text.Arguments;
 struct DhtDump
 {
 static:
+
+    /***************************************************************************
+
+        Internal count of records & bytes received
+    
+    ***************************************************************************/
+
+    private ulong records, bytes;
 
     /***************************************************************************
 
@@ -69,16 +81,17 @@ static:
         auto range_max = args.getInt!(hash_t)("end");
         auto channel = args.getString("channel");
         auto all_channels = args.getBool("all_channels");
+        auto count_records = args.getBool("count");
 
         scope dht = initDhtClient();
 
         if ( all_channels )
         {
-            dumpAllChannels(dht, range_min, range_max);
+            dumpAllChannels(dht, range_min, range_max, count_records);
         }
         else
         {
-            dumpChannel(dht, channel, range_min, range_max);
+            dumpChannel(dht, channel, range_min, range_max, count_records);
         }
 
         return true;
@@ -129,22 +142,35 @@ static:
             dht = dht client to perform query with
             range_min = start of hash range to query
             range_max = end of hash range to query
+            count_records = whether to display a count of the records without
+                dumping the record contents
     
     ***************************************************************************/
 
-    private void dumpAllChannels ( DhtClient dht, hash_t range_min, hash_t range_max )
+    private void dumpAllChannels ( DhtClient dht, hash_t range_min, hash_t range_max, bool count_records )
     {
+        records = 0;
+        bytes = 0;
+        
         char[][] channels;
         dht.getChannels(
                 ( uint id, char[] channel )
                 {
-                    channels ~= channel;
+                    if ( channel.length )
+                    {
+                        channels.appendCopy(channel);
+                    }
                 }
             ).eventLoop();
 
         foreach ( channel; channels )
         {
-            dumpChannel(dht, channel, range_min, range_max);
+            dumpChannel(dht, channel, range_min, range_max, count_records);
+        }
+
+        if ( count_records )
+        {
+            Stdout.format("Total of all channels = {} records ({} bytes) in the specified range\n", records, bytes);
         }
     }
 
@@ -158,21 +184,35 @@ static:
             channel = channel to query
             range_min = start of hash range to query
             range_max = end of hash range to query
-    
+            count_records = whether to display a count of the records without
+                dumping the record contents
+
     ***************************************************************************/
     
-    private void dumpChannel ( DhtClient dht, char[] channel, hash_t range_min, hash_t range_max )
+    private void dumpChannel ( DhtClient dht, char[] channel, hash_t range_min, hash_t range_max, bool count_records )
     {
+        ulong channel_records, channel_bytes;
         dht.getRange(channel, range_min, range_max,
                 ( uint id, char[] key, char[] value )
                 {
                     if ( key.length )
                     {
-                        Stdout.format("{}: {} -> {}\n", channel, key, value);
+                        channel_records++;
+                        channel_bytes += value.length;
+                        if ( !count_records )
+                        {
+                            Stdout.format("{}: {} -> {}\n", channel, key, value);
+                        }
                     }
                 }
             ).eventLoop();
-    }
 
+        records += channel_records;
+        bytes += channel_bytes;
+        if ( count_records )
+        {
+            Stdout.format("Channel {} contains {} records ({} bytes) in the specified range\n", channel, channel_records, channel_bytes);
+        }
+    }
 }
 
