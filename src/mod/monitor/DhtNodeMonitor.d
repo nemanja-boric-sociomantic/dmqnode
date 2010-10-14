@@ -228,8 +228,9 @@ class NodeMonDaemon : DhtClient
         Returns:
             void
     
-    ***************************************************************************/    
-        void onConnectionError ( DhtClient.ErrorInfo info )
+    ***************************************************************************/
+
+    void onConnectionError ( DhtClient.ErrorInfo info )
     {
             char[] node_id = info.nodeitem.Address ~ ":" 
                                 ~ Integer.toString(info.nodeitem.Port);
@@ -277,8 +278,6 @@ class NodeMonDaemon : DhtClient
         foreach (k;this.t_bytes.keys)this.t_bytes.remove(k);
         foreach (k;this.c_records.keys)this.c_records.remove(k);
         foreach (k;this.t_records.keys)this.t_records.remove(k);
-
-        
         
         this.getChannels(&this.addChannels);
         this.eventLoop();
@@ -329,7 +328,6 @@ class NodeMonDaemon : DhtClient
             this.printRow();
             this.nodeItems.length=0;
         }
-        
     }
 
     /***************************************************************************
@@ -342,8 +340,8 @@ class NodeMonDaemon : DhtClient
 
     ***************************************************************************/
 
-    private void printRow () {
-
+    private void printRow ()
+    {
        this.printBoxLine(false);
 
        this.printNodeInfo();
@@ -355,7 +353,6 @@ class NodeMonDaemon : DhtClient
        this.printNodeChannels();
 
        this.printNodeTotal();
-
     }
 
     /***************************************************************************
@@ -396,7 +393,8 @@ class NodeMonDaemon : DhtClient
 
             foreach (node; this.nodeItems)
             {
-                try {
+                try
+                {
                     this.node_id = node.Address ~ ":" ~ Integer.toString(node.Port);
                     
                     this.printError(this.node_id);
@@ -417,7 +415,6 @@ class NodeMonDaemon : DhtClient
          }
 
         this.printBoxLine();
-
     }
 
     /***************************************************************************
@@ -428,9 +425,9 @@ class NodeMonDaemon : DhtClient
             void
 
     ***************************************************************************/
+
     private void printNodeTotal () 
     {
-
         Trace.format("{,21} |", "Total");
 
         if (this.t_records.length)
@@ -460,7 +457,6 @@ class NodeMonDaemon : DhtClient
 
         Trace.formatln("");
         this.printBoxLine();
-
     }
 
     /***************************************************************************
@@ -471,6 +467,7 @@ class NodeMonDaemon : DhtClient
             void
 
     ***************************************************************************/
+
     private void printNodeInfo ()
     {
         uint i = 0;
@@ -502,6 +499,7 @@ class NodeMonDaemon : DhtClient
             void
 
     ***************************************************************************/
+
     private void printNodeInfoHeaders ()
     {
         uint i = 0;
@@ -524,7 +522,6 @@ class NodeMonDaemon : DhtClient
 
         Trace.formatln("");
         this.printBoxLine();
-        
     }
 
     /***************************************************************************
@@ -535,6 +532,7 @@ class NodeMonDaemon : DhtClient
             void
 
     ***************************************************************************/
+
     private void printNodeRange ()
     {
         uint i = 0;
@@ -610,16 +608,16 @@ class NodeMonDaemon : DhtClient
 
      ***************************************************************************/
 
-        private void printHeadLine ()
-        {
-            Trace.format("-----------------------");
+    private void printHeadLine ()
+    {
+        Trace.format("-----------------------");
 
-            for (uint i=0; i<this.display_cols; i++)
-            {
-                Trace.format("---------------------------------------");
-            }
-            Trace.formatln("");
-}
+        for (uint i=0; i<this.display_cols; i++)
+        {
+            Trace.format("---------------------------------------");
+        }
+        Trace.formatln("");
+    }
 
     /***************************************************************************
 
@@ -682,9 +680,9 @@ class NodeMonDaemon : DhtClient
 
      **************************************************************************/
 
-    protected void addChannels ( uint id, char[] channel )
+    private void addChannels ( uint id, char[] channel )
     {
-        if (!this.channels.contains(channel))
+        if ( channel.length && !this.channels.contains(channel) )
         {
             this.channels ~= channel.dup;
         }
@@ -710,12 +708,15 @@ class NodeMonDaemon : DhtClient
     private void addChannelSize ( uint id, char[] address, ushort port, char[] channel, 
             ulong records, ulong bytes )
     {
-        this.node_id = address ~ ":" ~ Integer.toString(port);
-        
-        this.c_bytes[node_id][channel] = bytes;
-        this.c_records[node_id][channel] = records;
+        if ( channel.length )
+        {
+            this.node_id = address ~ ":" ~ Integer.toString(port);
+            
+            this.c_bytes[this.node_id][channel] = bytes;
+            this.c_records[this.node_id][channel] = records;
+        }
     }
-        
+
     /***************************************************************************
 
         Formats a number to a string, with comma separation every 3 digits
@@ -724,7 +725,7 @@ class NodeMonDaemon : DhtClient
 
      **************************************************************************/
 
-    protected static char[] formatCommaNumber ( T ) ( T num, out char[] str )
+    private static char[] formatCommaNumber ( T ) ( T num, out char[] str )
     {
         auto string = Integer.toString(num);
 
