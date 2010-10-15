@@ -18,13 +18,15 @@ module core.config.MainConfig;
 
  ******************************************************************************/
 
-private import  core.config.DhtNodesConfig;
+//private import  core.config.DhtNodesConfig;
 
 private import  swarm.dht.DhtConst;
 
 private import  ocean.sys.CmdPath;
 
-public  import  ocean.util.Config, ocean.util.OceanException, ocean.util.TraceLog;
+public  import  ocean.util.Config,
+                ocean.util.OceanException,
+                ocean.util.TraceLog;
 
 private import  tango.util.log.AppendFile;
 
@@ -134,21 +136,5 @@ struct MainConfig
     
         OceanException.setOutput(new AppendFile(this.cmdpath.prepend([error_log])));
     }
-        
-    /***************************************************************************
-    
-        Reads the list of Ad4Max DHT client node items from
-        dhtclients.xml. The DHT client node items list is an array of
-        swarm.dht.DhtConst.NodeItem structures where each structure contains
-        address, port and responsibility range of one DHT node to connect to.
-        
-        Returns:
-            DHT node items (address/port/range structures)
-    
-     **************************************************************************/
-    
-    public static DhtConst.NodeItem[] getDhtNodeItems ( )
-    {
-        return DhtNodesConfig.readFile(this.cmdpath.prepend(this.Path.DhtNodeCfg));
-    }
 }
+
