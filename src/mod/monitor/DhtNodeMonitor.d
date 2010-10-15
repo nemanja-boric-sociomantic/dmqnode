@@ -25,23 +25,29 @@ module src.mod.monitor.DhtNodeMonitor;
 
  ******************************************************************************/
 
-private import  core.config.MainConfig;
+private import src.core.config.MonitorConfig;
 
-private import  swarm.dht.DhtClient;
+private import swarm.dht.DhtClient,
+               swarm.dht.DhtHash,
+               swarm.dht.DhtConst;
 
-private import  swarm.dht.DhtHash, swarm.dht.DhtConst;
+private import swarm.dht.client.DhtNodesConfig;
 
-private import  tango.core.Thread;
+private import ocean.core.Array;
 
-private import  tango.core.Array;
+private import tango.core.Thread;
 
-private import  tango.time.Clock;
+private import tango.core.Array;
 
-private import  tango.util.Arguments;
+private import tango.time.Clock;
 
-private import  tango.util.log.Trace;
+private import tango.math.Math : min;
 
-private import  Integer = tango.text.convert.Integer;
+private import tango.util.Arguments;
+
+private import tango.util.log.Trace;
+
+private import Integer = tango.text.convert.Integer;
 
 
 
@@ -80,23 +86,23 @@ struct DhtNodeMonitor
 
  ******************************************************************************/
 
-class NodeMonDaemon : DhtClient
+class NodeMonDaemon
 {
     /***************************************************************************
 
-        DHT configuration file 
-
+        Sleep time between updates (in daemon mode)
+    
      **************************************************************************/
 
-    const char[][] DhtNodeCfg     = ["etc", "dhtnodes.xml"];
-
+    private const WAIT_TIME = 10; // seconds
+    
     /***************************************************************************
 
-        Number of seconds between display updates
-
+        Dht client
+    
      **************************************************************************/
 
-    static public const WAIT_TIME = 10;
+    private DhtClient dhtclient;
 
     /***************************************************************************
 
@@ -104,30 +110,15 @@ class NodeMonDaemon : DhtClient
 
      **************************************************************************/
 
-    protected char[][] channels;
+    private char[][] channels;
     
     /***************************************************************************
 
         Array of error messages, node ip and port are key.
     
      **************************************************************************/
-    protected char[][ char[] ] errors;
 
-    /***************************************************************************
-
-        Minimum value for responsible range
-
-     **************************************************************************/
-
-    protected char[] range_min;
-
-    /***************************************************************************
-
-        Maximum value for responsible range
-
-     **************************************************************************/
-
-    protected char[] range_max;
+    private char[][char[]] errors;
 
     /***************************************************************************
 
@@ -135,7 +126,7 @@ class NodeMonDaemon : DhtClient
 
      **************************************************************************/
 
-    protected ulong c_bytes[char[]][char[]];
+    private ulong[char[]][char[]] channel_bytes;
 
     /***************************************************************************
 
@@ -143,7 +134,7 @@ class NodeMonDaemon : DhtClient
 
      **************************************************************************/
 
-    protected ulong c_records[char[]][char[]];
+    private ulong[char[]][char[]] channel_records;
 
     /***************************************************************************
 
@@ -151,7 +142,7 @@ class NodeMonDaemon : DhtClient
 
      **************************************************************************/
 
-    protected ulong t_bytes[char[]];
+    private ulong[char[]] total_bytes;
 
     /***************************************************************************
 
@@ -159,7 +150,7 @@ class NodeMonDaemon : DhtClient
 
      **************************************************************************/
 
-    protected ulong t_records[char[]];
+    private ulong[char[]] total_records;
 
     /***************************************************************************
 
@@ -167,17 +158,7 @@ class NodeMonDaemon : DhtClient
 
      **************************************************************************/
 
-    protected char[] node_id;
-
-    /***************************************************************************
-
-        Buffer for thousand separator method
-
-        TODO
-
-     **************************************************************************/
-
-    protected char[] buf;
+    private char[] node_id;
 
     /***************************************************************************
 
@@ -185,15 +166,15 @@ class NodeMonDaemon : DhtClient
 
      **************************************************************************/
 
-    protected DhtConst.NodeItem[]   nodeItems;
+    private DhtConst.NodeItem[] rowNodeItems;
 
     /***************************************************************************
 
-        Number of columns to display
-
+        Buffer for thousand separator method
+    
      **************************************************************************/
-
-    protected uint  display_cols;
+    
+    private char[] buf;
 
     /***************************************************************************
 
@@ -201,53 +182,50 @@ class NodeMonDaemon : DhtClient
 
      **************************************************************************/
 
-    public this ()
+    public this ( )
     {
-        hash_t range_min, range_max;
-        DhtHash.HexDigest hash;
+        this.dhtclient = new DhtClient();
 
-        new Thread(&this.run);
-
-        foreach (node; MainConfig.getDhtNodeItems())
-        {
-            this.addNode(node.Address, node.Port);
-        }
+        DhtNodesConfig.addNodesToClient(this.dhtclient, "etc/dhtnodes.xml");
         
-        super.queryNodeRanges().eventLoop();
+        this.dhtclient.queryNodeRanges().eventLoop();
 
-        super.error_callback = &this.onConnectionError;
-
+        this.dhtclient.error_callback = &this.onConnectionError;
     }
+
+    /***************************************************************************
+
+        Destructor
     
-    
+    ***************************************************************************/
+
+    ~this ( )
+    {
+        delete this.dhtclient;
+    }
     
     /***************************************************************************
     
         Receives error information from the DhtClient
     
-        Returns:
-            void
-    
     ***************************************************************************/
 
     void onConnectionError ( DhtClient.ErrorInfo info )
     {
-            char[] node_id = info.nodeitem.Address ~ ":" 
-                                ~ Integer.toString(info.nodeitem.Port);
-            if (!(node_id in this.errors))
-            {
-                this.errors[info.nodeitem.Address ~ ":" 
-                        ~ Integer.toString(info.nodeitem.Port)]  = info.message;
-            }
+        char[] node_id = info.nodeitem.Address ~ ":" 
+                            ~ Integer.toString(info.nodeitem.Port);
+
+        if (!(node_id in this.errors))
+        {
+            this.errors[info.nodeitem.Address ~ ":" 
+                    ~ Integer.toString(info.nodeitem.Port)]  = info.message;
+        }
     }
     
     /***************************************************************************
 
         Daemon main loop. Updates the display, then sleeps a while - on infinite
         loop.
-
-        Returns:
-            void
 
     ***************************************************************************/
 
@@ -265,27 +243,21 @@ class NodeMonDaemon : DhtClient
         Updates the display. Queries the DHT node for the number of records in
         all channels.
 
-        Returns:
-            void
-
     ***************************************************************************/
 
-    protected void update ()
+    private void update ()
     {
-        
         foreach (k;this.errors.keys)this.errors.remove(k);
-        foreach (k;this.c_bytes.keys)this.c_bytes.remove(k);
-        foreach (k;this.t_bytes.keys)this.t_bytes.remove(k);
-        foreach (k;this.c_records.keys)this.c_records.remove(k);
-        foreach (k;this.t_records.keys)this.t_records.remove(k);
-        
-        this.getChannels(&this.addChannels);
-        this.eventLoop();
+        foreach (k;this.channel_bytes.keys)this.channel_bytes.remove(k);
+        foreach (k;this.total_bytes.keys)this.total_bytes.remove(k);
+        foreach (k;this.channel_records.keys)this.channel_records.remove(k);
+        foreach (k;this.total_records.keys)this.total_records.remove(k);
 
-        foreach (channel; this.channels)
+        this.dhtclient.getChannels(&this.addChannels).eventLoop();
+
+        foreach ( channel; this.channels )
         {
-            this.getChannelSize(channel, &this.addChannelSize);
-            this.eventLoop();
+            this.dhtclient.getChannelSize(channel, &this.addChannelSize).eventLoop();
         }
 
         this.print();
@@ -295,48 +267,36 @@ class NodeMonDaemon : DhtClient
 
         Prints all fetched data to Stdout.
 
-        Returns:
-            void
-
     ***************************************************************************/
 
     private void print ()
     {
-        uint i,t    = 0;
+        uint col_num, node_num;
+        auto columns = this.getDisplayColumns();
 
-        this.getDisplayColumns();
+        this.printTime(columns);
 
-        this.printTime();
-
-        foreach (node; super)
+        foreach ( node; this.dhtclient )
         {
+            col_num++, node_num++;
+            this.rowNodeItems ~= node.nodeitem;
 
-            i++, t++;
-            this.nodeItems ~= node.nodeitem;
-
-            if ((i==this.display_cols) || 
-                ( (MainConfig.getDhtNodeItems().length-t)+i < this.display_cols))
+            if ( col_num == columns || ( this.dhtclient.nodeRegistry.length - node_num) + col_num < columns )
             {
                 Trace.formatln("");
-                i=0;
-            }
-            else
-            {
-                continue;
-            }
+                this.printRow();
 
-            this.printRow();
-            this.nodeItems.length=0;
+                // Start next row
+                this.rowNodeItems.length = 0;
+                col_num = 0;
+            }
         }
     }
 
     /***************************************************************************
 
-        Prints one row of data. Row length is determined by the 
-        "Monitor : display_cols" configuration setting.
-
-        Returns:
-            void
+        Prints one row of data. Row length is determined by the
+        "DISPLAY : columns" configuration setting.
 
     ***************************************************************************/
 
@@ -359,59 +319,44 @@ class NodeMonDaemon : DhtClient
 
         Prints the current time and number of nodes.
 
-        Returns:
-            void
-
     ***************************************************************************/
 
-    private void printTime ()
+    private void printTime ( size_t columns )
     {
-       this.printHeadLine();
+       this.printHeadLine(columns);
 
         Trace.formatln(" Time: {}            Number of Nodes: {}",
-                Clock.now(), MainConfig.getDhtNodeItems().length);
+                Clock.now(), this.dhtclient.nodeRegistry.length);
 
-        this.printHeadLine();
+        this.printHeadLine(columns);
     }
 
     /***************************************************************************
 
         Prints a list of channels.
 
-        Returns:
-            void
-
     ***************************************************************************/
 
     private void printNodeChannels () 
     {
-
         foreach (channel; this.channels)
         {
-
             Trace.format("{,21} |", channel);
 
-            foreach (node; this.nodeItems)
+            foreach (node; this.rowNodeItems)
             {
-                try
-                {
-                    this.node_id = node.Address ~ ":" ~ Integer.toString(node.Port);
-                    
-                    this.printError(this.node_id);
-                    
-                    Trace.format(" | {,11} | {,13} bytes  |",
-                            typeof(this).formatCommaNumber(this.c_records[this.node_id][channel], this.buf),
-                            typeof(this).formatCommaNumber(this.c_bytes[this.node_id][channel], this.buf));
-                    this.t_records[this.node_id]  += this.c_records[this.node_id][channel];
-                    this.t_bytes[this.node_id]    += this.c_bytes[this.node_id][channel];
-                } 
-                catch ( Exception e )
-                {
-                }
+                this.node_id = node.Address ~ ":" ~ Integer.toString(node.Port);
+                
+                this.printError(this.node_id);
+
+                Trace.format(" | {,11} |",     formatCommaNumber(this.channel_records[this.node_id][channel], this.buf));
+                Trace.format(" {,14} bytes |", formatCommaNumber(this.channel_bytes[this.node_id][channel], this.buf));
+
+                this.total_records[this.node_id]  += this.channel_records[this.node_id][channel];
+                this.total_bytes[this.node_id]    += this.channel_bytes[this.node_id][channel];
             }
 
             Trace.formatln("");
-            this.printBoxLine();
          }
 
         this.printBoxLine();
@@ -421,32 +366,22 @@ class NodeMonDaemon : DhtClient
 
         Prints the total items and size of all channels for a paticular node.
 
-        Returns:
-            void
-
     ***************************************************************************/
 
     private void printNodeTotal () 
     {
         Trace.format("{,21} |", "Total");
 
-        if (this.t_records.length)
+        if (this.total_records.length)
         {
             
-            foreach (node; this.nodeItems)
+            foreach (node; this.rowNodeItems)
             {
                 this.node_id = node.Address ~ ":" ~ Integer.toString(node.Port);
                 if (!(this.node_id in this.errors))
                 {
-                    try
-                    {
-                        Trace.format(" |{,13}|{,14} bytes  |",
-                        typeof(this).formatCommaNumber(this.t_records[this.node_id], this.buf), 
-                        typeof(this).formatCommaNumber(this.t_bytes[this.node_id], this.buf));
-                    } 
-                    catch ( Exception e)
-                    {
-                    }
+                    Trace.format(" | {,11} |",     formatCommaNumber(this.total_records[this.node_id], this.buf));
+                    Trace.format(" {,14} bytes |", formatCommaNumber(this.total_bytes[this.node_id], this.buf));
                 }
                 else
                 {
@@ -463,16 +398,13 @@ class NodeMonDaemon : DhtClient
 
         Prints the Node info.
 
-        Returns:
-            void
-
     ***************************************************************************/
 
     private void printNodeInfo ()
     {
         uint i = 0;
 
-        foreach (node; this.nodeItems)
+        foreach (node; this.rowNodeItems)
         {
             i++;
 
@@ -495,16 +427,13 @@ class NodeMonDaemon : DhtClient
 
         Prints the Node info headers - Items,Size.
 
-        Returns:
-            void
-
     ***************************************************************************/
 
     private void printNodeInfoHeaders ()
     {
         uint i = 0;
 
-        foreach (node; this.nodeItems)
+        foreach (node; this.rowNodeItems)
         {
             i++;
 
@@ -528,16 +457,13 @@ class NodeMonDaemon : DhtClient
 
         Prints the Node Range.
 
-        Returns:
-            void
-
     ***************************************************************************/
 
     private void printNodeRange ()
     {
         uint i = 0;
 
-        foreach (node; this.nodeItems)
+        foreach (node; this.rowNodeItems)
         {
             i++;
             
@@ -566,9 +492,6 @@ class NodeMonDaemon : DhtClient
         Param:
         node_id = address:port of node.
 
-        Returns:
-            void
-    
     ***************************************************************************/
  
     private void printError ( char[] node_id )
@@ -582,57 +505,32 @@ class NodeMonDaemon : DhtClient
 
     /***************************************************************************
 
-        Gets the number of columns to display from the main configuration.
-
         Returns:
-            void
+            the number of columns to display from the main configuration.
 
     ***************************************************************************/
 
-    private void getDisplayColumns ()
+    private size_t getDisplayColumns ()
     {
-        this.display_cols = Config.get!(uint)("Monitor", "display_cols");
-
-        if (this.display_cols>=MainConfig.getDhtNodeItems().length) 
+        auto columns = MonitorConfig.columns;
+        if ( this.dhtclient.nodeRegistry.length < columns )
         {
-            this.display_cols = MainConfig.getDhtNodeItems().length;
+            columns = this.dhtclient.nodeRegistry.length;
         }
+        return columns;
     }
 
     /***************************************************************************
 
         Prints a horizontal line
-
-        Returns:
-            void
 
      ***************************************************************************/
 
-    private void printHeadLine ()
+    private void printHeadLine ( size_t columns )
     {
         Trace.format("-----------------------");
 
-        for (uint i=0; i<this.display_cols; i++)
-        {
-            Trace.format("---------------------------------------");
-        }
-        Trace.formatln("");
-    }
-
-    /***************************************************************************
-
-        Prints a horizontal line
-
-        Returns:
-            void
-
-    ***************************************************************************/
-
-    private void printLine ()
-    {
-        Trace.format("-----------------------");
-
-        foreach (node; MainConfig.getDhtNodeItems())
+        for (uint i=0; i < columns; i++)
         {
             Trace.format("---------------------------------------");
         }
@@ -642,9 +540,9 @@ class NodeMonDaemon : DhtClient
     /***************************************************************************
 
         Prints a horizontal line with spaces.
-
-        Returns:
-            void
+        
+        Params:
+            start = 
 
     ***************************************************************************/
 
@@ -659,7 +557,7 @@ class NodeMonDaemon : DhtClient
             Trace.format("                       ");
         }
 
-        foreach (node; this.nodeItems)
+        foreach (node; this.rowNodeItems)
         {
             Trace.format(" --------------------------------------");
         }
@@ -675,16 +573,14 @@ class NodeMonDaemon : DhtClient
         Param:
             channel = name of the channel
 
-        Returns:
-            void
-
      **************************************************************************/
 
     private void addChannels ( uint id, char[] channel )
     {
         if ( channel.length && !this.channels.contains(channel) )
         {
-            this.channels ~= channel.dup;
+            this.channels.length = this.channels.length + 1;
+            this.channels[$-1].copy(channel);
         }
     }
 
@@ -700,9 +596,6 @@ class NodeMonDaemon : DhtClient
             records = number of records
             bytes = number of bytes
             
-        Returns:
-            void            
-
      **************************************************************************/
     
     private void addChannelSize ( uint id, char[] address, ushort port, char[] channel, 
@@ -712,8 +605,8 @@ class NodeMonDaemon : DhtClient
         {
             this.node_id = address ~ ":" ~ Integer.toString(port);
             
-            this.c_bytes[this.node_id][channel] = bytes;
-            this.c_records[this.node_id][channel] = records;
+            this.channel_bytes[this.node_id][channel] = bytes;
+            this.channel_records[this.node_id][channel] = records;
         }
     }
 
@@ -721,19 +614,31 @@ class NodeMonDaemon : DhtClient
 
         Formats a number to a string, with comma separation every 3 digits
 
-        TODO: Should be moved to tango tango.text.convert.Layout
+        TODO: move to tango tango.text.convert.Layout?
 
-     **************************************************************************/
+    ***************************************************************************/
 
-    private static char[] formatCommaNumber ( T ) ( T num, out char[] str )
+    private static char[] formatCommaNumber ( T ) ( T num, ref char[] output )
     {
-        auto string = Integer.toString(num);
+        output.length = 0;
+
+        // Format number into a string
+        char[20] string_buf;
+        auto string = Integer.format(string_buf, num);
 
         bool comma;
         size_t left = 0;
         size_t right = left + 3;
         size_t first_comma;
 
+        // Handle negative numbers
+        if ( string[0] == '-' )
+        {
+            output ~= "-";
+            string = string[1..$];
+        }
+
+        // Find position of first comma
         if ( string.length > 3 )
         {
             comma = true;
@@ -745,6 +650,7 @@ class NodeMonDaemon : DhtClient
             }
         }
 
+        // Copy chunks of the formatted number into the destination string, with commas
         do
         {
             if ( right >= string.length )
@@ -752,17 +658,18 @@ class NodeMonDaemon : DhtClient
                 right = string.length;
                 comma = false;
             }
-            str ~= string[left..right];
+            output ~= string[left..right];
             if ( comma )
             {
-                str ~= ",";
+                output ~= ",";
             }
 
             left = right;
             right = left + 3;
-        } while( left < string.length );
+        }
+        while( left < string.length );
 
-        return str;
+        return output;
     }
 }
 
