@@ -18,7 +18,7 @@ module src.main.monitor;
     
  ******************************************************************************/
 
-private import  core.config.MainConfig;
+private import  core.config.MonitorConfig;
 
 private import  mod.monitor.DhtNodeMonitor;
 
@@ -27,6 +27,8 @@ private import  ocean.util.OceanException;
 private import  tango.util.Arguments;
 
 private import  tango.io.Stdout;
+
+
 
 /*******************************************************************************
 
@@ -97,7 +99,7 @@ void printUsage ()
 
 void main ( char[][] args )
 {
-    MainConfig.init(args[0]);
+    MonitorConfig.init();
     
     if (!isArgument(args)) 
     {
