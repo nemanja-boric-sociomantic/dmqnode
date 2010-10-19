@@ -60,18 +60,32 @@ static:
 
     /***************************************************************************
 
+        Is the getRange command supported by the node(s) we're querying?
+    
+    ***************************************************************************/
+
+    private bool range_supported;
+
+    
+    /***************************************************************************
+
         Internal count of records & bytes received
     
     ***************************************************************************/
 
     private ulong records, bytes;
 
+    
     /***************************************************************************
 
         Runs the dht node dump
         
         Params:
             args = command line arguments
+            
+        Throws:
+            asserts that the node(s) support(s) getRange, if the arguments
+            indicate that a getRange request is needed
 
     ***************************************************************************/
 
@@ -85,6 +99,8 @@ static:
 
         scope dht = initDhtClient();
 
+        assert(range_supported || (range_min == hash_t.min && range_max == hash_t.max), "Error: queried node(s) can't handle getRange commands" );
+        
         if ( all_channels )
         {
             dumpAllChannels(dht, range_min, range_max, count_records);
@@ -115,10 +131,13 @@ static:
     {
         bool error;
         auto dht = new DhtClient();
+        
+        range_supported = getRangeSupported(dht);
+
         dht.error_callback(
-            (ErrorInfo e)
+            ( ErrorInfo e )
             {
-                Stderr.format("Error info: {}\n", e.message);
+                Stderr.format("DHT client error: {}\n", e.message);
                 error = true;
             }
         );
@@ -128,6 +147,46 @@ static:
         assert(!error);
 
         return dht;
+    }
+    
+    
+    /***************************************************************************
+
+        Tells whether the connected node(s) support(s) the getRange command.
+        Attempts to execute a getRange over all channels, and registers an
+        error callback to catch NotImplemented error codes.
+    
+        Returns:
+            true if the dht node(s) do(es) support getRange
+
+    ***************************************************************************/
+
+    private bool getRangeSupported ( DhtClient dht )
+    {
+        bool done_first_channel, supported;
+
+        dht.error_callback(
+                ( ErrorInfo e )
+                {
+                    supported = false;
+                }
+            );
+
+        dht.getChannels(
+                ( uint id, char[] channel )
+                {
+                    if ( !done_first_channel )
+                    {
+                        dht.getRange(channel, 0, 0,
+                                ( uint id, char[] key, char[] value )
+                                {
+                                    supported = true;
+                                });
+                        done_first_channel = true;
+                    }
+                }).eventLoop();
+
+        return supported;
     }
 
 
@@ -192,20 +251,28 @@ static:
     private void dumpChannel ( DhtClient dht, char[] channel, hash_t range_min, hash_t range_max, bool count_records )
     {
         ulong channel_records, channel_bytes;
-        dht.getRange(channel, range_min, range_max,
-                ( uint id, char[] key, char[] value )
+
+        void receiveRecord ( uint id, char[] key, char[] value )
+        {
+            if ( key.length )
+            {
+                channel_records++;
+                channel_bytes += value.length;
+                if ( !count_records )
                 {
-                    if ( key.length )
-                    {
-                        channel_records++;
-                        channel_bytes += value.length;
-                        if ( !count_records )
-                        {
-                            Stdout.format("{}: {} -> {}\n", channel, key, value);
-                        }
-                    }
+                    Stdout.format("{}: {} -> {}\n", channel, key, value);
                 }
-            ).eventLoop();
+            }
+        }
+
+        if ( !range_supported && range_min == hash_t.min && range_max == hash_t.max )
+        {
+            dht.getAll(channel, &receiveRecord).eventLoop();
+        }
+        else
+        {
+            dht.getRange(channel, range_min, range_max, &receiveRecord).eventLoop();
+        }
 
         records += channel_records;
         bytes += channel_bytes;
