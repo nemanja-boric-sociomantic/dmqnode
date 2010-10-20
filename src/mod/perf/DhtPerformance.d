@@ -281,9 +281,9 @@ class DhtPerformanceWorker
                         
         this.readAll();
         
-//        this.readRandom();
-//        
-//        this.cleanUp();
+        this.readRandom();
+        
+        this.cleanUp();
         
         Trace.formatln("").flush();
     }
