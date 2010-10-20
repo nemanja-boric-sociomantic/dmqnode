@@ -104,9 +104,11 @@ bool parseArgs ( Arguments args, char[][] arguments )
     args("iterations").params(1).aliased('i').help("number of iterations");
     args("connections").params(1).aliased('c').help("number of dht connections");
     args("size").params(1).aliased('s').help("size of entry");
-    args("evenloop").params(1).aliased('e').help("size of eventloop stack");
+    args("eventloop").params(1).aliased('e').help("size of eventloop stack");
     
     if (!args.parse(arguments))     return false;    
+    
+    if (args.getBool("help"))        return false;
     
     return true;    
 }
