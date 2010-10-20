@@ -12,7 +12,12 @@
 
     Copies the data of all channels from a source dht node cluster to the 
     destination dht node cluster.
-     
+    
+    TODO: 
+    1. handle compression properly
+    2. handle get and put method properly
+    3. use streaming instead of single puts 
+    
  ******************************************************************************/
 
 module mod.copy.DhtCopy;
@@ -31,7 +36,8 @@ private import  swarm.dht.DhtClient,
                 swarm.dht.DhtHash,
                 swarm.dht.DhtConst;
 
-private import  swarm.dht.client.DhtNodesConfig;
+private import  swarm.dht.client.connection.ErrorInfo,
+                swarm.dht.client.DhtNodesConfig;
 
 private import  tango.io.Stdout;
 
@@ -104,6 +110,14 @@ class DhtCopyWorker
     
     /***************************************************************************
     
+        PutMethod delegate
+    
+     **************************************************************************/
+    
+    private     void delegate (char[], char[], ref char[], bool) put_method_dg;    
+    
+    /***************************************************************************
+    
         Eventloop counter for the put buffer 
     
      **************************************************************************/
@@ -133,6 +147,12 @@ class DhtCopyWorker
      **************************************************************************/
     
     private     uint[char[]]        channel_count;
+    
+    /***************************************************************************
+    
+        internal counter
+    
+     **************************************************************************/
     
     private     uint                count;
     
@@ -186,6 +206,9 @@ class DhtCopyWorker
         Saves all channels that need to be copied
                 
         Params:
+            id = internal dhtclient id
+            key = entry key
+            value = entry value 
             
         Returns:
             void
@@ -195,9 +218,10 @@ class DhtCopyWorker
     private void copyChannel ( hash_t id, char[] key, char[] value )
     {
         debug Stdout.formatln("ID: {}\t Key: {}\t Value: {}", id, key, value);
-        
+                   
         this.put_buffer[this.eventloop_count] = value.dup;
-        this.dst.put(this.current_channel, key, this.put_buffer[this.eventloop_count]);
+        
+        this.put_method_dg(this.current_channel, key, this.put_buffer[this.eventloop_count], false);
         
         this.eventloop_count++;
         
@@ -223,7 +247,7 @@ class DhtCopyWorker
     
     private void initDhtClients ( in char[] src_file, in char[] dst_file )
     {
-        this.src = new DhtClient(10);
+        this.src = new DhtClient(this.CONNECTIONS);
         this.dst = new DhtClient(this.CONNECTIONS);
                    
         DhtNodesConfig.addNodesToClient(this.src, src_file);
@@ -234,6 +258,79 @@ class DhtCopyWorker
         
         this.src.queryNodeRanges().eventLoop();
         this.dst.queryNodeRanges().eventLoop();
+        
+        this.getPutMethod();
+    }
+    
+    /***************************************************************************
+
+        Get Available put method. Sets the internal put method delegate.
+        
+        Default is put. Fallback is putDup.
+        
+        Params:            
+            
+        Returns:
+            void
+    
+     **************************************************************************/
+    
+    private void getPutMethod ()
+    {
+        char[] channel  = "____test";
+        char[] value    = "1";
+        hash_t key      = 1;
+        
+        this.put_method_dg = &this.put;
+                
+        this.dst.error_callback(( ErrorInfo e )
+                {   
+                    this.put_method_dg = &this.putDup;                    
+                });
+
+        this.dst.put(channel, key, value).eventLoop();       
+        
+        this.dst.remove(channel, key).eventLoop();        
+    }
+    
+    /***************************************************************************
+
+        Simple put method wrapper.
+        
+        Params:   
+            channel = channel name 
+            key = key
+            value = value
+            compress = compression on/off
+            
+        Returns:
+            void
+    
+     **************************************************************************/
+        
+    private void put ( char[] channel, char[] key, ref char[] value, bool compress = false )
+    {
+        this.dst.put(channel, DhtHash.straightToHash(key), value, compress);
+    }
+   
+    /***************************************************************************
+
+        Simple putDup method wrapper.
+        
+        Params:   
+            channel = channel name 
+            key = key
+            value = value
+            compress = compression on/off
+            
+        Returns:
+            void
+    
+     **************************************************************************/
+        
+    private void putDup ( char[] channel, char[] key, ref char[] value, bool compress = false )
+    {
+        this.dst.putDup(channel, DhtHash.straightToHash(key), value, compress);
     }
     
     /***************************************************************************
