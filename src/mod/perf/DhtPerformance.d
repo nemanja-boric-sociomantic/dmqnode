@@ -67,9 +67,9 @@ struct DhtPerformance
             worker.setNumberIterations(args.getInt!(uint)("iterations"));
         }
         
-        if (args.getInt!(uint)("evenloop"))
+        if (args.getInt!(uint)("eventloop"))
         {
-            worker.setPutMultiple(args.getInt!(uint)("evenloop"));
+            worker.setPutMultiple(args.getInt!(uint)("eventloop"));
         }
         
         if (args.getInt!(uint)("size"))
@@ -98,7 +98,7 @@ class DhtPerformanceWorker
      
      **************************************************************************/
     
-    private     char[]              channel                 = "___test";
+    private     char[]              channel                 = "____test";
     
     /***************************************************************************
     
