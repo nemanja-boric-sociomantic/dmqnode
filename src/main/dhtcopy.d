@@ -83,6 +83,24 @@ void main ( char[][] arguments )
 void printHelp ( Arguments args, char[] app_name )
 {    
     args.displayHelp(app_name);
+    
+    Stderr.formatln("Examples:
+    copy all channels from source nodes to destination nodes        
+    {0} -s etc/srcnodes.xml -d etc/dstnodes.xml
+            
+    copy a distinct channel from source nodes to destination nodes        
+    {0} -s etc/srcnodes.xml -d etc/dstnodes.xml -c profiles
+
+    copy all channels from source nodes to destination nodes and use 
+    compression for destination nodes
+    {0} -s etc/srcnodes.xml -d etc/dstnodes.xml -z
+            
+    get hash ranges for a number of  nodes    
+    {0} -r -n 8
+
+    get a list of channels in the source nodes 
+    {0} -s etc/srcnodes.xml -d etc/dstnodes.xml -l                      
+    ", app_name);
 }
 
 
@@ -103,19 +121,25 @@ void printHelp ( Arguments args, char[] app_name )
 
 bool parseArgs ( Arguments args, char[][] arguments )
 {
-    args("help").aliased('?').aliased('h').help("display this help");
-    args("source").params(1).aliased('s').help("start of range to query (hash value - defaults to 0x00000000)");
-    args("destination").params(1).aliased('d').help("end of range to query (hash value - defaults to 0xFFFFFFFF)");
-    args("range").params(0).aliased('r').help("get ranges for the given number of nodes");
-    args("number").params(1).aliased('n').help("number of nodes for the ranges command");
-
+    args("help")        .aliased('?').aliased('h').help("display this help");
+    
+    args("source")      .params(1).aliased('s').help("start of range to query (hash value - defaults to 0x00000000)");
+    args("destination") .params(1).aliased('d').help("end of range to query (hash value - defaults to 0xFFFFFFFF)");
+    args("range")       .params(0).aliased('r').help("get ranges for the given number of nodes");
+    args("number")      .params(1).aliased('n').help("number of nodes for the ranges command");
+    args("list")        .params(0).aliased('l').help("get a list of channels in the source nodes");
+    
+    args("channel")     .params(1).aliased('c').help("name of the channel to copy (optional)");
+    args("compression") .params(0).aliased('z').help("enable compression (optional)");
+    
+    
     if (!args.parse(arguments))
     {
         return false;
     }
     
     if ( (args.getString("source").length != 0 && args.getString("destination").length != 0)
-        ||  (args.get("range") && args.getInt!(uint)("number") != 0))        
+        ||  (args.get("range") && args.getInt!(uint)("number") != 0) || args.getBool("list"))        
     { 
         return true;
     }
