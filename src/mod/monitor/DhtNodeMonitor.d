@@ -247,15 +247,15 @@ class NodeMonDaemon
 
     private void update ()
     {
-        foreach (k;this.errors.keys)this.errors.remove(k);
-        foreach (k;this.channel_bytes.keys)this.channel_bytes.remove(k);
-        foreach (k;this.total_bytes.keys)this.total_bytes.remove(k);
-        foreach (k;this.channel_records.keys)this.channel_records.remove(k);
-        foreach (k;this.total_records.keys)this.total_records.remove(k);
+        foreach (k; this.errors.keys)            this.errors.remove(k);
+        foreach (k; this.channel_bytes.keys)     this.channel_bytes.remove(k);
+        foreach (k; this.total_bytes.keys)       this.total_bytes.remove(k);
+        foreach (k; this.channel_records.keys)   this.channel_records.remove(k);
+        foreach (k; this.total_records.keys)     this.total_records.remove(k);
 
         this.dhtclient.getChannels(&this.addChannels).eventLoop();
 
-        foreach ( channel; this.channels )
+        foreach (channel; this.channels)
         {
             this.dhtclient.getChannelSize(channel, &this.addChannelSize).eventLoop();
         }
@@ -272,25 +272,29 @@ class NodeMonDaemon
     private void print ()
     {
         uint col_num, node_num;
+        
         auto columns = this.getDisplayColumns();
-
+        auto number_nodes = this.dhtclient.nodeRegistry.length;
+        
         this.printTime(columns);
 
-        foreach ( node; this.dhtclient )
+        foreach (node; this.dhtclient)
         {
-            col_num++, node_num++;
+            col_num++;
+            node_num++;
+            
             this.rowNodeItems ~= node.nodeitem;
 
-            if ( col_num == columns || ( this.dhtclient.nodeRegistry.length - node_num) + col_num < columns )
+            if (col_num == columns)
             {
-                Trace.formatln("");
                 this.printRow();
-
-                // Start next row
+                
                 this.rowNodeItems.length = 0;
                 col_num = 0;
             }
         }
+        
+        this.printRow();
     }
 
     /***************************************************************************
@@ -302,6 +306,8 @@ class NodeMonDaemon
 
     private void printRow ()
     {
+       Trace.formatln("");
+        
        this.printBoxLine(false);
 
        this.printNodeInfo();
@@ -457,7 +463,7 @@ class NodeMonDaemon
 
         Prints the Node Range.
 
-    ***************************************************************************/
+     **************************************************************************/
 
     private void printNodeRange ()
     {
@@ -492,7 +498,7 @@ class NodeMonDaemon
         Param:
         node_id = address:port of node.
 
-    ***************************************************************************/
+     **************************************************************************/
  
     private void printError ( char[] node_id )
     {
@@ -505,15 +511,18 @@ class NodeMonDaemon
 
     /***************************************************************************
 
+        then the actual number of dht nodes available.
+
         Returns:
             the number of columns to display from the main configuration.
 
-    ***************************************************************************/
+     **************************************************************************/
 
     private size_t getDisplayColumns ()
     {
         auto columns = MonitorConfig.columns;
-        if ( this.dhtclient.nodeRegistry.length < columns )
+        
+        if (this.dhtclient.nodeRegistry.length < columns)
         {
             columns = this.dhtclient.nodeRegistry.length;
         }
@@ -524,7 +533,7 @@ class NodeMonDaemon
 
         Prints a horizontal line
 
-     ***************************************************************************/
+     **************************************************************************/
 
     private void printHeadLine ( size_t columns )
     {
@@ -544,7 +553,7 @@ class NodeMonDaemon
         Params:
             start = 
 
-    ***************************************************************************/
+     **************************************************************************/
 
     private void printBoxLine ( bool start = true )
     {
@@ -616,7 +625,7 @@ class NodeMonDaemon
 
         TODO: move to tango tango.text.convert.Layout?
 
-    ***************************************************************************/
+     **************************************************************************/
 
     private static char[] formatCommaNumber ( T ) ( T num, ref char[] output )
     {
