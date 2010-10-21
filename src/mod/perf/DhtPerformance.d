@@ -6,7 +6,7 @@
     
     version:        Jun 2010: Initial release
     
-    authors:        Gavin Norman
+    authors:        Lars Kirchhoff
     
     --
     
@@ -14,6 +14,10 @@
     DHT node specified in the config file.
     
     Uses the channel "____test" to insert data and test on this.
+    
+    TODO:
+    1. Create a check on available command
+    2. Create a performance test for each command
 
  ******************************************************************************/
 
@@ -281,7 +285,11 @@ class DhtPerformanceWorker
                         
         this.readAll();
         
-        this.readRandom();
+        this.prepareRandomRead();
+        
+        this.readRandomSingle();
+
+        this.readRandomMultiple();
         
         this.cleanUp();
         
@@ -423,6 +431,7 @@ class DhtPerformanceWorker
         for (uint i=0; i < this.number_iterations; i++)
         {   
             this.put_buffer[count] = this.value;
+            
             this.dht.put(this.channel, i, this.put_buffer[count]);
             
             if (count == (this.eventloop_stack - 1))
@@ -478,18 +487,16 @@ class DhtPerformanceWorker
     
     /***************************************************************************
 
-        Read random from the test dht channel
+        Prepare random read values
                 
         Returns:
             void
     
      **************************************************************************/
         
-    private void readRandom ()
+    private void prepareRandomRead ()
     {
         uint count = 0;
-        
-        char[] _value;
         
         this.sw.start();
         
@@ -518,8 +525,22 @@ class DhtPerformanceWorker
         
         Trace.formatln(" Items written: {,9}\tItems per second: {,10}\t Time: {,6}s",
                 this.number_iterations, this.number_iterations/this.sw.stop(),this.sw.stop());
+    }
+    
+    /***************************************************************************
+
+        Read random from the test dht channel
+                
+        Returns:
+            void
+    
+     **************************************************************************/
         
-        count = 0;
+    private void readRandomSingle ()
+    {
+        uint count = 0;
+        
+        char[] _value;
         
         Trace.format("{,25}", "Read random test").flush();
         
@@ -539,6 +560,20 @@ class DhtPerformanceWorker
         
         Trace.formatln(" Items read: {,12}\tItems per second: {,10}\t Time: {,6}s", 
                 this.number_iterations, this.number_iterations/this.sw.stop(),this.sw.stop());
+    }
+    
+    /***************************************************************************
+
+        Read random multiple from the test dht channel
+                
+        Returns:
+            void
+    
+     **************************************************************************/
+        
+    private void readRandomMultiple ()
+    {
+        
     }
     
     /***************************************************************************
