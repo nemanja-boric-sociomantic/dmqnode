@@ -54,7 +54,7 @@ public static:
         Config.init("etc/config.ini");
 
         // DISPLAY
-        columns = Config.Int["DISPLAY", "columns"];
+        columns = Config.Int["Monitor", "columns"];
         assert(columns > 0, typeof(*this).stringof ~ ".init - not possible to display with 0 columns!");
     }
 }
