@@ -248,10 +248,23 @@ static:
 
     ***************************************************************************/
     
+    private void displayChannelSize ( DhtClient dht, char[] channel  )
+    {
+        dht.getChannelSize(channel, (hash_t id, char[] address, ushort port, char[] channel, 
+                                     ulong records, ulong bytes)
+                          {
+                              Stdout.formatln("{}:{} {} - {} records, {} bytes", address, port, channel, records, bytes);
+                          }).eventLoop();
+        Stdout.flush();
+    }
+    
+    
     private void dumpChannel ( DhtClient dht, char[] channel, hash_t range_min, hash_t range_max, bool count_records )
     {
         ulong channel_records, channel_bytes;
 
+        displayChannelSize(dht, channel);
+        
         void receiveRecord ( uint id, char[] key, char[] value )
         {
             if ( key.length )
@@ -261,6 +274,10 @@ static:
                 if ( !count_records )
                 {
                     Stdout.format("{}: {} -> {}\n", channel, key, value);
+                }
+                else if (!(channel_records % 10_000))
+                {
+                    Stdout.format("\b\b\b\b\b\b\b\b\b\b{,10}", channel_records).flush();
                 }
             }
         }
@@ -278,7 +295,7 @@ static:
         bytes += channel_bytes;
         if ( count_records )
         {
-            Stdout.format("Channel {} contains {} records ({} bytes) in the specified range\n", channel, channel_records, channel_bytes);
+            Stdout.format("\nChannel {} contains {} records ({} bytes) in the specified range\n", channel, channel_records, channel_bytes);
         }
     }
 }
