@@ -147,7 +147,7 @@ write_buffer_size       = 65536
 
 [Monitor]
 
-display_cols            = 3
+columns                 = 3
 
 
 
