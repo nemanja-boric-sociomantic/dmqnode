@@ -13,6 +13,8 @@
     Displays an updating count of the number of records in each channel of the
     DHT node specified in the config file.
 
+    TODO:   Add a column for the totals per channel    
+    
  ******************************************************************************/
 
 module src.mod.monitor.DhtNodeMonitor;
