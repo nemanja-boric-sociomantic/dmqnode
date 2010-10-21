@@ -41,6 +41,8 @@ private import  swarm.dht.client.connection.ErrorInfo,
 
 private import  tango.io.Stdout;
 
+private import  tango.time.StopWatch;
+
 
 
 /*******************************************************************************
@@ -54,16 +56,36 @@ struct DhtCopy
     public static bool run ( Arguments args )
     {
         scope worker = new DhtCopyWorker();
-    
+        
         if (args.getString("source").length != 0 && 
-            args.getString("destination").length != 0)
+            args.getString("destination").length != 0 && !args.getBool("list"))
         {
+            if (args.getString("channel").length != 0)
+            {
+                worker.setChannel(args.getString("channel"));
+            }
+            
+            if (args.getBool("compression"))
+            {
+                worker.setCompression(true);
+            }
+            
             worker.copy(args.getString("source"), args.getString("destination"));
+            
             return true;
         }
-        else
+        
+        if (args.getBool("range"))
         {
             worker.range(args.getInt!(uint)("number"));
+            return true;
+        }
+        
+        if (args.getBool("list") && 
+            args.getString("source").length != 0 && 
+            args.getString("destination").length != 0)
+        {         
+            worker.list(args.getString("source"), args.getString("destination"));
             return true;
         }
         
@@ -82,7 +104,8 @@ class DhtCopyWorker
     
      **************************************************************************/
     
-    private     const uint          CONNECTIONS = 10;
+    private     const uint          SRC_CONNECTIONS = 1;
+    private     const uint          DST_CONNECTIONS = 1;
     
     /***************************************************************************
     
@@ -150,11 +173,60 @@ class DhtCopyWorker
     
     /***************************************************************************
     
-        internal counter
+        Internal record counter
     
      **************************************************************************/
     
-    private     uint                count;
+    private     uint                records_count;
+    
+    /***************************************************************************
+    
+        Total number of bytes copied
+    
+     **************************************************************************/
+
+    private     uint                records_bytes;
+    
+    /***************************************************************************
+    
+        Number of channel items to copy
+    
+     **************************************************************************/
+    
+    private     uint                channel_records;
+    
+    /***************************************************************************
+    
+        Number of progress steps shown while doing the test
+    
+     **************************************************************************/
+    
+    private     uint                progress_steps          = 50;
+    
+    /***************************************************************************
+    
+        Number that tells when to show the next progress step based on the 
+        number of iteration and the numbmer of progress steps.s 
+    
+     **************************************************************************/
+    
+    private     uint                progress_               = 1;
+    
+    /***************************************************************************
+    
+        Should compression be used for the destination node channel
+    
+     **************************************************************************/
+        
+    private     bool                compression             = false; 
+    
+    /***************************************************************************
+    
+        StopWatch
+    
+     **************************************************************************/
+
+    private     StopWatch           sw;
     
     /***************************************************************************
      
@@ -164,6 +236,45 @@ class DhtCopyWorker
     
     public this () {}
         
+    /***************************************************************************
+    
+        Set channel to the channel name provided
+        
+        Params:
+            channel = channel name
+            
+        Returns:
+            void
+     
+     **************************************************************************/
+        
+    public void setChannel ( char[] channel )
+    {
+        this.src_channels.length = 0;
+        
+        if (channel.length != 0)
+        {
+            this.src_channels ~= channel;
+        }
+    }
+    
+    /***************************************************************************
+    
+        Set if compression should be used for the destination 
+        
+        Params:
+            compression = compression enabled 
+            
+        Returns:
+            void
+     
+     **************************************************************************/
+        
+    public void setCompression ( bool compression = false )
+    {
+        this.compression = compression;
+    }
+    
     /***************************************************************************
 
         Copy the data from source dht node cluster to destination dht 
@@ -182,22 +293,183 @@ class DhtCopyWorker
     {
         this.initDhtClients(src_file, dst_file);
         
-        this.src.getChannels(( hash_t id, char[] channel )
-                {   
-                    this.src_channels ~= channel.dup;     
-                }).eventLoop();            
+        this.initChannels();
+        
+        debug Stdout.formatln("Channels: {}\n Compression: {}", this.src_channels, this.compression).flush();
         
         foreach (channel; this.src_channels)
         {
-            this.count              = 0;
+            this.records_count      = 0;
             this.eventloop_count    = 0;
-            this.current_channel    = channel;
+            this.current_channel    = channel.dup;
+            
+            this.initProgress();
+            
+            this.sw.start();
+            
+            Stdout.format("Channel: {} [{} items]\nProgress: ", this.current_channel, this.channel_records).flush();
             
             try
             {
-                this.src.getAll(channel, &this.copyChannel).eventLoop();
+                this.src.getAll(this.current_channel, &this.copyChannel).eventLoop();
             }
-            catch (Exception e) {}
+            catch (Exception e) 
+            {
+                Stdout.formatln("Exception: {}", e.msg);
+            }            
+            
+            Stdout.formatln("\n{,-22} {}s \n{,-22} {} \n{,-22} {} \n{,-22} {} \n{,-22} {}", 
+                    "Time:",                    this.sw.stop(),
+                    "Records copied:",          this.records_count,
+                    "Records/s:",               this.records_count/this.sw.stop(),
+                    "Bytes:",                   this.records_bytes,
+                    "Avg. bytes per record:",   this.records_bytes/this.records_count).flush();
+        }
+        
+        this.dst.eventLoop();                                                   // final eventloop to write everything which is still in the eventloop stack
+    }
+    
+    /***************************************************************************
+
+        Method to calculatate node ranges based on the number of nodes
+        with an even distritution.
+        
+        Params:
+            number = number of nodes
+            
+        Returns:
+            void
+    
+     **************************************************************************/
+    
+    public void range ( uint number )
+    {
+        auto range = hash_t.max / number;
+        uint start = 0, end = 0;
+       
+        for (uint i = 0; i < number; i++)
+        {
+            end = start + range;
+            Stdout.formatln("{:X8} - {:X8}", start, end);
+            start = end + 1;
+        }
+    }
+    
+    /***************************************************************************
+    
+        Outputs a list with channels in the source nodes
+        
+        Params:            
+            
+        Returns:
+            void
+    
+     **************************************************************************/
+        
+    public void list ( char[] src_file, char[] dst_file )
+    {
+        this.initDhtClients(src_file, dst_file);
+        
+        this.src.getChannels(&this.addChannels).eventLoop();
+        
+        foreach (channel; this.src_channels)
+        {
+            Stdout.formatln(channel).flush();
+        }
+    }
+    
+    /***************************************************************************
+
+        Checks if a channel is already set. If not grab all channels from 
+        the source dht node cluster. 
+         
+        Params:
+            
+        Returns:
+            void
+    
+     **************************************************************************/
+        
+    private void initChannels ()
+    { 
+        if (this.src_channels.length == 0)
+        {
+            this.src.getChannels(&this.addChannels).eventLoop();
+        }
+    }
+    
+    /***************************************************************************
+
+        Calculate number of channel records
+         
+        Params:
+            address = node IP address
+            port = node port
+            channel = node channel name 
+            records = number of records
+            bytes = number of bytes
+            
+        Returns:
+            void
+    
+     **************************************************************************/
+    
+    private void getChannelRecords ( uint id, char[] address, ushort port, char[] channel, 
+            ulong records, ulong bytes )
+    {
+        this.channel_records += records;
+    }
+        
+    /***************************************************************************
+
+        Calculate how many records are used to display a progress bar item
+         
+        Params:
+                       
+        Returns:
+            void
+    
+     **************************************************************************/
+        
+    private void initProgress ()
+    {
+        this.src.getChannelSize(this.current_channel, &this.getChannelRecords).eventLoop();
+        
+        if (this.channel_records > this.progress_steps)      
+        {
+            this.progress_ = cast (uint) (this.channel_records / this.progress_steps);
+        }
+    }
+    
+    /***************************************************************************
+
+        Add channels to internal channel list
+         
+        Params:
+            id = internal dht id
+            channel = channel name
+            
+        Returns:
+            void
+    
+     **************************************************************************/
+        
+    private void addChannels ( hash_t id, char[] channel )
+    {   
+        bool found = false;
+        
+        if (channel.length != 0)
+        {
+            foreach (_channel; this.src_channels)
+            {
+                if (_channel == channel) 
+                {
+                    found = true;
+                    break;
+                }                
+            }
+            
+            if (!found) this.src_channels ~= channel.dup;
         }
     }
     
@@ -221,7 +493,9 @@ class DhtCopyWorker
                    
         this.put_buffer[this.eventloop_count] = value.dup;
         
-        this.put_method_dg(this.current_channel, key, this.put_buffer[this.eventloop_count], false);
+        this.records_bytes += value.length;
+        
+        this.put_method_dg(this.current_channel, key, this.put_buffer[this.eventloop_count], this.compression);
         
         this.eventloop_count++;
         
@@ -229,6 +503,13 @@ class DhtCopyWorker
         {
             this.dst.eventLoop();
             this.eventloop_count = 0;
+        }
+        
+        this.records_count++;
+        
+        if ((this.records_count % this.progress_) == 0)
+        {
+            Stdout.format(".").flush();
         }
     }
 
@@ -247,8 +528,8 @@ class DhtCopyWorker
     
     private void initDhtClients ( in char[] src_file, in char[] dst_file )
     {
-        this.src = new DhtClient(this.CONNECTIONS);
-        this.dst = new DhtClient(this.CONNECTIONS);
+        this.src = new DhtClient(this.SRC_CONNECTIONS);
+        this.dst = new DhtClient(this.DST_CONNECTIONS);
                    
         DhtNodesConfig.addNodesToClient(this.src, src_file);
         DhtNodesConfig.addNodesToClient(this.dst, dst_file);
@@ -285,6 +566,7 @@ class DhtCopyWorker
                 
         this.dst.error_callback(( ErrorInfo e )
                 {   
+                    Stdout.formatln("Method: putDup").flush();
                     this.put_method_dg = &this.putDup;                    
                 });
 
@@ -309,7 +591,7 @@ class DhtCopyWorker
      **************************************************************************/
         
     private void put ( char[] channel, char[] key, ref char[] value, bool compress = false )
-    {
+    {   
         this.dst.put(channel, DhtHash.straightToHash(key), value, compress);
     }
    
@@ -331,31 +613,5 @@ class DhtCopyWorker
     private void putDup ( char[] channel, char[] key, ref char[] value, bool compress = false )
     {
         this.dst.putDup(channel, DhtHash.straightToHash(key), value, compress);
-    }
-    
-    /***************************************************************************
-
-        Method to calculatate node ranges based on the number of nodes
-        with an even distritution.
-        
-        Params:
-            number = number of nodes
-            
-        Returns:
-            void
-
-     **************************************************************************/
-    
-    public void range ( uint number )
-    {
-        auto range = hash_t.max / number;
-        uint start = 0, end = 0;
-       
-        for (uint i = 0; i < number; i++)
-        {
-            end = start + range;
-            Stdout.formatln("{:X8} - {:X8}", start, end);
-            start = end + 1;
-        }
-    }
+    }   
 }
