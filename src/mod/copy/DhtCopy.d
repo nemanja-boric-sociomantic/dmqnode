@@ -41,6 +41,8 @@ private import  swarm.dht.client.connection.ErrorInfo,
 
 private import  tango.io.Stdout;
 
+private import  tango.math.Math;
+
 private import  tango.time.StopWatch;
 
 
@@ -337,14 +339,15 @@ class DhtCopyWorker
     public void range ( uint number )
     {
         auto range = hash_t.max / number;
-        uint start = 0, end = 0;
+        uint start;
 
-        for (uint i = 0; i < number; i++)
+        for ( uint i = 0; i < number - 1; i++ )
         {
-            end = start + range;
-            Stdout.formatln("{:X8} - {:X8}", start, end);
-            start = end + 1;
+            Stdout.formatln("{:X8} - {:X8}", start, start + range);
+            start = start + range + 1;
         }
+
+        Stdout.formatln("{:X8} - {:X8}", start, hash_t.max);
     }
 
     /***************************************************************************
