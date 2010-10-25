@@ -60,15 +60,6 @@ static:
 
     /***************************************************************************
 
-        Is the getRange command supported by the node(s) we're querying?
-    
-    ***************************************************************************/
-
-    private bool range_supported;
-
-    
-    /***************************************************************************
-
         Internal count of records & bytes received
     
     ***************************************************************************/
@@ -99,7 +90,8 @@ static:
 
         scope dht = initDhtClient();
 
-        assert(range_supported || (range_min == hash_t.min && range_max == hash_t.max), "Error: queried node(s) can't handle getRange commands" );
+        assert(dht.commandSupported(DhtConst.Command.GetRange) ||
+                (range_min == hash_t.min && range_max == hash_t.max), "Error: queried node(s) can't handle getRange commands" );
         
         if ( all_channels )
         {
@@ -132,8 +124,6 @@ static:
         bool error;
         auto dht = new DhtClient();
         
-        range_supported = getRangeSupported(dht);
-
         dht.error_callback(
             ( ErrorInfo e )
             {
@@ -143,53 +133,13 @@ static:
         );
         
         DhtNodesConfig.addNodesToClient(dht, "etc/dhtnodes.xml");
-        dht.queryNodeRanges().eventLoop();
+        dht.nodeHandshake();
         assert(!error);
 
         return dht;
     }
     
     
-    /***************************************************************************
-
-        Tells whether the connected node(s) support(s) the getRange command.
-        Attempts to execute a getRange over all channels, and registers an
-        error callback to catch NotImplemented error codes.
-    
-        Returns:
-            true if the dht node(s) do(es) support getRange
-
-    ***************************************************************************/
-
-    private bool getRangeSupported ( DhtClient dht )
-    {
-        bool done_first_channel, supported;
-
-        dht.error_callback(
-                ( ErrorInfo e )
-                {
-                    supported = false;
-                }
-            );
-
-        dht.getChannels(
-                ( uint id, char[] channel )
-                {
-                    if ( !done_first_channel )
-                    {
-                        dht.getRange(channel, 0, 0,
-                                ( uint id, char[] key, char[] value )
-                                {
-                                    supported = true;
-                                });
-                        done_first_channel = true;
-                    }
-                }).eventLoop();
-
-        return supported;
-    }
-
-
     /***************************************************************************
 
         Outputs dht records in the specified hash range in all channels to
@@ -259,6 +209,21 @@ static:
     }
     
     
+    /***************************************************************************
+
+        Outputs dht records in the specified hash range in the specified
+        channel to stdout.
+        
+        Params:
+            dht = dht client to perform query with
+            channel = name of channel to dump
+            range_min = start of hash range to query
+            range_max = end of hash range to query
+            count_records = whether to display a count of the records without
+                dumping the record contents
+    
+    ***************************************************************************/
+
     private void dumpChannel ( DhtClient dht, char[] channel, hash_t range_min, hash_t range_max, bool count_records )
     {
         ulong channel_records, channel_bytes;
@@ -282,7 +247,7 @@ static:
             }
         }
 
-        if ( !range_supported && range_min == hash_t.min && range_max == hash_t.max )
+        if ( !dht.commandSupported(DhtConst.Command.GetRange) && range_min == hash_t.min && range_max == hash_t.max )
         {
             dht.getAll(channel, &receiveRecord).eventLoop();
         }
