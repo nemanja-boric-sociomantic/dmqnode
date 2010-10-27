@@ -12,6 +12,7 @@
     
     Command line parameters:
         -h = display help
+        -S = dhtnodes.xml source file
         -s = start of range to query (hash value - defaults to 0x00000000)
         -e = end of range to query   (hash value - defaults to 0xFFFFFFFF)
         -c = channel name to query
@@ -82,13 +83,14 @@ static:
 
     public bool run ( Arguments args )
     {
+        auto xml = args.getString("source");
         auto range_min = args.getInt!(hash_t)("start");
         auto range_max = args.getInt!(hash_t)("end");
         auto channel = args.getString("channel");
         auto all_channels = args.getBool("all_channels");
         auto count_records = args.getBool("count");
 
-        scope dht = initDhtClient();
+        scope dht = initDhtClient(xml);
 
         assert(dht.commandSupported(DhtConst.Command.GetRange) ||
                 (range_min == hash_t.min && range_max == hash_t.max), "Error: queried node(s) can't handle getRange commands" );
@@ -119,7 +121,7 @@ static:
 
     ***************************************************************************/
 
-    private DhtClient initDhtClient ( )
+    private DhtClient initDhtClient ( char[] xml )
     {
         bool error;
         auto dht = new DhtClient();
@@ -132,7 +134,7 @@ static:
             }
         );
         
-        DhtNodesConfig.addNodesToClient(dht, "etc/dhtnodes.xml");
+        DhtNodesConfig.addNodesToClient(dht, xml);
         dht.nodeHandshake();
         assert(!error);
 
@@ -260,7 +262,7 @@ static:
         bytes += channel_bytes;
         if ( count_records )
         {
-            Stdout.format("\nChannel {} contains {} records ({} bytes) in the specified range\n", channel, channel_records, channel_bytes);
+            Stdout.format("Channel {} contains {} records ({} bytes) in the specified range\n\n", channel, channel_records, channel_bytes);
         }
     }
 }
