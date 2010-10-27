@@ -12,6 +12,7 @@
     
     Command line parameters:
         -h = display help
+        -S = dhtnodes.xml source file
         -s = start of range to query (hash value - defaults to 0x00000000)
         -e = end of range to query   (hash value - defaults to 0xFFFFFFFF)
         -c = channel name to query
@@ -85,6 +86,7 @@ void main ( char[][] arguments )
 bool parseArgs ( Arguments args, char[][] arguments )
 {
     args("help").aliased('?').aliased('h').help("display this help");
+    args("source").params(1).required().aliased('S').help("path of dhtnodes.xml file defining nodes to dump");
     args("start").params(1).defaults("0x00000000").aliased('s').help("start of range to query (hash value - defaults to 0x00000000)");
     args("end").params(1).defaults("0xffffffff").aliased('e').help("end of range to query (hash value - defaults to 0xFFFFFFFF)");
     args("channel").conflicts("all_channels").params(1).aliased('c').help("channel name to query");
