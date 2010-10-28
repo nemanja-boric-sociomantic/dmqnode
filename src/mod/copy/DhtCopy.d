@@ -30,6 +30,8 @@ module mod.copy.DhtCopy;
 
  ******************************************************************************/
 
+private import  ocean.core.Array;
+
 private import  ocean.text.Arguments;
 
 private import  swarm.dht.DhtClient,
@@ -38,6 +40,10 @@ private import  swarm.dht.DhtClient,
 
 private import  swarm.dht.client.connection.ErrorInfo,
                 swarm.dht.client.DhtNodesConfig;
+
+private import  tango.core.Array;
+
+private import  Integer = tango.text.convert.Integer;
 
 private import  tango.io.Stdout;
 
@@ -72,14 +78,14 @@ struct DhtCopy
                 worker.setCompression(true);
             }
 
-            worker.copy(args.getString("source"), args.getString("destination"));
+            worker.dhtcopy(args.getString("source"), args.getString("destination"), args.getInt!(hash_t)("start"), args.getInt!(hash_t)("end"));
 
             return true;
         }
 
-        if (args.getBool("range"))
+        if (args.getInt!(uint)("range") != 0)
         {
-            worker.range(args.getInt!(uint)("number"));
+            worker.range(args.getInt!(uint)("range"));
             return true;
         }
 
@@ -99,6 +105,209 @@ struct DhtCopy
 
 class DhtCopyWorker
 {
+    /***************************************************************************
+
+        Queue of records to write to the destination dht - builds up a set of
+        records to be sent all at once to the destination dht
+    
+     **************************************************************************/
+
+    class DestinationQueue
+    {
+        /***********************************************************************
+
+            Number of items stored in the queue before all are sent to the dht
+    
+        ***********************************************************************/
+
+        private const QueueSize = 200;
+
+        /***********************************************************************
+
+            Stored records
+        
+        ***********************************************************************/
+
+        private char[][QueueSize] records;
+
+        /***********************************************************************
+
+            Number of records in queue
+        
+        ***********************************************************************/
+
+        private size_t count;
+
+        /***********************************************************************
+
+            Destination dht client
+        
+        ***********************************************************************/
+
+        private DhtClient dst;
+
+        /***********************************************************************
+
+            Channel to write to
+        
+        ***********************************************************************/
+
+        private char[] channel;
+        
+        /***********************************************************************
+
+            Start and end hash of range being copied - any records outside of
+            this range which are attempted to be added to the queue will not be
+            stored or copied
+        
+        ***********************************************************************/
+
+        private hash_t start = 0x00000000;
+
+        private hash_t end = 0xffffffff;
+
+        /***********************************************************************
+
+            Whether to write with compression
+        
+        ***********************************************************************/
+
+        private bool compress;
+
+        /***********************************************************************
+
+            Constructor.
+            
+            Params:
+                dst = destination dht client
+        
+        ***********************************************************************/
+
+        public this ( DhtClient dst )
+        {
+            this.dst = dst;
+            this.count = 0;
+        }
+
+        /***********************************************************************
+
+            Sets the channel to write to.
+            
+            Params:
+                channel = channel name
+        
+        ***********************************************************************/
+
+        public void setChannel ( char[] channel )
+        {
+            this.channel.copy(channel);
+        }
+
+        /***********************************************************************
+
+            Sets the hash range to copy
+            
+            Params:
+                start = start of range
+                end = end of range
+        
+        ***********************************************************************/
+
+        public void setRange ( hash_t start, hash_t end )
+        {
+            this.start = start;
+            this.end = end;
+        }
+
+        /***********************************************************************
+
+            Sets the compression flag.
+            
+            Params:
+                compress = true to compress data to the destination dht
+        
+        ***********************************************************************/
+
+        public void setCompression ( bool compress )
+        {
+            this.compress = compress;
+        }
+
+        /***********************************************************************
+
+            Returns:
+                the compression setting.
+        
+        ***********************************************************************/
+
+        public bool compression ( )
+        {
+            return this.compress;
+        }
+
+        /***********************************************************************
+
+            Puts a record into the queue. If the record's hash is outside the
+            hash range set, the record is not added to the queue. After adding a
+            record, if the queue is full then it is flushed (all records are
+            put to the destination dht.)
+            
+            Params:
+                key = key of record to put
+                value = record value
+        
+        ***********************************************************************/
+
+        public void put ( hash_t key, char[] value )
+        in
+        {
+            assert(this.dst, typeof(this).stringof ~  ".put - cannot put before initialisation");
+        }
+        body
+        {
+            if ( key >= this.start && key <= this.end )
+            {
+                this.records[this.count].copy(value);
+    
+                if ( this.dst.commandSupported(DhtConst.Command.Put) )
+                {
+                    this.dst.put(this.channel, key, this.records[this.count], this.compress);
+                }
+                else if ( this.dst.commandSupported(DhtConst.Command.PutDup) )
+                {
+                    this.dst.putDup(this.channel, key, this.records[this.count], this.compress);
+                }
+                else
+                {
+                    assert(false, typeof(this).stringof ~  ".put - neither Put nor PutDup supported by destination dht");
+                }
+    
+                if ( ++this.count >= QueueSize )
+                {
+                    this.flush();
+                }
+            }
+        }
+
+        /***********************************************************************
+
+            Sends all queued records to the destination dht.
+            
+        ***********************************************************************/
+
+        public void flush ( )
+        in
+        {
+            assert(this.dst, typeof(this).stringof ~  ".flush - cannot flush before initialisation");
+        }
+        body
+        {
+            this.dst.eventLoop();
+            this.count = 0;
+        }
+    }
+
+
     /***************************************************************************
 
         Number of Connections to each DHT node
@@ -126,35 +335,11 @@ class DhtCopyWorker
 
     /***************************************************************************
 
-        Put buffer for multiple items per eventloop 
-
+        Record queue the destination dht nodes (to put in batches)
+    
      **************************************************************************/
-
-    private     char[][200]         put_buffer;
-
-    /***************************************************************************
-
-        PutMethod delegate
-
-     **************************************************************************/
-
-    private     void delegate (char[], char[], ref char[], bool) put_method_dg;    
-
-    /***************************************************************************
-
-        Eventloop counter for the put buffer 
-
-     **************************************************************************/
-
-    private     uint                eventloop_count;
-
-    /***************************************************************************
-
-        Current channel that is being copied
-
-     **************************************************************************/
-
-    private     char[]              current_channel;
+    
+    private     DestinationQueue    dst_queue;
 
     /***************************************************************************
 
@@ -207,19 +392,11 @@ class DhtCopyWorker
     /***************************************************************************
 
         Number that tells when to show the next progress step based on the 
-        number of iteration and the numbmer of progress steps.s 
+        number of iteration and the number of progress steps.
 
      **************************************************************************/
 
     private     uint                progress_               = 1;
-
-    /***************************************************************************
-
-        Should compression be used for the destination node channel
-
-     **************************************************************************/
-
-    private     bool                compression             = false; 
 
     /***************************************************************************
 
@@ -273,7 +450,7 @@ class DhtCopyWorker
 
     public void setCompression ( bool compression = false )
     {
-        this.compression = compression;
+        this.dst_queue.setCompression(compression);
     }
 
     /***************************************************************************
@@ -289,38 +466,49 @@ class DhtCopyWorker
             void
 
      **************************************************************************/
-        
-    public void copy ( in char[] src_file, in char[] dst_file )
+
+    public void dhtcopy ( char[] src_file, char[] dst_file, hash_t start, hash_t end )
     {
         this.initDhtClients(src_file, dst_file);
 
         this.initChannels();
 
-        debug Stdout.formatln("Channels: {}\n Compression: {}", this.src_channels, this.compression).flush();
+        this.dst_queue.setRange(start, end);
+
+        debug Stdout.formatln("Channels: {}\nCompression: {}\nRange: 0x{:x8} .. 0x{:x8}", this.src_channels, this.dst_queue.compression, start, end).flush();
 
         foreach (channel; this.src_channels)
         {
             this.records_count      = 0;
-            this.eventloop_count    = 0;
-            this.current_channel    = channel.dup;
+            this.dst_queue.setChannel(channel);
 
-            this.initProgress();
+            this.initProgress(channel);
 
             this.sw.start();
 
-            Stdout.format("Channel: {} [{} items]\nProgress: ", this.current_channel, this.channel_records).flush();
+            Stdout.format("\nChannel: {} [{} items]\nProgress: ", channel, this.channel_records).flush();
 
-            this.src.getRange(this.current_channel, hash_t.min, hash_t.max, &this.copyChannel).eventLoop();
+            if ( this.src.commandSupported(DhtConst.Command.GetRange) )
+            {
+                this.src.getRange(channel, start, end, &this.put).eventLoop();
+            }
+            else
+            {
+                this.src.getAll(channel, &this.put).eventLoop();
+            }
 
+            auto time = this.sw.stop();
+            auto records_per_sec = time > 0 ? this.records_count / time : 0;
+            auto bytes_per_record = this.records_count > 0 ? this.records_bytes / this.records_count : 0;
             Stdout.formatln("\n{,-22} {}s \n{,-22} {} \n{,-22} {} \n{,-22} {} \n{,-22} {}", 
                     "Time:",                    this.sw.stop(),
                     "Records copied:",          this.records_count,
-                    "Records/s:",               this.records_count/this.sw.stop(),
+                    "Records/s:",               records_per_sec,
                     "Bytes:",                   this.records_bytes,
-                    "Avg. bytes per record:",   this.records_bytes/this.records_count).flush();
-        }
+                    "Avg. bytes per record:",   bytes_per_record).flush();
 
-        this.dst.eventLoop();                                                   // final eventloop to write everything which is still in the eventloop stack
+            this.dst_queue.flush();                                             // write everything which is still in the queue for this channel
+        }
     }
 
     /***************************************************************************
@@ -426,9 +614,9 @@ class DhtCopyWorker
 
      **************************************************************************/
 
-    private void initProgress ()
+    private void initProgress ( char[] channel )
     {
-        this.src.getChannelSize(this.current_channel, &this.getChannelRecords).eventLoop();
+        this.src.getChannelSize(channel, &this.getChannelRecords).eventLoop();
 
         if (this.channel_records > this.progress_steps)
         {
@@ -453,18 +641,9 @@ class DhtCopyWorker
     {
         bool found = false;
 
-        if (channel.length != 0)
+        if ( channel.length != 0 && !this.src_channels.contains(channel) )
         {
-            foreach (_channel; this.src_channels)
-            {
-                if (_channel == channel) 
-                {
-                    found = true;
-                    break;
-                }
-            }
-
-            if (!found) this.src_channels ~= channel.dup;
+            this.src_channels.appendCopy(channel);
         }
 
         this.src_channels.sort;
@@ -484,26 +663,15 @@ class DhtCopyWorker
 
      **************************************************************************/
 
-    private void copyChannel ( hash_t id, char[] key, char[] value )
+    private void put ( hash_t id, char[] key, char[] value )
     {
-        debug Stdout.formatln("ID: {}\t Key: {}\t Value: {}", id, key, value);
+//        debug Stdout.formatln("ID: {}\t Key: {}\t Value: {}", id, key, value);
 
-        if (key.length)
+        if ( key.length )
         {
-            this.put_buffer[this.eventloop_count] = value.dup;
+            this.dst_queue.put(DhtHash.straightToHash(key), value);
 
             this.records_bytes += value.length;
-
-            this.put_method_dg(this.current_channel, key, this.put_buffer[this.eventloop_count], this.compression);
-
-            this.eventloop_count++;
-
-            if (this.eventloop_count == 200)
-            {
-                this.dst.eventLoop();
-                this.eventloop_count = 0;
-            }
-
             this.records_count++;
 
             if ((this.records_count % this.progress_) == 0)
@@ -530,6 +698,10 @@ class DhtCopyWorker
     {
         this.src = new DhtClient(this.SRC_CONNECTIONS);
         this.dst = new DhtClient(this.DST_CONNECTIONS);
+        this.dst_queue = new DestinationQueue(this.dst);
+
+        this.src.error_callback = &this.handleError;
+        this.dst.error_callback = &this.handleError;
 
         DhtNodesConfig.addNodesToClient(this.src, src_file);
         DhtNodesConfig.addNodesToClient(this.dst, dst_file);
@@ -537,13 +709,8 @@ class DhtCopyWorker
         debug Stdout.formatln("Source: {} [{}]", src_file, this.src.nodeRegistry().length);
         debug Stdout.formatln("Destination: {} [{}]", dst_file, this.dst.nodeRegistry().length);
 
-        this.src.queryNodeRanges().eventLoop();
-        this.dst.queryNodeRanges().eventLoop();
-
-        this.getPutMethod();
-
-        this.src.error_callback = &this.handleError;
-        this.dst.error_callback = &this.handleError;
+        this.src.nodeHandshake();
+        this.dst.nodeHandshake();
     }
 
     /***************************************************************************
@@ -562,76 +729,4 @@ class DhtCopyWorker
     {
         Stdout.formatln("Error: {}", e.message).flush;
     }
-
-    /***************************************************************************
-
-        Get Available put method. Sets the internal put method delegate.
-
-        Default is put. Fallback is putDup.
-
-        Params:
-
-        Returns:
-            void
-
-     **************************************************************************/
-
-    private void getPutMethod ()
-    {
-        char[] channel  = "____test";
-        char[] value    = "1";
-        hash_t key      = 1;
-
-        this.put_method_dg = &this.put;
-
-        this.dst.error_callback(( ErrorInfo e )
-                {
-                    debug Stdout.formatln("Method: putDup").flush();
-                    this.put_method_dg = &this.putDup;
-                });
-
-        this.dst.put(channel, key, value).eventLoop();
-
-        this.dst.remove(channel, key).eventLoop();
-    }
-
-    /***************************************************************************
-
-        Simple put method wrapper.
-
-        Params:
-            channel = channel name 
-            key = key
-            value = value
-            compress = compression on/off
-
-        Returns:
-            void
-
-     **************************************************************************/
-
-    private void put ( char[] channel, char[] key, ref char[] value, bool compress = false )
-    {
-        this.dst.put(channel, DhtHash.straightToHash(key), value, compress);
-    }
-
-    /***************************************************************************
-
-        Simple putDup method wrapper.
-
-        Params:
-            channel = channel name 
-            key = key
-            value = value
-            compress = compression on/off
-
-        Returns:
-            void
-
-     **************************************************************************/
-
-    private void putDup ( char[] channel, char[] key, ref char[] value, bool compress = false )
-    {
-        this.dst.putDup(channel, DhtHash.straightToHash(key), value, compress);
-    }   
 }

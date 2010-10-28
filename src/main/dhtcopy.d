@@ -13,10 +13,11 @@
 
     Command line parameters:
         -h --help           = display help
-        -s --source         = source node xml configuration file
-        -d --destination    = destination node xml configuration file
-        -r --ranges         = get ranges of the new nodes
-        -n --number         = number of nodes
+        -S --source         = source node xml configuration file
+        -D --destination    = destination node xml configuration file
+        -s --start          = start of hash range to copy
+        -e --end            = end of hash range to copy
+        -r --ranges         = calculate and display ranges of the new nodes
 
  ******************************************************************************/
 
@@ -86,20 +87,20 @@ void printHelp ( Arguments args, char[] app_name )
     
     Stderr.formatln("Examples:
     copy all channels from source nodes to destination nodes        
-    {0} -s etc/srcnodes.xml -d etc/dstnodes.xml
+    {0} -S etc/srcnodes.xml -D etc/dstnodes.xml
             
     copy a distinct channel from source nodes to destination nodes        
-    {0} -s etc/srcnodes.xml -d etc/dstnodes.xml -c profiles
+    {0} -S etc/srcnodes.xml -D etc/dstnodes.xml -c profiles
 
     copy all channels from source nodes to destination nodes and use 
     compression for destination nodes
-    {0} -s etc/srcnodes.xml -d etc/dstnodes.xml -z
+    {0} -S etc/srcnodes.xml -D etc/dstnodes.xml -z
             
     get hash ranges for a number of  nodes    
     {0} -r -n 8
 
     get a list of channels in the source nodes 
-    {0} -s etc/srcnodes.xml -d etc/dstnodes.xml -l                      
+    {0} -S etc/srcnodes.xml -D etc/dstnodes.xml -l                      
     ", app_name);
 }
 
@@ -123,15 +124,14 @@ bool parseArgs ( Arguments args, char[][] arguments )
 {
     args("help")        .aliased('?').aliased('h').help("display this help");
     
-    args("source")      .params(1).aliased('s').help("start of range to query (hash value - defaults to 0x00000000)");
-    args("destination") .params(1).aliased('d').help("end of range to query (hash value - defaults to 0xFFFFFFFF)");
-    args("range")       .params(0).aliased('r').help("get ranges for the given number of nodes");
-    args("number")      .params(1).aliased('n').help("number of nodes for the ranges command");
+    args("source")      .params(1).aliased('S').help("path of dhtnodes.xml file defining nodes to copy from");
+    args("destination") .params(1).aliased('D').help("path of dhtnodes.xml file defining nodes to copy to");
+    args("start")       .params(1).aliased('s').defaults("0x00000000").help("start of range to query (hash value - defaults to 0x00000000)");
+    args("end")         .params(1).aliased('e').defaults("0xFFFFFFFF").help("end of range to query (hash value - defaults to 0xFFFFFFFF)");
+    args("range")       .params(1).aliased('r').help("calculate and display ranges for the given number of nodes");
     args("list")        .params(0).aliased('l').help("get a list of channels in the source nodes");
-    
     args("channel")     .params(1).aliased('c').help("name of the channel to copy (optional)");
     args("compression") .params(0).aliased('z').help("enable compression (optional)");
-    
     
     if (!args.parse(arguments))
     {
@@ -139,7 +139,7 @@ bool parseArgs ( Arguments args, char[][] arguments )
     }
     
     if ( (args.getString("source").length != 0 && args.getString("destination").length != 0)
-        ||  (args.get("range") && args.getInt!(uint)("number") != 0) || args.getBool("list"))        
+        ||  args.getInt!(uint)("range") != 0 || args.getBool("list"))        
     { 
         return true;
     }
