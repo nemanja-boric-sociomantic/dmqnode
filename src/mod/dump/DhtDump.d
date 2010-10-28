@@ -92,9 +92,6 @@ static:
 
         scope dht = initDhtClient(xml);
 
-        assert(dht.commandSupported(DhtConst.Command.GetRange) ||
-                (range_min == hash_t.min && range_max == hash_t.max), "Error: queried node(s) can't handle getRange commands" );
-        
         if ( all_channels )
         {
             dumpAllChannels(dht, range_min, range_max, count_records);
@@ -249,13 +246,24 @@ static:
             }
         }
 
-        if ( !dht.commandSupported(DhtConst.Command.GetRange) && range_min == hash_t.min && range_max == hash_t.max )
+        if ( dht.commandSupported(DhtConst.Command.GetRange) )
         {
-            dht.getAll(channel, &receiveRecord).eventLoop();
+            dht.getRange(channel, range_min, range_max, &receiveRecord).eventLoop();
         }
         else
         {
-            dht.getRange(channel, range_min, range_max, &receiveRecord).eventLoop();
+            dht.getAll(channel,
+                    ( uint id, char[] hash_str, char[] value )
+                    {
+                        if ( hash_str.length )
+                        {
+                            auto hash = DhtHash.straightToHash(hash_str);
+                            if ( hash >= range_min && hash <= range_max )
+                            {
+                                receiveRecord(id, hash_str, value);
+                            }
+                        }
+                    }).eventLoop();
         }
 
         records += channel_records;
