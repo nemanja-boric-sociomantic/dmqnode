@@ -131,7 +131,7 @@ struct MainConfig
         }
         else
         {
-            TraceLog.disableTrace;
+            TraceLog.enabled = false;
         }
     
         OceanException.setOutput(new AppendFile(this.cmdpath.prepend([error_log])));
