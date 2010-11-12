@@ -231,7 +231,7 @@ static:
         
         void receiveRecord ( uint id, char[] key, char[] value )
         {
-            if ( key.length )
+            if ( key.length && value.length )
             {
                 channel_records++;
                 channel_bytes += value.length;
