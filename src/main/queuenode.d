@@ -20,6 +20,7 @@ module main.queuenode;
  ******************************************************************************/
 
 private import server.QueueDaemon;
+private import core.Terminate;
 
 private import ocean.util.Config;
 private import ocean.sys.CmdPath;
@@ -47,7 +48,7 @@ void main ( char[][] args )
     
     cmdpath.set(args[0]);
     
-    Config.init(cmdpath.prepend("etc", "config.ini"));
+    Config.init("etc/config.ini");
     
     queue = new QueueDaemon();
     
@@ -57,14 +58,6 @@ void main ( char[][] args )
     
     delete queue;
 }
-
-/******************************************************************************
-
-    Kill application flag
-
- ******************************************************************************/
-
-bool kill = false;
 
 /******************************************************************************
 
@@ -86,7 +79,7 @@ bool terminate ( int code )
     
     queue.shutdown();
     
-    scope (exit) kill = true;
+    scope (exit) Terminate.terminating = true;
     
-    return kill;
+    return Terminate.terminating;
 }
