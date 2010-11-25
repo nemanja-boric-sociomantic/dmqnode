@@ -21,6 +21,10 @@ module server.DhtDaemon;
 
  ******************************************************************************/
 
+private import core.config.MainConfig;
+
+private import  server.QueueTracer;
+
 private import  swarm.queue.QueueNode;
 
 private import  swarm.queue.QueueConst;
@@ -49,12 +53,30 @@ class QueueDaemon
 {
     /***************************************************************************
 
+        Queue node type alias
+    
+     **************************************************************************/
+
+    private alias QueueNode!(Ring, uint) Queue;
+
+
+    /***************************************************************************
+
         Queue node object
 
      **************************************************************************/
 
-    private     IQueueNode                node;
+    private IQueueNode node;
 
+
+    /***************************************************************************
+
+        Queue channel tracer object
+    
+     **************************************************************************/
+
+    private QueueTracer!(Queue) qtrace;
+    
     /***************************************************************************
 
          Constructor
@@ -63,6 +85,8 @@ class QueueDaemon
 
     public this ( )
     {
+        MainConfig.init();
+
         this.setLogger();
 
         uint    number_threads  = Config.get!(uint)("Server", "connection_threads");
@@ -72,9 +96,17 @@ class QueueDaemon
         assertEx!(IllegalArgumentException)(number_threads, "number of threads of 0 specified in configuration");
         assertEx!(IllegalArgumentException)(size_limit,     "size limit 0 specified in configuration");
         
-        this.node = new QueueNode!(Ring, uint)(QueueConst.NodeItem(Config.getChar("Server", "address"),
-                                                                   Config.getInt("Server", "port")),
-                                               number_threads, data_dir, size_limit);
+        auto queue = new Queue(QueueConst.NodeItem(Config.getChar("Server", "address"),
+                Config.getInt("Server", "port")),
+                number_threads, data_dir, size_limit);
+        this.node = queue;
+
+        debug Trace.formatln("Queue node: {}:{}", Config.getChar("Server", "address"), Config.getChar("Server", "port"));
+
+        if ( MainConfig.show_channel_trace )
+        {
+            this.qtrace = new QueueTracer!(Queue)(queue);
+        }
     }
 
     /***************************************************************************
