@@ -22,9 +22,10 @@ module main.queuenode;
 private import server.QueueDaemon;
 private import core.Terminate;
 
-private import ocean.util.Config;
-private import ocean.sys.CmdPath;
-private import ocean.sys.SignalHandler;
+private import core.config.MainConfig;
+
+private import ocean.sys.CmdPath,
+               ocean.sys.SignalHandler;
 
 debug private import tango.util.log.Trace;
 
@@ -44,11 +45,7 @@ QueueDaemon queue;
 
 void main ( char[][] args )
 {
-    CmdPath cmdpath;
-    
-    cmdpath.set(args[0]);
-    
-    Config.init("etc/config.ini");
+    MainConfig.init(args[0]);
     
     queue = new QueueDaemon();
     

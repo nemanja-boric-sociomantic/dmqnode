@@ -85,8 +85,6 @@ class QueueDaemon
 
     public this ( )
     {
-        MainConfig.init();
-
         this.setLogger();
 
         uint    number_threads  = Config.get!(uint)("Server", "connection_threads");

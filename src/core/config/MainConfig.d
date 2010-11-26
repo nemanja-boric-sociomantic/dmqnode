@@ -36,10 +36,12 @@ debug private import tango.util.log.Trace;
 
 *******************************************************************************/
 
-class MainConfig
+struct MainConfig
 {
 public static:
 
+    // TODO: add other config parameters (see server.QueueDaemon) into this struct
+    
     /***************************************************************************
     
         Trace
@@ -57,11 +59,12 @@ public static:
     
     ***************************************************************************/
     
-    void init ( )
+    void init ( char[] command_path )
     {
         CmdPath cmdpath;
-    
-        Config.init("etc/config.ini");
+        cmdpath.set(command_path);
+
+        Config.init(cmdpath.prepend("etc", "config.ini"));
     
         // Trace
         show_channel_trace = Config.Bool["Trace", "show_channel_trace"];
