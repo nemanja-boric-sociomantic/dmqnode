@@ -49,6 +49,10 @@ public static:
     ***************************************************************************/
 
     bool show_channel_trace;
+    
+    bool trace_rw_positions;
+
+    bool trace_byte_size;
 
     uint channel_trace_update;
 
@@ -69,6 +73,8 @@ public static:
         // Trace
         show_channel_trace = Config.Bool["Trace", "show_channel_trace"];
         channel_trace_update = Config.Int["Trace", "channel_trace_update"];
+        trace_rw_positions = Config.Bool["Trace", "trace_rw_positions"];
+        trace_byte_size = Config.Bool["Trace", "trace_byte_size"];
     }
 }
 

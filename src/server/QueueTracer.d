@@ -24,9 +24,17 @@ private import core.config.MainConfig;
 
 private import core.Terminate;
 
+private import ocean.util.log.StaticTrace;
+
+private import ocean.core.Array;
+
+private import swarm.queue.storage.model.StorageEngineInfo;
+
 private import tango.core.Thread;
 
-private import ocean.util.log.StaticTrace;
+private import tango.text.convert.Layout;
+
+debug private import tango.util.log.Trace;
 
 
 
@@ -59,6 +67,15 @@ class QueueTracer ( Q )
     ***************************************************************************/
 
     private Q queue;
+
+
+    /***************************************************************************
+
+        Output string buffer.
+    
+    ***************************************************************************/
+
+    private char[] output;
 
 
     /***************************************************************************
@@ -99,28 +116,122 @@ class QueueTracer ( Q )
     private void run ( )
     {
         auto sleep_time = cast(float)MainConfig.channel_trace_update / 1000.0;
-        
+
         while ( !Terminate.terminating )
         {
+            this.output.length = 0;
+            auto num_channels = this.queue.numChannels();
+
+            size_t i;
             foreach ( id; this.queue )
             {
-                // TODO: concatenate multi-channel info with Layout
                 auto channel = this.queue.channelInfo(id);
-                auto read = channel.readPercent() * 100;
-                auto write = channel.writePercent() * 100;
+                if ( channel )
+                {
+                    if ( MainConfig.trace_rw_positions )
+                    {
+                        this.appendRWTrace(id, channel);
+                    }
+                    else
+                    {
+                        this.appendSize(id, channel);
+                    }
     
-                if ( read <= write )
-                {
-                    StaticTrace.format("{} [r{}% .. w{}%]", id, read, write).flush();
-                }
-                else
-                {
-                    StaticTrace.format("{} [w{}% .. r{}%]", id, write, read).flush();
+                    if ( i++ < num_channels - 1 )
+                    {
+                        this.output.append(" | ");
+                    }
                 }
             }
+            StaticTrace.format("{}", this.output).flush();
 
             Thread.sleep(sleep_time);
         }
+    }
+
+
+    /***************************************************************************
+
+        Appends read/write position info for a channel to the output string.
+        
+        Params:
+            id = name of channel
+            channel = channel info object
+    
+    ***************************************************************************/
+
+    private void appendRWTrace ( char[] id, StorageEngineInfo channel )
+    {
+        if ( MainConfig.trace_byte_size )
+        {
+            auto read = channel.readPos();
+            auto write = channel.writePos();
+            if ( read <= write )
+            {
+                Layout!(char).instance().convert(&this.layoutSink, "{} [r{} .. w{}]", id, read, write);
+            }
+            else
+            {
+                Layout!(char).instance().convert(&this.layoutSink, "{} [w{} .. r{}]", id, write, read);
+            }
+        }
+        else
+        {
+            auto read = channel.readPercent() * 100;
+            auto write = channel.writePercent() * 100;
+            if ( read <= write )
+            {
+                Layout!(char).instance().convert(&this.layoutSink, "{} [r{}% .. w{}%]", id, read, write);
+            }
+            else
+            {
+                Layout!(char).instance().convert(&this.layoutSink, "{} [w{}% .. r{}%]", id, write, read);
+            }
+        }
+    }
+
+
+    /***************************************************************************
+
+        Appends size info for a channel to the output string.
+        
+        Params:
+            id = name of channel
+            channel = channel info object
+    
+    ***************************************************************************/
+
+    private void appendSize ( char[] id, StorageEngineInfo channel )
+    {
+        if ( MainConfig.trace_byte_size )
+        {
+            auto size = channel.size();
+            Layout!(char).instance().convert(&this.layoutSink, "{}: {}", id, size);
+        }
+        else
+        {
+            auto size = channel.sizePercent();
+            Layout!(char).instance().convert(&this.layoutSink, "{}: {}%", id, size);
+        }
+    }
+
+
+    /***************************************************************************
+
+        Sink delegate for Layout.convert. Appends string chunks to this.output.
+        
+        Params:
+            s = string to process
+            
+        Returns:
+            number of characters processed.
+    
+    ***************************************************************************/
+
+    private uint layoutSink ( char[] s )
+    {
+        this.output.append(s);
+        return s.length;
     }
 }
 
