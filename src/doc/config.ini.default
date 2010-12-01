@@ -22,8 +22,8 @@
 ; connection_threads    number of threads for incoming connections
 ; data_dir              directory where the data is stored
 ; storage_engine        storage engine that should be used (only one can be used)
-;                       [hashtable, btree, filesystem, memory, logfile]
-; size_limit            size limit for storage engine (should to be adequat for
+;                       [hashtable, btree, filesystem, memory, logfiles]
+; size_limit            size limit for storage engine (should to be adequate for
 ;                       the choosen storage engine). If set to 0 no limit is 
 ;                       applied. size limit is set in bytes.
 ;
