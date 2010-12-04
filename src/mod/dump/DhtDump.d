@@ -17,6 +17,7 @@
         -e = end of range to query   (hash value - defaults to 0xFFFFFFFF)
         -c = channel name to query
         -A = query all channels
+        -x = displays records as hexadecimal dump (default is a string dump)
 
 *******************************************************************************/
 
@@ -38,11 +39,13 @@ private import swarm.dht.client.DhtNodesConfig;
 
 private import swarm.dht.client.connection.ErrorInfo;
 
-private import tango.io.Stdout;
-
 private import ocean.text.Arguments;
 
 private import ocean.core.Array;
+
+private import tango.io.Stdout;
+
+private import tango.math.Math : min;
 
 debug private import tango.util.log.Trace;
 
@@ -67,17 +70,52 @@ static:
 
     private ulong records, bytes;
 
+
+    /***************************************************************************
+
+        Internal count of records & bytes received for the current channel
     
+    ***************************************************************************/
+
+    private ulong channel_records, channel_bytes;
+
+
+    /***************************************************************************
+
+        Maximum number of characters to output to stdout for each record
+
+    ***************************************************************************/
+
+    private uint text_limit;
+
+
+    /***************************************************************************
+
+        True = just count records, false = show text of each record
+    
+    ***************************************************************************/
+
+    private bool count_records;
+
+    
+    /***************************************************************************
+
+        True = output hex values, false = output strings
+    
+    ***************************************************************************/
+
+    private bool hex_output;
+
+
     /***************************************************************************
 
         Runs the dht node dump
         
         Params:
             args = command line arguments
-            
-        Throws:
-            asserts that the node(s) support(s) getRange, if the arguments
-            indicate that a getRange request is needed
+
+        Returns:
+            true
 
     ***************************************************************************/
 
@@ -88,17 +126,19 @@ static:
         auto range_max = args.getInt!(hash_t)("end");
         auto channel = args.getString("channel");
         auto all_channels = args.getBool("all_channels");
-        auto count_records = args.getBool("count");
+        count_records = args.getBool("count");
+        hex_output = args.getBool("hex");
+        text_limit = args.getInt!(uint)("limit");
 
         scope dht = initDhtClient(xml);
 
         if ( all_channels )
         {
-            dumpAllChannels(dht, range_min, range_max, count_records);
+            dumpAllChannels(dht, range_min, range_max);
         }
         else
         {
-            dumpChannel(dht, channel, range_min, range_max, count_records);
+            dumpChannel(dht, channel, range_min, range_max);
         }
 
         return true;
@@ -111,8 +151,8 @@ static:
         etc/dhtnodes.xml, and querying the node ranges.
 
         Returns:
-            dht node
-    
+            initialised dht client
+
         Throws:
             asserts that no errors occurred during initialisation
 
@@ -150,12 +190,10 @@ static:
             dht = dht client to perform query with
             range_min = start of hash range to query
             range_max = end of hash range to query
-            count_records = whether to display a count of the records without
-                dumping the record contents
-    
+
     ***************************************************************************/
 
-    private void dumpAllChannels ( DhtClient dht, hash_t range_min, hash_t range_max, bool count_records )
+    private void dumpAllChannels ( DhtClient dht, hash_t range_min, hash_t range_max )
     {
         records = 0;
         bytes = 0;
@@ -173,7 +211,7 @@ static:
 
         foreach ( channel; channels )
         {
-            dumpChannel(dht, channel, range_min, range_max, count_records);
+            dumpChannel(dht, channel, range_min, range_max);
         }
 
         if ( count_records )
@@ -190,10 +228,6 @@ static:
         Params:
             dht = dht client to perform query with
             channel = channel to query
-            range_min = start of hash range to query
-            range_max = end of hash range to query
-            count_records = whether to display a count of the records without
-                dumping the record contents
 
     ***************************************************************************/
     
@@ -218,33 +252,25 @@ static:
             channel = name of channel to dump
             range_min = start of hash range to query
             range_max = end of hash range to query
-            count_records = whether to display a count of the records without
-                dumping the record contents
-    
+
     ***************************************************************************/
 
-    private void dumpChannel ( DhtClient dht, char[] channel, hash_t range_min, hash_t range_max, bool count_records )
+    private void dumpChannel ( DhtClient dht, char[] channel, hash_t range_min, hash_t range_max )
     {
-        ulong channel_records, channel_bytes;
-
-        displayChannelSize(dht, channel);
-        
         void receiveRecord ( uint id, char[] key, char[] value )
         {
             if ( key.length && value.length )
             {
                 channel_records++;
                 channel_bytes += value.length;
-                if ( !count_records )
-                {
-                    Stdout.format("{}: {} -> {}\n", channel, key, value);
-                }
-                else if (!(channel_records % 10_000))
-                {
-                    Stdout.format("\b\b\b\b\b\b\b\b\b\b{,10}", channel_records).flush();
-                }
+                outputRecord(channel, key, value);
             }
         }
+
+        channel_records = 0;
+        channel_bytes = 0;
+
+        displayChannelSize(dht, channel);
 
         if ( dht.commandSupported(DhtConst.Command.GetRange) )
         {
@@ -271,6 +297,44 @@ static:
         if ( count_records )
         {
             Stdout.format("Channel {} contains {} records ({} bytes) in the specified range\n\n", channel, channel_records, channel_bytes);
+        }
+    }
+
+
+    /***************************************************************************
+
+        Outputs a record to stdout
+        
+        Params:
+            channel = channel record came from
+            key = record key
+            value = record value
+    
+    ***************************************************************************/
+
+    private void outputRecord ( char[] channel, char[] key, char[] value )
+    {
+        if ( !count_records )
+        {
+            auto limit = min(text_limit, value.length);
+            char[] limit_text;
+            if ( limit < value.length )
+            {
+                limit_text = "... [truncated]";
+            }
+
+            if ( hex_output )
+            {
+                Stdout.format("{}: {} -> {}{} ({} bytes)\n", channel, key, cast(void[])value[0..limit], limit_text, value.length);
+            }
+            else
+            {
+                Stdout.format("{}: {} -> '{}{}' ({} bytes)\n", channel, key, value, limit_text, value.length);
+            }
+        }
+        else if ( !(channel_records % 10_000) )
+        {
+            Stdout.format("\b\b\b\b\b\b\b\b\b\b{,10}", channel_records).flush();
         }
     }
 }

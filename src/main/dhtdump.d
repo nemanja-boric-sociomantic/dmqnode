@@ -18,6 +18,7 @@
         -c = channel name to query
         -n = count records, do not dump contents
         -A = query all channels
+        -x = displays records as hexadecimal dump (default is a string dump)
 
 *******************************************************************************/
 
@@ -92,6 +93,8 @@ bool parseArgs ( Arguments args, char[][] arguments )
     args("channel").conflicts("all_channels").params(1).aliased('c').help("channel name to query");
     args("all_channels").conflicts("channel").aliased('A').help("query all channels");
     args("count").aliased('n').help("count records, do not dump contents");
+    args("hex").aliased('x').help("displays records as hexadecimal dump (default is a string dump)");
+    args("limit").params(1).defaults("0xffffffff").aliased('l').help("limits the length of text displayed for each record");
 
     // Parse aguments
     if ( !args.parse(arguments) )
