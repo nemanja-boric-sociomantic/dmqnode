@@ -325,7 +325,7 @@ static:
 
             if ( hex_output )
             {
-                Stdout.format("{}: {} -> {}{} ({} bytes)\n", channel, key, cast(void[])value[0..limit], limit_text, value.length);
+                Stdout.format("{}: {} -> {:x}{} ({} bytes)\n", channel, key, cast(void[])value[0..limit], limit_text, value.length);
             }
             else
             {
