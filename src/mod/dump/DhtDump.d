@@ -18,6 +18,7 @@
         -c = channel name to query
         -A = query all channels
         -x = displays records as hexadecimal dump (default is a string dump)
+        -l = limits the length of text displayed for each record
 
 *******************************************************************************/
 
@@ -121,27 +122,65 @@ static:
 
     public bool run ( Arguments args )
     {
-        auto xml = args.getString("source");
-        auto range_min = args.getInt!(hash_t)("start");
-        auto range_max = args.getInt!(hash_t)("end");
         auto channel = args.getString("channel");
-        auto all_channels = args.getBool("all_channels");
+        auto xml = args.getString("source");
         count_records = args.getBool("count");
         hex_output = args.getBool("hex");
         text_limit = args.getInt!(uint)("limit");
 
         scope dht = initDhtClient(xml);
 
-        if ( all_channels )
+        if ( args.exists("key") )
         {
-            dumpAllChannels(dht, range_min, range_max);
+            auto key = args.getInt!(hash_t)("key");
+            dumpRecord(dht, channel, key);
         }
         else
         {
-            dumpChannel(dht, channel, range_min, range_max);
+            auto range_min = args.exists("start") ? args.getInt!(hash_t)("start") : 0x00000000;
+            auto range_max = args.exists("end") ? args.getInt!(hash_t)("end") : 0xffffffff;
+            auto all_channels = args.getBool("all_channels");
+
+            if ( args.getBool("all_channels") )
+            {
+                dumpAllChannels(dht, range_min, range_max);
+            }
+            else
+            {
+                dumpChannel(dht, channel, range_min, range_max);
+            }
         }
 
         return true;
+    }
+
+    
+    /***************************************************************************
+
+        Outputs a single dht record with the specified hash in the specified
+        channel to stdout.
+        
+        Params:
+            dht = dht client to perform query with
+            channel = channel to query
+            key = hash of record to dump
+    
+    ***************************************************************************/
+
+    private void dumpRecord ( DhtClient dht, char[] channel, hash_t key )
+    {
+        dht.get(channel, key,
+                ( uint id, char[] value )
+                {
+                    if ( value.length )
+                    {
+                        outputRecord(channel, key, value);
+                    }
+                    else
+                    {
+                        Stdout.formatln("Record doesn't exist");
+                    }
+                }).eventLoop();
     }
 
 
@@ -311,6 +350,13 @@ static:
             value = record value
     
     ***************************************************************************/
+
+    private void outputRecord ( char[] channel, hash_t key, char[] value )
+    {
+        DhtHash.HexDigest hash_str;
+        DhtHash.toString(key, hash_str);
+        outputRecord(channel, hash_str, value);
+    }
 
     private void outputRecord ( char[] channel, char[] key, char[] value )
     {

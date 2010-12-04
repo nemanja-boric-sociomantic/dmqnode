@@ -19,6 +19,8 @@
         -n = count records, do not dump contents
         -A = query all channels
         -x = displays records as hexadecimal dump (default is a string dump)
+        -l = limits the length of text displayed for each record
+        -k = fetch just a single record with the specified key (hash)
 
 *******************************************************************************/
 
@@ -38,7 +40,7 @@ private import ocean.util.OceanException;
 
 private import ocean.text.Arguments;
 
-debug private import tango.util.log.Trace;
+private import tango.util.log.Trace;
 
 
 
@@ -88,29 +90,36 @@ bool parseArgs ( Arguments args, char[][] arguments )
 {
     args("help").aliased('?').aliased('h').help("display this help");
     args("source").params(1).required().aliased('S').help("path of dhtnodes.xml file defining nodes to dump");
-    args("start").params(1).defaults("0x00000000").aliased('s').help("start of range to query (hash value - defaults to 0x00000000)");
-    args("end").params(1).defaults("0xffffffff").aliased('e').help("end of range to query (hash value - defaults to 0xFFFFFFFF)");
+    args("start").params(1).aliased('s').help("start of range to query (hash value - defaults to 0x00000000)");
+    args("end").params(1).aliased('e').help("end of range to query (hash value - defaults to 0xFFFFFFFF)");
     args("channel").conflicts("all_channels").params(1).aliased('c').help("channel name to query");
     args("all_channels").conflicts("channel").aliased('A').help("query all channels");
     args("count").aliased('n').help("count records, do not dump contents");
     args("hex").aliased('x').help("displays records as hexadecimal dump (default is a string dump)");
-    args("limit").params(1).defaults("0xffffffff").aliased('l').help("limits the length of text displayed for each record");
+    args("limit").params(1).defaults("0xffffffff").aliased('l').help("limits the length of text displayed for each record (defaults to no limit)");
+    args("key").params(1).aliased('k').help("fetch just a single record with the specified key (hash)");
 
     // Parse aguments
     if ( !args.parse(arguments) )
     {
+        Trace.formatln("Invalid arguments");
         return false;
     }
 
+    // start must be <= end
     if ( args.getInt!(uint)("start") > args.getInt!(uint)("end") )
     {
+        Trace.formatln("Range start must be <= end");
         return false;
     }
 
-    if ( (args.getString("channel").length && args.getBool("all_channels")) ||
-         !(args.getString("channel").length || args.getBool("all_channels")) )
+    // cannot do a single key request and a range request
+    if ( args.exists("key") )
     {
-        return false;
+        if ( args.exists("start") || args.exists("end") )
+        {
+            return false;
+        }
     }
 
     return true;
