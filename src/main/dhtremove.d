@@ -19,13 +19,10 @@
         -C = query complete hash range
         -c = channel name to query
         -A = query all channels
-        -n = count records, do not dump contents
-        -x = displays records as hexadecimal dump (default is a string dump)
-        -l = limits the length of text displayed for each record
 
 *******************************************************************************/
 
-module src.main.dhtdump;
+module src.main.dhtremove;
 
 
 
@@ -35,7 +32,7 @@ module src.main.dhtdump;
     
 *******************************************************************************/
 
-private import src.mod.dump.DhtDump;
+private import src.mod.remove.DhtRemove;
 
 private import ocean.util.OceanException;
 
@@ -58,10 +55,10 @@ void main ( char[][] arguments )
 
     // Define valid arguments
     scope args = new Arguments();
-    if ( DhtDump.parseArgs(args, arguments[1..$]) )
+    if ( DhtRemove.parseArgs(args, arguments[1..$]) )
     {
         // run app
-        OceanException.run(&DhtDump.run, args);
+        OceanException.run(&DhtRemove.run, args);
     }
     else
     {
