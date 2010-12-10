@@ -59,44 +59,9 @@ debug private import tango.util.log.Trace;
 
 class DhtRemove : DhtTool
 {
-    /***************************************************************************
-    
-        Singleton instance of this class, used in static methods.
-    
-    ***************************************************************************/
-    
-    private static typeof(this) singleton;
-    
-    static private typeof(this) instance ( )
-    {
-        if ( !singleton )
-        {
-            singleton = new typeof(this);
-        }
-    
-        return singleton;
-    }
-    
-    
-    /***************************************************************************
-    
-        Parses and validates command line arguments.
-        
-        Params:
-            args = arguments object
-            arguments = command line args (excluding the file name)
-    
-        Returns:
-            true if the arguments are valid
-    
-    ***************************************************************************/
-    
-    static public bool parseArgs ( Arguments args, char[][] arguments )
-    {
-        return instance().validArgs(args, arguments);
-    }
-    
-    
+    mixin SingletonMethods;
+
+
     /***************************************************************************
 
         Checks whether the parsed command line args are valid.
@@ -117,25 +82,6 @@ class DhtRemove : DhtTool
             return false;
         }
         
-        return true;
-    }
-
-
-    /***************************************************************************
-    
-        Main run method, called by OceanException.run.
-        
-        Params:
-            args = processed arguments
-    
-        Returns:
-            always true
-    
-    ***************************************************************************/
-    
-    static public bool run ( Arguments args )
-    {
-        instance().process(args);
         return true;
     }
 

@@ -63,61 +63,7 @@ debug private import tango.util.log.Trace;
 
 class DhtDump : DhtTool
 {
-    /***************************************************************************
-
-        Singleton instance of this class, used in static methods.
-    
-    ***************************************************************************/
-
-    private static typeof(this) singleton;
-
-    static private typeof(this) instance ( )
-    {
-        if ( !singleton )
-        {
-            singleton = new typeof(this);
-        }
-
-        return singleton;
-    }
-
-
-    /***************************************************************************
-
-        Parses and validates command line arguments.
-        
-        Params:
-            args = arguments object
-            arguments = command line args (excluding the file name)
-    
-        Returns:
-            true if the arguments are valid
-    
-    ***************************************************************************/
-    
-    static public bool parseArgs ( Arguments args, char[][] arguments )
-    {
-        return instance().validArgs(args, arguments);
-    }
-    
-    
-    /***************************************************************************
-    
-        Main run method, called by OceanException.run.
-        
-        Params:
-            args = processed arguments
-    
-        Returns:
-            always true
-    
-    ***************************************************************************/
-    
-    static public bool run ( Arguments args )
-    {
-        instance().process(args);
-        return true;
-    }
+    mixin SingletonMethods;
 
 
     /***************************************************************************
@@ -215,7 +161,7 @@ class DhtDump : DhtTool
 
     ***************************************************************************/
 
-    override protected void init_ ( Arguments args )
+    override protected void readArgs_ ( Arguments args )
     {
         this.count_records = args.getBool("count");
         this.hex_output = args.getBool("hex");
