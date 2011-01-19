@@ -1,19 +1,21 @@
 /*******************************************************************************
 
     DHT node dump
-    
+
     copyright:      Copyright (c) 2010 sociomantic labs. All rights reserved
-    
+
     version:        October 2010: Initial release
-    
+
     authors:        Gavin Norman
-    
-    Reads records from one or more dht nodes and outputs them to stdout.
-    
+
+    Reads records from one or more dht nodes and outputs them to stdout or to a
+    file.
+
     Command line parameters:
         -n = count records, do not dump contents
         -x = displays records as hexadecimal dump (default is a string dump)
         -l = limits the length of text displayed for each record
+        -f = dumps records to a file, instead of to stdout
 
     Inherited from super class:
         -h = display help
@@ -47,7 +49,11 @@ private import ocean.core.Array;
 
 private import ocean.text.Arguments;
 
+private import ocean.io.serialize.SimpleSerializer;
+
 private import tango.io.Stdout;
+
+private import tango.io.device.File;
 
 private import tango.math.Math : min;
 
@@ -95,6 +101,33 @@ class DhtDump : DhtTool
 
     /***************************************************************************
 
+        True = dump to file, false = dump to stdout
+
+    ***************************************************************************/
+
+    private bool file_dump;
+
+
+    /***************************************************************************
+
+        File used for dumping to
+
+    ***************************************************************************/
+
+    private File file;
+
+
+    /***************************************************************************
+
+        Flag to indicate that the dump file is open
+    
+    ***************************************************************************/
+
+    private bool file_open;
+
+
+    /***************************************************************************
+
         Internal count of records & bytes received
     
     ***************************************************************************/
@@ -109,6 +142,18 @@ class DhtDump : DhtTool
     ***************************************************************************/
 
     private ulong channel_records, channel_bytes;
+
+    
+    /***************************************************************************
+
+        Constructor.
+    
+    ***************************************************************************/
+
+    public this ( )
+    {
+        this.file = new File;
+    }
 
 
     /***************************************************************************
@@ -125,6 +170,7 @@ class DhtDump : DhtTool
         args("count").aliased('n').help("count records, do not dump contents");
         args("hex").aliased('x').help("displays records as hexadecimal dump (default is a string dump)");
         args("limit").params(1).defaults("0xffffffff").aliased('l').help("limits the length of text displayed for each record (defaults to no limit)");
+        args("file").aliased('f').help("dumps records to a file, named [channel].dump");
     }
 
 
@@ -147,7 +193,27 @@ class DhtDump : DhtTool
             Stderr.formatln("You want to count a single record? The result is 1.");
             return false;
         }
-        
+
+        if ( args.exists("file") )
+        {
+            if ( args.exists("hex") )
+            {
+                Stderr.formatln("Cannot dump hex data to a file.");
+                return false;
+            }
+
+            if ( args.exists("count") )
+            {
+                Stderr.formatln("Cannot dump a record count to file.");
+                return false;
+            }
+
+            if ( args.exists("limit") )
+            {
+                Stderr.formatln("Cannot limit the values of records dumped to file.");
+                return false;
+            }
+        }
         return true;
     }
 
@@ -166,6 +232,7 @@ class DhtDump : DhtTool
         this.count_records = args.getBool("count");
         this.hex_output = args.getBool("hex");
         this.text_limit = args.getInt!(uint)("limit");
+        this.file_dump = args.getBool("file");
 
         this.records = 0;
         this.bytes = 0;
@@ -187,6 +254,11 @@ class DhtDump : DhtTool
         if ( this.count_records )
         {
             Stdout.format("Total of all channels = {} records ({} bytes) in the specified range\n", this.records, this.bytes);
+        }
+
+        if ( this.file_open )
+        {
+            this.file.close();
         }
     }
 
@@ -279,28 +351,29 @@ class DhtDump : DhtTool
 
     /***************************************************************************
 
-        Outputs dht records in the specified channel & hash range to stdout.
-        
+        Outputs the size and record count of the specified channel to stdout.
+
         Params:
             dht = dht client to perform query with
             channel = channel to query
-    
+
     ***************************************************************************/
     
     private void displayChannelSize ( DhtClient dht, char[] channel  )
     {
-        dht.getChannelSize(channel, (hash_t id, char[] address, ushort port, char[] channel, 
-                                     ulong records, ulong bytes)
-                          {
-                              Stdout.formatln("{}:{} {} - {} records, {} bytes", address, port, channel, records, bytes);
-                          }).eventLoop();
+        dht.getChannelSize(channel,
+                ( hash_t id, char[] address, ushort port, char[] channel, ulong records, ulong bytes )
+                {
+                    Stdout.formatln("{}:{} {} - {} records, {} bytes", address, port, channel, records, bytes);
+                }).eventLoop();
+
         Stdout.flush();
     }
 
 
     /***************************************************************************
 
-        Outputs a record to stdout
+        Outputs a single record.
         
         Params:
             channel = channel record came from
@@ -330,21 +403,69 @@ class DhtDump : DhtTool
         }
         else
         {
-            auto limit = min(this.text_limit, value.length);
-            char[] limit_text;
-            if ( limit < value.length )
+            if ( this.file_dump )
             {
-                limit_text = "... [truncated]";
-            }
-
-            if ( hex_output )
-            {
-                Stdout.format("{}: {} -> {:x}{} ({} bytes)\n", channel, key, cast(void[])value[0..limit], limit_text, value.length);
+                dumpRecordToFile(channel, key, value);
             }
             else
             {
-                Stdout.format("{}: {} -> '{}{}' ({} bytes)\n", channel, key, value[0..limit], limit_text, value.length);
+                dumpRecordToStdout(channel, key, value);
             }
+        }
+    }
+
+
+    /***************************************************************************
+
+        Outputs a record to a file. The file is opened if it's not already.
+
+        Params:
+            channel = channel record came from
+            key = record key
+            value = record value
+    
+    ***************************************************************************/
+
+    private void dumpRecordToFile ( char[] channel, char[] key, char[] value )
+    {
+        if ( !this.file_open )
+        {
+            this.file.open(channel ~ ".dump", File.WriteCreate);
+            this.file_open = true;
+        }
+
+        SimpleSerializer.write(this.file, key);
+        SimpleSerializer.write(this.file, value);
+    }
+
+
+    /***************************************************************************
+
+        Outputs a record to stdout.
+    
+        Params:
+            channel = channel record came from
+            key = record key
+            value = record value
+    
+    ***************************************************************************/
+
+    private void dumpRecordToStdout ( char[] channel, char[] key, char[] value )
+    {
+        auto limit = min(this.text_limit, value.length);
+        char[] limit_text;
+        if ( limit < value.length )
+        {
+            limit_text = "... [truncated]";
+        }
+
+        if ( hex_output )
+        {
+            Stdout.format("{}: {} -> {:x}{} ({} bytes)\n", channel, key, cast(void[])value[0..limit], limit_text, value.length);
+        }
+        else
+        {
+            Stdout.format("{}: {} -> '{}{}' ({} bytes)\n", channel, key, value[0..limit], limit_text, value.length);
         }
     }
 }
