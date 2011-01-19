@@ -1,6 +1,6 @@
 /*******************************************************************************
 
-    DHT node dump
+    DHT node bulk remove
     
     copyright:      Copyright (c) 2010 sociomantic labs. All rights reserved
     
