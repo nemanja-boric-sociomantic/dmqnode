@@ -332,6 +332,8 @@ class DhtDump : DhtTool
     
     ***************************************************************************/
 
+    // TODO: add decompression flag
+
     protected void processRecord ( DhtClient dht, char[] channel, hash_t key)
     {
         dht.get(channel, key,
