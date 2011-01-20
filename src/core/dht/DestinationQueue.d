@@ -11,7 +11,11 @@
     --
 
     Queue of records to write to the destination dht - builds up a set of
-    records to be sent all at once to the destination dht
+    records to be sent all at once to the destination dht.
+
+    As the records are put() to the destination queue, the values are copied
+    into an internal array. This means that the using class does not need to
+    take care of managing its own pool of record values.
 
  ******************************************************************************/
 
@@ -71,7 +75,7 @@ class DestinationQueue
     
     /***************************************************************************
     
-        Destination dht client
+        Destination dht client reference (set in constructor)
     
     ***************************************************************************/
     
@@ -93,9 +97,9 @@ class DestinationQueue
     
     ***************************************************************************/
     
-    private hash_t start = 0x00000000;
+    private hash_t start = hash_t.min;
     
-    private hash_t end = 0xffffffff;
+    private hash_t end = hash_t.max;
     
     /***************************************************************************
     
