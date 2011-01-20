@@ -13,7 +13,8 @@
 
     Command line parameters:
         -S = dhtnodes.xml file for dht to query
-        -n = display the count of records & bytes per channel
+        -v = verbose output, displays info per channel per node, and per node
+            per channel
         -h = display help
 
     TODO: add a flag to show the number of open connections (when the new dht
