@@ -1,27 +1,19 @@
 /*******************************************************************************
 
-    DHT node dump
+    DHT node import
     
-    copyright:      Copyright (c) 2010 sociomantic labs. All rights reserved
+    copyright:      Copyright (c) 2011 sociomantic labs. All rights reserved
     
-    version:        October 2010: Initial release
+    version:        January 2011: Initial release
     
     authors:        Gavin Norman
     
-    Reads records from one or more dht nodes and outputs them to stdout.
-    
+    Reads records from a file and puts them to a dht.
+
     Command line parameters:
+        -D = dhtnodes.xml file for destination dht
+        -f = name of file to read records from
         -h = display help
-        -S = dhtnodes.xml source file
-        -k = fetch just a single record with the specified key (hash)
-        -s = start of range to query (hash value - defaults to 0x00000000)
-        -e = end of range to query   (hash value - defaults to 0xFFFFFFFF)
-        -C = query complete hash range
-        -c = channel name to query
-        -A = query all channels
-        -n = count records, do not dump contents
-        -x = displays records as hexadecimal dump (default is a string dump)
-        -l = limits the length of text displayed for each record
 
 *******************************************************************************/
 
