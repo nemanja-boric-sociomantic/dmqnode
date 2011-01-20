@@ -54,6 +54,8 @@ private import ocean.text.Arguments;
 
 private import ocean.io.serialize.SimpleSerializer;
 
+private import ocean.util.log.PeriodicTrace;
+
 private import tango.io.Stdout;
 
 private import tango.io.device.File;
@@ -79,6 +81,15 @@ class DhtDump : SourceDhtTool
     ***************************************************************************/
 
     mixin SingletonMethods;
+
+
+    /***************************************************************************
+
+        Progress tracer.
+    
+    ***************************************************************************/
+    
+    private PeriodicTrace trace;
 
 
     /***************************************************************************
@@ -162,6 +173,9 @@ class DhtDump : SourceDhtTool
     public this ( )
     {
         this.file = new File;
+
+        this.trace.interval = 100_000;
+        this.trace.static_display = true;
     }
 
 
@@ -322,7 +336,7 @@ class DhtDump : SourceDhtTool
 
         this.records += this.channel_records;
         this.bytes += this.channel_bytes;
-        if ( this.count_records )
+        if ( this.count_records || this.file_dump )
         {
             Stdout.format("Channel {} contains {} records ({} bytes) in the specified range\n\n", channel, this.channel_records, this.channel_bytes);
         }
@@ -343,7 +357,7 @@ class DhtDump : SourceDhtTool
 
     // TODO: add decompression flag
 
-    protected void processRecord ( DhtClient dht, char[] channel, hash_t key)
+    protected void processRecord ( DhtClient dht, char[] channel, hash_t key )
     {
         dht.get(channel, key,
                 ( uint id, char[] value )
@@ -402,17 +416,15 @@ class DhtDump : SourceDhtTool
 
     private void outputRecord ( char[] channel, char[] key, char[] value )
     {
-        if ( this.count_records )
-        {
-            this.channel_records++;
-            this.channel_bytes += value.length;
+        this.channel_records++;
+        this.channel_bytes += value.length;
 
-            if ( !(this.channel_records % 1000) )
-            {
-                Stderr.format("{,10}\b\b\b\b\b\b\b\b\b\b", this.channel_records).flush();
-            }
+        if ( this.count_records || this.file_dump )
+        {
+            this.trace.format("{,10}", this.channel_records);
         }
-        else
+
+        if ( !this.count_records )
         {
             if ( this.file_dump )
             {
