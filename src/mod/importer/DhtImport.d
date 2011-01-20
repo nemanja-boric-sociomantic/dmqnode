@@ -160,7 +160,7 @@ class DhtImport : DhtTool
 
     ***************************************************************************/
 
-    final override protected void addArgs_ ( Arguments args )
+    override protected void addArgs_ ( Arguments args )
     {
         args("dest").params(1).required().aliased('D').help("path of dhtnodes.xml file defining nodes to import records to");
         args("file").params(1).required().aliased('f').help("name of file (created by dhtdump) to read records from");
