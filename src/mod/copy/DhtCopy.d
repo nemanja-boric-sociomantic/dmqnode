@@ -14,9 +14,10 @@
     destination dht node cluster.
 
     TODO: 
-    1. handle compression properly
-    2. handle get and put method properly
-    3. use streaming instead of single puts 
+    1. Update to be based on DhtTool base class.
+    2. handle compression properly
+    3. handle get and put method properly
+    4. use streaming instead of single puts 
 
  ******************************************************************************/
 
