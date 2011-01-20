@@ -233,11 +233,11 @@ class DhtInfo : DhtTool
         }
 
         // Display channels
+        Stdout.formatln("\nChannels:");
+        Stdout.formatln("------------------------------------------------------------------------------");
+
         if ( verbose )
         {
-            Stdout.formatln("\nChannels:");
-            Stdout.formatln("------------------------------------------------------------------------------");
-
             foreach ( i, channel; channel_names )
             {
                 Stdout.formatln("Channel {}: {}:", i, channel);
@@ -261,13 +261,15 @@ class DhtInfo : DhtTool
         }
         else
         {
-            Stdout.formatln("Channels:");
             foreach ( i, channel; channel_names )
             {
                 ulong records, bytes;
                 foreach ( node; this.nodes )
                 {
-                    node.addChannelSize(channel, records, bytes);
+                    ulong channel_records, channel_bytes;
+                    node.getChannelSize(channel, channel_records, channel_bytes);
+                    records += channel_records;
+                    bytes += channel_bytes;
                 }
     
                 this.outputRow(i, channel, longest_channel_name, records, bytes);
@@ -275,11 +277,11 @@ class DhtInfo : DhtTool
         }
 
         // Display nodes
+        Stdout.formatln("\nNodes:");
+        Stdout.formatln("------------------------------------------------------------------------------");
+
         if ( verbose )
         {
-            Stdout.formatln("\nNodes:");
-            Stdout.formatln("------------------------------------------------------------------------------");
-
             foreach ( i, node; this.nodes )
             {
                 char[] node_name;
@@ -300,7 +302,6 @@ class DhtInfo : DhtTool
         }
         else
         {
-            Stdout.formatln("\nNodes:");
             foreach ( i, node; this.nodes )
             {
                 ulong records, bytes;
