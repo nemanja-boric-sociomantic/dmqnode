@@ -1,26 +1,18 @@
 /*******************************************************************************
 
     DHT node tool abstract class
-    
+
     copyright:      Copyright (c) 2010 sociomantic labs. All rights reserved
-    
+
     version:        December 2010: Initial release
-    
+
     authors:        Gavin Norman
 
     Base class for DHT tools which connect to a node cluster specified in an xml
-    file, and provide commands over single keys, key sub-ranges and the complete
-    hash range, and over a specified channel or all channels.
-    
+    file.
+
     Provides the following command line parameters:
         -h = display help
-        -S = dhtnodes.xml source file
-        -k = process just a single record with the specified key (hash)
-        -s = start of range to process (hash value - defaults to 0x00000000)
-        -e = end of range to process (hash value - defaults to 0xFFFFFFFF)
-        -C = process complete hash range
-        -c = channel name to process
-        -A = process all channels
 
 *******************************************************************************/
 
@@ -33,8 +25,6 @@ module src.mod.model.DhtTool;
     Imports
 
 *******************************************************************************/
-
-private import ocean.core.Array;
 
 private import ocean.text.Arguments;
 
@@ -64,7 +54,7 @@ abstract class DhtTool
 
     ***************************************************************************/
 
-    protected char[] xml;
+    protected char[] dht_nodes_config;
 
 
     /***************************************************************************
@@ -74,44 +64,6 @@ abstract class DhtTool
     ***************************************************************************/
 
     protected bool dht_error;
-
-
-    /***************************************************************************
-
-        Query key range struct
-    
-    ***************************************************************************/
-
-    struct Range
-    {
-        enum RangeType
-        {
-            SingleKey,
-            KeyRange
-        }
-
-        RangeType type;
-        
-        hash_t key1, key2;
-    }
-
-    protected Range range;
-
-
-    /***************************************************************************
-
-        Query channels struct
-    
-    ***************************************************************************/
-
-    struct Channels
-    {
-        bool all_channels;
-        
-        char[] channel;
-    }
-
-    protected Channels channels;
 
 
     /***************************************************************************
@@ -131,11 +83,11 @@ abstract class DhtTool
 
     ***************************************************************************/
     
-    public bool validateArgs ( Arguments args, char[][] arguments )
+    final public bool validateArgs ( Arguments args, char[][] arguments )
     {
         this.addArgs(args);
-    
-        if ( !args.parse(arguments) )
+
+        if ( arguments.length && !args.parse(arguments) )
         {
             Stderr.formatln("Invalid arguments");
             return false;
@@ -148,14 +100,16 @@ abstract class DhtTool
     /***************************************************************************
 
         Main process method. Runs the tool based on the passed command line
-        arguments.
-    
+        arguments. Reads command line args, sets up the dht client, then calls
+        the abstract process_(), which must be implemented by deriving classes.
+        Finally, calls the finished() method.
+
         Params:
             args = arguments object
 
     ***************************************************************************/
     
-    public void process ( Arguments args )
+    final public void process ( Arguments args )
     in
     {
         assert(this.validArgs(args), typeof(this).stringof ~ "process - invalid arguments");
@@ -164,62 +118,26 @@ abstract class DhtTool
     {
         this.readArgs(args);
 
-        auto dht = this.initDhtClient(this.xml);
+        assert(this.dht_nodes_config.length, typeof(this).stringof ~ ".process - no xml node config file");
 
-        if ( this.channels.all_channels )
-        {
-            with ( this.range.RangeType ) switch ( this.range.type )
-            {
-                case KeyRange:
-                    this.processAllChannels(dht, this.range.key1, this.range.key2);
-                    break;
-            }
-        }
-        else
-        {
-            with ( this.range.RangeType ) switch ( this.range.type )
-            {
-                case SingleKey:
-                    this.processRecord(dht, this.channels.channel, this.range.key1);
-                    break;
-    
-                case KeyRange:
-                    this.processChannel(dht, this.channels.channel, this.range.key1, this.range.key2);
-                    break;
-            }
-        }
-    
+        auto dht = this.initDhtClient(this.dht_nodes_config);
+
+        this.process_(dht);
+
         this.finished(dht);
     }
 
 
     /***************************************************************************
 
-        Runs the tool over the specified hash range on a single channel.
+        Implementation dependent process method.
 
         Params:
-            dht = dht client
-            channel = name of channel
-            start = start of hash range
-            end = end of hash range
-    
+            dht = dht client to use
+
     ***************************************************************************/
 
-    abstract protected void processChannel ( DhtClient dht, char[] channel, hash_t start, hash_t end );
-
-
-    /***************************************************************************
-
-        Runs the tool over the specified record in a single channel.
-
-        Params:
-            dht = dht client
-            channel = name of channel
-            key = record hash
-    
-    ***************************************************************************/
-
-    abstract protected void processRecord ( DhtClient dht, char[] channel, hash_t key);
+    abstract protected void process_ ( DhtClient dht );
 
 
     /***************************************************************************
@@ -269,7 +187,7 @@ abstract class DhtTool
     
     ***************************************************************************/
 
-    protected bool validArgs_ ( Arguments args )
+    protected bool validArgs ( Arguments args )
     {
         return true;
     }
@@ -287,7 +205,7 @@ abstract class DhtTool
     
     ***************************************************************************/
     
-    protected void readArgs_ ( Arguments args )
+    protected void readArgs ( Arguments args )
     in
     {
         assert(this.validArgs(args), typeof(this).stringof ~ "readArgs_ - invalid arguments");
@@ -308,126 +226,12 @@ abstract class DhtTool
             args = arguments object
     
     ***************************************************************************/
-    
+
     private void addArgs ( Arguments args )
     {
         args("help").aliased('?').aliased('h').help("display this help");
-        args("source").params(1).required().aliased('S').help("path of dhtnodes.xml file defining nodes to dump");
-        args("key").params(1).aliased('k').help("fetch just a single record with the specified key (hash)");
-        args("start").params(1).aliased('s').help("start of range to query (hash value - defaults to 0x00000000)");
-        args("end").params(1).aliased('e').help("end of range to query (hash value - defaults to 0xFFFFFFFF)");
-        args("complete_range").aliased('C').help("fetch records in the complete hash range");
-        args("channel").conflicts("all_channels").params(1).aliased('c').help("channel name to query");
-        args("all_channels").conflicts("channel").aliased('A').help("query all channels");
 
         this.addArgs_(args);
-    }
-
-
-    /***************************************************************************
-
-        Validates command line arguments in the passed Arguments object. This
-        method validates only the base class' arguments (see module header),
-        then calls the validArgs_() method to validate any additional command
-        line arguments required by the derived class.
-    
-        Params:
-            args = arguments object used to parse command line arguments
-    
-        Returns:
-            true if the command line args are valid
-    
-    ***************************************************************************/
-    
-    private bool validArgs ( Arguments args )
-    {
-        if ( !args.exists("source") )
-        {
-            Stderr.formatln("No xml source file specified (use -S)");
-            return false;
-        }
-        
-        bool all_channels = args.exists("all_channels");
-        bool one_channel = args.exists("channel");
-    
-        if ( !oneTrue(all_channels, one_channel) )
-        {
-            Stderr.formatln("Please specify exactly one of the following options: single channel (-c) or all channels (-A)");
-            return false;
-        }
-    
-        bool complete_range = args.exists("complete_range");
-        bool key_range = args.exists("start") || args.exists("end");
-        bool single_key = args.exists("key");
-    
-        if ( !oneTrue(complete_range, key_range, single_key) )
-        {
-            Stderr.formatln("Please specify exactly one of the following options: complete range (-C), key range (-s .. -e) or single key (-k)");
-            return false;
-        }
-        
-        if ( single_key && all_channels )
-        {
-            Stderr.formatln("Cannot process a single key (-k) over all channels (-A)");
-            return false;
-        }
-    
-        return this.validArgs_(args);
-    }
-
-
-    /***************************************************************************
-
-        Reads the tool's settings from validated command line arguments. This
-        method reads only the base class' arguments (see module header), then
-        calls the readArgs_() method to read any additional command line
-        arguments required by the derived class.
-
-        Params:
-            args = arguments object to read
-    
-    ***************************************************************************/
-
-    private void readArgs ( Arguments args )
-    in
-    {
-        assert(this.validArgs(args), typeof(this).stringof ~ "readArgs - invalid arguments");
-    }
-    body
-    {
-        this.xml = args.getString("source");
-        
-        if ( args.exists("all_channels") )
-        {
-            this.channels.all_channels = true;
-            this.channels.channel.length = 0;
-        }
-        else if ( args.exists("channel") )
-        {
-            this.channels.all_channels = false;
-            this.channels.channel = args.getString("channel");
-        }
-
-        if ( args.exists("complete_range") )
-        {
-            this.range.type = this.range.type.KeyRange;
-            this.range.key1 = 0x00000000;
-            this.range.key2 = 0xffffffff;
-        }
-        else if ( args.exists("start") || args.exists("end") )
-        {
-            this.range.type = this.range.type.KeyRange;
-            this.range.key1 = args.exists("start") ? args.getInt!(hash_t)("start") : 0x00000000;
-            this.range.key2 = args.exists("end") ? args.getInt!(hash_t)("end") : 0xffffffff;
-        }
-        else if ( args.exists("key") )
-        {
-            this.range.type = this.range.type.SingleKey;
-            this.range.key1 = args.getInt!(hash_t)("key");
-            this.range.key2 = this.range.key1;
-        }
-
-        this.readArgs_(args);
     }
 
 
@@ -455,8 +259,8 @@ abstract class DhtTool
         
         DhtNodesConfig.addNodesToClient(dht, xml);
         dht.nodeHandshake();
-        assert(!this.dht_error);
-    
+        assert(!this.dht_error, typeof(this).stringof ~ ".initDhtClient - error during dht client initialisation");
+
         return dht;
     }
 
@@ -475,38 +279,6 @@ abstract class DhtTool
     {
         Stderr.format("DHT client error: {}\n", e.message);
         this.dht_error = true;
-    }
-
-
-    /***************************************************************************
-
-        Runs the tool over the specified hash range on all channels in the
-        dht node cluster. The channels are processed in series.
-
-        Params:
-            dht = dht client
-            start = start of hash range
-            end = end of hash range
-
-    ***************************************************************************/
-    
-    private void processAllChannels ( DhtClient dht, hash_t start, hash_t end )
-    {
-        char[][] channels;
-        dht.getChannels(
-                ( uint id, char[] channel )
-                {
-                    if ( channel.length )
-                    {
-                        channels.appendCopy(channel);
-                    }
-                }
-            ).eventLoop();
-    
-        foreach ( channel; channels )
-        {
-            this.processChannel(dht, channel, start, end);
-        }
     }
 
 
