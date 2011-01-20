@@ -67,7 +67,7 @@ struct DhtCopy
         scope worker = new DhtCopyWorker();
 
         if (args.getString("source").length != 0 && 
-            args.getString("destination").length != 0 && !args.getBool("list"))
+            args.getString("destination").length != 0 )
         {
             if (args.getString("channel").length != 0)
             {
@@ -87,14 +87,6 @@ struct DhtCopy
         if (args.getInt!(uint)("range") != 0)
         {
             worker.range(args.getInt!(uint)("range"));
-            return true;
-        }
-
-        if (args.getBool("list") && 
-            args.getString("source").length != 0 && 
-            args.getString("destination").length != 0)
-        {
-            worker.list(args.getString("source"), args.getString("destination"));
             return true;
         }
 
@@ -537,29 +529,6 @@ class DhtCopyWorker
         }
 
         Stdout.formatln("{:X8} - {:X8}", start, hash_t.max);
-    }
-
-    /***************************************************************************
-
-        Outputs a list with channels in the source nodes
-
-        Params:
-
-        Returns:
-            void
-
-     **************************************************************************/
-
-    public void list ( char[] src_file, char[] dst_file )
-    {
-        this.initDhtClients(src_file, dst_file);
-
-        this.src.getChannels(&this.addChannels).eventLoop();
-
-        foreach (channel; this.src_channels)
-        {
-            Stdout.formatln(channel).flush();
-        }
     }
 
     /***************************************************************************

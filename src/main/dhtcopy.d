@@ -129,7 +129,6 @@ bool parseArgs ( Arguments args, char[][] arguments )
     args("start")       .params(1).aliased('s').defaults("0x00000000").help("start of range to query (hash value - defaults to 0x00000000)");
     args("end")         .params(1).aliased('e').defaults("0xFFFFFFFF").help("end of range to query (hash value - defaults to 0xFFFFFFFF)");
     args("range")       .params(1).aliased('r').help("calculate and display ranges for the given number of nodes");
-    args("list")        .params(0).aliased('l').help("get a list of channels in the source nodes");
     args("channel")     .params(1).aliased('c').help("name of the channel to copy (optional)");
     args("compression") .params(0).aliased('z').help("enable compression (optional)");
     
