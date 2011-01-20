@@ -27,6 +27,9 @@
         -c = channel name to query
         -A = query all channels
 
+    TODO: add flag to switch off decompression of fetched records (this only
+    works with the new dht client) - essential for proper dump to file backups. 
+
 *******************************************************************************/
 
 module src.mod.dump.DhtDump;
