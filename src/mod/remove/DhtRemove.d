@@ -33,7 +33,7 @@ module src.mod.dump.DhtRemove;
 
 *******************************************************************************/
 
-private import src.mod.model.DhtTool;
+private import src.mod.model.SourceDhtTool;
 
 private import swarm.dht.DhtClient,
            swarm.dht.DhtHash,
@@ -57,8 +57,14 @@ debug private import tango.util.log.Trace;
 
 *******************************************************************************/
 
-class DhtRemove : DhtTool
+class DhtRemove : SourceDhtTool
 {
+    /***************************************************************************
+
+        Singleton parseArgs() and run() methods.
+    
+    ***************************************************************************/
+
     mixin SingletonMethods;
 
 

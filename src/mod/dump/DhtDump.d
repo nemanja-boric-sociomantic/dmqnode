@@ -39,7 +39,7 @@ module src.mod.dump.DhtDump;
 
 *******************************************************************************/
 
-private import src.mod.model.DhtTool;
+private import src.mod.model.SourceDhtTool;
 
 private import swarm.dht.DhtClient,
                swarm.dht.DhtHash,
@@ -67,8 +67,14 @@ debug private import tango.util.log.Trace;
 
 *******************************************************************************/
 
-class DhtDump : DhtTool
+class DhtDump : SourceDhtTool
 {
+    /***************************************************************************
+
+        Singleton parseArgs() and run() methods.
+    
+    ***************************************************************************/
+
     mixin SingletonMethods;
 
 
@@ -165,7 +171,7 @@ class DhtDump : DhtTool
     
     ***************************************************************************/
 
-    override protected void addArgs_ ( Arguments args )
+    override protected void addArgs__ ( Arguments args )
     {
         args("count").aliased('n').help("count records, do not dump contents");
         args("hex").aliased('x').help("displays records as hexadecimal dump (default is a string dump)");
@@ -432,7 +438,7 @@ class DhtDump : DhtTool
     {
         if ( !this.file_open )
         {
-            this.file.open(channel ~ ".dump", File.WriteCreate);
+            this.file.open(channel, File.WriteCreate);
             this.file_open = true;
         }
 
