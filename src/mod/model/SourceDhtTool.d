@@ -42,9 +42,18 @@ private import ocean.core.Array;
 
 private import ocean.text.Arguments;
 
-private import swarm.dht.DhtClient,
-               swarm.dht.DhtHash,
-               swarm.dht.DhtConst;
+version ( NewDhtClient )
+{
+    private import swarm.dht2.DhtClient,
+                   swarm.dht2.DhtHash,
+                   swarm.dht2.DhtConst;
+}
+else
+{
+    private import swarm.dht.DhtClient,
+                   swarm.dht.DhtHash,
+                   swarm.dht.DhtConst;
+}
 
 private import tango.io.Stdout;
 

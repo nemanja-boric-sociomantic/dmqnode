@@ -28,13 +28,26 @@ module src.mod.model.DhtTool;
 
 private import ocean.text.Arguments;
 
-private import swarm.dht.DhtClient,
-               swarm.dht.DhtHash,
-               swarm.dht.DhtConst;
+version ( NewDhtClient )
+{
+    private import swarm.dht2.DhtClient,
+                   swarm.dht2.DhtHash,
+                   swarm.dht2.DhtConst;
 
-private import swarm.dht.client.connection.ErrorInfo;
+    private import swarm.dht2.client.connection.ErrorInfo;
+    
+    private import swarm.dht2.client.DhtNodesConfig;
+}
+else
+{
+    private import swarm.dht.DhtClient,
+                   swarm.dht.DhtHash,
+                   swarm.dht.DhtConst;
 
-private import swarm.dht.client.DhtNodesConfig;
+    private import swarm.dht.client.connection.ErrorInfo;
+    
+    private import swarm.dht.client.DhtNodesConfig;
+}
 
 private import tango.io.Stdout;
 
@@ -254,12 +267,28 @@ abstract class DhtTool
     private DhtClient initDhtClient ( char[] xml )
     {
         auto dht = new DhtClient();
-        
-        dht.error_callback(&this.dhtError);
-        
-        DhtNodesConfig.addNodesToClient(dht, xml);
-        dht.nodeHandshake();
-        assert(!this.dht_error, typeof(this).stringof ~ ".initDhtClient - error during dht client initialisation");
+
+        version ( NewDhtClient )
+        {
+            dht.addNodes(xml);
+
+            dht.nodeHandshake();
+
+            dht.error_callback(&this.dhtError);
+
+            // FIXME: the setting of the error callback should go before the call to nodeHandShake.
+            // (just done afterwards at the moment to avoid getting errors with
+            // supported command list mismatches to the old node)
+        }
+        else
+        {
+            dht.error_callback(&this.dhtError);
+
+            DhtNodesConfig.addNodesToClient(dht, xml);
+
+            dht.nodeHandshake();
+            assert(!this.dht_error, typeof(this).stringof ~ ".initDhtClient - error during dht client initialisation");
+        }
 
         return dht;
     }

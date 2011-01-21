@@ -16,6 +16,8 @@
         -x = displays records as hexadecimal dump (default is a string dump)
         -l = limits the length of text displayed for each record
         -f = dumps records to a file, instead of to stdout
+        -r = dumps raw records exactly as stored in the node, without
+             decompressing
 
     Inherited from super class:
         -h = display help
@@ -44,9 +46,20 @@ module src.mod.dump.DhtDump;
 
 private import src.mod.model.SourceDhtTool;
 
-private import swarm.dht.DhtClient,
-               swarm.dht.DhtHash,
-               swarm.dht.DhtConst;
+version ( NewDhtClient )
+{
+    pragma(msg, "*** Building with new dht client (swarm.dht2.DhtClient), which supports non-decompressing gets");
+
+    private import swarm.dht2.DhtClient,
+                   swarm.dht2.DhtHash,
+                   swarm.dht2.DhtConst;
+}
+else
+{
+    private import swarm.dht.DhtClient,
+                   swarm.dht.DhtHash,
+                   swarm.dht.DhtConst;
+}
 
 private import ocean.core.Array;
 
@@ -130,6 +143,16 @@ class DhtDump : SourceDhtTool
 
     /***************************************************************************
 
+        True = dump raw records without decompressing, false = dump decompressed
+        records
+    
+    ***************************************************************************/
+
+    private bool raw_dump;
+
+
+    /***************************************************************************
+
         File used for dumping to
 
     ***************************************************************************/
@@ -194,6 +217,11 @@ class DhtDump : SourceDhtTool
         args("hex").aliased('x').help("displays records as hexadecimal dump (default is a string dump)");
         args("limit").params(1).defaults("0xffffffff").aliased('l').help("limits the length of text displayed for each record (defaults to no limit)");
         args("file").aliased('f').help("dumps records to a file, named [channel].dump");
+
+        version ( NewDhtClient )
+        {
+            args("raw").aliased('r').help("dumps raw records exactly as stored in the node, without decompressing");
+        }
     }
 
 
@@ -256,7 +284,11 @@ class DhtDump : SourceDhtTool
         this.hex_output = args.getBool("hex");
         this.text_limit = args.getInt!(uint)("limit");
         this.file_dump = args.getBool("file");
-
+        version ( NewDhtClient )
+        {
+            this.raw_dump = args.getBool("raw");
+        }
+        
         this.records = 0;
         this.bytes = 0;
     }
@@ -320,18 +352,36 @@ class DhtDump : SourceDhtTool
         }
         else
         {
-            dht.getAll(channel,
-                    ( uint id, char[] hash_str, char[] value )
-                    {
-                        if ( hash_str.length )
+            version ( NewDhtClient )
+            {
+                dht.getAll(channel,
+                        ( uint id, char[] hash_str, char[] value )
                         {
-                            auto hash = DhtHash.straightToHash(hash_str);
-                            if ( hash >= start && hash <= end )
+                            if ( hash_str.length )
                             {
-                                receiveRecord(id, hash_str, value);
+                                auto hash = DhtHash.straightToHash(hash_str);
+                                if ( hash >= start && hash <= end )
+                                {
+                                    receiveRecord(id, hash_str, value);
+                                }
                             }
-                        }
-                    }).eventLoop();
+                        }, !this.raw_dump).eventLoop();
+            }
+            else
+            {
+                dht.getAll(channel,
+                        ( uint id, char[] hash_str, char[] value )
+                        {
+                            if ( hash_str.length )
+                            {
+                                auto hash = DhtHash.straightToHash(hash_str);
+                                if ( hash >= start && hash <= end )
+                                {
+                                    receiveRecord(id, hash_str, value);
+                                }
+                            }
+                        }).eventLoop();
+            }
         }
 
         this.records += this.channel_records;
@@ -355,22 +405,38 @@ class DhtDump : SourceDhtTool
     
     ***************************************************************************/
 
-    // TODO: add decompression flag
-
     protected void processRecord ( DhtClient dht, char[] channel, hash_t key )
     {
-        dht.get(channel, key,
-                ( uint id, char[] value )
-                {
-                    if ( value.length )
+        version ( NewDhtClient )
+        {
+            dht.get(channel, key,
+                    ( uint id, char[] value )
                     {
-                        this.outputRecord(channel, key, value);
-                    }
-                    else
+                        if ( value.length )
+                        {
+                            this.outputRecord(channel, key, value);
+                        }
+                        else
+                        {
+                            Stdout.formatln("Record doesn't exist");
+                        }
+                    }, !this.raw_dump).eventLoop();
+        }
+        else
+        {
+            dht.get(channel, key,
+                    ( uint id, char[] value )
                     {
-                        Stdout.formatln("Record doesn't exist");
-                    }
-                }).eventLoop();
+                        if ( value.length )
+                        {
+                            this.outputRecord(channel, key, value);
+                        }
+                        else
+                        {
+                            Stdout.formatln("Record doesn't exist");
+                        }
+                    }).eventLoop();
+        }
     }
 
 
