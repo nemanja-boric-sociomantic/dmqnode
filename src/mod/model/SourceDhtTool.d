@@ -55,6 +55,8 @@ else
                    swarm.dht.DhtConst;
 }
 
+private import tango.core.Array;
+
 private import tango.io.Stdout;
 
 
@@ -332,7 +334,7 @@ abstract class SourceDhtTool : DhtTool
         dht.getChannels(
                 ( uint id, char[] channel )
                 {
-                    if ( channel.length )
+                    if ( channel.length && !channels.contains(channel) )
                     {
                         channels.appendCopy(channel);
                     }
