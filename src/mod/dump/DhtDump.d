@@ -451,8 +451,14 @@ class DhtDump : SourceDhtTool
 
     private void dumpRecordToFile ( char[] channel, char[] key, char[] value )
     {
-        if ( !this.file_open )
+        if ( this.file.toString != channel )
         {
+            if ( this.file_open )
+            {
+                this.file.close;
+            }
+
+            Stdout.formatln("Writing to file {}", channel);
             this.file.open(channel, File.WriteCreate);
             this.file_open = true;
         }
