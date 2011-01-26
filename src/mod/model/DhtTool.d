@@ -270,15 +270,11 @@ abstract class DhtTool
 
         version ( NewDhtClient )
         {
+            dht.error_callback(&this.dhtError);
+
             dht.addNodes(xml);
 
             dht.nodeHandshake();
-
-            dht.error_callback(&this.dhtError);
-
-            // FIXME: the setting of the error callback should go before the call to nodeHandShake.
-            // (just done afterwards at the moment to avoid getting errors with
-            // supported command list mismatches to the old node)
         }
         else
         {
@@ -287,7 +283,7 @@ abstract class DhtTool
             DhtNodesConfig.addNodesToClient(dht, xml);
 
             dht.nodeHandshake();
-            assert(!this.dht_error, typeof(this).stringof ~ ".initDhtClient - error during dht client initialisation");
+            assert(!this.dht_error, typeof(this).stringof ~ ".initDhtClient - error during dht client initialisation of " ~ xml);
         }
 
         return dht;
