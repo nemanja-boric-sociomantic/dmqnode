@@ -216,7 +216,7 @@ class DhtDump : SourceDhtTool
         args("count").aliased('n').help("count records, do not dump contents");
         args("hex").aliased('x').help("displays records as hexadecimal dump (default is a string dump)");
         args("limit").params(1).defaults("0xffffffff").aliased('l').help("limits the length of text displayed for each record (defaults to no limit)");
-        args("file").aliased('f').help("dumps records to a file, named [channel].dump");
+        args("file").aliased('f').help("dumps records to a file, named [channel]");
 
         version ( NewDhtClient )
         {

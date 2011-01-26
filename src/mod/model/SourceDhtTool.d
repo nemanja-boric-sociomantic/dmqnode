@@ -24,6 +24,10 @@
     Inherited from super class:
         -h = display help
 
+    Note: all numerical parameters may be specified in any base. The default is
+    decimal, but other bases may be specified with the normal identifiers (0x
+    for hex, for example).
+
 *******************************************************************************/
 
 module mod.model.SourceDhtTool;
