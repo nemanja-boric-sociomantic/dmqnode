@@ -75,7 +75,7 @@ class QueueDaemon
     
      **************************************************************************/
 
-    private QueueTracer!(Queue) qtrace;
+    private QueueTracer qtrace;
     
     /***************************************************************************
 
@@ -103,7 +103,7 @@ class QueueDaemon
 
         if ( MainConfig.show_channel_trace )
         {
-            this.qtrace = new QueueTracer!(Queue)(queue);
+            this.qtrace = new QueueTracer(queue);
         }
     }
 
@@ -116,6 +116,7 @@ class QueueDaemon
     public int run ()
     {
         this.node.run();
+        this.qtrace.start();
         this.node.attach();
 
         return true;
@@ -129,6 +130,8 @@ class QueueDaemon
 
     public void shutdown ( )
     {
+        this.qtrace.terminate().join();
+        
         return this.node.shutdown();
     }
 
