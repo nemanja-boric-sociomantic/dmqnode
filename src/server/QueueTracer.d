@@ -22,12 +22,11 @@ module server.QueueTracer;
 
 private import core.config.MainConfig;
 
-private import core.Terminate;
-
 private import ocean.util.log.StaticTrace;
 
 private import ocean.core.Array;
 
+private import swarm.queue.node.model.IQueueNode;
 private import swarm.queue.storage.model.StorageEngineInfo;
 
 private import tango.core.Thread;
@@ -36,37 +35,23 @@ private import tango.text.convert.Layout;
 
 debug private import tango.util.log.Trace;
 
-
-
 /*******************************************************************************
 
     Queue tracer class. Creates its own thread and updates the console output
     periodically with the read/write positions of the queue's channels. The
     update time is set in the config file.
 
-    Template params:
-        Q = type of queue to trace
-
 *******************************************************************************/
 
-class QueueTracer ( Q )
+class QueueTracer : Thread
 {
-    /***************************************************************************
-
-        Internal thread used for update loop
-    
-    ***************************************************************************/
-
-    private Thread thread;
-
-    
     /***************************************************************************
 
         Reference to the queue which is being traced
     
     ***************************************************************************/
 
-    private Q queue;
+    private IQueueNode queue;
 
 
     /***************************************************************************
@@ -80,6 +65,14 @@ class QueueTracer ( Q )
 
     /***************************************************************************
 
+        Run loop termination flag.
+    
+    ***************************************************************************/
+
+    private bool terminated = false;
+    
+    /***************************************************************************
+
         Constructor.
         
         Params:
@@ -87,37 +80,40 @@ class QueueTracer ( Q )
     
     ***************************************************************************/
 
-    public this ( Q queue )
+    public this ( IQueueNode queue )
     {
-        this.thread = new Thread(&this.run);
+        super(&this.run);
         this.queue = queue;
-        this.thread.start();
     }
-
 
     /***************************************************************************
 
-        Destructor.
+        Terminates the run loop; must be called before join() (otherwise join()
+        will never return).
+        
+        Returns:
+            this instance
     
     ***************************************************************************/
-
-    ~this ( )
-    {
-        delete this.thread;
-    }
     
+    typeof (this) terminate ( )
+    {
+        this.terminated = true;
+        
+        return this;
+    }
 
     /***************************************************************************
 
         Thread run method.
     
     ***************************************************************************/
-
+    
     private void run ( )
     {
         auto sleep_time = cast(float)MainConfig.channel_trace_update / 1000.0;
 
-        while ( !Terminate.terminating )
+        while ( !this.terminated )
         {
             this.output.length = 0;
             auto num_channels = this.queue.numChannels();
@@ -148,8 +144,7 @@ class QueueTracer ( Q )
             Thread.sleep(sleep_time);
         }
     }
-
-
+    
     /***************************************************************************
 
         Appends read/write position info for a channel to the output string.
