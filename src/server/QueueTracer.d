@@ -206,7 +206,7 @@ class QueueTracer : Thread
         else
         {
             auto size = channel.sizePercent();
-            Layout!(char).instance().convert(&this.layoutSink, "{}: {}%", id, size);
+            Layout!(char).instance().convert(&this.layoutSink, "{}: {}%", id, size * 100.0);
         }
     }
 
