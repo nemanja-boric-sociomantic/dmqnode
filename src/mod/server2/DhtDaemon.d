@@ -24,6 +24,8 @@ module mod.server2.DhtDaemon;
 
 private import  core.config.MainConfig;
 
+private import  ocean.io.select.model.ISelectClient;
+
 private import  swarm.dht2.DhtNode;
 private import  swarm.dht2.DhtHash;
 
@@ -96,8 +98,9 @@ class DhtDaemon
     public this ( )
     {
         NodeItem node_item = this.getNodeItemConfiguration();
-        
-        this.setLogger();
+
+        // TODO: not sure if we need this, the trace log isn't being used for anything
+//        this.setLogger();
         
         uint    number_threads  = Config.get!(uint)("Server", "connection_threads");
         ulong   size_limit      = Config.get!(ulong)("Server", "size_limit");
@@ -113,19 +116,25 @@ class DhtDaemon
         switch (storage)
         {
             case DhtConst.Storage.Memory :
-                this.node = new MemoryNode(node_item, data_dir, size_limit);
+                auto memory_node = new MemoryNode(node_item, data_dir, size_limit);
+                memory_node.error_callback(&this.dhtError);
+                this.node = memory_node;
                 break;
         
             case DhtConst.Storage.LogFiles :
-                this.node = new LogFilesNode(node_item, data_dir, this.getLogFilesWriteBuffer(), size_limit);
+                auto logfiles_node = new LogFilesNode(node_item, data_dir, this.getLogFilesWriteBuffer(), size_limit);
+                logfiles_node.error_callback(&this.dhtError);
+                this.node = logfiles_node;
                 break;
-        
+
             default:
                 throw new Exception("Invalid / unsupported data storage");
                 break;
         }
+
+        OceanException.console_output = Config.get!(bool)("Log", "trace_errors");
     }
-    
+
     /***************************************************************************
     
         Runs the DHT node
@@ -172,18 +181,36 @@ class DhtDaemon
     }
     
     /***************************************************************************
+
+        Callback for exceptions inside the dht node event loop. Writes errors to
+        the error.log file, and optionally to the console (if the
+        Log/trace_errors config parameter is true).
+
+        Params:
+            exception = exception which occurred
+            event_info = info about epoll event during which exception occurred
+
+    **************************************************************************/
+
+    private void dhtError ( Exception exception, IAdvancedSelectClient.EventInfo event_info )
+    {
+        OceanException.Warn("Exception caught in eventLoop: {}", exception.msg);
+    }
+
+    /***************************************************************************
     
         Set Logger
     
     **************************************************************************/
-    
-    private void setLogger ()
+
+    // TODO: not sure if we need this, the trace log isn't being used for anything
+/*    private void setLogger ( )
     {
         auto log = Log.getLogger("dht.persist");
         log.add(new AppendConsole);
         log.level = Level.Trace;
     }
-    
+*/
     /***************************************************************************
     
         Get storage configuration
