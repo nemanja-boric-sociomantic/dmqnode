@@ -68,15 +68,6 @@ class DhtImport : DhtTool
 
     /***************************************************************************
 
-        Periodic trace for record count.
-    
-    ***************************************************************************/
-
-    private PeriodicTrace trace;
-
-
-    /***************************************************************************
-
         Name of file to read records from.
     
     ***************************************************************************/
@@ -243,9 +234,6 @@ class DhtImport : DhtTool
 
     private void importRecords ( File file, DhtClient dht )
     {
-        this.trace.interval = 100_000;
-        this.trace.static_display = true;
-
         ulong record_count;
         bool end_of_file;
         do
@@ -255,7 +243,7 @@ class DhtImport : DhtTool
                 SimpleSerializer.read(file, this.key);
                 SimpleSerializer.read(file, this.value);
 
-                this.trace.format("{} records", ++record_count);
+                StaticPeriodicTrace.format("{} records", ++record_count);
 
                 this.put_queue.put(DhtHash.straightToHash(this.key), this.value);
             }
