@@ -266,6 +266,8 @@ abstract class DhtTool
 
     private DhtClient initDhtClient ( char[] xml )
     {
+        Stderr.formatln("Initialising dht client connections");
+
         auto dht = new DhtClient();
 
         version ( NewDhtClient )
@@ -285,6 +287,8 @@ abstract class DhtTool
             dht.nodeHandshake();
             assert(!this.dht_error, typeof(this).stringof ~ ".initDhtClient - error during dht client initialisation of " ~ xml);
         }
+
+        Stderr.formatln("Dht client connections initialised");
 
         return dht;
     }
