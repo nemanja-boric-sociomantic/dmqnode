@@ -12,7 +12,7 @@
 
 ******************************************************************************/
 
-module  mod.server2.DhtDaemon;
+module mod.server2.DhtDaemon;
 
 
 
@@ -56,7 +56,7 @@ class DhtDaemon
     
     /***************************************************************************
     
-        alias for Memory node 
+        alias for LogFiles node 
     
     **************************************************************************/
     
@@ -102,7 +102,7 @@ class DhtDaemon
         uint    number_threads  = Config.get!(uint)("Server", "connection_threads");
         ulong   size_limit      = Config.get!(ulong)("Server", "size_limit");
         char[]  data_dir        = Config.get!(char[])("Server", "data_dir");
-        
+
         Storage storage         = this.getStorageConfiguration();
         
         if (storage == DhtConst.Storage.None)
@@ -113,12 +113,11 @@ class DhtDaemon
         switch (storage)
         {
             case DhtConst.Storage.Memory :
-                Trace.formatln("New memory node");
                 this.node = new MemoryNode(node_item, data_dir, size_limit);
                 break;
         
             case DhtConst.Storage.LogFiles :
-                this.node = new LogFilesNode(node_item, data_dir, size_limit, this.getLogFilesWriteBuffer());
+                this.node = new LogFilesNode(node_item, data_dir, this.getLogFilesWriteBuffer(), size_limit);
                 break;
         
             default:
@@ -225,11 +224,11 @@ class DhtDaemon
     
     private size_t getLogFilesWriteBuffer ()
     {
-    size_t wbs = LogFiles.DefaultWriteBufferSize;
-    
-    Config.get(wbs, "Options_LogFiles", "write_buffer_size");
-    
-    return wbs;
+        size_t wbs = LogFiles.DefaultWriteBufferSize;
+        
+        Config.get(wbs, "Options_LogFiles", "write_buffer_size");
+        
+        return wbs;
     }
 }
 
