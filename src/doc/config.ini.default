@@ -156,6 +156,8 @@ columns                 = 3
 ; error                 log for exceptions thrown in the server
 ; trace                 trace log file for debugging purpose
 ; trace_enable          trace level to write events upon
+; trace_errors          writes errors to the console (in addition to the error
+;                       log)
 ;
 
 [Log]
@@ -163,3 +165,4 @@ columns                 = 3
 error                   = log/error.log
 trace                   = log/trace.log
 trace_enable            = 1
+trace_errors            = false
