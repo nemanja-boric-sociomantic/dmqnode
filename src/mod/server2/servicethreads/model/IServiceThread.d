@@ -1,5 +1,7 @@
 module mod.server2.servicethreads.model.IServiceThread;
 
+private import mod.server2.util.Terminator;
+
 private import tango.core.Thread;
 
 private import ocean.io.select.model.ISelectListenerInfo;
@@ -35,7 +37,7 @@ abstract class IServiceThread : Thread
 
     private void run ( )
     {
-        while ( true ) // TODO: termination!
+        while ( !Terminator.terminating )
         {
             this.serviceNode(this.listener_info, this.update_time);
 
