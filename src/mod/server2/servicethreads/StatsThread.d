@@ -4,6 +4,8 @@ private import mod.server2.servicethreads.model.IServiceThread;
 
 private import ocean.io.select.model.ISelectListenerInfo;
 
+private import ocean.util.TraceLog;
+
 private import swarm.dht2.node.model.IDhtNode;
 
 private import swarm.dht2.storage.model.IStorageEngineService;
@@ -23,7 +25,7 @@ class StatsThread : IServiceThread
     {
         auto received = listener_info.bytesReceived;
         auto sent = listener_info.bytesSent;
-        Trace.formatln("Node stats: {} sent ({} K/s), {} received ({} K/s)",
+        TraceLog.write("Node stats: {} sent ({} K/s), {} received ({} K/s)",
                 sent, cast(float)(sent / 1024) / cast(float)seconds_elapsed,
                 received, cast(float)(received / 1024) / cast(float)seconds_elapsed);
         listener_info.resetByteCounters();
