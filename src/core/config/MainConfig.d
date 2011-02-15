@@ -121,17 +121,11 @@ struct MainConfig
         
         error_log    = Config.getChar   (this.Sections.Log, this.Keys.Error);
         trace_enable = !!Config.getInt  (this.Sections.Log, this.Keys.TraceEnable); 
-        
-        if (trace_enable)
-        {
-            trace_log = Config.getChar(this.Sections.Log, this.Keys.Trace);
-            TraceLog.init(this.cmdpath.prepend([trace_log]));
-        }
-        else
-        {
-            TraceLog.enabled = false;
-        }
-    
+
+        TraceLog.init(cmdpath.prepend([Config.Char["Log", "trace"]]));
+        TraceLog.enabled = Config.Bool["Log", "trace_enable"];
+        TraceLog.console_enabled = Config.Bool["Log", "console_trace_enable"];
+
         OceanException.setOutput(new AppendFile(this.cmdpath.prepend([error_log])));
     }
 }
