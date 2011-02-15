@@ -24,6 +24,10 @@ module mod.server2.DhtDaemon;
 
 private import  core.config.MainConfig;
 
+private import  mod.server2.servicethreads.ServiceThreads,
+                mod.server2.servicethreads.StatsThread,
+                mod.server2.servicethreads.MaintenanceThread;
+
 private import  ocean.io.select.model.ISelectClient;
 
 private import  swarm.dht2.DhtNode;
@@ -88,7 +92,12 @@ class DhtDaemon
     **************************************************************************/
     
     private     IDhtNode                node;
-    
+
+
+    // TODO
+    private ServiceThreads service_threads;
+
+
     /***************************************************************************
     
          Constructor
@@ -132,6 +141,10 @@ class DhtDaemon
                 break;
         }
 
+        this.service_threads = new ServiceThreads;
+        this.service_threads.add(new MaintenanceThread(this.node, 30)); // TODO: move update time to config file
+        this.service_threads.add(new StatsThread(this.node, 5)); // TODO: move update time to config file
+
         OceanException.console_output = Config.get!(bool)("Log", "trace_errors");
     }
 
@@ -141,10 +154,12 @@ class DhtDaemon
     
     **************************************************************************/
     
-    public int run ()
+    public int run ( )
     {
+        this.service_threads.start();
+
         this.node.eventLoop();
-        
+
         return true;
     }
     
