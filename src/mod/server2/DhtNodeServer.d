@@ -20,6 +20,8 @@ module  mod.server2.DhtNodeServer;
 
 private import mod.server2.DhtDaemon;
 
+private import mod.server2.util.Terminator;
+
 private import ocean.sys.Daemon;
 private import ocean.sys.SignalHandler;
 
@@ -44,7 +46,7 @@ debug private import tango.util.log.Trace;
 struct DhtNodeServer
 {
     static DhtDaemon dht;
-    
+
     /**
      * Queue Server Daemon
      *
@@ -61,13 +63,15 @@ struct DhtNodeServer
     {
         SignalHandler.register(SignalHandler.AppTermination, &shutdown);
     }
-    
+
     private static bool shutdown ( int code )
     {
         debug Trace.formatln('\n' ~ SignalHandler.getId(code));
-        
+
+        Terminator.terminating = true;
+
         this.dht.shutdown();
-        
+
         return true;
     }
 }
