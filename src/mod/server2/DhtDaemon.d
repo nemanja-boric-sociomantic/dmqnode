@@ -83,8 +83,7 @@ class DhtDaemon
     **************************************************************************/
     
     alias       DhtConst.Storage.BaseType   Storage;
-    
-    
+
     /***************************************************************************
     
         Dht node instance
@@ -93,10 +92,13 @@ class DhtDaemon
     
     private     IDhtNode                node;
 
+    /***************************************************************************
+    
+        Service threads handler
+    
+    **************************************************************************/
 
-    // TODO
     private ServiceThreads service_threads;
-
 
     /***************************************************************************
     
@@ -108,15 +110,12 @@ class DhtDaemon
     {
         NodeItem node_item = this.getNodeItemConfiguration();
 
-        // TODO: not sure if we need this, the trace log isn't being used for anything
-//        this.setLogger();
-        
         uint    number_threads  = Config.get!(uint)("Server", "connection_threads");
         ulong   size_limit      = Config.get!(ulong)("Server", "size_limit");
         char[]  data_dir        = Config.get!(char[])("Server", "data_dir");
 
         Storage storage         = this.getStorageConfiguration();
-        
+
         if (storage == DhtConst.Storage.None)
         {
             throw new Exception("Invalid data storage");
@@ -142,8 +141,8 @@ class DhtDaemon
         }
 
         this.service_threads = new ServiceThreads;
-        this.service_threads.add(new MaintenanceThread(this.node, 30)); // TODO: move update time to config file
-        this.service_threads.add(new StatsThread(this.node, 5)); // TODO: move update time to config file
+        this.service_threads.add(new MaintenanceThread(this.node, Config.Int["ServiceThreads", "maintenance_sleep"]));
+        this.service_threads.add(new StatsThread(this.node, Config.Int["ServiceThreads", "stats_sleep"]));
 
         OceanException.console_output = Config.get!(bool)("Log", "trace_errors");
     }
@@ -212,20 +211,6 @@ class DhtDaemon
         OceanException.Warn("Exception caught in eventLoop: {}", exception.msg);
     }
 
-    /***************************************************************************
-    
-        Set Logger
-    
-    **************************************************************************/
-
-    // TODO: not sure if we need this, the trace log isn't being used for anything
-/*    private void setLogger ( )
-    {
-        auto log = Log.getLogger("dht.persist");
-        log.add(new AppendConsole);
-        log.level = Level.Trace;
-    }
-*/
     /***************************************************************************
     
         Get storage configuration
