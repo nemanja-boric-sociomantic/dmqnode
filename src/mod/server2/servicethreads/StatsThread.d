@@ -25,9 +25,10 @@ class StatsThread : IServiceThread
     {
         auto received = listener_info.bytesReceived;
         auto sent = listener_info.bytesSent;
-        TraceLog.write("Node stats: {} sent ({} K/s), {} received ({} K/s)",
+        TraceLog.write("Node stats: {} sent ({} K/s), {} received ({} K/s), handling {} connections",
                 sent, cast(float)(sent / 1024) / cast(float)seconds_elapsed,
-                received, cast(float)(received / 1024) / cast(float)seconds_elapsed);
+                received, cast(float)(received / 1024) / cast(float)seconds_elapsed,
+                listener_info.numOpenConnections);
         listener_info.resetByteCounters();
     }
 
