@@ -39,14 +39,14 @@ abstract class IServiceThread : Thread
     {
         while ( !Terminator.terminating )
         {
+            Thread.sleep(this.update_time);
+
             this.serviceNode(this.listener_info, this.update_time);
 
             foreach ( channel; this.channels_service )
             {
                 this.serviceChannel(channel, this.update_time);
             }
-
-            Thread.sleep(this.update_time);
         }
     }
 
