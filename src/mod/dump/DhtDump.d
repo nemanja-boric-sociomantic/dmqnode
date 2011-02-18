@@ -46,20 +46,9 @@ module src.mod.dump.DhtDump;
 
 private import src.mod.model.SourceDhtTool;
 
-version ( NewDhtClient )
-{
-    pragma(msg, "*** Building with new dht client (swarm.dht2.DhtClient), which supports non-decompressing gets");
-
-    private import swarm.dht2.DhtClient,
-                   swarm.dht2.DhtHash,
-                   swarm.dht2.DhtConst;
-}
-else
-{
-    private import swarm.dht.DhtClient,
-                   swarm.dht.DhtHash,
-                   swarm.dht.DhtConst;
-}
+private import swarm.dht2.DhtClient,
+               swarm.dht2.DhtHash,
+               swarm.dht2.DhtConst;
 
 private import ocean.core.Array;
 
@@ -102,7 +91,7 @@ class DhtDump : SourceDhtTool
     
     ***************************************************************************/
     
-    private PeriodicTrace trace;
+    private PeriodicTracer trace;
 
 
     /***************************************************************************
@@ -217,11 +206,7 @@ class DhtDump : SourceDhtTool
         args("hex").aliased('x').help("displays records as hexadecimal dump (default is a string dump)");
         args("limit").params(1).defaults("0xffffffff").aliased('l').help("limits the length of text displayed for each record (defaults to no limit)");
         args("file").aliased('f').help("dumps records to a file, named [channel]");
-
-        version ( NewDhtClient )
-        {
-            args("raw").aliased('r').help("dumps raw records exactly as stored in the node, without decompressing");
-        }
+        args("raw").aliased('r').help("dumps raw records exactly as stored in the node, without decompressing");
     }
 
 
@@ -284,10 +269,7 @@ class DhtDump : SourceDhtTool
         this.hex_output = args.getBool("hex");
         this.text_limit = args.getInt!(uint)("limit");
         this.file_dump = args.getBool("file");
-        version ( NewDhtClient )
-        {
-            this.raw_dump = args.getBool("raw");
-        }
+        this.raw_dump = args.getBool("raw");
         
         this.records = 0;
         this.bytes = 0;
@@ -333,7 +315,7 @@ class DhtDump : SourceDhtTool
 
     protected void processChannel ( DhtClient dht, char[] channel, hash_t start, hash_t end )
     {
-        void receiveRecord ( uint id, char[] key, char[] value )
+        void receiveRecord ( DhtClient.RequestContext context, char[] key, char[] value )
         {
             if ( key.length && value.length )
             {
@@ -352,35 +334,25 @@ class DhtDump : SourceDhtTool
         }
         else
         {
-            version ( NewDhtClient )
+            void getAllDg ( DhtClient.RequestContext context, char[] hash_str, char[] value )
             {
-                dht.getAll(channel,
-                        ( uint id, char[] hash_str, char[] value )
-                        {
-                            if ( hash_str.length )
-                            {
-                                auto hash = DhtHash.straightToHash(hash_str);
-                                if ( hash >= start && hash <= end )
-                                {
-                                    receiveRecord(id, hash_str, value);
-                                }
-                            }
-                        }, !this.raw_dump).eventLoop();
+                if ( hash_str.length )
+                {
+                    auto hash = DhtHash.straightToHash(hash_str);
+                    if ( hash >= start && hash <= end )
+                    {
+                        receiveRecord(context, hash_str, value);
+                    }
+                }
+            }
+            
+            if ( this.raw_dump )
+            {
+                dht.getAllRaw(channel, &getAllDg).eventLoop();
             }
             else
             {
-                dht.getAll(channel,
-                        ( uint id, char[] hash_str, char[] value )
-                        {
-                            if ( hash_str.length )
-                            {
-                                auto hash = DhtHash.straightToHash(hash_str);
-                                if ( hash >= start && hash <= end )
-                                {
-                                    receiveRecord(id, hash_str, value);
-                                }
-                            }
-                        }).eventLoop();
+                dht.getAll(channel, &getAllDg).eventLoop();
             }
         }
 
@@ -407,35 +379,25 @@ class DhtDump : SourceDhtTool
 
     protected void processRecord ( DhtClient dht, char[] channel, hash_t key )
     {
-        version ( NewDhtClient )
+        void getDg ( DhtClient.RequestContext context, char[] value )
         {
-            dht.get(channel, key,
-                    ( uint id, char[] value )
-                    {
-                        if ( value.length )
-                        {
-                            this.outputRecord(channel, key, value);
-                        }
-                        else
-                        {
-                            Stdout.formatln("Record doesn't exist");
-                        }
-                    }, !this.raw_dump).eventLoop();
+            if ( value.length )
+            {
+                this.outputRecord(channel, key, value);
+            }
+            else
+            {
+                Stdout.formatln("Record doesn't exist");
+            }
+        }
+
+        if ( this.raw_dump )
+        {
+            dht.getRaw(channel, key, &getDg).eventLoop();
         }
         else
         {
-            dht.get(channel, key,
-                    ( uint id, char[] value )
-                    {
-                        if ( value.length )
-                        {
-                            this.outputRecord(channel, key, value);
-                        }
-                        else
-                        {
-                            Stdout.formatln("Record doesn't exist");
-                        }
-                    }).eventLoop();
+            dht.get(channel, key, &getDg).eventLoop();
         }
     }
 
@@ -453,7 +415,7 @@ class DhtDump : SourceDhtTool
     private void displayChannelSize ( DhtClient dht, char[] channel  )
     {
         dht.getChannelSize(channel,
-                ( hash_t id, char[] address, ushort port, char[] channel, ulong records, ulong bytes )
+                ( DhtClient.RequestContext context, char[] address, ushort port, char[] channel, ulong records, ulong bytes )
                 {
                     Stdout.formatln("{}:{} {} - {} records, {} bytes", address, port, channel, records, bytes);
                 }).eventLoop();

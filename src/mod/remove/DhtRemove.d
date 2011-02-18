@@ -8,7 +8,7 @@
     
     authors:        Gavin Norman
     
-    Reads records from one or more dht nodes and outputs them to stdout.
+    Removes records from one or more dht nodes.
     
     Command line parameters:
     Inherited from super class:
@@ -35,9 +35,9 @@ module src.mod.dump.DhtRemove;
 
 private import src.mod.model.SourceDhtTool;
 
-private import swarm.dht.DhtClient,
-           swarm.dht.DhtHash,
-           swarm.dht.DhtConst;
+private import swarm.dht2.DhtClient,
+               swarm.dht2.DhtHash,
+               swarm.dht2.DhtConst;
 
 private import ocean.core.Array;
 

@@ -33,9 +33,9 @@ module src.mod.info.DhtInfo;
 
 private import src.mod.model.DhtTool;
 
-private import swarm.dht.DhtClient,
-           swarm.dht.DhtHash,
-           swarm.dht.DhtConst;
+private import swarm.dht2.DhtClient,
+               swarm.dht2.DhtHash,
+               swarm.dht2.DhtConst;
 
 private import ocean.core.Array;
 
@@ -393,7 +393,7 @@ class DhtInfo : DhtTool
     private void getChannelNames ( DhtClient dht, ref char[][] channel_names, out size_t longest_channel_name )
     {
         dht.getChannels(
-                ( uint id, char[] channel )
+                ( DhtClient.RequestContext context, char[] channel )
                 {
                     if ( channel.length && !channel_names.contains(channel) )
                     {
@@ -423,7 +423,7 @@ class DhtInfo : DhtTool
     private void getChannelSize ( DhtClient dht, char[] channel )
     {
         dht.getChannelSize(channel,
-                ( hash_t id, char[] address, ushort port, char[] channel, ulong records, ulong bytes )
+                ( DhtClient.RequestContext context, char[] address, ushort port, char[] channel, ulong records, ulong bytes )
                 {
                     auto node = this.findNode(address, port);
                     assert(node, typeof(this).stringof ~ "Node mismatch!");

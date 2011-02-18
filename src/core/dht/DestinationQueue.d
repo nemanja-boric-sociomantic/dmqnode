@@ -35,9 +35,9 @@ private import  ocean.core.Array;
 
 private import  ocean.text.Arguments;
 
-private import  swarm.dht.DhtClient,
-                swarm.dht.DhtHash,
-                swarm.dht.DhtConst;
+private import  swarm.dht2.DhtClient,
+                swarm.dht2.DhtHash,
+                swarm.dht2.DhtConst;
 
 
 /*******************************************************************************
@@ -206,11 +206,25 @@ class DestinationQueue
     
             if ( this.dst.commandSupported(DhtConst.Command.Put) )
             {
-                this.dst.put(this.channel, key, this.records[this.count], this.compress);
+                if ( this.compress )
+                {
+                    this.dst.putCompressed(this.channel, key, &this.putRecord, DhtClient.RequestContext(this.count));
+                }
+                else
+                {
+                    this.dst.put(this.channel, key, &this.putRecord, DhtClient.RequestContext(this.count));
+                }
             }
             else if ( this.dst.commandSupported(DhtConst.Command.PutDup) )
             {
-                this.dst.putDup(this.channel, key, this.records[this.count], this.compress);
+                if ( this.compress )
+                {
+                    this.dst.putDupCompressed(this.channel, key, &this.putRecord, DhtClient.RequestContext(this.count));
+                }
+                else
+                {
+                    this.dst.putDup(this.channel, key, &this.putRecord, DhtClient.RequestContext(this.count));
+                }
             }
             else
             {
@@ -223,7 +237,7 @@ class DestinationQueue
             }
         }
     }
-    
+
     /***************************************************************************
     
         Sends all queued records to the destination dht.
@@ -240,4 +254,24 @@ class DestinationQueue
         this.dst.eventLoop();
         this.count = 0;
     }
+
+
+    /***************************************************************************
+    
+        Callback delegate for dht put requests. Provides the record to be put.
+
+        Params:
+            context = context of dht request (in this case stores the index into
+                the local records array).
+
+        Returns:
+            record to be put to the dht
+
+    ***************************************************************************/
+
+    private char[] putRecord ( DhtClient.RequestContext context )
+    {
+        return this.records[context.integer];
+    }
 }
+

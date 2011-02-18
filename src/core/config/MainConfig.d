@@ -18,7 +18,7 @@ module core.config.MainConfig;
 
  ******************************************************************************/
 
-private import  swarm.dht.DhtConst;
+private import  swarm.dht2.DhtConst;
 
 private import  ocean.sys.CmdPath;
 
