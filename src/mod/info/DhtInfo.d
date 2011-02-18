@@ -16,6 +16,7 @@
         -v = verbose output, displays info per channel per node, and per node
             per channel
         -c = display the number of connections being handled per node
+        -a = display the api version of the dht nodes
 
     Inherited from super class:
         -h = display help
@@ -223,6 +224,15 @@ class DhtInfo : DhtTool
 
     /***************************************************************************
 
+        Toggle output of the nodes' api version.
+
+    ***************************************************************************/
+    
+    private bool api_version;
+
+
+    /***************************************************************************
+
         Main process method. Runs the tool based on the passed command line
         arguments.
     
@@ -253,6 +263,11 @@ class DhtInfo : DhtTool
         {
             this.displayNumConnections(dht, longest_node_name);
         }
+
+        if ( this.api_version )
+        {
+            this.displayApiVersions(dht, longest_node_name);
+        }
     }
 
 
@@ -270,6 +285,7 @@ class DhtInfo : DhtTool
         args("source").params(1).required().aliased('S').help("path of dhtnodes.xml file defining nodes to query");
         args("verbose").aliased('v').help("verbose output, displays info per channel per node, and per node per channel");
         args("connections").aliased('c').help("displays the number of connections being handled per node");
+        args("api").aliased('a').help("displays the api version of the dht nodes");
     }
 
 
@@ -313,6 +329,36 @@ class DhtInfo : DhtTool
         this.verbose = args.getBool("verbose");
 
         this.connections = args.getBool("connections");
+
+        this.api_version = args.getBool("api");
+    }
+
+
+    /***************************************************************************
+
+        Queries and displays the api version of each node.
+
+        Params:
+            dht = dht client to perform query with
+            longest_node_name = the length of the longest node name string
+
+    ***************************************************************************/
+    
+    private void displayApiVersions ( DhtClient dht, size_t longest_node_name )
+    {
+        Stdout.formatln("\nApi version:");
+        Stdout.formatln("------------------------------------------------------------------------------");
+
+        bool output;
+        dht.getVersion(
+                ( DhtClient.RequestContext context, char[] api_version )
+                {
+                    if ( api_version.length && !output )
+                    {
+                        Stdout.formatln("  API: {}", api_version);
+                        output = true;
+                    }
+                }).eventLoop;
     }
 
 

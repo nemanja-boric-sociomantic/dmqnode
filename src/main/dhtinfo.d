@@ -17,6 +17,7 @@
             per channel
         -h = display help
         -c = display the number of connections being handled per node
+        -a = display the api version of the dht nodes
 
 *******************************************************************************/
 
