@@ -1,0 +1,183 @@
+; Dht node configuration
+;
+; A dht node is a server that communicates via a binary protocol and stores
+; data in a key/value storage. Data can be stored into different channels
+; that are automatically created when a first insert command is send to a
+; specific channel. A dht node can store the data in different storage
+; engines.
+;
+; (c) 2009-2010 sociomantic labs GmbH. All rights reserved
+;               david.eckardt@sociomantic.com
+;               thomas.nicolai@sociomantic.com
+;               lars.kirchhoff@sociomantic.com
+;
+
+
+
+; Basic server configuration
+;
+; address               ip address on which the server should be listening
+; port                  port on which the server should be listening
+; pidfile               name of the PID file
+; connection_threads    number of threads for incoming connections
+; data_dir              directory where the data is stored
+; storage_engine        storage engine that should be used (only one can be used)
+;                       [hashtable, btree, filesystem, memory, logfiles]
+; size_limit            size limit for storage engine (should to be adequate for
+;                       the choosen storage engine). If set to 0 no limit is 
+;                       applied. size limit is set in bytes.
+;
+
+[Server]
+
+address                 = 192.168.2.222
+port                    = 10011
+pidfile                 = var/server.pid
+connection_threads      = 40
+data_dir                = data
+storage_engine          = hashtable
+size_limit              = 3000000000
+minval                  = 0x0
+maxval                  = 0xf
+
+
+
+; HashTable storage engine configuration
+;
+; All options are optional; default values are used for options not specified:
+;
+; bnum                  specifies the number of elements of the bucket array.
+;                       If it is not more than 0, the default value is specified.
+;                       The default value is 131071. Suggested size of the bucket
+;                       array is about from 0.5 to 4 times of the number of all
+;                       records to be stored.
+;
+; apow                  specifies the size of record alignment by power of 2.
+;                       If it is negative, the default value is specified.
+;                       The default value is 4 standing for 2^4=16.
+;
+; fpow                  specifies the maximum number of elements of the free
+;                       block pool by power of 2. If it is negative, the default
+;                       value is specified. The default value is 10 standing
+;                       for 2^10=1024.
+; compression_mode      compression mode for hashtable storage. 
+;                       Available options are: none, deflate, bzip, tcbs
+;
+
+[Options_Hashtable]
+
+bnum                    = 131071
+apow                    = 4
+fpow                    = 10
+compression_mode        = none
+
+
+
+; Btree storage engine configuration
+;
+; All options are optional; default values are used for options not specified:
+;
+; bnum                  specifies the number of elements of the bucket array.
+;                       If it is not more than 0, the default value is specified.
+;                       The default value is 32749. Suggested size of the bucket
+;                       array is about from 1 to 4 times of the number of all
+;                       pages to be stored.
+;
+; apow                  specifies the size of record alignment by power of 2.
+;                       If it is negative, the default value is specified. The
+;                       default value is 8 standing for 2^8=256.
+;
+; fpow                  specifies the maximum number of elements of the free
+;                       block pool by power of 2. If it is negative, the default
+;                       value is specified. The default value is 10 standing
+;                       for 2^10=1024.
+;
+; lmemb                 specifies the number of members in each leaf page. If
+;                       it is not more than 0, the default value is specified.
+;                       The default value is 128.
+;
+; nmemb                 specifies the number of members in each non-leaf page.
+;                       If it is not more than 0, the default value is specified.
+;                       The default value is 256.
+; compression_mode      compression mode for hashtable storage. 
+;                       Available options are: none, deflate, bzip, tcbs
+;
+
+[Options_Btree]
+
+bnum                    = 32749
+apow                    = 8
+fpow                    = 10
+lmemb                   = 128
+nmemb                   = 256
+compression_mode        = none
+
+
+
+; Memory storage engine configuration
+;
+; bnum                  specifies the number of elements of the bucket array.
+;                       If it is not more than 0, the default value is specified.
+;                       The default value is 32749. Suggested size of the bucket
+;                       array is about from 1 to 4 times of the number of all
+;                       pages to be stored.
+;
+
+[Options_Memory]
+
+bnum                    = 32749
+
+
+
+; LogFiles storage engine configuration
+;
+; write_buffer_size     specifies the file output buffer size in bytes; default
+;                       is 65536.
+
+[Options_LogFiles]
+
+write_buffer_size       = 65536
+
+
+
+; Service threads configuration
+;
+; maintenance_sleep    specifies the number of seconds between each maintenance call
+; stats_sleep          specifies the number of seconds between each stats line output
+;
+
+[ServiceThreads]
+
+maintenance_sleep       = 900
+stats_sleep             = 1
+
+
+
+; Monitor Configuration
+;
+; display_cols          Number of node columns to display in a single row before breaking.
+;
+
+[Monitor]
+
+columns                 = 3
+
+
+
+; Logging Configuration
+;
+; error                 log for exceptions thrown in the server
+; trace                 trace log file for debugging purpose
+; trace_enable          trace level to write events upon
+; console_trace_enable  toggles output of trace log lines to console
+; trace_errors          writes errors to the console (in addition to the error
+;                       log)
+;
+
+[Log]
+
+error                   = log/error.log
+trace                   = log/trace.log
+trace_enable            = 1
+console_trace_enable    = false
+trace_errors            = false
