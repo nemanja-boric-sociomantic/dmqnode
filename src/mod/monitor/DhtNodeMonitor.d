@@ -633,7 +633,7 @@ class NodeMonDaemon
     private void addChannelSize ( DhtClient.RequestContext context, char[] address, ushort port, char[] channel, 
             ulong records, ulong bytes )
     {
-        debug Trace.formatln("'{}' - '{}' - '{}' - '{}' - '{}' - '{}'", context.hash, address, port, channel, records, bytes ).flush();
+        debug Trace.formatln("'{}' - '{}' - '{}' - '{}' - '{}'", address, port, channel, records, bytes ).flush();
         
         if (channel.length)
         {
