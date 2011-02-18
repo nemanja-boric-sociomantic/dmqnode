@@ -21,6 +21,8 @@
     Inherited from super class:
         -h = display help
 
+    TODO: display node hash range responsibilities
+
 *******************************************************************************/
 
 module src.mod.info.DhtInfo;
