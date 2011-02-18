@@ -29,6 +29,9 @@
         -c = channel name to query
         -A = query all channels
 
+    TODO: add a -D flag to specify that the dumped records should be sent to a
+    destination dht (instead of to the console / files).
+
     TODO: add a flag (only valid in combination with -f) to specify the
     directory which files are written into.
 
