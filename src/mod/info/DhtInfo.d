@@ -15,6 +15,7 @@
         -S = dhtnodes.xml file for dht to query
         -v = verbose output, displays info per channel per node, and per node
             per channel
+        -c = display the number of connections being handled per node
 
     Inherited from super class:
         -h = display help
@@ -171,7 +172,24 @@ class DhtInfo : DhtTool
 
         public void name ( ref char[] name )
         {
-            name.concat(this.address, ":", Integer.toString(this.port));
+            typeof(*this).formatName(this.address, this.port, name);
+        }
+
+
+        /***********************************************************************
+
+            Formats the provided string with the name of the specified node.
+    
+            Params:
+                address = node ip address
+                port = node port
+                name = string to receive node name
+
+        ***********************************************************************/
+
+        static public void formatName ( char[] address, ushort port, ref char[] name )
+        {
+            name.concat(address, ":", Integer.toString(port));
         }
     }
 
@@ -187,11 +205,20 @@ class DhtInfo : DhtTool
 
     /***************************************************************************
     
-        Toggles verbose output
+        Toggle verbose output.
     
     ***************************************************************************/
     
     private bool verbose;
+
+
+    /***************************************************************************
+    
+        Toggle output of number of connections being handled per node.
+    
+    ***************************************************************************/
+    
+    private bool connections;
 
 
     /***************************************************************************
@@ -206,12 +233,6 @@ class DhtInfo : DhtTool
     
     protected void process_ ( DhtClient dht )
     {
-        // Get channel names
-        size_t longest_channel_name;
-        char[][] channel_names;
-
-        this.getChannelNames(dht, channel_names, longest_channel_name);
-
         // Get node addresses/ports
         size_t longest_node_name;
 
@@ -226,96 +247,11 @@ class DhtInfo : DhtTool
             }
         }
 
-        // Get channel size info
-        foreach ( channel; channel_names )
+        this.displayContents(dht, longest_node_name);
+
+        if ( this.connections )
         {
-            this.getChannelSize(dht, channel);
-        }
-
-        // Display channels
-        Stdout.formatln("\nChannels:");
-        Stdout.formatln("------------------------------------------------------------------------------");
-
-        if ( verbose )
-        {
-            foreach ( i, channel; channel_names )
-            {
-                Stdout.formatln("Channel {}: {}:", i, channel);
-
-                ulong channel_records, channel_bytes;
-                foreach ( j, node; this.nodes )
-                {
-                    ulong records, bytes;
-                    node.getChannelSize(channel, records, bytes);
-                    channel_records += records;
-                    channel_bytes += bytes;
-
-                    char[] node_name;
-                    node.name(node_name);
-
-                    this.outputRow(j, node_name, longest_node_name, records, bytes);
-                }
-
-                this.outputTotal(channel_records, channel_bytes);
-            }
-        }
-        else
-        {
-            foreach ( i, channel; channel_names )
-            {
-                ulong records, bytes;
-                foreach ( node; this.nodes )
-                {
-                    ulong channel_records, channel_bytes;
-                    node.getChannelSize(channel, channel_records, channel_bytes);
-                    records += channel_records;
-                    bytes += channel_bytes;
-                }
-    
-                this.outputRow(i, channel, longest_channel_name, records, bytes);
-            }
-        }
-
-        // Display nodes
-        Stdout.formatln("\nNodes:");
-        Stdout.formatln("------------------------------------------------------------------------------");
-
-        if ( verbose )
-        {
-            foreach ( i, node; this.nodes )
-            {
-                char[] node_name;
-                node.name(node_name);
-                Stdout.formatln("Node {}: {}:", i, node_name);
-
-                ulong node_records, node_bytes;
-
-                foreach ( j, ch; node.channels )
-                {
-                    this.outputRow(j, ch.name, longest_channel_name, ch.records, ch.bytes);
-                    node_records += ch.records;
-                    node_bytes += ch.bytes;
-                }
-
-                this.outputTotal(node_records, node_bytes);
-            }
-        }
-        else
-        {
-            foreach ( i, node; this.nodes )
-            {
-                ulong records, bytes;
-    
-                foreach ( ch; node.channels )
-                {
-                    records += ch.records;
-                    bytes += ch.bytes;
-                }
-    
-                char[] node_name = node.address ~ ":" ~ Integer.toString(node.port);
-    
-                this.outputRow(i, node_name, longest_node_name, records, bytes);
-            }
+            this.displayNumConnections(dht, longest_node_name);
         }
     }
 
@@ -333,6 +269,7 @@ class DhtInfo : DhtTool
     {
         args("source").params(1).required().aliased('S').help("path of dhtnodes.xml file defining nodes to query");
         args("verbose").aliased('v').help("verbose output, displays info per channel per node, and per node per channel");
+        args("connections").aliased('c').help("displays the number of connections being handled per node");
     }
 
 
@@ -374,6 +311,146 @@ class DhtInfo : DhtTool
         super.dht_nodes_config = args.getString("source");
 
         this.verbose = args.getBool("verbose");
+
+        this.connections = args.getBool("connections");
+    }
+
+
+    /***************************************************************************
+
+        Queries and displays the number of connections being handled per node.
+    
+        Params:
+            dht = dht client to perform query with
+            longest_node_name = the length of the longest node name string
+
+    ***************************************************************************/
+
+    private void displayNumConnections ( DhtClient dht, size_t longest_node_name )
+    {
+        Stdout.formatln("\nConnections being handled:");
+        Stdout.formatln("------------------------------------------------------------------------------");
+
+        uint count;
+        dht.getNumConnections(
+                ( DhtClient.RequestContext context, char[] node_address, ushort node_port, size_t num_connections )
+                {
+                    char[] node_name;
+                    NodeInfo.formatName(node_address, node_port, node_name);
+                    this.outputConnectionsRow(count++, node_name, longest_node_name, num_connections - 1);
+                }).eventLoop;
+    }
+
+
+    /***************************************************************************
+
+        Queries and displays the size of the contents of each channel and node.
+    
+        Params:
+            dht = dht client to perform query with
+            longest_node_name = the length of the longest node name string
+
+    ***************************************************************************/
+
+    private void displayContents ( DhtClient dht, size_t longest_node_name )
+    {
+        // Get channel names
+        size_t longest_channel_name;
+        char[][] channel_names;
+
+        this.getChannelNames(dht, channel_names, longest_channel_name);
+
+        // Get channel size info
+        foreach ( channel; channel_names )
+        {
+            this.getChannelSize(dht, channel);
+        }
+
+        // Display channels
+        Stdout.formatln("\nChannels:");
+        Stdout.formatln("------------------------------------------------------------------------------");
+
+        if ( this.verbose )
+        {
+            foreach ( i, channel; channel_names )
+            {
+                Stdout.formatln("Channel {}: {}:", i, channel);
+
+                ulong channel_records, channel_bytes;
+                foreach ( j, node; this.nodes )
+                {
+                    ulong records, bytes;
+                    node.getChannelSize(channel, records, bytes);
+                    channel_records += records;
+                    channel_bytes += bytes;
+
+                    char[] node_name;
+                    node.name(node_name);
+
+                    this.outputRow(j, node_name, longest_node_name, records, bytes);
+                }
+
+                this.outputTotal(longest_node_name, channel_records, channel_bytes);
+            }
+        }
+        else
+        {
+            foreach ( i, channel; channel_names )
+            {
+                ulong records, bytes;
+                foreach ( node; this.nodes )
+                {
+                    ulong channel_records, channel_bytes;
+                    node.getChannelSize(channel, channel_records, channel_bytes);
+                    records += channel_records;
+                    bytes += channel_bytes;
+                }
+    
+                this.outputRow(i, channel, longest_channel_name, records, bytes);
+            }
+        }
+
+        // Display nodes
+        Stdout.formatln("\nNodes:");
+        Stdout.formatln("------------------------------------------------------------------------------");
+
+        if ( this.verbose )
+        {
+            foreach ( i, node; this.nodes )
+            {
+                char[] node_name;
+                node.name(node_name);
+                Stdout.formatln("Node {}: {}:", i, node_name);
+
+                ulong node_records, node_bytes;
+
+                foreach ( j, ch; node.channels )
+                {
+                    this.outputRow(j, ch.name, longest_channel_name, ch.records, ch.bytes);
+                    node_records += ch.records;
+                    node_bytes += ch.bytes;
+                }
+
+                this.outputTotal(longest_channel_name, node_records, node_bytes);
+            }
+        }
+        else
+        {
+            foreach ( i, node; this.nodes )
+            {
+                ulong records, bytes;
+    
+                foreach ( ch; node.channels )
+                {
+                    records += ch.records;
+                    bytes += ch.bytes;
+                }
+    
+                char[] node_name = node.address ~ ":" ~ Integer.toString(node.port);
+    
+                this.outputRow(i, node_name, longest_node_name, records, bytes);
+            }
+        }
     }
 
 
@@ -435,6 +512,19 @@ class DhtInfo : DhtTool
     }
 
 
+    private void outputConnectionsRow ( uint num, char[] name, size_t longest_name, uint connections )
+    {
+        char[] pad;
+        pad.length = longest_name - name.length;
+        pad[] = ' ';
+
+        char[] connections_str;
+        formatCommaNumber(connections, connections_str);
+
+        Stdout.formatln("  {,3}: {}{} {,5} connections", num, name, pad, connections_str);
+    }
+
+
     /***************************************************************************
     
         Outputs a size info row to Stdout.
@@ -475,15 +565,19 @@ class DhtInfo : DhtTool
     
     ***************************************************************************/
 
-    private void outputTotal ( ulong records, ulong bytes )
+    private void outputTotal ( size_t longest_name, ulong records, ulong bytes )
     {
+        char[] pad;
+        pad.length = longest_name;
+        pad[] = ' ';
+
         char[] records_str;
         formatCommaNumber(records, records_str);
-    
+
         char[] bytes_str;
         formatCommaNumber(bytes, bytes_str);
-    
-        Stdout.formatln("Total = {} records {} bytes\n", records_str, bytes_str);
+
+        Stdout.formatln("Total: {} {,17} records {,17} bytes", pad, records_str, bytes_str);
     }
 
 

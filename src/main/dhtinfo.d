@@ -16,9 +16,7 @@
         -v = verbose output, displays info per channel per node, and per node
             per channel
         -h = display help
-
-    TODO: add a flag to show the number of open connections (when the new dht
-    node / client is online)
+        -c = display the number of connections being handled per node
 
 *******************************************************************************/
 
