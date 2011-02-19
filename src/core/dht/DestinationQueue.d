@@ -200,7 +200,7 @@ class DestinationQueue
     }
     body
     {
-        if ( key >= this.start && key <= this.end )
+        if ( key >= this.start && key <= this.end && value.length )
         {
             this.records[this.count].copy(value);
     
