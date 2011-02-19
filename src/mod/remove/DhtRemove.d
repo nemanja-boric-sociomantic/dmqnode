@@ -21,6 +21,8 @@
         -c = channel name to remove records from
         -A = remove from all channels
 
+    TODO: add an "are you sure?" prompt when removing a whole channel
+
 *******************************************************************************/
 
 module src.mod.dump.DhtRemove;
