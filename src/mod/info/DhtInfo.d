@@ -13,15 +13,15 @@
 
     Command line parameters:
         -S = dhtnodes.xml file for dht to query
+        -d = display the quantity of data stored in each node and each channel
         -v = verbose output, displays info per channel per node, and per node
             per channel
         -c = display the number of connections being handled per node
         -a = display the api version of the dht nodes
+        -r = display the hash ranges of the dht nodes
 
     Inherited from super class:
         -h = display help
-
-    TODO: display node hash range responsibilities
 
 *******************************************************************************/
 
@@ -88,6 +88,16 @@ class DhtInfo : DhtTool
         public ushort port;
 
 
+        /***********************************************************************
+        
+            Node hash range
+        
+        ***********************************************************************/
+
+        public hash_t min_hash;
+        public hash_t max_hash;
+
+        
         /***********************************************************************
         
             Size info for a single channel in a dht node
@@ -208,6 +218,15 @@ class DhtInfo : DhtTool
 
     /***************************************************************************
     
+        Toggle data output.
+    
+    ***************************************************************************/
+    
+    private bool data;
+
+
+    /***************************************************************************
+    
         Toggle verbose output.
     
     ***************************************************************************/
@@ -235,6 +254,15 @@ class DhtInfo : DhtTool
 
     /***************************************************************************
 
+        Toggle output of the nodes' hash ranges.
+    
+    ***************************************************************************/
+    
+    private bool hash_ranges;
+
+
+    /***************************************************************************
+
         Main process method. Runs the tool based on the passed command line
         arguments.
     
@@ -250,8 +278,8 @@ class DhtInfo : DhtTool
 
         foreach ( node; dht )
         {
-            this.nodes ~= NodeInfo(node.nodeitem.Address, node.nodeitem.Port);
-            
+            this.nodes ~= NodeInfo(node.nodeitem.Address, node.nodeitem.Port, node.nodeitem.MinValue, node.nodeitem.MaxValue);
+
             auto name_len = node.nodeitem.Address.length + 6;
             if ( name_len > longest_node_name )
             {
@@ -259,7 +287,11 @@ class DhtInfo : DhtTool
             }
         }
 
-        this.displayContents(dht, longest_node_name);
+        // Display various forms of output
+        if ( this.data )
+        {
+            this.displayContents(dht, longest_node_name);
+        }
 
         if ( this.connections )
         {
@@ -269,6 +301,11 @@ class DhtInfo : DhtTool
         if ( this.api_version )
         {
             this.displayApiVersions(dht, longest_node_name);
+        }
+
+        if ( this.hash_ranges )
+        {
+            this.displayHashRanges(dht, longest_node_name);
         }
     }
 
@@ -285,9 +322,11 @@ class DhtInfo : DhtTool
     override protected void addArgs_ ( Arguments args )
     {
         args("source").params(1).required().aliased('S').help("path of dhtnodes.xml file defining nodes to query");
+        args("data").aliased('d').help("display the quantity of data stored in each node and each channel");
         args("verbose").aliased('v').help("verbose output, displays info per channel per node, and per node per channel");
         args("connections").aliased('c').help("displays the number of connections being handled per node");
         args("api").aliased('a').help("displays the api version of the dht nodes");
+        args("range").aliased('r').help("display the hash ranges of the dht nodes");
     }
 
 
@@ -328,11 +367,48 @@ class DhtInfo : DhtTool
     {
         super.dht_nodes_config = args.getString("source");
 
+        this.data = args.getBool("data");
+
         this.verbose = args.getBool("verbose");
+        if ( this.verbose )
+        {
+            this.data = true;
+        }
 
         this.connections = args.getBool("connections");
 
         this.api_version = args.getBool("api");
+
+        this.hash_ranges = args.getBool("range");
+
+        if ( !this.data && !this.verbose && !this.connections && !this.api_version && !this.hash_ranges )
+        {
+            this.data = true;
+        }
+    }
+
+
+    /***************************************************************************
+
+        Displays the hash range of each node.
+    
+        Params:
+            dht = dht client to perform query with
+            longest_node_name = the length of the longest node name string
+    
+    ***************************************************************************/
+    
+    private void displayHashRanges ( DhtClient dht, size_t longest_node_name )
+    {
+        Stdout.formatln("\nHash ranges:");
+        Stdout.formatln("------------------------------------------------------------------------------");
+
+        foreach ( i, node; this.nodes )
+        {
+            char[] name_str;
+            node.name(name_str);
+            this.outputHashRangeRow(i, name_str, longest_node_name, node.min_hash, node.max_hash);
+        }
     }
 
 
@@ -435,10 +511,10 @@ class DhtInfo : DhtTool
                     char[] node_name;
                     node.name(node_name);
 
-                    this.outputRow(j, node_name, longest_node_name, records, bytes);
+                    this.outputSizeRow(j, node_name, longest_node_name, records, bytes);
                 }
 
-                this.outputTotal(longest_node_name, channel_records, channel_bytes);
+                this.outputSizeTotal(longest_node_name, channel_records, channel_bytes);
             }
         }
         else
@@ -454,7 +530,7 @@ class DhtInfo : DhtTool
                     bytes += channel_bytes;
                 }
     
-                this.outputRow(i, channel, longest_channel_name, records, bytes);
+                this.outputSizeRow(i, channel, longest_channel_name, records, bytes);
             }
         }
 
@@ -474,12 +550,12 @@ class DhtInfo : DhtTool
 
                 foreach ( j, ch; node.channels )
                 {
-                    this.outputRow(j, ch.name, longest_channel_name, ch.records, ch.bytes);
+                    this.outputSizeRow(j, ch.name, longest_channel_name, ch.records, ch.bytes);
                     node_records += ch.records;
                     node_bytes += ch.bytes;
                 }
 
-                this.outputTotal(longest_channel_name, node_records, node_bytes);
+                this.outputSizeTotal(longest_channel_name, node_records, node_bytes);
             }
         }
         else
@@ -496,7 +572,7 @@ class DhtInfo : DhtTool
     
                 char[] node_name = node.address ~ ":" ~ Integer.toString(node.port);
     
-                this.outputRow(i, node_name, longest_node_name, records, bytes);
+                this.outputSizeRow(i, node_name, longest_node_name, records, bytes);
             }
         }
     }
@@ -560,6 +636,43 @@ class DhtInfo : DhtTool
     }
 
 
+    /***************************************************************************
+    
+        Outputs a hash range info row to Stdout.
+    
+        Params:
+            num = number to prepend to row
+            name = name of row item
+            longest_name = length of the longest string of type name, used to
+                work out how wide the name column needs to be
+             min = min hash
+             max = mas hash
+    
+    ***************************************************************************/
+
+    private void outputHashRangeRow ( uint num, char[] name, size_t longest_name, hash_t min, hash_t max )
+    {
+        char[] pad;
+        pad.length = longest_name - name.length;
+        pad[] = ' ';
+
+        Stdout.formatln("  {,3}: {}{}   0x{:X8} .. 0x{:X8}", num, name, pad, min, max);
+    }
+
+
+    /***************************************************************************
+    
+        Outputs a connections info row to Stdout.
+    
+        Params:
+            num = number to prepend to row
+            name = name of row item
+            longest_name = length of the longest string of type name, used to
+                work out how wide the name column needs to be
+            connections = number of connections
+
+    ***************************************************************************/
+
     private void outputConnectionsRow ( uint num, char[] name, size_t longest_name, uint connections )
     {
         char[] pad;
@@ -587,7 +700,7 @@ class DhtInfo : DhtTool
     
     ***************************************************************************/
 
-    private void outputRow ( uint num, char[] name, size_t longest_name, ulong records, ulong bytes )
+    private void outputSizeRow ( uint num, char[] name, size_t longest_name, ulong records, ulong bytes )
     {
         char[] pad;
         pad.length = longest_name - name.length;
@@ -613,7 +726,7 @@ class DhtInfo : DhtTool
     
     ***************************************************************************/
 
-    private void outputTotal ( size_t longest_name, ulong records, ulong bytes )
+    private void outputSizeTotal ( size_t longest_name, ulong records, ulong bytes )
     {
         char[] pad;
         pad.length = longest_name;
