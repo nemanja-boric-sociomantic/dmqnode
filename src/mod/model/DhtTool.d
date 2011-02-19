@@ -122,6 +122,8 @@ abstract class DhtTool
 
         auto dht = this.initDhtClient(this.dht_nodes_config);
 
+        this.init(dht);
+        
         this.process_(dht);
 
         this.finished(dht);
@@ -138,6 +140,22 @@ abstract class DhtTool
     ***************************************************************************/
 
     abstract protected void process_ ( DhtClient dht );
+
+
+    /***************************************************************************
+
+        Called before processing (in the process() method, above). The base
+        class implementation does nothing, but derived classes may wish to add
+        behaviour at this point.
+    
+        Params:
+            dht = dht client
+    
+    ***************************************************************************/
+    
+    protected void init ( DhtClient dht )
+    {
+    }
 
 
     /***************************************************************************
@@ -251,9 +269,9 @@ abstract class DhtTool
 
     ***************************************************************************/
 
-    private DhtClient initDhtClient ( char[] xml )
+    protected DhtClient initDhtClient ( char[] xml )
     {
-        Stderr.formatln("Initialising dht client connections");
+        Stderr.formatln("Initialising dht client connections from {}", xml);
 
         auto dht = new DhtClient();
 
