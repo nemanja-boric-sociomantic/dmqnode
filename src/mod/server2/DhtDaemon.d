@@ -110,7 +110,6 @@ class DhtDaemon
     {
         NodeItem node_item = this.getNodeItemConfiguration();
 
-        uint    number_threads  = Config.get!(uint)("Server", "connection_threads");
         ulong   size_limit      = Config.get!(ulong)("Server", "size_limit");
         char[]  data_dir        = Config.get!(char[])("Server", "data_dir");
 

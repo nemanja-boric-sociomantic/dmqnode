@@ -71,7 +71,6 @@ struct MainConfig
                 address                 = "address",
                 port                    = "port",
                 pidfile                 = "pidfile",
-                connection_threads      = "connection_threads",
                 data_dir                = "data_dir",
                 storage_engine          = "storage_engine",
                 size_limit              = "size_limit",
