@@ -112,7 +112,7 @@ abstract class SourceDhtTool : DhtTool
 
     ***************************************************************************/
     
-    protected void process_ ( DhtClient dht )
+    final protected void process_ ( DhtClient dht )
     {
         if ( this.channels.all_channels )
         {
@@ -136,8 +136,6 @@ abstract class SourceDhtTool : DhtTool
                     break;
             }
         }
-    
-        this.finished(dht);
     }
 
 
