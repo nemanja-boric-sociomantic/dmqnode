@@ -22,6 +22,8 @@ module mod.server2.servicethreads.model.IServiceThread;
 
 private import mod.server2.util.Terminator;
 
+private import ocean.util.OceanException;
+
 private import tango.core.Thread;
 
 private import swarm.dht2.node.model.IDhtNode,
@@ -97,13 +99,23 @@ public abstract class IServiceThread : Thread
     {
         while ( !Terminator.terminating )
         {
-            Thread.sleep(this.update_time);
-
-            this.serviceNode(this.node_info, this.update_time);
-
-            foreach ( channel; this.channels_service )
+            try
             {
-                this.serviceChannel(channel, this.update_time);
+                Thread.sleep(this.update_time);
+
+                if ( !Terminator.terminating )
+                {
+                    this.serviceNode(this.node_info, this.update_time);
+        
+                    foreach ( channel; this.channels_service )
+                    {
+                        this.serviceChannel(channel, this.update_time);
+                    }
+                }
+            }
+            catch ( Exception e )
+            {
+                OceanException.Warn("Error during {}: {}", this.id, e.msg);
             }
         }
     }
@@ -134,5 +146,18 @@ public abstract class IServiceThread : Thread
     ***************************************************************************/
 
     abstract protected void serviceChannel ( IStorageEngineService channel, uint seconds_elapsed );
+
+
+    /***************************************************************************
+
+        Gets the identifying string for the sub-class (used for message
+        printing).
+    
+        Returns:
+            sub-class id
+    
+    ***************************************************************************/
+
+    abstract protected char[] id ( );
 }
 

@@ -89,5 +89,20 @@ class StatsThread : IServiceThread
     protected void serviceChannel ( IStorageEngineService channel, uint seconds_elapsed )
     {
     }
+
+
+    /***************************************************************************
+
+        Gets the identifying string for this class (used for message printing).
+    
+        Returns:
+            class id
+    
+    ***************************************************************************/
+    
+    protected char[] id ( )
+    {
+        return typeof(this).stringof;
+    }
 }
 
