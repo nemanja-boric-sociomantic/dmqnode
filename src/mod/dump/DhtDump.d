@@ -102,7 +102,7 @@ class DhtDump : SourceDhtTool
     
     ***************************************************************************/
     
-    private PeriodicTrace trace;
+    private PeriodicTracer trace;
 
 
     /***************************************************************************
