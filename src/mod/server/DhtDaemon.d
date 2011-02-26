@@ -199,11 +199,11 @@ class DhtDaemon
     {
         NodeItem node_item; 
 
-        char[] minval = Config.getChar("Server", "minval");
-        char[] maxval = Config.getChar("Server", "maxval");
+        char[] minval = Config.Char["Server", "minval"];
+        char[] maxval = Config.Char["Server", "maxval"];
 
-        node_item.Address  = Config.getChar("Server", "address");
-        node_item.Port     = Config.getInt("Server", "port");
+        node_item.Address  = Config.Char["Server", "address"];
+        node_item.Port     = Config.Int["Server", "port"];
         node_item.MinValue = DhtHash.toHashRangeStart(minval);
         node_item.MaxValue = DhtHash.toHashRangeEnd(maxval);
 
