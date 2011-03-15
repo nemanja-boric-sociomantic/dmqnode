@@ -32,10 +32,6 @@ private import swarm.dht2.DhtClient,
                swarm.dht2.DhtHash,
                swarm.dht2.DhtConst;
 
-private import swarm.dht2.client.connection.ErrorInfo;
-
-private import swarm.dht2.client.DhtNodesConfig;
-
 private import tango.io.Stdout;
 
 
@@ -280,11 +276,28 @@ abstract class DhtTool
         dht.addNodes(xml);
 
         dht.nodeHandshake();
-        assert(!this.dht_error, typeof(this).stringof ~ ".initDhtClient - error during dht client initialisation of " ~ xml);
+        if ( this.strictHandshake )
+        {
+            assert(!this.dht_error, typeof(this).stringof ~ ".initDhtClient - error during dht client initialisation of " ~ xml);
+        }
 
         Stderr.formatln("Dht client connections initialised");
 
         return dht;
+    }
+
+
+    /***************************************************************************
+
+        Returns:
+            true if the tool should fail if any errors occur during node
+            handshake
+
+    ***************************************************************************/
+
+    protected bool strictHandshake ( )
+    {
+        return true;
     }
 
 
@@ -298,7 +311,7 @@ abstract class DhtTool
 
     ***************************************************************************/
 
-    private void dhtError ( ErrorInfo e )
+    protected void dhtError ( DhtClient.ErrorInfo e )
     {
         Stderr.format("DHT client error: {}\n", e.message);
         this.dht_error = true;
