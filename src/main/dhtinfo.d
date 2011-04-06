@@ -8,16 +8,21 @@
 
     authors:        Gavin Norman
 
-    Display information about a dht - the names of the channels, and optionally
-    the number of records & bytes per channel.
+    Display information about a dht -- the default (with no command line args)
+    is a nicely formatted monitor display.
+
+    Display of number of active connections, node api versions, hash ranges, etc
+    are possible with command line arguments.
 
     Command line parameters:
         -S = dhtnodes.xml file for dht to query
+        -d = display the quantity of data stored in each node and each channel
         -v = verbose output, displays info per channel per node, and per node
             per channel
-        -h = display help
         -c = display the number of connections being handled per node
         -a = display the api version of the dht nodes
+        -r = display the hash ranges of the dht nodes
+        -w = width of monitor display (number of columns)
 
 *******************************************************************************/
 
