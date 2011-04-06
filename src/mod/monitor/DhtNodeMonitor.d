@@ -30,11 +30,9 @@ module src.mod.monitor.DhtNodeMonitor;
 
 private import  src.core.config.MonitorConfig;
 
-private import  swarm.dht.DhtClient,
-                swarm.dht.DhtHash,
-                swarm.dht.DhtConst;
-
-private import  swarm.dht.client.DhtNodesConfig;
+private import  swarm.dht2.DhtClient,
+                swarm.dht2.DhtHash,
+                swarm.dht2.DhtConst;
 
 private import  ocean.core.Array;
 
@@ -188,12 +186,11 @@ class NodeMonDaemon
     public this ( )
     {
         this.dht = new DhtClient();
-
-        DhtNodesConfig.addNodesToClient(this.dht, "etc/dhtnodes.xml");
-        
-        this.dht.queryNodeRanges().eventLoop();
+        this.dht.addNodes("etc/dhtnodes.xml");
 
         this.dht.error_callback = &this.onConnectionError;
+
+        this.dht.nodeHandshake();
     }
 
     /***************************************************************************
@@ -608,7 +605,7 @@ class NodeMonDaemon
 
      **************************************************************************/
 
-    private void addChannels ( uint id, char[] channel )
+    private void addChannels ( DhtClient.RequestContext context, char[] channel )
     {
         if (channel.length && !this.channels.contains(channel))
         {
@@ -633,10 +630,10 @@ class NodeMonDaemon
 
      **************************************************************************/
 
-    private void addChannelSize ( uint id, char[] address, ushort port, char[] channel, 
+    private void addChannelSize ( DhtClient.RequestContext context, char[] address, ushort port, char[] channel, 
             ulong records, ulong bytes )
     {
-        debug Trace.formatln("'{}' - '{}' - '{}' - '{}' - '{}' - '{}'", id, address, port, channel, records, bytes ).flush();
+        debug Trace.formatln("'{}' - '{}' - '{}' - '{}' - '{}'", address, port, channel, records, bytes ).flush();
         
         if (channel.length)
         {

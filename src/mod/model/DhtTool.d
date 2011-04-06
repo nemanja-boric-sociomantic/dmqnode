@@ -28,26 +28,9 @@ module src.mod.model.DhtTool;
 
 private import ocean.text.Arguments;
 
-version ( NewDhtClient )
-{
-    private import swarm.dht2.DhtClient,
-                   swarm.dht2.DhtHash,
-                   swarm.dht2.DhtConst;
-
-    private import swarm.dht2.client.connection.ErrorInfo;
-    
-    private import swarm.dht2.client.DhtNodesConfig;
-}
-else
-{
-    private import swarm.dht.DhtClient,
-                   swarm.dht.DhtHash,
-                   swarm.dht.DhtConst;
-
-    private import swarm.dht.client.connection.ErrorInfo;
-    
-    private import swarm.dht.client.DhtNodesConfig;
-}
+private import swarm.dht2.DhtClient,
+               swarm.dht2.DhtHash,
+               swarm.dht2.DhtConst;
 
 private import tango.io.Stdout;
 
@@ -135,6 +118,8 @@ abstract class DhtTool
 
         auto dht = this.initDhtClient(this.dht_nodes_config);
 
+        this.init(dht);
+        
         this.process_(dht);
 
         this.finished(dht);
@@ -151,6 +136,22 @@ abstract class DhtTool
     ***************************************************************************/
 
     abstract protected void process_ ( DhtClient dht );
+
+
+    /***************************************************************************
+
+        Called before processing (in the process() method, above). The base
+        class implementation does nothing, but derived classes may wish to add
+        behaviour at this point.
+    
+        Params:
+            dht = dht client
+    
+    ***************************************************************************/
+    
+    protected void init ( DhtClient dht )
+    {
+    }
 
 
     /***************************************************************************
@@ -264,33 +265,39 @@ abstract class DhtTool
 
     ***************************************************************************/
 
-    private DhtClient initDhtClient ( char[] xml )
+    protected DhtClient initDhtClient ( char[] xml )
     {
-        Stderr.formatln("Initialising dht client connections");
+        Stderr.formatln("Initialising dht client connections from {}", xml);
 
         auto dht = new DhtClient();
 
-        version ( NewDhtClient )
+        dht.error_callback(&this.dhtError);
+
+        dht.addNodes(xml);
+
+        dht.nodeHandshake();
+        if ( this.strictHandshake )
         {
-            dht.error_callback(&this.dhtError);
-
-            dht.addNodes(xml);
-
-            dht.nodeHandshake();
-        }
-        else
-        {
-            dht.error_callback(&this.dhtError);
-
-            DhtNodesConfig.addNodesToClient(dht, xml);
-
-            dht.nodeHandshake();
             assert(!this.dht_error, typeof(this).stringof ~ ".initDhtClient - error during dht client initialisation of " ~ xml);
         }
 
         Stderr.formatln("Dht client connections initialised");
 
         return dht;
+    }
+
+
+    /***************************************************************************
+
+        Returns:
+            true if the tool should fail if any errors occur during node
+            handshake
+
+    ***************************************************************************/
+
+    protected bool strictHandshake ( )
+    {
+        return true;
     }
 
 
@@ -304,7 +311,7 @@ abstract class DhtTool
 
     ***************************************************************************/
 
-    private void dhtError ( ErrorInfo e )
+    protected void dhtError ( DhtClient.ErrorInfo e )
     {
         Stderr.format("DHT client error: {}\n", e.message);
         this.dht_error = true;

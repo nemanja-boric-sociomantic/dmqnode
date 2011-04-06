@@ -46,18 +46,9 @@ private import ocean.core.Array;
 
 private import ocean.text.Arguments;
 
-version ( NewDhtClient )
-{
-    private import swarm.dht2.DhtClient,
-                   swarm.dht2.DhtHash,
-                   swarm.dht2.DhtConst;
-}
-else
-{
-    private import swarm.dht.DhtClient,
-                   swarm.dht.DhtHash,
-                   swarm.dht.DhtConst;
-}
+private import swarm.dht2.DhtClient,
+               swarm.dht2.DhtHash,
+               swarm.dht2.DhtConst;
 
 private import tango.core.Array;
 
@@ -121,7 +112,7 @@ abstract class SourceDhtTool : DhtTool
 
     ***************************************************************************/
     
-    protected void process_ ( DhtClient dht )
+    final protected void process_ ( DhtClient dht )
     {
         if ( this.channels.all_channels )
         {
@@ -145,8 +136,6 @@ abstract class SourceDhtTool : DhtTool
                     break;
             }
         }
-    
-        this.finished(dht);
     }
 
 
@@ -336,7 +325,7 @@ abstract class SourceDhtTool : DhtTool
     {
         char[][] channels;
         dht.getChannels(
-                ( uint id, char[] channel )
+                ( DhtClient.RequestContext context, char[] channel )
                 {
                     if ( channel.length && !channels.contains(channel) )
                     {

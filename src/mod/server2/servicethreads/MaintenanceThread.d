@@ -81,5 +81,20 @@ class MaintenanceThread : IServiceThread
     {
         channel.maintenance();
     }
+
+
+    /***************************************************************************
+
+        Gets the identifying string for this class (used for message printing).
+    
+        Returns:
+            class id
+    
+    ***************************************************************************/
+    
+    protected char[] id ( )
+    {
+        return typeof(this).stringof;
+    }
 }
 

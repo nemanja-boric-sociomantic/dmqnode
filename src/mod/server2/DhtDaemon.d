@@ -110,7 +110,6 @@ class DhtDaemon
     {
         NodeItem node_item = this.getNodeItemConfiguration();
 
-        uint    number_threads  = Config.get!(uint)("Server", "connection_threads");
         ulong   size_limit      = Config.get!(ulong)("Server", "size_limit");
         char[]  data_dir        = Config.get!(char[])("Server", "data_dir");
 
@@ -183,11 +182,11 @@ class DhtDaemon
     {
         NodeItem node_item; 
         
-        char[] minval = Config.getChar("Server", "minval");
-        char[] maxval = Config.getChar("Server", "maxval");
+        char[] minval = Config.Char["Server", "minval"];
+        char[] maxval = Config.Char["Server", "maxval"];
         
-        node_item.Address  = Config.getChar("Server", "address");
-        node_item.Port     = Config.getInt("Server", "port");
+        node_item.Address  = Config.Char["Server", "address"];
+        node_item.Port     = Config.Int["Server", "port"];
         node_item.MinValue = DhtHash.toHashRangeStart(minval);
         node_item.MaxValue = DhtHash.toHashRangeEnd(maxval);
         

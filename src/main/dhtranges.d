@@ -1,32 +1,26 @@
 /*******************************************************************************
 
-    DHT node info
-
+    DHT node ranges reporter
+    
     copyright:      Copyright (c) 2011 sociomantic labs. All rights reserved
-
-    version:        January 2011: Initial release
-
+    
+    version:        April 2011: Initial release
+    
     authors:        Gavin Norman
 
-    Display information about a dht -- the default (with no command line args)
-    is a nicely formatted monitor display.
-
-    Display of number of active connections, node api versions, hash ranges, etc
-    are possible with command line arguments.
+    TODO
 
     Command line parameters:
         -S = dhtnodes.xml file for dht to query
-        -d = display the quantity of data stored in each node and each channel
         -v = verbose output, displays info per channel per node, and per node
             per channel
+        -h = display help
         -c = display the number of connections being handled per node
         -a = display the api version of the dht nodes
-        -r = display the hash ranges of the dht nodes
-        -w = width of monitor display (number of columns)
 
 *******************************************************************************/
 
-module src.main.dhtinfo;
+module src.main.dhtranges;
 
 
 
@@ -36,7 +30,7 @@ module src.main.dhtinfo;
 
 *******************************************************************************/
 
-private import src.mod.info.DhtInfo;
+private import src.mod.ranges.DhtRanges;
 
 private import ocean.util.OceanException;
 
@@ -47,7 +41,7 @@ private import ocean.text.Arguments;
 /*******************************************************************************
 
     Main
-
+    
     Params:
         arguments = command line arguments
 
@@ -59,10 +53,10 @@ void main ( char[][] arguments )
     
     // Define valid arguments
     scope args = new Arguments();
-    if ( DhtInfo.parseArgs(args, arguments[1..$]) )
+    if ( DhtRanges.parseArgs(args, arguments[1..$]) )
     {
         // run app
-        OceanException.run(&DhtInfo.run, args);
+        OceanException.run(&DhtRanges.run, args);
     }
     else
     {

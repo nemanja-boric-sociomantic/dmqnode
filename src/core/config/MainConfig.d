@@ -18,7 +18,7 @@ module core.config.MainConfig;
 
  ******************************************************************************/
 
-private import  swarm.dht.DhtConst;
+private import  swarm.dht2.DhtConst;
 
 private import  ocean.sys.CmdPath;
 
@@ -71,7 +71,6 @@ struct MainConfig
                 address                 = "address",
                 port                    = "port",
                 pidfile                 = "pidfile",
-                connection_threads      = "connection_threads",
                 data_dir                = "data_dir",
                 storage_engine          = "storage_engine",
                 size_limit              = "size_limit",
@@ -119,8 +118,8 @@ struct MainConfig
         
         Config.init(this.cmdpath.prepend(this.Path.Config));
         
-        error_log    = Config.getChar   (this.Sections.Log, this.Keys.Error);
-        trace_enable = !!Config.getInt  (this.Sections.Log, this.Keys.TraceEnable); 
+        error_log    = Config.Char[this.Sections.Log, this.Keys.Error];
+        trace_enable = !!Config.Int[this.Sections.Log, this.Keys.TraceEnable]; 
 
         TraceLog.init(cmdpath.prepend([Config.Char["Log", "trace"]]));
         TraceLog.enabled = Config.Bool["Log", "trace_enable"];
