@@ -94,8 +94,8 @@ class QueueDaemon
         assertEx!(IllegalArgumentException)(number_threads, "number of threads of 0 specified in configuration");
         assertEx!(IllegalArgumentException)(size_limit,     "size limit 0 specified in configuration");
         
-        auto queue = new Queue(QueueConst.NodeItem(Config.getChar("Server", "address"),
-                Config.getInt("Server", "port")),
+        auto queue = new Queue(QueueConst.NodeItem(Config.Char["Server", "address"],
+                Config.Int["Server", "port"]),
                 number_threads, data_dir, size_limit);
         this.node = queue;
 
