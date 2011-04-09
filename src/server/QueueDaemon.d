@@ -129,7 +129,7 @@ class QueueDaemon
     public void shutdown ( )
     {
         this.qtrace.terminate().join();
-        
+
         return this.node.shutdown();
     }
 
@@ -146,3 +146,4 @@ class QueueDaemon
         log.level = Level.Trace;
     }
 }
+

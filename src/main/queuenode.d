@@ -20,7 +20,6 @@ module main.queuenode;
  ******************************************************************************/
 
 private import server.QueueDaemon;
-private import core.Terminate;
 
 private import core.config.MainConfig;
 
@@ -46,37 +45,32 @@ QueueDaemon queue;
 void main ( char[][] args )
 {
     MainConfig.init(args[0]);
-    
+
     queue = new QueueDaemon();
-    
+
     SignalHandler.register(SignalHandler.AppTermination, &terminate);
-    
+
     queue.run();
-    
-    delete queue;
 }
 
 /******************************************************************************
 
-    Termination signal handler callback method; attempts to gracefully shutdown
-    on first invocation and kills the application on subsequent invocations.
-    
+    Termination signal handler callback method; shuts down the queue node.
+
     Params:
         code = signal code
-        
+
     Returns:
-        false if called for the first time or true if called before (true
-        indicates that the application should be killed)
+        true, indicating that the application should be killed
 
  ******************************************************************************/
 
 bool terminate ( int code )
 {
-    debug Trace.formatln("terminating");
-    
+    debug Trace.formatln('\n' ~ SignalHandler.getId(code));
+
     queue.shutdown();
-    
-    scope (exit) Terminate.terminating = true;
-    
-    return Terminate.terminating;
+
+    return true;
 }
+
