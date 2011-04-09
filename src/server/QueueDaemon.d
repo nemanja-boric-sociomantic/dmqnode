@@ -87,19 +87,17 @@ class QueueDaemon
     {
         this.setLogger();
 
-        uint    number_threads  = Config.get!(uint)("Server", "connection_threads");
         uint    size_limit      = Config.get!(uint)("Server", "size_limit");
         char[]  data_dir        = Config.get!(char[])("Server", "data_dir");
-        
-        assertEx!(IllegalArgumentException)(number_threads, "number of threads of 0 specified in configuration");
+
         assertEx!(IllegalArgumentException)(size_limit,     "size limit 0 specified in configuration");
         
-        auto queue = new Queue(QueueConst.NodeItem(Config.Char["Server", "address"],
-                Config.Int["Server", "port"]),
-                number_threads, data_dir, size_limit);
+        auto queue = new Queue(
+                QueueConst.NodeItem(Config.Char["Server", "address"], Config.Int["Server", "port"]),
+                size_limit, data_dir, size_limit);
         this.node = queue;
 
-        debug Trace.formatln("Queue node: {}:{}", Config.getChar("Server", "address"), Config.getChar("Server", "port"));
+        debug Trace.formatln("Queue node: {}:{}", Config.Char["Server", "address"], Config.Char["Server", "port"]);
 
         if ( MainConfig.show_channel_trace )
         {
@@ -115,9 +113,9 @@ class QueueDaemon
 
     public int run ()
     {
-        this.node.run();
         this.qtrace.start();
-        this.node.attach();
+
+        this.node.eventLoop();
 
         return true;
     }
