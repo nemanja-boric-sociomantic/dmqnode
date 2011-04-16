@@ -19,7 +19,9 @@ module main.queuenode;
 
  ******************************************************************************/
 
-private import server.QueueDaemon;
+private import mod.server.QueueDaemon;
+
+private import mod.server.util.Terminator;
 
 private import core.config.MainConfig;
 
@@ -68,6 +70,8 @@ void main ( char[][] args )
 bool terminate ( int code )
 {
     debug Trace.formatln('\n' ~ SignalHandler.getId(code));
+
+    Terminator.terminating = true;
 
     queue.shutdown();
 

@@ -59,15 +59,25 @@ public static:
 
     /***************************************************************************
     
+        ServiceThreads
+
+    ***************************************************************************/
+
+    char[] stats_log;
+
+    bool stats_enabled;
+
+    bool stats_console_enabled;
+
+
+    /***************************************************************************
+    
         Reads static member variables from the config file in etc/config.ini
     
     ***************************************************************************/
     
     void init ( char[] exepath )
     {
-        char[] trace_log, error_log;
-        bool trace_enable;
-
         CmdPath cmdpath;
         cmdpath.set(exepath);
 
@@ -79,20 +89,17 @@ public static:
         trace_rw_positions = Config.Bool["Trace", "trace_rw_positions"];
         trace_byte_size = Config.Bool["Trace", "trace_byte_size"];
 
+        // ServiceThreads
+        stats_log = Config.Char["ServiceThreads", "stats_log"];
+        stats_enabled = Config.Bool["ServiceThreads", "stats_enabled"];
+        stats_console_enabled = Config.Bool["ServiceThreads", "stats_console_enabled"];
+
         // Log
-        error_log = Config.Char["Log", "error"];
-        trace_enable = !!Config.Int["Log", "trace_enable"]; 
+        TraceLog.init(cmdpath.prepend([Config.Char["Log", "trace"]]));
+        TraceLog.enabled = Config.Bool["Log", "trace_enable"];
+        TraceLog.console_enabled = Config.Bool["Log", "console_trace_enable"];
 
-        if ( trace_enable )
-        {
-            trace_log = Config.Char["Log", "trace"];
-            TraceLog.init(cmdpath.prepend([trace_log]));
-        }
-        else
-        {
-            TraceLog.enabled = false;
-        }
-
+        auto error_log = Config.Char["Log", "error"];
         OceanException.setOutput(new AppendFile(cmdpath.prepend([error_log])));
     }
 }
