@@ -72,11 +72,12 @@ class QueueDaemon
     /***************************************************************************
 
         Queue channel tracer object
-    
+
      **************************************************************************/
 
     private QueueTracer qtrace;
-    
+
+
     /***************************************************************************
 
          Constructor
@@ -87,14 +88,15 @@ class QueueDaemon
     {
         this.setLogger();
 
-        uint    size_limit      = Config.get!(uint)("Server", "size_limit");
-        char[]  data_dir        = Config.get!(char[])("Server", "data_dir");
+        uint size_limit = Config.get!(uint)("Server", "size_limit");
+        uint channel_size_limit = Config.get!(uint)("Server", "channel_size_limit");
+        char[] data_dir = Config.get!(char[])("Server", "data_dir");
 
         assertEx!(IllegalArgumentException)(size_limit,     "size limit 0 specified in configuration");
-        
+
         auto queue = new Queue(
                 QueueConst.NodeItem(Config.Char["Server", "address"], Config.Int["Server", "port"]),
-                size_limit, data_dir, size_limit);
+                size_limit, channel_size_limit, data_dir, channel_size_limit);
         this.node = queue;
 
         debug Trace.formatln("Queue node: {}:{}", Config.Char["Server", "address"], Config.Char["Server", "port"]);
@@ -104,6 +106,7 @@ class QueueDaemon
             this.qtrace = new QueueTracer(queue);
         }
     }
+
 
     /***************************************************************************
 
@@ -120,6 +123,7 @@ class QueueDaemon
         return true;
     }
 
+
     /***************************************************************************
 
         Shuts down the queue node
@@ -132,6 +136,7 @@ class QueueDaemon
 
         return this.node.shutdown();
     }
+
 
     /***************************************************************************
 
