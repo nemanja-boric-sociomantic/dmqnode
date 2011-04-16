@@ -110,21 +110,15 @@ struct MainConfig
     
     public static void init ( char[] exepath )
     {   
-        char[] trace_log, error_log, monitor_log;
-        
-        bool trace_enable;
-        
         this.cmdpath.set(exepath);
         
         Config.init(this.cmdpath.prepend(this.Path.Config));
         
-        error_log    = Config.Char[this.Sections.Log, this.Keys.Error];
-        trace_enable = !!Config.Int[this.Sections.Log, this.Keys.TraceEnable]; 
-
         TraceLog.init(cmdpath.prepend([Config.Char["Log", "trace"]]));
         TraceLog.enabled = Config.Bool["Log", "trace_enable"];
         TraceLog.console_enabled = Config.Bool["Log", "console_trace_enable"];
 
+        auto error_log = Config.Char[this.Sections.Log, this.Keys.Error];
         OceanException.setOutput(new AppendFile(this.cmdpath.prepend([error_log])));
     }
 }
