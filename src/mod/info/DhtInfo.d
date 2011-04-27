@@ -444,7 +444,7 @@ class DhtInfo : DhtTool
             this.getChannelSize(dht, channel);
         }
 
-        DhtMonitor.display(this.nodes, this.monitor_num_columns, longest_node_name, channel_names, longest_channel_name);
+        DhtMonitor.display(this.nodes, this.monitor_num_columns, channel_names);
     }
 
 
