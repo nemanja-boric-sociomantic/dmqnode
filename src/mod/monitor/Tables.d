@@ -35,10 +35,10 @@
         }
 
         // The last row is another divider
-        nodes_table.nextRow.setDivider();
+        table.nextRow.setDivider();
 
         // Display the table to Stdout
-        nodes_table.display();
+        table.display();
 
     ---
 
@@ -92,10 +92,10 @@
         }
 
         // The last row is another divider
-        nodes_table.nextRow.setDivider();
+        table.nextRow.setDivider();
 
         // Display the table to Stdout
-        nodes_table.display();
+        table.display();
 
     ---
 
