@@ -8,6 +8,9 @@
 
     authors:        Gavin Norman
 
+    TODO: this module also exists in the QueueNode project. It should probably
+    go into ocean somewhere.
+
     Usage example:
 
     ---
