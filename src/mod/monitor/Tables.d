@@ -1,0 +1,1063 @@
+/*******************************************************************************
+
+    Classes to draw auto-formatted tables to the console.
+
+    copyright:      Copyright (c) 2011 sociomantic labs. All rights reserved
+
+    version:        April 2011: Initial release
+
+    authors:        Gavin Norman
+
+    Usage example:
+
+    ---
+
+        // A table with 3 columns
+        scope table = new Table(3);
+
+        // First row is just a divider (---------------------)
+        table.firstRow.setDivider();
+
+        // Next row contains the headings, a series of strings
+        table.nextRow.set(Table.Cell.String("Address"), Table.Cell.String("Port"), Table.Cell.String("Connections"));
+
+        // Next row is another divider
+        table.nextRow.setDivider();
+
+        // Now we add one row for each of a set of 'nodes' (presumably dht or
+        // queue nodes)
+        foreach ( node; this.nodes )
+        {
+            table.nextRow.set(Table.Cell.String(node.address), Table.Cell.Integer(node.port), Table.Cell.Integer(node.connections));
+        }
+
+        // The last row is another divider
+        nodes_table.nextRow.setDivider();
+
+        // Display the table to Stdout
+        nodes_table.display();
+
+    ---
+
+    It's also possible to draw clever tables where certain cells in some rows
+    are merged together, something like this, for example:
+
+        |------------------------------------------------------
+        | 0xdb6db6e4 .. 0xedb6db76 | 0xedb6db77 .. 0xffffffff |
+        -------------------------------------------------------
+        |    Records |       Bytes |    Records |       Bytes |
+        -------------------------------------------------------
+        |     26,707 |  11,756,806 |     27,072 |  11,918,447 |
+        |      6,292 |   1,600,360 |      6,424 |   1,628,086 |
+        |  1,177,809 |  56,797,520 |  1,176,532 |  56,736,224 |
+        -------------------------------------------------------
+
+    In this example, columns 0 & 1 and 2 & 3 in rows 1 & 2 are merged.
+
+    Merged cells usage example:
+
+    ---
+
+        // A table with 4 columns
+        scope table = new Table(4);
+
+        // First row is just a divider (---------------------)
+        table.firstRow.setDivider();
+
+        // Next row contains a hash range occupying two (merged) cells. Note
+        // that this is the widest column -- the other columns adapt to allow it
+        // to fit.
+        table.nextRow.set(Table.Cell.Merged, Table.Cell.String("0xdb6db6e4 .. 0xedb6db76"),
+                          Table.Cell.Merged, Table.Cell.String("0xedb6db77 .. 0xffffffff"), );
+
+        // Next row is another divider
+        table.nextRow.setDivider();
+
+        // Next row contains the headings, a series of strings
+        table.nextRow.set(Table.Cell.String("Records"), Table.Cell.String("Bytes"),
+                          Table.Cell.String("Records"), Table.Cell.String("Bytes"),);
+
+        // Next row is another divider
+        table.nextRow.setDivider();
+
+        // Now we add one row for each of a set of 'nodes' (presumably dht or
+        // queue nodes)
+        foreach ( node; this.nodes )
+        {
+            table.nextRow.set(Table.Cell.Integer(node.records1), Table.Cell.Integer(node.bytes1),
+                              Table.Cell.Integer(node.records2), Table.Cell.Integer(node.bytes2));
+        }
+
+        // The last row is another divider
+        nodes_table.nextRow.setDivider();
+
+        // Display the table to Stdout
+        nodes_table.display();
+
+    ---
+
+*******************************************************************************/
+
+module mod.info.Tables;
+
+
+
+/*******************************************************************************
+
+    Imports
+
+*******************************************************************************/
+
+private import ocean.core.Array : copy, appendCopy;
+
+private import ocean.text.util.DigitGrouping;
+
+private import tango.io.stream.Format;
+
+private import tango.text.convert.Layout;
+
+private import tango.io.Stdout;
+
+
+
+/*******************************************************************************
+
+    Table
+
+*******************************************************************************/
+
+public class Table
+{
+    /***************************************************************************
+
+        Alias for a console outputter (basically Stdout / Stderr)
+
+    ***************************************************************************/
+
+    public alias FormatOutput!(char) Output;
+
+    
+    /***************************************************************************
+
+        Row
+    
+    ***************************************************************************/
+    
+    public class Row
+    {
+        /***********************************************************************
+
+            Cell
+        
+        ***********************************************************************/
+
+        public struct Cell
+        {
+            /*******************************************************************
+
+                Number of characters in-between each cell
+
+            *******************************************************************/
+
+            public const inter_cell_spacing = 3; // = " | "
+
+
+            /*******************************************************************
+
+                Static opCall method to create a cell containing a string.
+                
+                Params:
+                    string = string to put in cell
+
+                Returns:
+                    new cell struct
+
+            *******************************************************************/
+
+            static public Cell String ( char[] string )
+            {
+                Cell cell;
+                cell.setString(string);
+                return cell;
+            }
+
+
+            /*******************************************************************
+
+                Static opCall method to create a cell containing an integer.
+                
+                Params:
+                    integer = integer to put in cell
+    
+                Returns:
+                    new cell struct
+    
+            *******************************************************************/
+
+            static public Cell Integer ( uint integer )
+            {
+                Cell cell;
+                cell.setInteger(integer);
+                return cell;
+            }
+
+
+            /*******************************************************************
+
+                Static opCall method to create a cell containing a float.
+                
+                Params:
+                    floating = float to put in cell
+    
+                Returns:
+                    new cell struct
+    
+            *******************************************************************/
+
+            static public Cell Float ( float floating )
+            {
+                Cell cell;
+                cell.setFloat(floating);
+                return cell;
+            }
+
+
+            /*******************************************************************
+
+                Static opCall method to create a cell merged with the one to the
+                right.
+                
+                Returns:
+                    new cell struct
+    
+            *******************************************************************/
+
+            static public Cell Merged ( )
+            {
+                Cell cell;
+                cell.setMerged();
+                return cell;
+            }
+
+
+            /*******************************************************************
+
+                Static opCall method to create an empty cell.
+                
+                Returns:
+                    new cell struct
+    
+            *******************************************************************/
+
+            static public Cell Empty ( )
+            {
+                Cell cell;
+                cell.setEmpty();
+                return cell;
+            }
+
+
+            /*******************************************************************
+
+                Cell types enum
+
+            *******************************************************************/
+
+            public enum Type
+            {
+                Empty,      // no content
+                Divider,    // horizontal dividing line ------------------
+                Integer,    // contains an integer
+                Float,      // contains a floating point number
+                String,     // contains a string
+                Merged      // merged with cell to the right
+            }
+
+            public Type type;
+
+
+            /*******************************************************************
+
+                Cell contents union
+
+            *******************************************************************/
+
+            public union Contents
+            {
+                public uint integer;
+                public float floating;
+                public char[] string;
+            }
+
+            public Contents contents;
+
+
+            /*******************************************************************
+
+                Sets the cell to contain a string.
+
+                Params:
+                    str = string to set
+
+            *******************************************************************/
+
+            public void setString ( char[] str )
+            {
+                this.type = Type.String;
+                this.contents.string.copy(str);
+            }
+
+
+            /*******************************************************************
+
+                Sets the cell to contain an integer.
+    
+                Params:
+                    num = integer to set
+    
+            *******************************************************************/
+
+            public void setInteger ( uint num )
+            {
+                this.type = Type.Integer;
+                this.contents.integer = num;
+            }
+
+
+            /*******************************************************************
+
+                Sets the cell to contain a float.
+    
+                Params:
+                    num = float to set
+    
+            *******************************************************************/
+
+            public void setFloat ( float num )
+            {
+                this.type = Type.Float;
+                this.contents.floating = num;
+            }
+
+
+            /*******************************************************************
+
+                Sets the cell to contain nothing.
+    
+            *******************************************************************/
+
+            public void setEmpty ( )
+            {
+                this.type = Type.Empty;
+            }
+
+
+            /*******************************************************************
+
+                Sets the cell to contain a horizontal divider.
+
+            *******************************************************************/
+
+            public void setDivider ( )
+            {
+                this.type = Type.Divider;
+            }
+
+
+            /*******************************************************************
+
+                Sets the cell to be merged with the cell to its right.
+
+            *******************************************************************/
+
+            public void setMerged ( )
+            {
+                this.type = Type.Merged;
+            }
+
+
+            /*******************************************************************
+
+                Returns:
+                    the width of cell's contents, in characters
+
+            *******************************************************************/
+
+            public size_t width ( )
+            {
+                switch ( this.type )
+                {
+                    case Cell.Type.Merged:
+                    case Cell.Type.Empty:
+                    case Cell.Type.Divider:
+                        return 0;
+                    case Cell.Type.Integer:
+                        return DigitGrouping.length(this.contents.integer);
+                    case Cell.Type.Float:
+                        return this.floatWidth(this.contents.floating);
+                    case Cell.Type.String:
+                        return this.contents.string.length;
+                }
+            }
+
+
+            /*******************************************************************
+
+                Displays the cell to the specified output.
+
+                Params:
+                    output = output to send cell to
+                    width = display width of cell
+                    content_buf = string buffer to use for formatting cell
+                        contents
+                    spacing_buf = string buffer to use for formatting spacing to
+                        the left of the cell's contents
+
+            *******************************************************************/
+
+            public void display ( Output output, size_t width, ref char[] content_buf, ref char[] spacing_buf )
+            {
+                size_t layoutSink ( char[] s )
+                {
+                    content_buf ~= s;
+                    return s.length;
+                }
+
+                if ( this.type == Type.Divider )
+                {
+                    content_buf.length = width + inter_cell_spacing;
+                    content_buf[] = '-';
+
+                    output.format("{}", content_buf);
+                }
+                else
+                {
+                    switch ( this.type )
+                    {
+                        case Type.Empty:
+                            content_buf.length = 0;
+                            break;
+                        case Type.Integer:
+                            DigitGrouping.format(this.contents.integer, content_buf);
+                            break;
+                        case Type.Float:
+                            content_buf.length = 0;
+                            Layout!(char).instance().convert(&layoutSink, "{}", this.contents.floating);
+                            break;
+                        case Type.String:
+                            content_buf = this.contents.string;
+                            break;
+                        default:
+                            return;
+                    }
+
+                    assert(width >= content_buf.length, "column not wide enough");
+
+                    spacing_buf.length = width - content_buf.length;
+                    spacing_buf[] = ' ';
+                    output.format(" {}{} |", spacing_buf, content_buf);
+                }
+            }
+
+
+            /*******************************************************************
+
+                Calculates the number of characters required to display a float.
+
+                Params:
+                    f = float to calculate width of
+
+                Returns:
+                    number of character required to display f
+
+            *******************************************************************/
+
+            private size_t floatWidth ( float f )
+            {
+                size_t width = 4; // 0.00
+                if ( f < 0 )
+                {
+                    f = -f;
+                    width++; // minus symbol
+                }
+
+                float dec = 10;
+                while ( f >= dec )
+                {
+                    width++;
+                    dec *= 10;
+                }
+
+                return width;
+            }
+        }
+
+
+        /***********************************************************************
+
+            List of cells in row
+
+        ***********************************************************************/
+
+        public Cell[] cells;
+    
+
+        /***********************************************************************
+
+            Returns:
+                the number of cells in this row
+    
+        ***********************************************************************/
+
+        public size_t length ( )
+        {
+            return this.cells.length;
+        }
+    
+    
+        /***********************************************************************
+
+            Sets the number of cells in this row.
+
+            Params:
+                width = numebr of cells
+
+        ***********************************************************************/
+
+        public void setWidth ( size_t width )
+        {
+            this.cells.length = width;
+        }
+    
+
+        /***********************************************************************
+
+            Gets the cell in this row at the specified column.
+
+            Params:
+                col = column number
+
+            Returns:
+                pointer to cell in specified column, null if out of range
+
+        ***********************************************************************/
+
+        public Cell* opIndex ( size_t col )
+        {
+            Cell* c;
+    
+            if ( col < this.cells.length )
+            {
+                return &this.cells[col];
+            }
+    
+            return c;
+        }
+    
+
+        /***********************************************************************
+
+            foreach iterator over the cells in this row.
+    
+        ***********************************************************************/
+
+        public int opApply ( int delegate ( ref Cell cell ) dg )
+        {
+            int res;
+            foreach ( cell; this.cells )
+            {
+                res = dg(cell);
+                if ( !res ) break;
+            }
+    
+            return res;
+        }
+    
+
+        /***********************************************************************
+
+            foreach iterator over the cells in this row and their indices.
+
+        ***********************************************************************/
+
+        public int opApply ( int delegate ( ref size_t i, ref Cell cell ) dg )
+        {
+            int res;
+            foreach ( i, cell; this.cells )
+            {
+                res = dg(i, cell);
+                if ( res ) break;
+            }
+    
+            return res;
+        }
+    
+
+        /***********************************************************************
+
+            Sets the cells in this row. The passed list must be of equal length
+            to the length of this row.
+
+            Params:
+                cells = variadic list of cells
+
+        ***********************************************************************/
+
+        public void set ( Cell[] cells ... )
+        in
+        {
+            assert(cells.length == this.cells.length, "row length mismatch");
+        }
+        body
+        {
+            foreach ( i, cell; cells )
+            {
+                this.cells[i] = cell;
+            }
+        }
+    
+
+        /***********************************************************************
+
+            Sets all the cells in this row to be dividers, optionally with some
+            empty cells at the left.
+
+            Params:
+                empty_cells_at_left = number of empty cells to leave at the left
+                    of the row (all others will be dividers)
+    
+        ***********************************************************************/
+
+        public void setDivider ( size_t empty_cells_at_left = 0 )
+        {
+            foreach ( i, ref cell; this.cells )
+            {
+                if ( i < empty_cells_at_left )
+                {
+                    cell.setEmpty();
+                }
+                else
+                {
+                    cell.setDivider();
+                }
+            }
+        }
+
+
+        /***********************************************************************
+
+            Displays this row to the specified output, terminated with a
+            newline.
+
+            Params:
+                output = output to send cell to
+                column_widths = display width of cells
+                content_buf = string buffer to use for formatting cell
+                    contents
+                spacing_buf = string buffer to use for formatting spacing to
+                    the left of the cells' contents
+
+        ***********************************************************************/
+
+        public void display ( Output output, size_t[] column_widths, ref char[] content_buf, ref char[] spacing_buf )
+        {
+            assert(column_widths.length == this.length);
+    
+            uint merged;
+            size_t merged_width;
+    
+            foreach ( i, cell; this.cells )
+            {
+                if ( cell.type == Cell.Type.Merged )
+                {
+                    merged++;
+                    merged_width += column_widths[i] + Cell.inter_cell_spacing;
+                }
+                else
+                {
+                    cell.display(output, merged_width + column_widths[i], content_buf,  spacing_buf);
+    
+                    merged = 0;
+                    merged_width = 0;
+                }
+            }
+    
+            output.formatln("");
+        }
+    }
+
+
+    /***************************************************************************
+
+        Convenience alias, allows the Cell struct to be accessed from the
+        outside as Table.Cell.
+
+    ***************************************************************************/
+
+    public alias Row.Cell Cell;
+
+
+    /***************************************************************************
+
+        Number of columns in the table
+
+    ***************************************************************************/
+
+    private size_t num_columns;
+
+
+    /***************************************************************************
+
+        Number of characters in each column (auto calculated by the 
+        calculateColumnWidths() method)
+
+    ***************************************************************************/
+
+    private size_t[] column_widths;
+
+
+    /***************************************************************************
+
+        List of table rows
+    
+    ***************************************************************************/
+
+    private Row[] rows;
+
+
+    /***************************************************************************
+
+        Index of the current row
+
+    ***************************************************************************/
+
+    private size_t row_index;
+
+
+    /***************************************************************************
+
+        String buffers used for formatting.
+
+    ***************************************************************************/
+
+    private char[] content_buf, spacing_buf;
+
+
+    /***************************************************************************
+
+        Information on merged cells -- used by scanMergedCells().
+
+    ***************************************************************************/
+
+    private struct MergeInfo
+    {
+        size_t total_width;
+        size_t first_column;
+        size_t last_column;
+    }
+
+    private MergeInfo[] merged;
+
+    
+    /***************************************************************************
+
+        Constructor.
+        
+        Note: if you create a Table with this default constructor, you must call
+        init() when you're ready to use it.
+
+    ***************************************************************************/
+    
+    public this ( )
+    {
+    }
+
+
+    /***************************************************************************
+
+        Constructor. Sets the number of columns in the table.
+
+        Params:
+            num_columns = number of columns in the table
+
+    ***************************************************************************/
+
+    public this ( size_t num_columns )
+    {
+        this.init(num_columns);
+    }
+
+
+    /***************************************************************************
+
+        Init method. Must be called before any other methods are used.
+
+        Params:
+            num_columns = number of columns in the table
+
+    ***************************************************************************/
+
+    public void init ( size_t num_columns )
+    {
+        this.num_columns = num_columns;
+        this.rows.length = 0;
+        this.row_index = 0;
+    }
+
+
+    /***************************************************************************
+
+        Gets the first row in the table.
+
+        Returns:
+            reference to the table's first row
+
+    ***************************************************************************/
+
+    public Row firstRow ( )
+    {
+        this.row_index = 0;
+        return this.currentRow();
+    }
+
+
+    /***************************************************************************
+
+        Gets the current row in the table.
+    
+        Returns:
+            reference to the table's current row
+    
+    ***************************************************************************/
+
+    public Row currentRow ( )
+    {
+        this.ensureRowExists();
+        return this.rows[this.row_index];
+    }
+
+
+    /***************************************************************************
+
+        Gets the next row in the table, adding a new row if the current row is
+        currently the last.
+
+        Returns:
+            reference to the table's next row
+
+    ***************************************************************************/
+
+    public Row nextRow ( )
+    {
+        this.row_index++;
+        this.ensureRowExists();
+        return this.rows[this.row_index];
+    }
+
+
+    /***************************************************************************
+
+        Displays the table to the specified output.
+
+        Returns:
+            output = output to display table to
+
+    ***************************************************************************/
+
+    public void display ( Output output = Stdout )
+    {
+        this.calculateColumnWidths();
+
+        foreach ( row; this.rows )
+        {
+            row.display(output, this.column_widths, this.content_buf, this.spacing_buf);
+        }
+    }
+
+
+    /***************************************************************************
+
+        Checks whether the current row already exists, and creates it if it
+        doesn't.
+
+    ***************************************************************************/
+
+    private void ensureRowExists ( )
+    in
+    {
+        assert(this.num_columns, "num_columns not set, please call init()");
+    }
+    body
+    {
+        if ( this.rows.length <= this.row_index )
+        {
+            this.rows.length = this.row_index + 1;
+            foreach ( ref row; this.rows )
+            {
+                if ( !row )
+                {
+                    // TODO: repeatedly calling init() will cause a memory leak
+                    row = new Row;
+                }
+                row.setWidth(this.num_columns);
+            }
+        }
+    }
+
+
+    /***************************************************************************
+
+        Calculates the optimal width for each column, setting the column_widths
+        member.
+
+    ***************************************************************************/
+
+    private void calculateColumnWidths ( )
+    {
+        this.column_widths.length = this.num_columns;
+        this.column_widths[] = 0;
+
+        if ( !this.rows.length )
+        {
+            return;
+        }
+
+        // Find basic column widths, excluding merged cells
+        bool in_merge;
+        foreach ( row; this.rows )
+        {
+            in_merge = false;
+
+            foreach ( i, cell; row )
+            {
+                if ( in_merge )
+                {
+                    if ( cell.type != Row.Cell.Type.Merged )
+                    {
+                        in_merge = false;
+                    }
+                }
+                else
+                {
+                    if ( cell.type == Row.Cell.Type.Merged )
+                    {
+                        in_merge = true;
+                    }
+                    else
+                    {
+                        this.column_widths[i] = cell.width > this.column_widths[i] ? cell.width : this.column_widths[i];
+                    }
+                }
+            }
+        }
+
+        // Find merged columns and work out how many cells they span
+        auto merged = this.scanMergedCells();
+
+        // Adjust widths of non-merged columns to fit merged columns
+        foreach ( i, row; this.rows )
+        {
+            foreach ( merge; merged )
+            {
+                if ( row.cells[merge.first_column].type != Row.Cell.Type.Merged )
+                {
+                    // Calculate current width of all columns which merged cells
+                    // cover
+                    size_t width;
+                    foreach ( w; this.column_widths[merge.first_column..merge.last_column + 1] )
+                    {
+                        width += w;
+                    }
+
+                    // Add extra width to columns if the merged cells are larger
+                    // than the currently set column widths.
+                    if ( merge.total_width > width )
+                    {
+                        auto num_merged = merge.last_column - merge.first_column;
+                        int difference = merge.total_width - width - num_merged * Row.Cell.inter_cell_spacing;
+
+                        if ( difference > 0 )
+                        {
+                            this.expandColumns(merge.first_column, merge.last_column, difference);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
+    /***************************************************************************
+
+        Find sets of merged cells.
+
+        Returns:
+            list of merged cells sets
+
+    ***************************************************************************/
+
+    private MergeInfo[] scanMergedCells ( )
+    {
+        this.merged.length = 0;
+
+        foreach ( row; this.rows )
+        {
+            bool in_merge = false;
+
+            foreach ( i, cell; row )
+            {
+                if ( in_merge )
+                {
+                    this.merged[$-1].last_column = i;
+                    this.merged[$-1].total_width += cell.width;
+
+                    if ( cell.type != Row.Cell.Type.Merged )
+                    {
+                        in_merge = false;
+                    }
+                }
+                else
+                {
+                    if ( cell.type == Row.Cell.Type.Merged )
+                    {
+                        in_merge = true;
+                        this.merged.length = this.merged.length + 1;
+                        this.merged[$-1].first_column = i;
+                        this.merged[$-1].total_width += cell.width;
+                    }
+                }
+            }
+        }
+
+        return this.merged;
+    }
+
+
+    /***************************************************************************
+
+        Adds extra width to a specified range of columns. Extra width is
+        distriubuted evenly between all columns in the specified range.
+
+        Params:
+            first_column = index of first column in range to add extra width to
+            last_column = index of last column in range to add extra width to
+            extra_width = characters of extra width to distribute between all
+                columns in the specified range
+
+    ***************************************************************************/
+
+    private void expandColumns ( size_t first_column, size_t last_column, size_t extra_width )
+    {
+        size_t column = first_column;
+        while ( extra_width > 0 )
+        {
+            this.column_widths[column]++;
+            if ( ++column > last_column )
+            {
+                column = first_column;
+            }
+            extra_width--;
+        }
+    }
+}
+

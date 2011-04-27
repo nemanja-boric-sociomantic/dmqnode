@@ -1,10 +1,10 @@
 module mod.monitor.QueueMonitor;
 
-private import ocean.core.Array : copy, appendCopy;
+private import mod.monitor.Tables;
+
+private import ocean.core.Array : appendCopy;
 
 private import ocean.text.Arguments;
-
-private import ocean.text.util.DigitGrouping;
 
 private import swarm.queue.QueueClient;
 
@@ -216,19 +216,29 @@ class QueueMonitor
             this.queue.getChannelSize(channel, &getChannelSizeDg).eventLoop;
         }
 
-        // Node output
-        Stdout.formatln("Nodes:\n----------------------------------------------------------------------------------------------------------");
-        Stdout.formatln("{,15} | {,5} | {,3}", "Address", "Port", "Connections");
-        Stdout.formatln("----------------------------------------------------------------------------------------------------------");
+        // Nodes table
+        Stdout.formatln("Nodes:");
+
+        scope nodes_table = new Table(3);
+
+        nodes_table.firstRow.setDivider();
+        nodes_table.nextRow.set(Table.Cell.String("Address"), Table.Cell.String("Port"), Table.Cell.String("Connections"));
+        nodes_table.nextRow.setDivider();
         foreach ( node; this.nodes )
         {
-            Stdout.formatln("{,15} | {,5} | {,3}", node.address, node.port, node.connections);
+            nodes_table.nextRow.set(Table.Cell.String(node.address), Table.Cell.Integer(node.port), Table.Cell.Integer(node.connections));
         }
+        nodes_table.nextRow.setDivider();
+        nodes_table.display();
 
-        // Channel output
-        Stdout.formatln("\nChannels:\n----------------------------------------------------------------------------------------------------------");
-        Stdout.formatln("{,15} | {,7} | {,12} | {,12} | {,12}", "Name", "% full", "Records", "Bytes", "Bytes free");
-        Stdout.formatln("----------------------------------------------------------------------------------------------------------");
+        // Channels table
+        Stdout.formatln("\nChannels:");
+
+        scope channels_table = new Table(5);
+
+        channels_table.firstRow.setDivider();
+        channels_table.nextRow.set(Table.Cell.String("Name"), Table.Cell.String("% full"), Table.Cell.String("Records"), Table.Cell.String("Bytes"), Table.Cell.String("Bytes free"));
+        channels_table.nextRow.setDivider();
         foreach ( channel; channels )
         {
             ulong records, bytes, size_limit;
@@ -241,27 +251,13 @@ class QueueMonitor
                 bytes += channel_bytes;
             }
 
-            double percent = size_limit > 0 ? (cast(double)bytes / cast(double)size_limit) * 100 : 0;
+            float percent = size_limit > 0 ? (cast(float)bytes / cast(float)size_limit) * 100 : 0;
 
-            char[] records_str;
-            DigitGrouping.format(records, records_str);
-
-            char[] bytes_str;
-            DigitGrouping.format(bytes, bytes_str);
-
-            Stdout.format("{,15} | {,6}% | {,12} | {,12} | ", channel, percent, records_str, bytes_str);
-
-            if ( size_limit > 0 )
-            {
-                char[] size_limit_str;
-                DigitGrouping.format(size_limit - bytes, size_limit_str);
-                Stdout.formatln("{,12}", size_limit_str);
-            }
-            else
-            {
-                Stdout.formatln("{,12}", "unlimited");
-            }
+            channels_table.nextRow.set(Table.Cell.String(channel), Table.Cell.Float(percent), Table.Cell.Integer(records), Table.Cell.Integer(bytes),
+                    size_limit > 0 ? Table.Cell.Integer(size_limit - bytes) : Table.Cell.String("unlimited"));
         }
+        channels_table.nextRow.setDivider();
+        channels_table.display();
     }
 
 
@@ -303,9 +299,4 @@ class QueueMonitor
         return found;
     }
 }
-
-// Channel info:
-// Name     %full    records     bytes    bytes free
-
-
 
