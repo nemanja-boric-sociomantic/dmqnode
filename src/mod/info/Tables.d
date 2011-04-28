@@ -287,8 +287,8 @@ public class Table
 
             public union Contents
             {
-                public uint integer;
-                public float floating;
+                public ulong integer;
+                public double floating;
                 public char[] string;
             }
 
@@ -320,7 +320,7 @@ public class Table
     
             *******************************************************************/
 
-            public void setInteger ( uint num )
+            public void setInteger ( ulong num )
             {
                 this.type = Type.Integer;
                 this.contents.integer = num;
@@ -336,7 +336,7 @@ public class Table
     
             *******************************************************************/
 
-            public void setFloat ( float num )
+            public void setFloat ( double num )
             {
                 this.type = Type.Float;
                 this.contents.floating = num;
@@ -475,7 +475,7 @@ public class Table
 
             *******************************************************************/
 
-            private size_t floatWidth ( float f )
+            private size_t floatWidth ( double f )
             {
                 size_t width = 4; // 0.00
                 if ( f < 0 )
