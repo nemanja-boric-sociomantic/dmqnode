@@ -10,7 +10,7 @@
 
 *******************************************************************************/
 
-module mod.server.servicethreads.ServiceThreads;
+module mod.node.servicethreads.ServiceThreads;
 
 
 
@@ -20,7 +20,7 @@ module mod.server.servicethreads.ServiceThreads;
 
 *******************************************************************************/
 
-private import mod.server.servicethreads.model.IServiceThread;
+private import mod.node.servicethreads.model.IServiceThread;
 
 
 

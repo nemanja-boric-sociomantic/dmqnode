@@ -10,7 +10,7 @@
 
 ********************************************************************************/
 
-module  mod.server.DhtNodeServer;
+module  mod.node.DhtNodeServer;
 
 /*******************************************************************************
 
@@ -18,9 +18,9 @@ module  mod.server.DhtNodeServer;
 
 ******************************************************************************/
 
-private import mod.server.DhtDaemon;
+private import mod.node.DhtDaemon;
 
-private import mod.server.util.Terminator;
+private import mod.node.util.Terminator;
 
 private import ocean.sys.Daemon;
 private import ocean.sys.SignalHandler;

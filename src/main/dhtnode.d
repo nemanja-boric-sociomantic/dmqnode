@@ -20,7 +20,7 @@ module src.main.dhtnode2;
 
 private import  core.config.MainConfig;
 
-private import  mod.server.DhtNodeServer;
+private import  mod.node.DhtNodeServer;
 
 private import  ocean.util.OceanException;
 
