@@ -11,7 +11,7 @@
 
 *******************************************************************************/
 
-module mod.server2.servicethreads.MaintenanceThread;
+module mod.server.servicethreads.MaintenanceThread;
 
 
 
@@ -21,7 +21,7 @@ module mod.server2.servicethreads.MaintenanceThread;
 
 *******************************************************************************/
 
-private import mod.server2.servicethreads.model.IServiceThread;
+private import mod.server.servicethreads.model.IServiceThread;
 
 private import swarm.dht.node.model.IDhtNode,
                swarm.dht.node.model.IDhtNodeInfo;
