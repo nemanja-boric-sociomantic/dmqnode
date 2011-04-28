@@ -134,7 +134,7 @@ public struct NodeInfo
     
     public void getChannelSize ( char[] channel, out ulong records, out ulong bytes, out bool node_queried )
     {
-        foreach ( ref ch; this.channels )
+        foreach ( ch; this.channels )
         {
             if ( ch.name == channel )
             {
