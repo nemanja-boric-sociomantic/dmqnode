@@ -8,8 +8,8 @@
 
     authors:        Gavin Norman
 
-    TODO: this module also exists in the QueueNode project. It should probably
-    go into ocean somewhere.
+    TODO: this module also exists in the DhtNode project. It should probably go
+    into ocean somewhere.
 
     Usage example:
 
@@ -197,7 +197,7 @@ public class Table
     
             *******************************************************************/
 
-            static public Cell Integer ( uint integer )
+            static public Cell Integer ( ulong integer )
             {
                 Cell cell;
                 cell.setInteger(integer);
@@ -217,7 +217,7 @@ public class Table
     
             *******************************************************************/
 
-            static public Cell Float ( float floating )
+            static public Cell Float ( double floating )
             {
                 Cell cell;
                 cell.setFloat(floating);
@@ -484,7 +484,7 @@ public class Table
                     width++; // minus symbol
                 }
 
-                float dec = 10;
+                double dec = 10;
                 while ( f >= dec )
                 {
                     width++;
