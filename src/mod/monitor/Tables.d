@@ -197,7 +197,7 @@ public class Table
     
             *******************************************************************/
 
-            static public Cell Integer ( uint integer )
+            static public Cell Integer ( ulong integer )
             {
                 Cell cell;
                 cell.setInteger(integer);
@@ -217,7 +217,7 @@ public class Table
     
             *******************************************************************/
 
-            static public Cell Float ( float floating )
+            static public Cell Float ( double floating )
             {
                 Cell cell;
                 cell.setFloat(floating);
@@ -287,8 +287,8 @@ public class Table
 
             public union Contents
             {
-                public uint integer;
-                public float floating;
+                public ulong integer;
+                public double floating;
                 public char[] string;
             }
 
@@ -320,7 +320,7 @@ public class Table
     
             *******************************************************************/
 
-            public void setInteger ( uint num )
+            public void setInteger ( ulong num )
             {
                 this.type = Type.Integer;
                 this.contents.integer = num;
@@ -336,7 +336,7 @@ public class Table
     
             *******************************************************************/
 
-            public void setFloat ( float num )
+            public void setFloat ( double num )
             {
                 this.type = Type.Float;
                 this.contents.floating = num;
@@ -475,7 +475,7 @@ public class Table
 
             *******************************************************************/
 
-            private size_t floatWidth ( float f )
+            private size_t floatWidth ( double f )
             {
                 size_t width = 4; // 0.00
                 if ( f < 0 )
@@ -484,7 +484,7 @@ public class Table
                     width++; // minus symbol
                 }
 
-                float dec = 10;
+                double dec = 10;
                 while ( f >= dec )
                 {
                     width++;
