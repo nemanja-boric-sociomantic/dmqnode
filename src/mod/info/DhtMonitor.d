@@ -49,7 +49,7 @@ public class DhtMonitor
         table = new Table;
     }
 
-    static public void display ( NodeInfo[] nodes, size_t num_columns, char[][] channel_names )
+    static public void display ( NodeInfo[] nodes, size_t num_columns, char[][] channel_names, bool metric )
     in
     {
         assert(num_columns > 0, "Cannot display 0 columns wide!");
@@ -74,12 +74,13 @@ public class DhtMonitor
 
         foreach ( chunk; node_chunks )
         {
-            displayNodeChunk(chunk, channel_names);
+            displayNodeChunk(chunk, channel_names, metric);
         }
     }
 
+    private import tango.text.convert.Layout;
 
-    static private void displayNodeChunk ( NodeInfo*[] nodes, char[][] channel_names )
+    static private void displayNodeChunk ( NodeInfo*[] nodes, char[][] channel_names, bool metric )
     {
         char[] tmp;
 
@@ -128,8 +129,16 @@ public class DhtMonitor
 
                         if ( queried )
                         {
-                            cell1.setInteger(items);
-                            cell2.setInteger(size);
+                            if ( metric )
+                            {
+                                cell1.setDecimalMetric(items);
+                                cell2.setBinaryMetric(size, "B");
+                            }
+                            else
+                            {
+                                cell1.setInteger(items);
+                                cell2.setInteger(size);
+                            }
                         }
                         else
                         {
@@ -155,8 +164,16 @@ public class DhtMonitor
                         }
                     }
 
-                    cell1.setInteger(items);
-                    cell2.setInteger(size);
+                    if ( metric )
+                    {
+                        cell1.setDecimalMetric(items);
+                        cell2.setBinaryMetric(size, "B");
+                    }
+                    else
+                    {
+                        cell1.setInteger(items);
+                        cell2.setInteger(size);
+                    }
                 });
 
         table.nextRow.setDivider();

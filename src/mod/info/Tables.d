@@ -8,8 +8,8 @@
 
     authors:        Gavin Norman
 
-    TODO: this module also exists in the DhtNode project. It should probably go
-    into ocean somewhere.
+    TODO: this module also exists in the QueueNode project. It should probably
+    go into ocean somewhere.
 
     Usage example:
 
@@ -111,9 +111,10 @@ module mod.info.Tables;
 
 *******************************************************************************/
 
-private import ocean.core.Array : copy, appendCopy;
+private import ocean.core.Array : copy;
 
-private import ocean.text.util.DigitGrouping;
+private import ocean.text.util.DigitGrouping,
+               ocean.text.util.MetricPrefix;
 
 private import tango.io.stream.Format;
 
@@ -207,6 +208,53 @@ public class Table
 
             /*******************************************************************
 
+                Static opCall method to create a cell containing an integer
+                scaled into a binary metric representation (Ki, Mi, Gi, Ti,
+                etc).
+    
+                Params:
+                    integer = integer to put in cell
+                    metric_string = metric identifier (eg bytes, Kbytes, Mbytes,
+                        etc.)
+    
+                Returns:
+                    new cell struct
+    
+            *******************************************************************/
+    
+            static public Cell BinaryMetric ( ulong integer, char[] metric_string = "" )
+            {
+                Cell cell;
+                cell.setBinaryMetric(integer, metric_string);
+                return cell;
+            }
+    
+    
+            /*******************************************************************
+    
+                Static opCall method to create a cell containing an integer
+                scaled into a decimal metric representation (K, M, G, T, etc).
+        
+                Params:
+                    integer = integer to put in cell
+                    metric_string = metric identifier (eg bytes, Kbytes, Mbytes,
+                        etc.)
+        
+                Returns:
+                    new cell struct
+        
+            *******************************************************************/
+        
+            static public Cell DecimalMetric ( ulong integer, char[] metric_string = "" )
+            {
+                Cell cell;
+                cell.setDecimalMetric(integer, metric_string);
+                return cell;
+            }
+
+
+            /*******************************************************************
+
                 Static opCall method to create a cell containing a float.
                 
                 Params:
@@ -268,12 +316,14 @@ public class Table
 
             public enum Type
             {
-                Empty,      // no content
-                Divider,    // horizontal dividing line ------------------
-                Integer,    // contains an integer
-                Float,      // contains a floating point number
-                String,     // contains a string
-                Merged      // merged with cell to the right
+                Empty,          // no content
+                Divider,        // horizontal dividing line ------------------
+                Integer,        // contains an integer
+                BinaryMetric,   // contains an integer scaled to a binary metric
+                DecimalMetric,  // contains an integer scaled to a decimal metric
+                Float,          // contains a floating point number
+                String,         // contains a string
+                Merged          // merged with cell to the right
             }
 
             public Type type;
@@ -293,6 +343,16 @@ public class Table
             }
 
             public Contents contents;
+
+
+            /*******************************************************************
+
+                Metric postfix string (used by BinaryMetric and DecimalMetric
+                cell types)
+
+            *******************************************************************/
+
+            public char[] metric_string;
 
 
             /*******************************************************************
@@ -324,6 +384,46 @@ public class Table
             {
                 this.type = Type.Integer;
                 this.contents.integer = num;
+            }
+
+
+            /*******************************************************************
+
+                Sets the cell to contain an integer scaled into a binary metric
+                representation (Ki, Mi, Gi, Ti, etc).
+
+                Params:
+                    num = integer to set
+                    metric_string = metric identifier (eg bytes, Kbytes, Mbytes,
+                        etc.)
+
+            *******************************************************************/
+    
+            public void setBinaryMetric ( ulong num, char[] metric_string = "" )
+            {
+                this.type = Type.BinaryMetric;
+                this.contents.integer = num;
+                this.metric_string.copy(metric_string);
+            }
+
+
+            /*******************************************************************
+
+                Sets the cell to contain an integer scaled into a decimal metric
+                representation (K, M, G, T, etc).
+    
+                Params:
+                    num = integer to set
+                    metric_string = metric identifier (eg bytes, Kbytes, Mbytes,
+                        etc.)
+    
+            *******************************************************************/
+    
+            public void setDecimalMetric ( ulong num, char[] metric_string = "" )
+            {
+                this.type = Type.DecimalMetric;
+                this.contents.integer = num;
+                this.metric_string.copy(metric_string);
             }
 
 
@@ -394,6 +494,14 @@ public class Table
                     case Cell.Type.Empty:
                     case Cell.Type.Divider:
                         return 0;
+                    case Cell.Type.BinaryMetric:
+                        MetricPrefix metric;
+                        metric.bin(this.contents.integer);
+                        return this.floatWidth(metric.scaled) + 3 + this.metric_string.length;
+                    case Cell.Type.DecimalMetric:
+                        MetricPrefix metric;
+                        metric.dec(this.contents.integer);
+                        return this.floatWidth(metric.scaled) + 2 + this.metric_string.length;
                     case Cell.Type.Integer:
                         return DigitGrouping.length(this.contents.integer);
                     case Cell.Type.Float:
@@ -439,6 +547,36 @@ public class Table
                     {
                         case Type.Empty:
                             content_buf.length = 0;
+                            break;
+                        case Type.BinaryMetric:
+                            content_buf.length = 0;
+
+                            MetricPrefix metric;
+                            metric.bin(this.contents.integer);
+
+                            if ( metric.prefix == ' ' )
+                            {
+                                Layout!(char).instance().convert(&layoutSink, "{}      {}", cast(uint)metric.scaled, this.metric_string);
+                            }
+                            else
+                            {
+                                Layout!(char).instance().convert(&layoutSink, "{} {}i{}", metric.scaled, metric.prefix, this.metric_string);
+                            }
+                            break;
+                        case Type.DecimalMetric:
+                            content_buf.length = 0;
+
+                            MetricPrefix metric;
+                            metric.dec(this.contents.integer);
+
+                            if ( metric.prefix == ' ' )
+                            {
+                                Layout!(char).instance().convert(&layoutSink, "{}     {}", cast(uint)metric.scaled, this.metric_string);
+                            }
+                            else
+                            {
+                                Layout!(char).instance().convert(&layoutSink, "{} {}{}", metric.scaled, metric.prefix, this.metric_string);
+                            }
                             break;
                         case Type.Integer:
                             DigitGrouping.format(this.contents.integer, content_buf);

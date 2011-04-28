@@ -20,6 +20,7 @@
         -a = display the api version of the dht nodes
         -r = display the hash ranges of the dht nodes
         -w = width of monitor display (number of columns)
+        -m = show records and bytes as metric (K, M, G, T) in the monitor display
 
     Inherited from super class:
         -h = display help
@@ -103,6 +104,15 @@ class DhtInfo : DhtTool
     ***************************************************************************/
 
     private size_t monitor_num_columns;
+
+
+    /***************************************************************************
+
+        Monitor metric / normal integer display toggle.
+
+    ***************************************************************************/
+
+    private bool monitor_metric_display;
 
 
     /***************************************************************************
@@ -253,6 +263,7 @@ class DhtInfo : DhtTool
         args("api").aliased('a').help("displays the api version of the dht nodes");
         args("range").aliased('r').help("display the hash ranges of the dht nodes");
         args("width").params(1).aliased('w').defaults("4").help("width of monitor display (number of columns)");
+        args("metric").aliased('m').help("show records and bytes as metric (K, M, G, T) in the monitor display");
     }
 
 
@@ -317,13 +328,24 @@ class DhtInfo : DhtTool
         {
             this.monitor = true;
             this.monitor_num_columns = args.getInt!(size_t)("width");
+            this.monitor_metric_display = args.getBool("metric");
         }
     }
+
+
+    /***************************************************************************
+
+        Returns:
+            false to indicate that the tool should not fail if any errors occur
+            during node handshake
+
+    ***************************************************************************/
 
     override protected bool strictHandshake ( )
     {
         return false;
     }
+
 
     /***************************************************************************
 
@@ -444,7 +466,7 @@ class DhtInfo : DhtTool
             this.getChannelSize(dht, channel);
         }
 
-        DhtMonitor.display(this.nodes, this.monitor_num_columns, channel_names);
+        DhtMonitor.display(this.nodes, this.monitor_num_columns, channel_names, this.monitor_metric_display);
     }
 
 

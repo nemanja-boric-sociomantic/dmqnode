@@ -23,6 +23,7 @@
         -a = display the api version of the dht nodes
         -r = display the hash ranges of the dht nodes
         -w = width of monitor display (number of columns)
+        -m = show records and bytes as metric (K, M, G, T) in the monitor display
 
 *******************************************************************************/
 
