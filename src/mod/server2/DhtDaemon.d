@@ -30,13 +30,13 @@ private import  mod.server2.servicethreads.ServiceThreads,
 
 private import  ocean.io.select.model.ISelectClient;
 
-private import  swarm.dht2.DhtNode;
-private import  swarm.dht2.DhtHash;
+private import  swarm.dht.DhtNode;
+private import  swarm.dht.DhtHash;
 
-private import  swarm.dht2.storage.Memory;
-private import  swarm.dht2.storage.LogFiles;
+private import  swarm.dht.storage.Memory;
+private import  swarm.dht.storage.LogFiles;
 
-private import  swarm.dht2.node.model.IDhtNode;
+private import  swarm.dht.node.model.IDhtNode;
 
 private import  tango.util.log.Log, tango.util.log.AppendConsole;
 

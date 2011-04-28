@@ -23,10 +23,10 @@ module mod.server2.servicethreads.MaintenanceThread;
 
 private import mod.server2.servicethreads.model.IServiceThread;
 
-private import swarm.dht2.node.model.IDhtNode,
-               swarm.dht2.node.model.IDhtNodeInfo;
+private import swarm.dht.node.model.IDhtNode,
+               swarm.dht.node.model.IDhtNodeInfo;
 
-private import swarm.dht2.storage.model.IStorageEngineService;
+private import swarm.dht.storage.model.IStorageEngineService;
 
 debug private import tango.util.log.Trace;
 

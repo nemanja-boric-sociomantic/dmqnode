@@ -26,12 +26,12 @@ private import ocean.util.OceanException;
 
 private import tango.core.Thread;
 
-private import swarm.dht2.node.model.IDhtNode,
-               swarm.dht2.node.model.IDhtNodeInfo;
+private import swarm.dht.node.model.IDhtNode,
+               swarm.dht.node.model.IDhtNodeInfo;
 
-private import swarm.dht2.storage.channels.model.IStorageChannelsService;
+private import swarm.dht.storage.channels.model.IStorageChannelsService;
 
-private import swarm.dht2.storage.model.IStorageEngineService;
+private import swarm.dht.storage.model.IStorageEngineService;
 
 debug private import tango.util.log.Trace;
 

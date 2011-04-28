@@ -12,7 +12,7 @@ private import ocean.util.log.PeriodicTrace;
 
 private import ocean.text.Arguments;
 
-private import swarm.dht2.DhtClient;
+private import swarm.dht.DhtClient;
 
 private import tango.core.Array;
 

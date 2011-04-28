@@ -44,7 +44,7 @@ private import ocean.util.Config;
 
 private import ocean.text.Arguments;
 
-private import swarm.dht2.DhtConst;
+private import swarm.dht.DhtConst;
 
 private import tango.io.Stdout;
 

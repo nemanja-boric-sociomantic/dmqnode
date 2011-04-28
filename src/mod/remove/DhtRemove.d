@@ -37,9 +37,9 @@ module src.mod.dump.DhtRemove;
 
 private import src.mod.model.SourceDhtTool;
 
-private import swarm.dht2.DhtClient,
-               swarm.dht2.DhtHash,
-               swarm.dht2.DhtConst;
+private import swarm.dht.DhtClient,
+               swarm.dht.DhtHash,
+               swarm.dht.DhtConst;
 
 private import ocean.core.Array;
 
