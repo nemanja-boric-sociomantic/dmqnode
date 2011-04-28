@@ -26,7 +26,7 @@ private import  ocean.util.OceanException;
 
 private import  tango.io.Stdout;
 
-private import  tango.util.Arguments;
+private import  ocean.text.Arguments;
 
 /*******************************************************************************
 
@@ -45,15 +45,12 @@ private import  tango.util.Arguments;
 bool isArgument ( char[][] arguments )
 {
     Arguments args = new Arguments;
-    
-    args.prefixShort = ["-"];
-    args.prefixLong  = ["--"];
-    
-    args.define("d").parameters(0).aka("daemon");
-    
+
+    args("daemon").aliased('d');
+
     args.parse(arguments);
-    
-    if ( args.contains("d") )
+
+    if ( args.exists("daemon") )
     {
         return OceanException.run(&DhtNodeServer.run);
     }
