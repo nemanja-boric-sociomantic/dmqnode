@@ -55,7 +55,7 @@
         |  1,177,809 |  56,797,520 |  1,176,532 |  56,736,224 |
         -------------------------------------------------------
 
-    In this example, columns 0 & 1 and 2 & 3 in rows 1 & 2 are merged.
+    In this example, columns 0 & 1 and 2 & 3 in row 1 are merged.
 
     Merged cells usage example:
 
@@ -71,14 +71,14 @@
         // that this is the widest column -- the other columns adapt to allow it
         // to fit.
         table.nextRow.set(Table.Cell.Merged, Table.Cell.String("0xdb6db6e4 .. 0xedb6db76"),
-                          Table.Cell.Merged, Table.Cell.String("0xedb6db77 .. 0xffffffff"), );
+                          Table.Cell.Merged, Table.Cell.String("0xedb6db77 .. 0xffffffff"));
 
         // Next row is another divider
         table.nextRow.setDivider();
 
         // Next row contains the headings, a series of strings
         table.nextRow.set(Table.Cell.String("Records"), Table.Cell.String("Bytes"),
-                          Table.Cell.String("Records"), Table.Cell.String("Bytes"),);
+                          Table.Cell.String("Records"), Table.Cell.String("Bytes"));
 
         // Next row is another divider
         table.nextRow.setDivider();

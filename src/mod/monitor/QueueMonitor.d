@@ -4,6 +4,8 @@ private import mod.monitor.Tables;
 
 private import ocean.core.Array : appendCopy;
 
+private import ocean.io.select.EpollSelectDispatcher;
+
 private import ocean.text.Arguments;
 
 private import swarm.queue.QueueClient;
@@ -91,6 +93,8 @@ class QueueMonitor
         return true;
     }
 
+    private EpollSelectDispatcher epoll;
+
     private QueueClient queue;
 
     private struct NodeInfo
@@ -173,7 +177,8 @@ class QueueMonitor
 
     private void process ( Arguments args )
     {
-        this.queue = new QueueClient;
+        this.epoll = new EpollSelectDispatcher;
+        this.queue = new QueueClient(epoll);
         this.queue.addNodes(args.getString("source"));
 
         char[][] channels;
@@ -204,16 +209,21 @@ class QueueMonitor
             node.connections = conns - 1;
         }
 
-        this.queue.getChannels(&getChannelsDg).eventLoop;
+        this.queue.getChannels(&getChannelsDg);
+        this.epoll.eventLoop;
+
         channels.sort;
 
-        this.queue.getNumConnections(&getNumConnectionsDg).eventLoop;
+        this.queue.getNumConnections(&getNumConnectionsDg);
+        this.epoll.eventLoop;
 
-        this.queue.getSizeLimit(&getSizeLimitDg).eventLoop;
+        this.queue.getSizeLimit(&getSizeLimitDg);
+        this.epoll.eventLoop;
 
         foreach ( channel; channels )
         {
-            this.queue.getChannelSize(channel, &getChannelSizeDg).eventLoop;
+            this.queue.getChannelSize(channel, &getChannelSizeDg);
+            this.epoll.eventLoop;
         }
 
         // Nodes table
