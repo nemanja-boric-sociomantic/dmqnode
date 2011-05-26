@@ -30,13 +30,30 @@ private import ocean.util.log.MessageLogger;
 private import swarm.queue.node.model.IQueueNode,
                swarm.queue.node.model.IQueueNodeInfo;
 
+private import tango.text.convert.Layout;
+
 debug private import tango.util.log.Trace;
 
 
 
 class StatsThread : IServiceThread
 {
+    /***************************************************************************
+
+        Log file
+
+    ***************************************************************************/
+
     private MessageLogger log;
+
+
+    /***************************************************************************
+
+        Channel sizes string buffer
+
+    ***************************************************************************/
+
+    private char[] channel_sizes;
 
 
     /***************************************************************************
@@ -67,18 +84,51 @@ class StatsThread : IServiceThread
         Params:
             node_info = node information interface
             seconds_elapsed = time since this service was last performed
-    
+
     ***************************************************************************/
 
     protected void serviceNode ( IQueueNodeInfo node_info, uint seconds_elapsed )
     {
+        this.formatChannelSizes(node_info, this.channel_sizes);
+
         auto received = node_info.bytesReceived;
         auto sent = node_info.bytesSent;
-        this.log.write("Node stats: {} sent ({} K/s), {} received ({} K/s), handling {} connections",
+        this.log.write("Node stats: {} sent ({} K/s), {} received ({} K/s), handling {} connections{}",
                 sent, cast(float)(sent / 1024) / cast(float)seconds_elapsed,
                 received, cast(float)(received / 1024) / cast(float)seconds_elapsed,
-                node_info.numOpenConnections);
+                node_info.numOpenConnections,
+                this.channel_sizes);
+
         node_info.resetByteCounters();
+    }
+
+
+    /***************************************************************************
+
+        Formats the current size of each channel (in terms of % full) into the
+        provided string buffer.
+
+        Params:
+            node_info = node information interface
+            buf = output buffer
+
+    ***************************************************************************/
+
+    protected void formatChannelSizes ( IQueueNodeInfo node_info, ref char[] buf )
+    {
+        size_t layoutSink ( char[] s )
+        {
+            buf ~= s;
+            return s.length;
+        }
+
+        buf.length = 0;
+
+        foreach ( name, size, limit; node_info )
+        {
+            auto percent = (cast(float)size / cast(float)limit) * 100.0;
+            Layout!(char).instance().convert(&layoutSink, ", {}: {}%", name, percent);
+        }
     }
 
 
