@@ -1,6 +1,6 @@
-module mod.monitor.QueueMonitor;
+module src.mod.monitor.QueueMonitor;
 
-private import mod.monitor.Tables;
+private import src.mod.monitor.Tables;
 
 private import ocean.core.Array : appendCopy;
 

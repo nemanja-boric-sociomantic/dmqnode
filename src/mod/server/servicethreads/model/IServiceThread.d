@@ -10,7 +10,7 @@
 
 *******************************************************************************/
 
-module mod.server.servicethreads.model.IServiceThread;
+module src.mod.server.servicethreads.model.IServiceThread;
 
 
 
@@ -20,7 +20,7 @@ module mod.server.servicethreads.model.IServiceThread;
 
 *******************************************************************************/
 
-private import mod.server.util.Terminator;
+private import src.mod.server.util.Terminator;
 
 private import ocean.util.OceanException;
 

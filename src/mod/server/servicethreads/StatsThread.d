@@ -11,7 +11,7 @@
 
 *******************************************************************************/
 
-module mod.server.servicethreads.StatsThread;
+module src.mod.server.servicethreads.StatsThread;
 
 
 
@@ -21,9 +21,9 @@ module mod.server.servicethreads.StatsThread;
 
 *******************************************************************************/
 
-private import core.config.MainConfig;
+private import src.core.config.MainConfig;
 
-private import mod.server.servicethreads.model.IServiceThread;
+private import src.mod.server.servicethreads.model.IServiceThread;
 
 private import ocean.util.log.MessageLogger;
 

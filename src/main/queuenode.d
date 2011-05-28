@@ -11,7 +11,7 @@
 
  ******************************************************************************/
 
-module main.queuenode;
+module src.main.queuenode;
 
 /******************************************************************************
 
@@ -19,11 +19,11 @@ module main.queuenode;
 
  ******************************************************************************/
 
-private import mod.server.QueueDaemon;
+private import src.mod.server.QueueDaemon;
 
-private import mod.server.util.Terminator;
+private import src.mod.server.util.Terminator;
 
-private import core.config.MainConfig;
+private import src.core.config.MainConfig;
 
 private import ocean.sys.CmdPath,
                ocean.sys.SignalHandler;
@@ -38,6 +38,9 @@ debug private import tango.util.log.Trace;
 
 QueueDaemon queue;
 
+
+private import tango.core.Memory;
+
 /******************************************************************************
 
     main method
@@ -46,6 +49,8 @@ QueueDaemon queue;
 
 void main ( char[][] args )
 {
+//    GC.disable;
+    
     MainConfig.init(args[0]);
 
     queue = new QueueDaemon();

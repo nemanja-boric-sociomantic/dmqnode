@@ -11,7 +11,7 @@
 
  ******************************************************************************/
 
-module mod.server.DhtDaemon;
+module src.mod.server.QueueDaemon;
 
 
 
@@ -21,10 +21,10 @@ module mod.server.DhtDaemon;
 
  ******************************************************************************/
 
-private import  core.config.MainConfig;
+private import  src.core.config.MainConfig;
 
-private import  mod.server.servicethreads.ServiceThreads,
-                mod.server.servicethreads.StatsThread;
+private import  src.mod.server.servicethreads.ServiceThreads,
+                src.mod.server.servicethreads.StatsThread;
 
 private import  swarm.queue.QueueNode;
 

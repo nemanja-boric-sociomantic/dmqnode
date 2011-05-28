@@ -10,7 +10,7 @@
 
 *******************************************************************************/
 
-module main.queuemonitor;
+module src.main.queuemonitor;
 
 
 
@@ -20,7 +20,7 @@ module main.queuemonitor;
 
 *******************************************************************************/
 
-private import mod.monitor.QueueMonitor;
+private import src.mod.monitor.QueueMonitor;
 
 private import ocean.util.OceanException;
 
