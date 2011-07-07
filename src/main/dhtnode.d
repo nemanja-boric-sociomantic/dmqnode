@@ -18,9 +18,9 @@ module src.main.dhtnode2;
 
 ******************************************************************************/
 
-private import  core.config.MainConfig;
+private import  src.core.config.MainConfig;
 
-private import  mod.node.DhtNodeServer;
+private import  src.mod.node.DhtNodeServer;
 
 private import  ocean.util.OceanException;
 

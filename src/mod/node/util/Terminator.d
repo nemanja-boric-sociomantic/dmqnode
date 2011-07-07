@@ -1,4 +1,4 @@
-module mod.node.util.Terminator;
+module src.mod.node.util.Terminator;
 
 struct Terminator
 {

@@ -12,7 +12,7 @@
 
 ******************************************************************************/
 
-module mod.node.DhtDaemon;
+module src.mod.node.DhtDaemon;
 
 
 
@@ -22,11 +22,11 @@ module mod.node.DhtDaemon;
 
 ******************************************************************************/
 
-private import  core.config.MainConfig;
+private import  src.core.config.MainConfig;
 
-private import  mod.node.servicethreads.ServiceThreads,
-                mod.node.servicethreads.StatsThread,
-                mod.node.servicethreads.MaintenanceThread;
+private import  src.mod.node.servicethreads.ServiceThreads,
+                src.mod.node.servicethreads.StatsThread,
+                src.mod.node.servicethreads.MaintenanceThread;
 
 private import  ocean.io.select.model.ISelectClient;
 

@@ -11,7 +11,7 @@
 
 *******************************************************************************/
 
-module mod.node.servicethreads.StatsThread;
+module src.mod.node.servicethreads.StatsThread;
 
 
 
@@ -21,7 +21,7 @@ module mod.node.servicethreads.StatsThread;
 
 *******************************************************************************/
 
-private import mod.node.servicethreads.model.IServiceThread;
+private import src.mod.node.servicethreads.model.IServiceThread;
 
 private import ocean.util.TraceLog;
 
