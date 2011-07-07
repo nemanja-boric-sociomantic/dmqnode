@@ -64,7 +64,7 @@ private import tango.io.device.File;
 
 private import tango.math.Math : min;
 
-debug private import tango.util.log.Trace;
+debug private import ocean.util.log.Trace;
 
 
 

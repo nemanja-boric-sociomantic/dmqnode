@@ -26,7 +26,7 @@ private import Integer = tango.text.convert.Integer;
 
 private import tango.text.convert.Layout;
 
-debug private import tango.util.log.Trace;
+debug private import ocean.util.log.Trace;
 
 
 

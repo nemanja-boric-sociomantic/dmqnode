@@ -40,7 +40,7 @@ private import  swarm.dht.node.model.IDhtNode;
 
 private import  tango.util.log.Log, tango.util.log.AppendConsole;
 
-debug private import tango.util.log.Trace;
+debug private import ocean.util.log.Trace;
 
 
 

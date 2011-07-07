@@ -48,7 +48,7 @@ private import swarm.dht.DhtConst;
 
 private import tango.io.Stdout;
 
-debug private import tango.util.log.Trace;
+debug private import ocean.util.log.Trace;
 
 
 

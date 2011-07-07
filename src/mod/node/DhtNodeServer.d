@@ -25,7 +25,7 @@ private import src.mod.node.util.Terminator;
 private import ocean.sys.Daemon;
 private import ocean.sys.SignalHandler;
 
-debug private import tango.util.log.Trace;
+debug private import ocean.util.log.Trace;
 
 /*******************************************************************************
 
