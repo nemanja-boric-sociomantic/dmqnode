@@ -7,6 +7,9 @@ NODE_OUTPUT = bin/queuenode
 MONITOR_TARGET = src/main/queuemonitor.d
 MONITOR_OUTPUT = bin/queuemonitor
 
+CONSUMER_TARGET = src/main/queueconsumer.d
+CONSUMER_OUTPUT = bin/queueconsumer
+
 
 # ------------------------------------------------------------------------------
 # Xfbuild flags
@@ -19,6 +22,7 @@ XFBUILD_FLAGS =\
 # dmd flags
 
 FLAGS =\
+	-version=NewTango \
     -Isrc \
     -L-lminilzo \
     -L/usr/lib/libglib-2.0.so \
@@ -34,7 +38,7 @@ DEBUG_FLAGS = ${FLAGS}\
 # ------------------------------------------------------------------------------
 # Debug build of node & monitor (default)
 
-default: node monitor
+default: node monitor consumer
 
 
 # ------------------------------------------------------------------------------
@@ -58,13 +62,26 @@ monitor-release:
 
 
 # ------------------------------------------------------------------------------
+# Consumer debug & release builds
+
+consumer:
+	xfbuild +D=.deps-consumer +O=.objs-consumer +o=${CONSUMER_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${CONSUMER_TARGET}
+
+consumer-release:
+	xfbuild +D=.deps-consumer +O=.objs-consumer +o=${CONSUMER_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${CONSUMER_TARGET}
+
+
+# ------------------------------------------------------------------------------
 # Cleanup
 
 clean:
-	xfbuild ${XFBUILD_FLAGS} +clean ${FEED_TARGET}
-	xfbuild ${XFBUILD_FLAGS} +clean ${STREAM_TARGET}
+	xfbuild ${XFBUILD_FLAGS} +clean ${NODE_TARGET}
+	xfbuild ${XFBUILD_FLAGS} +clean ${MONITOR_TARGET}
+	xfbuild ${XFBUILD_FLAGS} +clean ${CONSUMER_TARGET}
 	@rm .objs-node -rf
 	@rm .deps-node -rf
 	@rm .objs-monitor -rf
 	@rm .deps-monitor -rf
+	@rm .objs-consumer -rf
+	@rm .deps-consumer -rf
 
