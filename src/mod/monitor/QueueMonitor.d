@@ -1,4 +1,24 @@
+/*******************************************************************************
+
+    Queue monitor
+
+    copyright:      Copyright (c) 2011 sociomantic labs. All rights reserved
+
+    version:        April 2011: Initial release
+
+    authors:        Gavin Norman
+
+*******************************************************************************/
+
 module src.mod.monitor.QueueMonitor;
+
+
+
+/*******************************************************************************
+
+    Imports
+
+*******************************************************************************/
 
 private import src.mod.monitor.Tables;
 
@@ -15,13 +35,20 @@ private import tango.core.Array : contains;
 private import tango.io.Stdout;
 
 
+
+/*******************************************************************************
+
+    Queue monitor class
+
+*******************************************************************************/
+
 class QueueMonitor
 {
-    /***********************************************************************
+    /***************************************************************************
     
         Singleton instance of this class, used in static methods.
     
-    ***********************************************************************/
+    ***************************************************************************/
 
     private static typeof(this) singleton;
 
@@ -36,7 +63,7 @@ class QueueMonitor
     }
 
 
-    /***********************************************************************
+    /***************************************************************************
 
         Parses and validates command line arguments.
 
@@ -47,7 +74,7 @@ class QueueMonitor
         Returns:
             true if the arguments are valid
 
-    ***********************************************************************/
+    ***************************************************************************/
 
     static public bool parseArgs ( Arguments args, char[][] arguments )
     {
@@ -55,7 +82,7 @@ class QueueMonitor
     }
 
 
-    /***********************************************************************
+    /***************************************************************************
     
         Main run method, called by OceanException.run.
         
@@ -65,7 +92,7 @@ class QueueMonitor
         Returns:
             always true
     
-    ***********************************************************************/
+    ***************************************************************************/
 
     static public bool run ( Arguments args )
     {
@@ -73,7 +100,160 @@ class QueueMonitor
         return true;
     }
 
+
+    /***************************************************************************
+
+        Epoll select dispatcher.
+
+    ***************************************************************************/
+
+    private EpollSelectDispatcher epoll;
+
+
+    /***************************************************************************
+
+        Queue client.
+
+    ***************************************************************************/
+
+    private QueueClient queue;
+
+
+    /***************************************************************************
+
+        Struct storing information about a single queue node.
+
+    ***************************************************************************/
+
+    private struct NodeInfo
+    {
+        /***********************************************************************
+
+            Node address and port.
+
+        ***********************************************************************/
+
+        char[] address;
+        ushort port;
+
+
+        /***********************************************************************
+
+            Number of connections the node is handling.
+
+        ***********************************************************************/
+
+        uint connections;
+
+
+        /***********************************************************************
+
+            The per-channel size limit set for the node.
+
+        ***********************************************************************/
+
+        ulong channel_size_limit;
+
+
+        /***********************************************************************
+
+            Size info for a single channel in a queue node
+
+        ***********************************************************************/
+
+        public struct ChannelInfo
+        {
+            public char[] name;
+            public ulong records;
+            public ulong bytes;
+        }
+
+
+        /***********************************************************************
+
+            List of channel size infos
+
+        ***********************************************************************/
+
+        public ChannelInfo[] channels;
+
     
+        /***********************************************************************
+        
+            Sets the size for a channel.
+        
+            Params:
+                channel = channel name
+                records = number of records in channel
+                bytes = number of bytes in channel
+        
+        ***********************************************************************/
+        
+        public void setChannelSize ( char[] channel, ulong records, ulong bytes )
+        {
+            foreach ( ref ch; this.channels )
+            {
+                if ( ch.name == channel )
+                {
+                    ch.records = records;
+                    ch.bytes = bytes;
+                    return;
+                }
+            }
+
+            this.channels ~= ChannelInfo("", records, bytes);
+            this.channels[$-1].name.copy(channel);
+        }
+
+
+        /***********************************************************************
+
+            Gets the size for a channel into the provided output variables.
+
+            Params:
+                channel = channel name
+                records = receives the number of records in channel
+                bytes = receives the number of bytes in channel
+
+        ***********************************************************************/
+
+        public void getChannelSize ( char[] channel, out ulong records, out ulong bytes )
+        {
+            foreach ( ref ch; this.channels )
+            {
+                if ( ch.name == channel )
+                {
+                    records += ch.records;
+                    bytes += ch.bytes;
+                    return;
+                }
+            }
+        }
+    }
+
+
+    /***************************************************************************
+
+        List of node infos
+
+    ***************************************************************************/
+
+    private NodeInfo[] nodes;
+
+
+    /***************************************************************************
+    
+        Validates command line arguments.
+    
+        Params:
+            args = arguments processor
+            arguments = command line args
+
+        Returns:
+            true if arguments are valid
+
+    ***************************************************************************/
+
     private bool validateArgs ( Arguments args, char[][] arguments )
     {
         args("source").required.params(1).aliased('S').help("config file listing queue nodes to connect to");
@@ -93,87 +273,17 @@ class QueueMonitor
         return true;
     }
 
-    private EpollSelectDispatcher epoll;
 
-    private QueueClient queue;
+    /***************************************************************************
 
-    private struct NodeInfo
-    {
-        char[] address;
-        ushort port;
-        uint connections;
-        ulong channel_size_limit;
+        Initialises a queue client and connects to the nodes specified in the
+        command line arguments. Gets information from all connected queue nodes
+        and displays it in two tables.
 
-        /***********************************************************************
+        Params:
+            args = processed arguments
 
-            Size info for a single channel in a queue node
-
-        ***********************************************************************/
-
-        public struct ChannelInfo
-        {
-            public char[] name;
-            public ulong records;
-            public ulong bytes;
-        }
-
-        public ChannelInfo[] channels;
-
-    
-        /***************************************************************************
-        
-            Sets the size for a channel.
-        
-            Params:
-                channel = channel name
-                records = number of records in channel
-                bytes = number of bytes in channel
-        
-        ***************************************************************************/
-        
-        public void setChannelSize ( char[] channel, ulong records, ulong bytes )
-        {
-            foreach ( ref ch; this.channels )
-            {
-                if ( ch.name == channel )
-                {
-                    ch.records = records;
-                    ch.bytes = bytes;
-                    return;
-                }
-            }
-
-            this.channels ~= ChannelInfo("", records, bytes);
-            this.channels[$-1].name.copy(channel);
-        }
-
-
-        /***************************************************************************
-
-            Gets the size for a channel into the provided output variables.
-
-            Params:
-                channel = channel name
-                records = receives the number of records in channel
-                bytes = receives the number of bytes in channel
-
-        ***************************************************************************/
-        
-        public void getChannelSize ( char[] channel, out ulong records, out ulong bytes )
-        {
-            foreach ( ref ch; this.channels )
-            {
-                if ( ch.name == channel )
-                {
-                    records += ch.records;
-                    bytes += ch.bytes;
-                    return;
-                }
-            }
-        }
-    }
-
-    private NodeInfo[] nodes;
+    ***************************************************************************/
 
     private void process ( Arguments args )
     {
