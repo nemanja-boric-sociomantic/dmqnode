@@ -1,6 +1,6 @@
 /*******************************************************************************
 
-    Queue Node Server
+    Queue node monitor
 
     copyright:      Copyright (c) 2011 sociomantic labs. All rights reserved
 
