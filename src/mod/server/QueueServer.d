@@ -1,8 +1,8 @@
 /*******************************************************************************
 
-        Queue Node Server Daemon
+        Queue Node Server
 
-        copyright:      Copyright (c) 2009 sociomantic labs. All rights reserved
+        copyright:      Copyright (c) 2011 sociomantic labs. All rights reserved
 
         version:        October 2010: Initial release
 
@@ -11,7 +11,7 @@
 
  ******************************************************************************/
 
-module src.mod.server.QueueDaemon;
+module src.mod.server.QueueServer;
 
 
 
@@ -21,7 +21,7 @@ module src.mod.server.QueueDaemon;
 
  ******************************************************************************/
 
-private import  src.core.config.MainConfig;
+private import  src.mod.server.config.MainConfig;
 
 private import  src.mod.server.servicethreads.ServiceThreads,
                 src.mod.server.servicethreads.StatsThread;
@@ -38,19 +38,21 @@ private import  ocean.util.Config;
 
 private import  ocean.core.Exception: assertEx;
 
+debug private import ocean.util.log.Trace;
+
 private import  tango.core.Exception: IllegalArgumentException;
 
 private import	tango.util.log.Log, tango.util.log.AppendConsole;
 
-debug private import tango.util.log.Trace;
+
 
 /*******************************************************************************
 
-    QueueDaemon
+    QueueServer
 
  ******************************************************************************/
 
-class QueueDaemon
+class QueueServer
 {
     /***************************************************************************
 
@@ -58,7 +60,7 @@ class QueueDaemon
     
      **************************************************************************/
 
-    private alias QueueNode!(Ring, uint) Queue;
+    private alias QueueNode!(RingNode, char[]) Queue;
 
 
     /***************************************************************************
@@ -95,7 +97,7 @@ class QueueDaemon
 
         this.node = new Queue(
                 QueueConst.NodeItem(Config.Char["Server", "address"], Config.Int["Server", "port"]),
-                size_limit, channel_size_limit, data_dir, channel_size_limit);
+                size_limit, channel_size_limit, data_dir);
 
         debug Trace.formatln("Queue node: {}:{}", Config.Char["Server", "address"], Config.Char["Server", "port"]);
 

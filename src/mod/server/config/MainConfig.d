@@ -8,7 +8,7 @@
 
 *******************************************************************************/
 
-module src.core.config.MainConfig;
+module src.mod.server.config.MainConfig;
 
 
 

@@ -25,14 +25,16 @@ FLAGS =\
 	-version=NewTango \
     -Isrc \
     -L-lminilzo \
-    -L/usr/lib/libglib-2.0.so \
-    -Llibebtree.a
+    -L-lglib-2.0 \
+    -L-lebtree
 
 RELEASE_FLAGS = ${FLAGS}\
 	-L-s
 
 DEBUG_FLAGS = ${FLAGS}\
 	-debug -gc
+#-debug=Raw
+#-debug=ISelectClient
 
 
 # ------------------------------------------------------------------------------
@@ -78,10 +80,10 @@ clean:
 	xfbuild ${XFBUILD_FLAGS} +clean ${NODE_TARGET}
 	xfbuild ${XFBUILD_FLAGS} +clean ${MONITOR_TARGET}
 	xfbuild ${XFBUILD_FLAGS} +clean ${CONSUMER_TARGET}
-	@rm .objs-node -rf
-	@rm .deps-node -rf
-	@rm .objs-monitor -rf
-	@rm .deps-monitor -rf
-	@rm .objs-consumer -rf
-	@rm .deps-consumer -rf
+	@-rm .objs-node -rf
+	@-rm .deps-node -rf
+	@-rm .objs-monitor -rf
+	@-rm .deps-monitor -rf
+	@-rm .objs-consumer -rf
+	@-rm .deps-consumer -rf
 

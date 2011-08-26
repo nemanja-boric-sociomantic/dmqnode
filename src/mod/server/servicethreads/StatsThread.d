@@ -21,7 +21,7 @@ module src.mod.server.servicethreads.StatsThread;
 
 *******************************************************************************/
 
-private import src.core.config.MainConfig;
+private import src.mod.server.config.MainConfig;
 
 private import src.mod.server.servicethreads.model.IServiceThread;
 
