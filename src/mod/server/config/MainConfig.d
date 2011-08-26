@@ -40,34 +40,40 @@ struct MainConfig
 {
 public static:
 
-    // TODO: add other config parameters (see server.QueueDaemon) into this struct
-    
     /***************************************************************************
-    
-        Trace
-    
-    ***************************************************************************/
 
-    bool show_channel_trace;
-    
-    bool trace_rw_positions;
-
-    bool trace_byte_size;
-
-    uint channel_trace_update;
-
-
-    /***************************************************************************
-    
-        ServiceThreads
+        Server
 
     ***************************************************************************/
 
+    char[] address;
+
+    ushort port;
+
+    uint size_limit;
+
+    uint channel_size_limit;
+
+    char[] data_dir;
+
+
+    /***************************************************************************
+
+        Log
+
+    ***************************************************************************/
+    
+    char[] error_log;
+    
+    char[] trace_log;
+    
     char[] stats_log;
+    
+    uint stats_log_period;
 
-    bool stats_enabled;
+    bool stats_log_enabled;
 
-    bool stats_console_enabled;
+    bool console_stats_enabled;
 
 
     /***************************************************************************
@@ -83,24 +89,27 @@ public static:
 
         Config.init(cmdpath.prepend("etc", "config.ini"));
 
-        // Trace
-        show_channel_trace = Config.Bool["Trace", "show_channel_trace"];
-        channel_trace_update = Config.Int["Trace", "channel_trace_update"];
-        trace_rw_positions = Config.Bool["Trace", "trace_rw_positions"];
-        trace_byte_size = Config.Bool["Trace", "trace_byte_size"];
-
-        // ServiceThreads
-        stats_log = Config.Char["ServiceThreads", "stats_log"];
-        stats_enabled = Config.Bool["ServiceThreads", "stats_enabled"];
-        stats_console_enabled = Config.Bool["ServiceThreads", "stats_console_enabled"];
+        // Server
+        address = Config.Char["Server", "address"];
+        port = Config.Int["Server", "port"];
+        size_limit = Config.Int["Server", "size_limit"];
+        channel_size_limit = Config.Int["Server", "channel_size_limit"];
+        data_dir = Config.Char["Server", "data_dir"];
 
         // Log
-        TraceLog.init(cmdpath.prepend([Config.Char["Log", "trace"]]));
-        TraceLog.enabled = Config.Bool["Log", "trace_enable"];
-        TraceLog.console_enabled = Config.Bool["Log", "console_trace_enable"];
-
-        auto error_log = Config.Char["Log", "error"];
+        error_log = Config.Char["Log", "error"];
         OceanException.setOutput(new AppendFile(cmdpath.prepend([error_log])));
+        OceanException.console_output = Config.Bool["Log", "console_echo_error"];
+
+        trace_log = Config.Char["Log", "trace"];
+        TraceLog.init(cmdpath.prepend([trace_log]));
+        TraceLog.console_enabled = Config.Bool["Log", "console_echo_trace"];
+
+        stats_log = cmdpath.prepend(Config.Char["Log", "stats"]);
+        stats_log_period = Config.Int["Log", "stats_log_period"];
+
+        stats_log_enabled = Config.Bool["Log", "stats_log_enabled"];
+        console_stats_enabled = Config.Bool["Log", "console_stats_enabled"];
     }
 }
 

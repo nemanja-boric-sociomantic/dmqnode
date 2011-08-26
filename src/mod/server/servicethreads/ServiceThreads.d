@@ -24,7 +24,7 @@ private import src.mod.server.servicethreads.model.IServiceThread;
 
 
 
-class ServiceThreads
+public class ServiceThreads
 {
     /***************************************************************************
     

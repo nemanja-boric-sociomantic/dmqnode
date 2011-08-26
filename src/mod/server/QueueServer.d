@@ -34,8 +34,6 @@ private import  swarm.queue.node.model.IQueueNode;
 
 private import  swarm.queue.storage.Ring;
 
-private import  ocean.util.Config;
-
 private import  ocean.core.Exception: assertEx;
 
 debug private import ocean.util.log.Trace;
@@ -89,20 +87,19 @@ class QueueServer
 
     public this ( )
     {
-        uint size_limit = Config.get!(uint)("Server", "size_limit");
-        uint channel_size_limit = Config.get!(uint)("Server", "channel_size_limit");
-        char[] data_dir = Config.get!(char[])("Server", "data_dir");
-
-        assertEx!(IllegalArgumentException)(size_limit, "size limit 0 specified in configuration");
+        assertEx!(IllegalArgumentException)(MainConfig.size_limit, "size limit 0 specified in configuration");
 
         this.node = new Queue(
-                QueueConst.NodeItem(Config.Char["Server", "address"], Config.Int["Server", "port"]),
-                size_limit, channel_size_limit, data_dir);
+                QueueConst.NodeItem(MainConfig.address, MainConfig.port),
+                MainConfig.size_limit, MainConfig.channel_size_limit, MainConfig.data_dir);
 
-        debug Trace.formatln("Queue node: {}:{}", Config.Char["Server", "address"], Config.Char["Server", "port"]);
+        debug Trace.formatln("Queue node: {}:{}", MainConfig.address, MainConfig.port);
 
         this.service_threads = new ServiceThreads;
-        this.service_threads.add(new StatsThread(this.node, Config.Int["ServiceThreads", "stats_sleep"]));
+        if ( MainConfig.stats_log_enabled || MainConfig.console_stats_enabled )
+        {
+            this.service_threads.add(new StatsThread(this.node, MainConfig.stats_log_period));
+        }
     }
 
 
