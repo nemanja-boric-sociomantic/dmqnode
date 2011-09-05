@@ -32,7 +32,7 @@ private import  swarm.queue.QueueConst;
 
 private import  swarm.queue.node.model.IQueueNode;
 
-private import  swarm.queue.storage.Ring;
+private import  swarm.queue.node.storage.Ring;
 
 private import  ocean.core.Exception: assertEx;
 
