@@ -18,7 +18,7 @@ module src.main.dhtnode2;
 
 ******************************************************************************/
 
-private import  src.core.config.MainConfig;
+private import  src.mod.node.config.MainConfig;
 
 private import  src.mod.node.DhtNodeServer;
 

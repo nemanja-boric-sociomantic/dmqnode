@@ -7,6 +7,9 @@ NODE_OUTPUT = bin/dhtnode
 REMOVE_TARGET = src/main/dhtremove.d
 REMOVE_OUTPUT = bin/dhtremove
 
+INFO_TARGET = src/main/dhtinfo.d
+INFO_OUTPUT = bin/dhtinfo
+
 
 # ------------------------------------------------------------------------------
 # Xfbuild flags
@@ -30,13 +33,14 @@ RELEASE_FLAGS = ${FLAGS}\
 	-L-s
 
 DEBUG_FLAGS = ${FLAGS}\
-	-debug -gc
+	-debug -gc -debug=ConnectionHandler
+#-debug=Raw
 
 
 # ------------------------------------------------------------------------------
-# Debug build of stream & feed (default)
+# Debug build of all targets (default)
 
-default: node remove
+default: node remove info
 
 
 # ------------------------------------------------------------------------------
@@ -60,13 +64,26 @@ remove-release:
 
 
 # ------------------------------------------------------------------------------
+# info debug & release builds
+
+info:
+	xfbuild +D=.deps-info +O=.objs-info +o=${INFO_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${INFO_TARGET}
+
+info-release:
+	xfbuild +D=.deps-info +O=.objs-info +o=${INFO_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${INFO_TARGET}
+
+
+# ------------------------------------------------------------------------------
 # Cleanup
 
 clean:
 	xfbuild ${XFBUILD_FLAGS} +clean ${NODE_TARGET}
 	xfbuild ${XFBUILD_FLAGS} +clean ${REMOVE_TARGET}
-	@rm .objs-node -rf
-	@rm .deps-node -rf
-	@rm .objs-remove -rf
-	@rm .deps-remove -rf
+	xfbuild ${XFBUILD_FLAGS} +clean ${INFO_TARGET}
+	@-rm .objs-node -rf
+	@-rm .deps-node -rf
+	@-rm .objs-remove -rf
+	@-rm .deps-remove -rf
+	@-rm .objs-info -rf
+	@-rm .deps-info -rf
 

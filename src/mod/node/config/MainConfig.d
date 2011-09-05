@@ -10,7 +10,7 @@
 
  ******************************************************************************/
 
-module src.core.config.MainConfig;
+module src.mod.node.config.MainConfig;
 
 /*******************************************************************************
 
@@ -39,13 +39,15 @@ private import  Date = tango.time.ISO8601,
 
 struct MainConfig
 {
+public static:
+
     /***************************************************************************
 
         Definitions of configuration section & key strings
 
      **************************************************************************/
     
-    public static const
+    public const
     {
         struct Path
         {
@@ -92,12 +94,32 @@ struct MainConfig
     
     /***************************************************************************
 
+        Log
+    
+    ***************************************************************************/
+    
+    char[] error_log;
+    
+    char[] trace_log;
+    
+    char[] stats_log;
+    
+    uint stats_log_period;
+    
+    bool stats_log_enabled;
+    
+    bool console_stats_enabled;
+
+
+    /***************************************************************************
+
         MainExe object holding absolute path to running executable
 
      **************************************************************************/
 
-    private static CmdPath cmdpath;
-        
+    private CmdPath cmdpath;
+
+
     /***************************************************************************
 
         Initializes configuration
@@ -108,18 +130,26 @@ struct MainConfig
     
      **************************************************************************/
     
-    public static void init ( char[] exepath )
+    public void init ( char[] exepath )
     {   
         this.cmdpath.set(exepath);
-        
-        Config.init(this.cmdpath.prepend(this.Path.Config));
-        
-        TraceLog.init(cmdpath.prepend([Config.Char["Log", "trace"]]));
-        TraceLog.enabled = Config.Bool["Log", "trace_enable"];
-        TraceLog.console_enabled = Config.Bool["Log", "console_trace_enable"];
 
-        auto error_log = Config.Char[this.Sections.Log, this.Keys.Error];
-        OceanException.setOutput(new AppendFile(this.cmdpath.prepend([error_log])));
-    }
+        Config.init(this.cmdpath.prepend(this.Path.Config));
+
+        // Log
+        error_log = Config.Char["Log", "error"];
+        OceanException.setOutput(new AppendFile(cmdpath.prepend([error_log])));
+        OceanException.console_output = Config.Bool["Log", "console_echo_error"];
+
+        trace_log = Config.Char["Log", "trace"];
+        TraceLog.init(cmdpath.prepend([trace_log]));
+        TraceLog.console_enabled = Config.Bool["Log", "console_echo_trace"];
+
+        stats_log = cmdpath.prepend(Config.Char["Log", "stats"]);
+        stats_log_period = Config.Int["Log", "stats_log_period"];
+
+        stats_log_enabled = Config.Bool["Log", "stats_log_enabled"];
+        console_stats_enabled = Config.Bool["Log", "console_stats_enabled"];
+}
 }
 

@@ -20,9 +20,9 @@ module src.mod.node.DhtDaemon;
 
     Imports
 
-******************************************************************************/
+*******************************************************************************/
 
-private import  src.core.config.MainConfig;
+private import  src.mod.node.config.MainConfig;
 
 private import  src.mod.node.servicethreads.ServiceThreads,
                 src.mod.node.servicethreads.StatsThread,
@@ -33,8 +33,8 @@ private import  ocean.io.select.model.ISelectClient;
 private import  swarm.dht.DhtNode;
 private import  swarm.dht.DhtHash;
 
-private import  swarm.dht.storage.Memory;
-private import  swarm.dht.storage.LogFiles;
+private import  swarm.dht.node.storage.MemoryStorageChannels;
+private import  swarm.dht.node.storage.LogFilesStorageChannels;
 
 private import  swarm.dht.node.model.IDhtNode;
 
@@ -58,7 +58,7 @@ class DhtDaemon
     
     **************************************************************************/
     
-    alias       DhtNode!(Memory)                                MemoryNode;
+    alias DhtNode!(MemoryStorageChannels, char[]) MemoryNode;
     
     /***************************************************************************
     
@@ -66,7 +66,7 @@ class DhtDaemon
     
     **************************************************************************/
     
-    alias       DhtNode!(LogFiles, size_t)                      LogFilesNode;
+    alias DhtNode!(LogFilesStorageChannels, char[], size_t) LogFilesNode;
     
     /***************************************************************************
     
@@ -123,13 +123,13 @@ class DhtDaemon
         switch (storage)
         {
             case DhtConst.Storage.Memory :
-                auto memory_node = new MemoryNode(node_item, data_dir, size_limit);
+                auto memory_node = new MemoryNode(node_item, size_limit, data_dir);
                 memory_node.error_callback(&this.dhtError);
                 this.node = memory_node;
                 break;
-        
+
             case DhtConst.Storage.LogFiles :
-                auto logfiles_node = new LogFilesNode(node_item, data_dir, this.getLogFilesWriteBuffer(), size_limit);
+                auto logfiles_node = new LogFilesNode(node_item, 0, data_dir, this.getLogFilesWriteBuffer());
                 logfiles_node.error_callback(&this.dhtError);
                 this.node = logfiles_node;
                 break;
@@ -142,8 +142,6 @@ class DhtDaemon
         this.service_threads = new ServiceThreads;
         this.service_threads.add(new MaintenanceThread(this.node, Config.Int["ServiceThreads", "maintenance_sleep"]));
         this.service_threads.add(new StatsThread(this.node, Config.Int["ServiceThreads", "stats_sleep"]));
-
-        OceanException.console_output = Config.get!(bool)("Log", "trace_errors");
     }
 
     /***************************************************************************
@@ -197,7 +195,7 @@ class DhtDaemon
 
         Callback for exceptions inside the dht node event loop. Writes errors to
         the error.log file, and optionally to the console (if the
-        Log/trace_errors config parameter is true).
+        Log/console_echo_errors config parameter is true).
 
         Params:
             exception = exception which occurred
@@ -205,7 +203,7 @@ class DhtDaemon
 
     **************************************************************************/
 
-    private void dhtError ( Exception exception, IAdvancedSelectClient.EventInfo event_info )
+    private void dhtError ( Exception exception, IAdvancedSelectClient.Event event_info )
     {
         OceanException.Warn("Exception caught in eventLoop: {}", exception.msg);
     }
@@ -216,7 +214,7 @@ class DhtDaemon
     
     **************************************************************************/
     
-    private Storage getStorageConfiguration ()
+    private Storage getStorageConfiguration ( )
     {
         switch (Config.get!(char[])("Server", "storage_engine"))
         {
@@ -250,10 +248,10 @@ class DhtDaemon
     
     private size_t getLogFilesWriteBuffer ()
     {
-        size_t wbs = LogFiles.DefaultWriteBufferSize;
-        
+        size_t wbs = LogFilesStorageChannels.DefaultWriteBufferSize;
+
         Config.get(wbs, "Options_LogFiles", "write_buffer_size");
-        
+
         return wbs;
     }
 }

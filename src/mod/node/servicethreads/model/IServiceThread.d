@@ -29,9 +29,9 @@ private import tango.core.Thread;
 private import swarm.dht.node.model.IDhtNode,
                swarm.dht.node.model.IDhtNodeInfo;
 
-private import swarm.dht.storage.channels.model.IStorageChannelsService;
+private import swarm.dht.node.storage.channels.model.IStorageChannelsService;
 
-private import swarm.dht.storage.model.IStorageEngineService;
+private import swarm.dht.node.storage.engine.model.IStorageEngineService;
 
 debug private import ocean.util.log.Trace;
 

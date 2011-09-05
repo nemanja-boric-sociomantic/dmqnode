@@ -180,7 +180,7 @@ class DhtInfo : DhtTool
 
     ***************************************************************************/
 
-    override protected void dhtError ( DhtClient.ErrorInfo e )
+    override protected void dhtError ( DhtClient.RequestFinishedInfo e )
     {
         super.dht_error = true;
         this.dht_errors.appendCopy(e.message);
@@ -613,6 +613,7 @@ class DhtInfo : DhtTool
                 {
                     if ( channel.length && !channel_names.contains(channel) )
                     {
+                        Trace.formatln("Channel = {}", channel);
                         channel_names.appendCopy(channel);
                         if ( channel.length > longest_channel_name )
                         {

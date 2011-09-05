@@ -78,8 +78,6 @@ public class DhtMonitor
         }
     }
 
-    private import tango.text.convert.Layout;
-
     static private void displayNodeChunk ( NodeInfo*[] nodes, char[][] channel_names, bool metric )
     {
         char[] tmp;

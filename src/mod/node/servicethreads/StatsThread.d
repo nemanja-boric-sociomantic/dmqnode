@@ -14,7 +14,175 @@
 module src.mod.node.servicethreads.StatsThread;
 
 
+/*******************************************************************************
 
+    Imports
+
+*******************************************************************************/
+
+private import src.mod.node.config.MainConfig;
+
+private import src.mod.node.servicethreads.model.IServiceThread;
+
+private import ocean.util.log.MessageLogger;
+
+private import ocean.util.log.StaticTrace;
+
+private import swarm.dht.node.model.IDhtNode,
+               swarm.dht.node.model.IDhtNodeInfo;
+
+private import swarm.dht.node.storage.engine.model.IStorageEngineService;
+
+private import ocean.text.convert.Layout;
+
+debug private import ocean.util.log.Trace;
+
+
+
+public class StatsThread : IServiceThread
+{
+    /***************************************************************************
+    
+        Log file
+    
+    ***************************************************************************/
+    
+    private MessageLogger log;
+    
+    
+    /***************************************************************************
+    
+        Log file update period (seconds)
+    
+    ***************************************************************************/
+    
+    private uint log_update_time;
+    
+    
+    /***************************************************************************
+    
+        Number of seconds elapsed since the log file was last updated
+    
+    ***************************************************************************/
+    
+    uint elapsed_since_last_log_update;
+    
+    
+    /***************************************************************************
+    
+        Count of bytes sent & received, written to the log file
+    
+    ***************************************************************************/
+    
+    ulong total_sent;
+    
+    ulong total_received;
+    
+    
+    /***************************************************************************
+    
+        Constructor.
+        
+        Params:
+            dht = dht node to service
+            update_time = time to sleep between runs of the service
+    
+    ***************************************************************************/
+    
+    public this ( IDhtNode dht, uint log_update_time )
+    {
+        super(dht, 1);
+    
+        this.log_update_time = log_update_time;
+    
+        if ( MainConfig.stats_log_enabled )
+        {
+            this.log = new MessageLogger(MainConfig.stats_log, "StatsLog");
+            this.log.enabled = true;
+        }
+    }
+    
+    
+    /***************************************************************************
+    
+        Method called on the node info interface once per service run. Outputs
+        stats info to the trace log.
+    
+        Params:
+            node_info = node information interface
+            seconds_elapsed = time since this service was last performed
+    
+    ***************************************************************************/
+    
+    protected void serviceNode ( IDhtNodeInfo node_info, uint seconds_elapsed )
+    {
+        auto received = node_info.bytesReceived;
+        auto sent = node_info.bytesSent;
+    
+        if ( MainConfig.console_stats_enabled )
+        {
+            StaticTrace.format("  dht: {} sent ({} K/s), {} received ({} K/s), handling {} connections",
+                    sent, cast(float)(sent / 1024) / cast(float)seconds_elapsed,
+                    received, cast(float)(received / 1024) / cast(float)seconds_elapsed,
+                    node_info.numOpenConnections).flush;
+        }
+    
+        if ( MainConfig.stats_log_enabled )
+        {
+            this.elapsed_since_last_log_update += seconds_elapsed;
+            this.total_sent += sent;
+            this.total_received += received;
+    
+            if ( this.elapsed_since_last_log_update >= this.log_update_time )
+            {
+                this.log.write("Node stats: {} sent ({} K/s), {} received ({} K/s), handling {} connections",
+                        this.total_sent, cast(float)(this.total_sent / 1024) / cast(float)seconds_elapsed,
+                        this.total_received, cast(float)(this.total_received / 1024) / cast(float)seconds_elapsed,
+                        node_info.numOpenConnections);
+    
+                this.elapsed_since_last_log_update = 0;
+                this.total_sent = 0;
+                this.total_received = 0;
+            }
+        }
+    
+        node_info.resetByteCounters();
+    }
+    
+    
+    /***************************************************************************
+
+        Method called on the channel service interface of all storage channels
+        once per service run.
+    
+        Params:
+            channel = channel service interface
+            seconds_elapsed = time since this service was last performed
+    
+    ***************************************************************************/
+    
+    protected void serviceChannel ( IStorageEngineService channel, uint seconds_elapsed )
+    {
+    }
+
+
+    /***************************************************************************
+    
+        Gets the identifying string for this class (used for message printing).
+    
+        Returns:
+            class id
+    
+    ***************************************************************************/
+    
+    protected char[] id ( )
+    {
+        return typeof(this).stringof;
+    }
+}
+
+
+/+
 /*******************************************************************************
 
     Imports
@@ -28,7 +196,7 @@ private import ocean.util.TraceLog;
 private import swarm.dht.node.model.IDhtNode,
                swarm.dht.node.model.IDhtNodeInfo;
 
-private import swarm.dht.storage.model.IStorageEngineService;
+private import swarm.dht.node.storage.engine.model.IStorageEngineService;
 
 debug private import ocean.util.log.Trace;
 
@@ -106,3 +274,4 @@ class StatsThread : IServiceThread
     }
 }
 
++/

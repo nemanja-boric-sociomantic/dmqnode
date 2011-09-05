@@ -311,7 +311,7 @@ abstract class DhtTool
 
     ***************************************************************************/
 
-    protected void dhtError ( DhtClient.ErrorInfo e )
+    protected void dhtError ( DhtClient.RequestFinishedInfo e )
     {
         Stderr.format("DHT client error: {}\n", e.message);
         this.dht_error = true;
