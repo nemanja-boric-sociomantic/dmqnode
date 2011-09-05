@@ -10,6 +10,8 @@ MONITOR_OUTPUT = bin/queuemonitor
 CONSUMER_TARGET = src/main/queueconsumer.d
 CONSUMER_OUTPUT = bin/queueconsumer
 
+TEST_TARGET = src/main/queuetest.d
+TEST_OUTPUT = bin/queuetest
 
 # ------------------------------------------------------------------------------
 # Xfbuild flags
@@ -40,7 +42,7 @@ DEBUG_FLAGS = ${FLAGS}\
 # ------------------------------------------------------------------------------
 # Debug build of node & monitor (default)
 
-default: node monitor consumer
+default: node monitor consumer test
 
 
 # ------------------------------------------------------------------------------
@@ -74,16 +76,28 @@ consumer-release:
 
 
 # ------------------------------------------------------------------------------
+# Test debug & release builds
+
+test:
+	xfbuild +D=.deps-test +O=.objs-test +o=${TEST_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${TEST_TARGET}
+
+test-release:
+	xfbuild +D=.deps-test +O=.objs-test +o=${TEST_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${TEST_TARGET}
+
+# ------------------------------------------------------------------------------
 # Cleanup
 
 clean:
 	xfbuild ${XFBUILD_FLAGS} +clean ${NODE_TARGET}
 	xfbuild ${XFBUILD_FLAGS} +clean ${MONITOR_TARGET}
 	xfbuild ${XFBUILD_FLAGS} +clean ${CONSUMER_TARGET}
+	xfbuild ${XFBUILD_FLAGS} +clean ${TEST_TARGET}
 	@-rm .objs-node -rf
 	@-rm .deps-node -rf
 	@-rm .objs-monitor -rf
 	@-rm .deps-monitor -rf
 	@-rm .objs-consumer -rf
 	@-rm .deps-consumer -rf
+	@-rm .objs-test -rf
+	@-rm .deps-test -rf	
 
