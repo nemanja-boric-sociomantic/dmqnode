@@ -45,6 +45,9 @@ class QueueTest
                 Trace.formatln("Running single test");
                 auto test = new Test(args, getCommands());
                 
+                test.start;
+                test.join;
+                
                 break;
             }
             case "same":

@@ -12,7 +12,8 @@
 
 module src.mod.test.Test;
 
-
+// TODO: have dependend threads somehow wait for each other, maybe using a "running"
+// variable in ICommands
 
 /*******************************************************************************
 
@@ -51,6 +52,7 @@ private import Integer = tango.text.convert.Integer;
 
 private import tango.core.Thread,
                tango.io.Stdout,
+               tango.util.log.Log,
                tango.core.Array : contains;
 
 /*******************************************************************************
@@ -79,13 +81,6 @@ private import tango.core.Thread,
 
 class Test : Thread
 {
-    /***************************************************************************
-    
-        Name of the channel that we are testing
-    
-    ***************************************************************************/
-        
-    char[] channel;
     char[] config;
     
     bool error = false;
@@ -142,9 +137,6 @@ class Test : Thread
         
         this.args = args;
         
-        this.channel = "test_channel_" ~ 
-                        Integer.toString(cast(size_t)cast(void*) commands);
-        
         this.config = args("config").assigned[0];
         
         this.commands = commands;
@@ -192,16 +184,10 @@ class Test : Thread
             
             for (size_t i = 0; i < 10_000; ++i)
             {
-                command.push(this.epoll, this.queue_client, this.channel, 5);
-                command.pop(this.epoll, this.queue_client, this.channel, 5);
+                command.push(this.epoll, this.queue_client, 5);
+                command.pop(this.epoll, this.queue_client, 5);                
             }
-            
-            Thread.sleep(1);
-            
-            if (!command.done)
-            {
-                Trace.formatln("Consumer did not consume all pushed items");
-            }
+            command.finish();
         }
     }
           
@@ -219,24 +205,22 @@ class Test : Thread
         {
             Trace.formatln("\t{} ...", command.name());
             
-            auto consumer = new Consumer(this.config, this.channel, command);
+            auto consumer = new Consumer(this.config, command);
             consumer.start;
             
             for (size_t i = 0; i < 100_000; ++i)
             {
-                command.push(this.epoll, this.queue_client, this.channel, 2);    
+                command.push(this.epoll, this.queue_client, 2);
+                
+                if (consumer.isRunning == false) break;
             }
             
-            Thread.sleep(1);
-            
-            if (!command.done)
-            {
-                Trace.formatln("Consumer did not consume all pushed items");
-            }
+            Thread.sleep(2);
             
             consumer.stopConsume;
-            
             consumer.join;
+            
+            command.finish();
         }
     }
           
@@ -255,7 +239,7 @@ class Test : Thread
         {            
             Trace.formatln("\t{} ...", command.name());
             
-            try do  command.push(this.epoll, this.queue_client, this.channel, 2 );
+            try do  command.push(this.epoll, this.queue_client, 2);
             while (command.info.status != QueueConst.Status.OutOfMemory)
             catch (Exception e)
             {
@@ -265,7 +249,7 @@ class Test : Thread
                 }
             }
             
-            do command.pop(this.epoll, this.queue_client, this.channel, 2);            
+            do command.pop(this.epoll, this.queue_client, 2);            
             while (!command.done);
             
             Thread.sleep(1);
@@ -294,10 +278,10 @@ class Test : Thread
         {            
             Trace.formatln("\t{} ...", command.name());
             
-            do  command.push(this.epoll, this.queue_client, this.channel, 10 );
+            do  command.push(this.epoll, this.queue_client, 10 );
             while (command.info.status != QueueConst.Status.OutOfMemory)
            
-            auto consumer = new Consumer(this.config, this.channel, command);
+            auto consumer = new Consumer(this.config, command);
             consumer.start;
             
             Thread.sleep(1);
@@ -317,13 +301,7 @@ class Test : Thread
 
 class Consumer : Thread
 {
-    /***************************************************************************
-    
-        Name of the channel that we are writing into.
-    
-    ***************************************************************************/
-        
-    char[] channel;
+    Logger logger;
     
     /***************************************************************************
 
@@ -350,23 +328,25 @@ class Consumer : Thread
     
     ***************************************************************************/
         
-    this ( char[] config, char[] channel, ICommand command )
+    this ( char[] config, ICommand command )
     {       
         this.epoll  = new EpollSelectDispatcher;
                 
         this.queue_client = new QueueClient(epoll, 10);
-        this.queue_client.addNodes(config);     
-        
-        this.channel = channel;
+        this.queue_client.addNodes(config);
         
         this.command = command;
         
         super(&this.run);
+        
+        this.logger = Log.lookup("ConsumerThread");
     }
     
     void run ( )
     {        
-        this.command.consume(this.epoll, this.queue_client, this.channel);
+        logger.trace("running...");
+        scope (exit) logger.trace("exiting ...");
+        this.command.consume(this.epoll, this.queue_client);        
     }
     
     public void stopConsume ( )

@@ -29,7 +29,8 @@ private import swarm.queue.QueueClient,
 
 private import ocean.util.container.RingQueue,
                ocean.io.select.EpollSelectDispatcher, 
-               ocean.util.log.Trace;
+               ocean.util.log.Trace,
+               ocean.io.digest.Fnv1;
 
 /*******************************************************************************
 
@@ -37,7 +38,8 @@ private import ocean.util.container.RingQueue,
 
 *******************************************************************************/
 
-private import tango.math.random.Random;
+private import tango.math.random.Random,
+               tango.util.log.Log;
 
 private import Integer = tango.text.convert.Integer;
 
@@ -51,7 +53,7 @@ private import Integer = tango.text.convert.Integer;
 
 const QueueSize = 10 * 1024 * 1024;  // 10mb
 const QueuePushMultiNum = 3;
-const QueueMaxPushSize = 5;
+const QueueMaxPushSize = 10;
 
 
 /*******************************************************************************
@@ -66,10 +68,14 @@ const QueueMaxPushSize = 5;
 *******************************************************************************/
 
 ICommand[] getCommands ( )
-{
-    return [cast(ICommand)new Push(QueueSize), 
+{   
+    static size_t instance_counter = 0;
+    
+    instance_counter++;
+    
+    return [cast(ICommand)new Push(QueueSize, instance_counter), 
             //new PushCompressed(QueueSize),
-            new PushMulti(QueuePushMultiNum, QueueSize)
+            new PushMulti(QueuePushMultiNum, QueueSize, instance_counter)
             //new PushMultiCompressed(QueuePushMultiNum, QueueSize)
            ];
 }
@@ -94,6 +100,30 @@ ICommand[] getCommands ( )
 
 abstract class ICommand
 {   
+    Logger logger;
+    
+    char[] channel;
+        
+    /***************************************************************************
+    
+        Local array for validation
+    
+    ***************************************************************************/
+    
+    protected int[] validator_array;
+    
+    size_t push_counter = 0;
+    
+    this ( size_t size, size_t instance_number )
+    {   
+        this.validator_array = new int[size];
+        
+        this.logger = Log.lookup("command." ~ this.name() ~ 
+                                 "[" ~ Integer.toString(instance_number) ~ "]");
+        
+        this.channel = "test_channel_" ~ Integer.toString(instance_number);
+    }
+    
     /***************************************************************************
     
         Pushes a test entry to the remote and local queue
@@ -101,14 +131,13 @@ abstract class ICommand
         Params:
             epoll           = epoll select dispatcher instance
             queue_client    = queue client instance
-            channel         = channel to write to
             amount          = optional, how many pushes to execute
             expected_result = optional, expected result code, defaults to Ok
             
     ***************************************************************************/
     
     void push ( EpollSelectDispatcher epoll, QueueClient queue_client, 
-                char[] channel, size_t amount = 1, 
+                size_t amount = 1, 
                 QueueConst.Status.BaseType expected_result = QueueConst.Status.Ok );
         
     /***************************************************************************
@@ -119,7 +148,6 @@ abstract class ICommand
         Params:
             epoll           = epoll select dispatcher instance
             queue_client    = queue client instance
-            channel         = channel to write to
             amount          = optional, how many pushes to execute
             expected_result = optional, expected result code, defaults to Ok
             
@@ -129,7 +157,7 @@ abstract class ICommand
     ***************************************************************************/
     
     size_t pop ( EpollSelectDispatcher epoll, QueueClient queue_client, 
-                 char[] channel, size_t amount = 1, 
+                 size_t amount = 1, 
                  QueueConst.Status.BaseType expected_result = QueueConst.Status.Ok );
         
     /***************************************************************************
@@ -140,13 +168,11 @@ abstract class ICommand
         Params:
             epoll           = epoll select dispatcher instance
             queue_client    = queue client instance
-            channel         = channel to write to
             expected_result = optional, expected result code, defaults to Ok            
              
     ***************************************************************************/
     
     void consume ( EpollSelectDispatcher epoll, QueueClient queue_client, 
-                   char[] channel, 
                    QueueConst.Status.BaseType expected_result = QueueConst.Status.Ok );
     
     /***************************************************************************
@@ -166,9 +192,30 @@ abstract class ICommand
             Whether all commands that have been pushed have been popped/consumed
              
     ***************************************************************************/
-    
-    bool done();
+
+    bool done()
+    {
+        return this.push_counter == 0;
+    }
         
+    void finish()
+    {
+        if (this.push_counter != 0)
+        {
+            logger.trace("push counter: {}", push_counter);
+            throw new Exception("Not all requests were processed according to"
+                                " the push counter");
+        }
+        
+        foreach (num; this.validator_array) if (num != 0)
+        {
+            logger.trace("num: {}", validator_array);
+            throw new Exception("Not all requests were processed!");
+        }
+        
+        this.push_counter = 0;
+    }
+    
     /***************************************************************************
     
         Info struct of the last request
@@ -194,42 +241,36 @@ abstract class ICommand
              
     ***************************************************************************/
     
-    protected ubyte[] getRandom ( ubyte[] data )
+    protected ubyte[] getRandom ( ubyte[] data, uint init )
     {
-        int i = rand.uniformR(QueueMaxPushSize) + 1;
+        uint i = Fnv1(init) % (QueueMaxPushSize-uint.sizeof) + 1;
+ 
+        data[0 .. uint.sizeof] = (cast(ubyte*)&init) [0 .. uint.sizeof];
         
-        foreach (ref b; data[0 .. i]) 
+        foreach (ref b; data[uint.sizeof .. i + uint.sizeof]) 
         {
-            b = rand.uniformR2(ubyte.min, ubyte.max);
+            b = Fnv1(++init) ;
         }
        
-        return data[0 .. i];
+        return data[0 .. i + uint.sizeof];
     }
 }
 
 
 class Push : ICommand
-{        
-    /***************************************************************************
-    
-        Local Queue for validation
-    
-    ***************************************************************************/
-    
-    protected ByteRingQueue local_queue;
-           
+{     
     /***************************************************************************
     
         Constructor
         
         Params:
-            size   = size of the local test queue in bytes
+            size   = size of the local test array in bytes
     
     ***************************************************************************/
     
-    this ( size_t size )
-    {
-        this.local_queue = new ByteRingQueue(size);
+    this ( size_t size, uint instance_counter )
+    {        
+        super(size, instance_counter);
     }
         
     /***************************************************************************
@@ -239,22 +280,21 @@ class Push : ICommand
         Params:
             epoll           = epoll select dispatcher instance
             queue_client    = queue client instance
-            channel         = channel to write to
             amount          = optional, how many pushes to execute
             expected_result = optional, expected result code, defaults to Ok
             
     ***************************************************************************/
     
     override void push ( EpollSelectDispatcher epoll, QueueClient queue_client, 
-                         char[] channel, size_t amount = 1, 
+                         size_t amount = 1, 
                          QueueConst.Status.BaseType expected_result = QueueConst.Status.Ok )
     {        
         queue_client.requestFinishedCallback(&this.requestFinished);
         ubyte[QueueMaxPushSize] data = void;
         
-        do synchronized (this.local_queue)
-        {               
-            auto rdata = getRandom(data);
+        do synchronized (this)
+        {             
+            auto rdata = getRandom(data, this.push_counter);
             
             char[] pusher ( uint id )
             {
@@ -267,16 +307,13 @@ class Push : ICommand
             
             if (info.status != expected_result)
             {
-                Trace.formatln("push failed, expected status {}, got {}: {}", 
-                               expected_result, info.status, info.message);
+                logger.error("push failed, expected status {}, got {}: {}", 
+                              expected_result, info.status, info.message);
                 
                 throw new Exception("Unexpected result");
             }       
             
-            if (!this.local_queue.push(rdata))
-            {
-                throw new Exception("Local queue is full!");
-            }
+            this.validator_array[push_counter++] ++;
         }
         while (--amount > 0) 
     }
@@ -289,7 +326,6 @@ class Push : ICommand
         Params:
             epoll           = epoll select dispatcher instance
             queue_client    = queue client instance
-            channel         = channel to write to
             amount          = optional, how many pushes to execute
             expected_result = optional, expected result code, defaults to Ok
             
@@ -299,29 +335,57 @@ class Push : ICommand
     ***************************************************************************/
     
     override size_t pop ( EpollSelectDispatcher epoll, QueueClient queue_client, 
-                          char[] channel, size_t amount = 1, 
+                          size_t amount = 1, 
                           QueueConst.Status.BaseType expected_result = QueueConst.Status.Ok )
     {
         bool error = false;
         queue_client.requestFinishedCallback(&this.requestFinished);
+        ubyte[QueueMaxPushSize] data = void;
         
         do
-        {       
-            ubyte[] data;            
-            synchronized (this.local_queue) 
-            {
-                data = this.local_queue.pop();
-                
+        {                  
+            synchronized (this) 
+            {                
                 void popper ( uint, char[] value )
                 {
-                    if (data != cast(ubyte[]) value)
-                    {
-                        Trace.formatln("Error: popped value {} differs from "
-                                       "pushed value {}", cast(ubyte[]) value,
-                                       data);
+                    ubyte[] gdata;
+                    
+                    if (value.length > uint.sizeof )
+                    {                        
+                        uint num = *(cast(uint*)value.ptr);
                         
-                        error = true;
+                        gdata = this.getRandom(data, num);
+                        
+                        if ( num >= this.validator_array.length )
+                        {
+                            error = true;   
+                            logger.error("Popped value {} is invalid ({})", 
+                                         cast(ubyte[]) value, this.validator_array.length);
+                        }
+                        else if ( gdata != cast(ubyte[]) value )
+                        {
+                            error = true;   
+                            logger.error("Popped value {} differs from expected"
+                                         " value {}", cast(ubyte[]) value, gdata);
+                        }
+                        else if ( this.validator_array[num] == 0 )
+                        {
+                            error = true;   
+                            logger.error("Popped value {} was already popped earlier or never pushed",
+                                         cast(ubyte[]) value);
+                        }
+                        else
+                        {
+                            this.validator_array[num] --;
+                            this.push_counter --;
+                        }
+                        
+                        return;
                     }
+                    
+                    logger.error("Popped value {} is too short", 
+                                 cast(ubyte[]) value);  
+                    error = true;    
                 }
                 
                 queue_client.pop(channel, &popper);            
@@ -352,32 +416,59 @@ class Push : ICommand
         Params:
             epoll           = epoll select dispatcher instance
             queue_client    = queue client instance
-            channel         = channel to write to
             expected_result = optional, expected result code, defaults to Ok            
              
     ***************************************************************************/
     
     override void consume ( EpollSelectDispatcher epoll, 
-                            QueueClient queue_client, char[] channel, 
+                            QueueClient queue_client,
                             QueueConst.Status.BaseType expected_result = QueueConst.Status.Ok )
     {
         queue_client.requestFinishedCallback(&this.requestFinished);
+        ubyte[QueueMaxPushSize] data = void;
         
         void consumer ( uint id, char[] value )
         {
-            ubyte[] data;
-            synchronized (this.local_queue) 
+            synchronized (this) 
             {
-                data = this.local_queue.pop();
-            
-                if (data != cast(ubyte[]) value)
-                {
-                    Trace.formatln("Error: consumed value {} differs from "
-                                   "pushed value {}", cast(ubyte[]) value,
-                                   data);
-    
-                    epoll.shutdown;
+                ubyte[] gdata;
+                
+                if (value.length > uint.sizeof )
+                {                        
+                    uint num = *(cast(uint*)value.ptr);
+                    
+                    gdata = this.getRandom(data, num);
+                    
+                    if ( num >= this.validator_array.length )
+                    {
+                        epoll.shutdown;
+                        logger.error("Consumed value {} is invalid ({})", 
+                                     cast(ubyte[]) value, this.validator_array.length);
+                    }
+                    else if ( gdata != cast(ubyte[]) value )
+                    {
+                        epoll.shutdown;
+                        logger.error("Consumed value {} differs from expected"
+                                     " value {}", cast(ubyte[]) value, gdata);
+                    }
+                    else if ( this.validator_array[num] == 0 )
+                    {
+                        epoll.shutdown;
+                        logger.error("Consumed value {} was already popped earlier or never pushed",
+                                     cast(ubyte[]) value);
+                    }
+                    else
+                    {
+                        this.validator_array[num] --;
+                    }
+                    
+                    return;
                 }
+                
+                logger.error("Consumed value {} is too short", 
+                             cast(ubyte[]) value);            
+
+                epoll.shutdown;
             }
         }
         
@@ -387,7 +478,7 @@ class Push : ICommand
                 
         if (info.status != expected_result)
         {
-            Trace.formatln("consume failed, expected status {}, got {}: {}", 
+            logger.error("consume failed, expected status {}, got {}: {}", 
                            expected_result, info.status, info.message);
             
             throw new Exception("Unexpected result");
@@ -407,21 +498,6 @@ class Push : ICommand
     {
         return "push";
     }
-   
-    /***************************************************************************
-    
-        Returns:
-            Whether all commands that have been pushed have been popped/consumed
-             
-    ***************************************************************************/
-    
-    bool done()
-    {
-        return this.local_queue.length == 0;
-    }
-    
-    
-    
 }
 
 class PushCompressed : Push
@@ -436,9 +512,9 @@ class PushCompressed : Push
     
     ***************************************************************************/
     
-    this ( size_t size )
+    this ( size_t size, uint instance_counter )
     {
-        super(size);
+        super(size, instance_counter);
     }  
     
     /***************************************************************************
@@ -448,22 +524,21 @@ class PushCompressed : Push
         Params:
             epoll           = epoll select dispatcher instance
             queue_client    = queue client instance
-            channel         = channel to write to
             amount          = optional, how many pushes to execute
             expected_result = optional, expected result code, defaults to Ok
             
     ***************************************************************************/
     
     override void push ( EpollSelectDispatcher epoll, QueueClient queue_client, 
-                         char[] channel, size_t amount = 1, 
+                         size_t amount = 1, 
                          QueueConst.Status.BaseType expected_result = QueueConst.Status.Ok )
     {
         queue_client.requestFinishedCallback(&this.requestFinished);
         ubyte[QueueMaxPushSize] data = void;
         
-        do synchronized (this.local_queue) 
+        do synchronized (this) 
         {               
-            auto rdata = getRandom(data);
+            auto rdata = getRandom(data, push_counter++);
              
             char[] pusher ( uint id )
             {
@@ -476,16 +551,13 @@ class PushCompressed : Push
             
             if (info.status != expected_result)
             {
-                Trace.formatln("pushCompressed failed, expected status {}, got {}: {}", 
+                logger.error("pushCompressed failed, expected status {}, got {}: {}", 
                                expected_result, info.status, info.message);
                 
                 throw new Exception("Unexpected result");
             }
                         
-            if (!this.local_queue.push(rdata))
-            {
-                throw new Exception("Local queue is full!");
-            }
+            this.validator_array[push_counter] = true;
         }
         while (--amount > 0) 
     }
@@ -507,15 +579,7 @@ class PushCompressed : Push
 
 
 class PushMulti : ICommand
-{        
-    /***************************************************************************
-    
-        Local Queue for validation
-    
-    ***************************************************************************/
-    
-    protected ByteRingQueue[] local_queues;
-       
+{     
     /***************************************************************************
     
         Amount of channels
@@ -533,16 +597,11 @@ class PushMulti : ICommand
     
     ***************************************************************************/
     
-    this ( size_t num_channels, size_t size )
+    this ( size_t num_channels, size_t size, uint instance_counter )
     {
-        this.local_queues = new ByteRingQueue[num_channels];
-
-        foreach (ref queue; this.local_queues)
-        {
-            queue = new ByteRingQueue(size);
-        }
-        
         this.num_channels = num_channels;
+        
+        super(size, instance_counter);
     }
         
     /***************************************************************************
@@ -552,14 +611,13 @@ class PushMulti : ICommand
         Params:
             epoll           = epoll select dispatcher instance
             queue_client    = queue client instance
-            channel         = channel to write to
             amount          = optional, how many pushes to execute
             expected_result = optional, expected result code, defaults to Ok
             
     ***************************************************************************/
     
     override void push ( EpollSelectDispatcher epoll, QueueClient queue_client, 
-                         char[] channel, size_t amount = 1, 
+                         size_t amount = 1, 
                          QueueConst.Status.BaseType expected_result = QueueConst.Status.Ok )
     {
         scope char[][] channels = new char[][num_channels];
@@ -570,7 +628,7 @@ class PushMulti : ICommand
                 
         do synchronized (this) 
         {               
-            auto rdata = getRandom(data);
+            auto rdata = getRandom(data, push_counter);
             
             char[] pusher ( uint id )
             {
@@ -583,20 +641,14 @@ class PushMulti : ICommand
             
             if (info.status != expected_result)
             {
-                Trace.formatln("pushMulti failed,  expected status {}, got {}: {}", 
+                logger.error("pushMulti failed,  expected status {}, got {}: {}", 
                                expected_result, info.status, info.message);
                 
                 throw new Exception("Unexpected result");
             }
-            
-            try foreach (queue; this.local_queues) 
-            {
-                queue.push(rdata);
-            }
-            catch (Exception e)
-            {
-                Trace.formatln("FAIL: {}", e.msg);
-            }
+
+            logger.trace("counter: {}", push_counter);
+            this.validator_array[push_counter++] += num_channels;
         }
         while (--amount > 0) 
     }
@@ -609,7 +661,6 @@ class PushMulti : ICommand
         Params:
             epoll           = epoll select dispatcher instance
             queue_client    = queue client instance
-            channel         = channel to write to
             amount          = optional, how many pushes to execute
             expected_result = optional, expected result code, defaults to Ok
             
@@ -619,50 +670,82 @@ class PushMulti : ICommand
     ***************************************************************************/
     
     override size_t pop ( EpollSelectDispatcher epoll, QueueClient queue_client, 
-                          char[] channel, size_t amount = 1, 
+                          size_t amount = 1, 
                           QueueConst.Status.BaseType expected_result = QueueConst.Status.Ok )
     {        
         queue_client.requestFinishedCallback(&this.requestFinished);
         bool error = false;
+        ubyte[QueueMaxPushSize] data = void;
         
-        do for (size_t i = 0; i < this.num_channels; ++i, error = false)
-        { 
-            char[] chan = channel ~ "_" ~ Integer.toString(i);
-            
-            ubyte[] data;
-            synchronized (this)
+        synchronized (this)
+        {
+            do 
             {
-                data = this.local_queues[i].pop();
-                  
-                void popper ( uint, char[] value )
-                {
-                    if (data != cast(ubyte[]) value)
+                for (size_t i = 0; i < this.num_channels; ++i, error = false)
+                { 
+                    char[] chan = channel ~ "_" ~ Integer.toString(i);
+                               
+                    void popper ( uint, char[] value )
                     {
-                        Trace.formatln("Error: popped value {} differs from "
-                                       "pushed value {}", cast(ubyte[]) value,
-                                       data);
+                        ubyte[] gdata;
+                        if (value.length > uint.sizeof )
+                        {                        
+                            uint num = *(cast(uint*)value.ptr);
+                            
+                            gdata = this.getRandom(data, num);
+                            
+                            if ( num >= this.validator_array.length )
+                            {
+                                error = true;
+                                logger.error("Popped value {} is invalid ({})", 
+                                             cast(ubyte[]) value, this.validator_array.length);
+                            }
+                            else if ( gdata != cast(ubyte[]) value )
+                            {
+                                error = true;
+                                logger.error("Popped value {} differs from expected"
+                                             " value {}", cast(ubyte[]) value, gdata);
+                            }
+                            else if ( this.validator_array[num] == 0 )
+                            {
+                                error = true;
+                                logger.error("Popped value {} was already popped earlier or never pushed",
+                                             cast(ubyte[]) value);
+                            }
+                            else
+                            {
+                                logger.trace("Popped({}) {}", num, cast(ubyte[])value);
+                                this.validator_array[num] --;
+                            }
+                            
+                            return;
+                        }
                         
-                        error = true;
-                    }             
+                        error = true;   
+                        
+                        logger.error("Popped value {} is too short", 
+                                     cast(ubyte[]) value);                       
+                    }
+                    
+                    queue_client.pop(chan, &popper);            
+                    
+                    epoll.eventLoop;
+                                    
+                    if (info.status != expected_result)
+                    {
+                        logger.error("pop failed, expected status {}, got {}: {}", 
+                                       expected_result, info.status, info.message);
+                        
+                        throw new Exception("Unexpected result");
+                    }                
+                    
+                    if (error) throw new Exception("Error while popping");
                 }
                 
-                queue_client.pop(chan, &popper);            
-                
-                epoll.eventLoop;
+                this.push_counter --;
             }
-            
-            if (info.status != expected_result)
-            {
-                Trace.formatln("pop failed, expected status {}, got {}: {}", 
-                               expected_result, info.status, info.message);
-                
-                throw new Exception("Unexpected result");
-            }                
-            
-            if (error) throw new Exception("Error while popping");
+            while (--amount > 0)
         }
-        while (--amount > 0)
-            
         return amount;
     }
     
@@ -674,36 +757,69 @@ class PushMulti : ICommand
         Params:
             epoll           = epoll select dispatcher instance
             queue_client    = queue client instance
-            channel         = channel to write to
             expected_result = optional, expected result code, defaults to Ok            
              
     ***************************************************************************/
         
     override void consume ( EpollSelectDispatcher epoll, 
-                            QueueClient queue_client, char[] channel, 
+                            QueueClient queue_client,
                             QueueConst.Status.BaseType expected_result = QueueConst.Status.Ok )
     {
         queue_client.requestFinishedCallback(&this.requestFinished);
+        ubyte[QueueMaxPushSize] data = void;
+        uint c = 0;
         
         void consumer ( uint id, char[] value )
         {
-            ubyte[] data;
             synchronized (this) 
             {
-                data = this.local_queues[id].pop();
-            
-                if (data != cast(ubyte[]) value)
-                {
-                    Trace.formatln("Error: consumed value {} differs from "
-                                   "pushed value {}", cast(ubyte[]) value,
-                                   data);
+                ubyte[] gdata;
+                
+                if (value.length > uint.sizeof )
+                {                        
+                    uint num = *(cast(uint*)value.ptr);
                     
-                    epoll.shutdown;
+                    gdata = this.getRandom(data, num);
+                    
+                    if ( num >= this.validator_array.length )
+                    {
+                        epoll.shutdown;
+                        logger.error("Consumed value {} is invalid ({})", 
+                                     cast(ubyte[]) value, this.validator_array.length);
+                    }
+                    else if ( gdata != cast(ubyte[]) value )
+                    {
+                        epoll.shutdown;
+                        logger.error("Consumed value {} differs from expected"
+                                     " value {}", cast(ubyte[]) value, gdata);
+                    }
+                    else if ( this.validator_array[num] == 0 )
+                    {
+                        epoll.shutdown;
+                        logger.error("Consumed value {} was already consumed earlier or never pushed",
+                                     cast(ubyte[]) value);
+                    }
+                    else
+                    {
+                        this.validator_array[num] --;
+                        c++;
+                        
+                        if (c == num_channels)
+                        {
+                            this.push_counter --;
+                            c = 0;
+                        }
+                    }
+                    
+                    return;
                 }
+                
+                logger.error("Consumed value {} is too short", 
+                             cast(ubyte[]) value);            
+
+                epoll.shutdown;
             }
         }
-        
-        static char nothing;
         
         char[] chan = null;
         
@@ -718,7 +834,7 @@ class PushMulti : ICommand
         
         if (info.status != expected_result)
         {
-            Trace.formatln("consume failed, expected status {}, got {}: {}", 
+            logger.error("consume failed, expected status {}, got {}: {}", 
                            expected_result, info.status, info.message);
             
             throw new Exception("Unexpected result");
@@ -738,20 +854,6 @@ class PushMulti : ICommand
     {
         return "pushMulti";
     }
-   
-    /***************************************************************************
-    
-        Returns:
-            Whether all commands that have been pushed have been popped/consumed
-             
-    ***************************************************************************/
-    
-    bool done()
-    {
-        foreach (q; this.local_queues) if (q.length != 0) return false;
-        
-        return true;
-    }
 }
 
 
@@ -766,9 +868,9 @@ class PushMultiCompressed : PushMulti
     
     ***************************************************************************/
     
-    this ( size_t num_channels, size_t size )
+    this ( size_t num_channels, size_t size, uint instance_counter )
     {
-        super(num_channels, size);
+        super(num_channels, size, instance_counter);
     }
     
     /***************************************************************************
@@ -778,59 +880,45 @@ class PushMultiCompressed : PushMulti
         Params:
             epoll           = epoll select dispatcher instance
             queue_client    = queue client instance
-            channel         = channel to write to
             amount          = optional, how many pushes to execute
             expected_result = optional, expected result code, defaults to Ok
             
     ***************************************************************************/
     
     override void push ( EpollSelectDispatcher epoll, QueueClient queue_client, 
-                         char[] channel, size_t amount = 1, 
+                         size_t amount = 1, 
                          QueueConst.Status.BaseType expected_result = QueueConst.Status.Ok )
     {
-        queue_client.requestFinishedCallback(&this.requestFinished);
         scope char[][] channels = new char[][num_channels];
+        queue_client.requestFinishedCallback(&this.requestFinished);
+        ubyte[QueueMaxPushSize] data = void;
         
         foreach (i, ref chan; channels) chan = channel ~ "_" ~ Integer.toString(i);
                 
-        do
-        {
-            int size = rand.uniformR(QueueMaxPushSize) + 1;
+        do synchronized (this) 
+        {               
+            auto rdata = getRandom(data, push_counter);
             
-            ubyte[] data;
-            synchronized (this) 
+            char[] pusher ( uint id )
             {
-                data = this.local_queues[0].push(size);
-                            
-                if (data is null)
-                {
-                    throw new Exception("Local queue is full!");
-                }
-                
-                foreach (ref b; data) b = rand.uniformR2(ubyte.min, ubyte.max);
-                
-                foreach (queue; this.local_queues[1 .. $]) 
-                {
-                    queue.push(data);
-                }
-                
-                char[] pusher ( uint id )
-                {
-                    return cast(char[]) data;
-                }
-                
-                queue_client.pushMultiCompressed(channels, &pusher);
-                
-                epoll.eventLoop;
+                return cast(char[]) rdata;
             }
+            
+            queue_client.pushMultiCompressed(channels, &pusher);
+            
+            epoll.eventLoop;        
             
             if (info.status != expected_result)
             {
-                Trace.formatln("pushMultiCompressed failed, expected status {}, got {}: {}", 
+                logger.error("pushMultiCompressed failed,  expected status {}, got {}: {}", 
                                expected_result, info.status, info.message);
                 
                 throw new Exception("Unexpected result");
             }
+            
+            this.push_counter += num_channels;
+            
+            push_counter++;
         }
         while (--amount > 0) 
     }
