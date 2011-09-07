@@ -20,13 +20,16 @@ module src.main.queuetest;
 
 *******************************************************************************/
 
-private import src.mod.test.QueueTest;
+private import src.mod.test.QueueTest,
+               src.mod.test.SimpleLayout;
 
 private import ocean.text.Arguments;
 
 debug private import ocean.util.log.Trace;
 
-private import tango.io.Stdout;
+private import tango.io.Stdout,
+               tango.util.log.Log,
+               tango.util.log.AppendConsole;
 
 /*******************************************************************************
 
@@ -76,7 +79,57 @@ void configureArguments ( Arguments args )
     args("parallel").aliased('p').params(0, 4).help("Parallel execution options")
             .defaults("single").defaults("same").defaults("other")
             .restrict("single", "same", "other");
+    args("verbose").aliased('v').params(1,1).defaults("info").help("Verbosity output level");
+    args("amount").aliased('a').params(1).defaults("10000").help("Amount of items to push");
+    args("size").aliased('s').params(1).defaults("10").help("Maximum size an item");
     args("help").aliased('h').help("Display help");
+}
+
+void setupLogger ( char[] level )
+{
+    Log.root.clear;
+    Log.root.add(new AppendConsole(new SimpleLayout));
+    
+    if (level.length > 0) switch (level)
+    {
+        case "Trace":
+        case "trace":
+        case "Debug":
+        case "debug":
+            Log.root.level(Level.Trace);
+            break;
+            
+        case "Info":
+        case "info":
+            Log.root.level(Level.Info);
+            break;
+            
+        case "Warn":
+        case "warn":
+            Log.root.level(Level.Warn);
+            break;
+            
+        case "Error":
+        case "error":
+            Log.root.level(Level.Error);
+            break;
+            
+        case "Fatal":
+        case "fatal":
+            Log.root.level(Level.Info);
+            break;
+            
+        case "None":
+        case "none":
+        case "Off":
+        case "off":
+        case "Disabled":
+        case "disabled":
+            Log.root.level(Level.None);
+            break;
+        default:
+            throw new Exception("Invalid output level");
+    }  
 }
 
 /*******************************************************************************
@@ -115,6 +168,8 @@ int main ( char[][] arguments )
         args.displayHelp(app_name);
         return 0;
     }
+    
+    setupLogger(args("verbose").assigned[0]);
     
     QueueTest.run(args);
     

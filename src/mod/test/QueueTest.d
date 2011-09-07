@@ -26,7 +26,8 @@ private import src.mod.test.Commands;
 
 private import ocean.text.Arguments;
 
-private import ocean.util.log.Trace;
+private import ocean.util.log.Trace,
+               tango.core.sync.Barrier;
 
 /*******************************************************************************
 
@@ -53,18 +54,29 @@ class QueueTest
             case "same":
                 Trace.formatln("Running parallel same-channel test");
                 auto cmds = getCommands();
+                auto barrier = new Barrier(5);
                 
                 Test[5] tests;
                 
-                for (uint i = 0; i < 5; ++i) (tests[i] = new Test(args, cmds)).start();
+                for (uint i = 0; i < 5; ++i) 
+                {
+                    (tests[i] = new Test(args, cmds, barrier)).start();
+                }
+                
                 foreach (test; tests) test.join;
                 
-                break;            
+                break;
     
             case "other":
                 Trace.formatln("Running parallel other-channels test");
+                
                 Test[5] tests;
-                for (uint i = 0; i < 5; ++i) (tests[i] = new Test(args, getCommands())).start();
+                
+                for (uint i = 0; i < 5; ++i) 
+                {
+                    (tests[i] = new Test(args, getCommands())).start();
+                }
+                
                 foreach (test; tests) test.join;
                 
                 break;  

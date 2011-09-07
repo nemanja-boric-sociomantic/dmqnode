@@ -103,7 +103,7 @@ abstract class ICommand
     Logger logger;
     
     char[] channel;
-        
+    
     /***************************************************************************
     
         Local array for validation
@@ -111,18 +111,20 @@ abstract class ICommand
     ***************************************************************************/
     
     protected int[] validator_array;
-    
+    size_t instance_number;
     size_t push_counter = 0;
     
     this ( size_t size, size_t instance_number )
-    {   
+    {           
         this.validator_array = new int[size];
-        
+        this.instance_number = instance_number;
         this.logger = Log.lookup("command." ~ this.name() ~ 
                                  "[" ~ Integer.toString(instance_number) ~ "]");
         
         this.channel = "test_channel_" ~ Integer.toString(instance_number);
     }
+    
+    size_t getChannelSize ( EpollSelectDispatcher epoll, QueueClient queue_client );
     
     /***************************************************************************
     
@@ -193,9 +195,9 @@ abstract class ICommand
              
     ***************************************************************************/
 
-    bool done()
+    size_t itemsLeft()
     {
-        return this.push_counter == 0;
+        return this.push_counter;
     }
         
     void finish()
@@ -223,7 +225,7 @@ abstract class ICommand
     ***************************************************************************/
     
     QueueClient.RequestFinishedInfo info;
-    
+        
     /***************************************************************************
     
         request finished dg. Sets the info struct.
@@ -272,7 +274,22 @@ class Push : ICommand
     {        
         super(size, instance_counter);
     }
+           
+    size_t getChannelSize ( EpollSelectDispatcher epoll, QueueClient queue_client )
+    {
+        size_t size;
+        void receiver ( uint, char[], ushort, char[], ulong records, ulong bytes )
+        {
+            size += bytes;
+        }
         
+        queue_client.getChannelSize(this.channel, &receiver);
+        
+        epoll.eventLoop;
+        
+        return size;
+    }
+    
     /***************************************************************************
     
         Pushes a test entry to the remote and local queue
@@ -293,7 +310,7 @@ class Push : ICommand
         ubyte[QueueMaxPushSize] data = void;
         
         do synchronized (this)
-        {             
+        {
             auto rdata = getRandom(data, this.push_counter);
             
             char[] pusher ( uint id )
@@ -345,12 +362,12 @@ class Push : ICommand
         do
         {                  
             synchronized (this) 
-            {                
+            {              
                 void popper ( uint, char[] value )
                 {
                     ubyte[] gdata;
                     
-                    if (value.length > uint.sizeof )
+                    if ( value.length > uint.sizeof )
                     {                        
                         uint num = *(cast(uint*)value.ptr);
                         
@@ -360,7 +377,8 @@ class Push : ICommand
                         {
                             error = true;   
                             logger.error("Popped value {} is invalid ({})", 
-                                         cast(ubyte[]) value, this.validator_array.length);
+                                         cast(ubyte[]) value, 
+                                         this.validator_array.length);
                         }
                         else if ( gdata != cast(ubyte[]) value )
                         {
@@ -428,7 +446,7 @@ class Push : ICommand
         ubyte[QueueMaxPushSize] data = void;
         
         void consumer ( uint id, char[] value )
-        {
+        {   
             synchronized (this) 
             {
                 ubyte[] gdata;
@@ -460,6 +478,7 @@ class Push : ICommand
                     else
                     {
                         this.validator_array[num] --;
+                        this.push_counter --;
                     }
                     
                     return;
@@ -579,7 +598,9 @@ class PushCompressed : Push
 
 
 class PushMulti : ICommand
-{     
+{   
+    protected size_t multi_responses;
+    
     /***************************************************************************
     
         Amount of channels
@@ -603,7 +624,45 @@ class PushMulti : ICommand
         
         super(size, instance_counter);
     }
+                
+    /***************************************************************************
+    
         
+            
+    ***************************************************************************/
+    
+    size_t getChannelSize ( EpollSelectDispatcher epoll, QueueClient queue_client )
+    {
+        QueueConst.Status.BaseType expected_result = QueueConst.Status.Ok;
+        size_t size;
+        
+        void receiver ( uint, char[], ushort, char[], ulong, ulong bytes )
+        {
+            size += bytes;
+        }
+
+        queue_client.requestFinishedCallback(&this.requestFinished);
+        
+        for (size_t i = 0; i < this.num_channels; ++i)
+        { 
+            char[] chan = channel ~ "_" ~ Integer.toString(i);
+                        
+            queue_client.getChannelSize(chan, &receiver);
+           
+            epoll.eventLoop;
+
+            if (info.status != expected_result)
+            {
+                logger.error("getChannelSize failed, expected status {}, got {}: {}", 
+                             expected_result, info.status, info.message);
+               
+                throw new Exception("Unexpected result");
+            }
+        }
+        
+        return size;
+    }
+    
     /***************************************************************************
     
         Pushes a test entry to the remote and local queue
@@ -627,11 +686,12 @@ class PushMulti : ICommand
         foreach (i, ref chan; channels) chan = channel ~ "_" ~ Integer.toString(i);
                 
         do synchronized (this) 
-        {               
+        {
             auto rdata = getRandom(data, push_counter);
             
             char[] pusher ( uint id )
             {
+                logger.trace("pushed:{}", cast(ubyte[]) rdata);
                 return cast(char[]) rdata;
             }
             
@@ -647,7 +707,6 @@ class PushMulti : ICommand
                 throw new Exception("Unexpected result");
             }
 
-            logger.trace("counter: {}", push_counter);
             this.validator_array[push_counter++] += num_channels;
         }
         while (--amount > 0) 
@@ -714,7 +773,6 @@ class PushMulti : ICommand
                             }
                             else
                             {
-                                logger.trace("Popped({}) {}", num, cast(ubyte[])value);
                                 this.validator_array[num] --;
                             }
                             
@@ -801,19 +859,20 @@ class PushMulti : ICommand
                     }
                     else
                     {
+                        logger.trace("consumed:{}", cast(ubyte[]) value);
                         this.validator_array[num] --;
-                        c++;
+                        multi_responses++;
                         
-                        if (c == num_channels)
+                        if (multi_responses == num_channels)
                         {
                             this.push_counter --;
-                            c = 0;
+                            multi_responses = 0;
                         }
                     }
                     
                     return;
                 }
-                
+                                
                 logger.error("Consumed value {} is too short", 
                              cast(ubyte[]) value);            
 
@@ -896,7 +955,7 @@ class PushMultiCompressed : PushMulti
         foreach (i, ref chan; channels) chan = channel ~ "_" ~ Integer.toString(i);
                 
         do synchronized (this) 
-        {               
+        {
             auto rdata = getRandom(data, push_counter);
             
             char[] pusher ( uint id )
