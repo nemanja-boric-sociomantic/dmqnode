@@ -114,7 +114,7 @@ class Test : Thread
     
     ***************************************************************************/
     
-    ICommand[] commands;
+    ICommand[] push_variations;
       
     /***************************************************************************
     
@@ -136,7 +136,7 @@ class Test : Thread
     
     ***************************************************************************/
         
-    this ( Arguments args, ICommand[] commands, Barrier barrier = null ) 
+    this ( Arguments args, ICommand[] push_variations, Barrier barrier = null ) 
     {   
         this.logger = Log.lookup("Thread(" ~ 
                                  Integer.toString(cast(size_t)cast(void*)this) ~ 
@@ -151,7 +151,7 @@ class Test : Thread
         
         this.config = args("config").assigned[0];
         
-        this.commands = commands;
+        this.push_variations = push_variations;
     
         this.barrier = barrier;
         
@@ -166,18 +166,42 @@ class Test : Thread
         
     public void run ()
     {
-        scope (exit) logger.trace("Thread exited");
-        foreach (command; this.args("commands").assigned) switch (command)
+        scope (exit) logger.trace("Thread exited"); 
+        foreach (push_command; push_variations) 
         {
-            case "consumer":
-                consumerCommand();
-                break;
-            case "popper":
-                popperCommand();
-                break;
-            case "fillPop":
-                fillPopCommand();
-                break;
+            logger.info("Testing {}:", push_command.name());
+            
+            foreach (command; this.args("commands").assigned) 
+            {   
+                size_t remaining = push_command.getChannelSize(this.epoll, this.queue_client);
+                if (remaining > 0)
+                {
+                    try push_command.pop(epoll, queue_client, remaining);
+                    catch (EmptyQueueException) { }
+                    
+                    
+                    
+                    if (push_command.getChannelSize(this.epoll, this.queue_client) > 0)
+                    {
+                        throw new Exception("Could not empty queue test channels for testing");
+                    }
+                }
+                
+                if (this.barrier !is null) this.barrier.wait();
+                
+                switch (command)
+                {
+                    case "consumer":
+                        consumerCommand(push_command);
+                        break;
+                    case "popper":
+                        popperCommand(push_command);
+                        break;
+                    case "fillPop":
+                        fillPopCommand(push_command);
+                        break;
+                }
+            }
         }
     }
       
@@ -188,23 +212,19 @@ class Test : Thread
     
     ***************************************************************************/
         
-    private void popperCommand ( )
+    private void popperCommand ( ICommand push_command )
     {
-        logger.info("Pushing and popping items:");
-        foreach (command; commands)
-        {            
-            logger.info("\t{} ...", command.name());
-            
-            for (size_t i = 0; i < 10_000; ++i)
-            {
-                command.push(this.epoll, this.queue_client, 5);
-                command.pop(this.epoll, this.queue_client, 5);                
-            }
-            
-            if (this.barrier !is null) this.barrier.wait();
-            
-            command.finish();
+        logger.info("\tpushing and popping items ...");
+
+        for (size_t i = 0; i < 10_000; ++i)
+        {
+            push_command.push(this.epoll, this.queue_client, 5);
+            push_command.pop(this.epoll, this.queue_client, 5);                
         }
+        
+        if (this.barrier !is null) this.barrier.wait();
+        
+        push_command.finish();        
     }
           
     /***************************************************************************
@@ -214,77 +234,80 @@ class Test : Thread
     
     ***************************************************************************/
         
-    private void consumerCommand ( )
+    private void consumerCommand ( ICommand push_command )
     {
-        logger.info("Pushing and consuming items:");
-        foreach (command; commands)
-        {   
-            logger.info("\t{} ...", command.name());
-            Consumer consumer;
-         
-            scope (failure) if (consumer !is null && consumer.isRunning)
+        logger.info("\tpushing and consuming items ...");
+  
+        Consumer consumer;
+        
+        try 
+        {
+            try 
+            {
+                consumer = new Consumer(this.config, push_command);
+                consumer.start;
+                
+                for ( size_t i = 0; i < 10_000; ++i )
+                {
+                    push_command.push(this.epoll, this.queue_client, 2);
+                    
+                    if ( consumer.isRunning == false ) break;
+                }
+            }
+            finally  if ( this.barrier !is null ) this.barrier.wait();
+            
+            this.waitForItems(push_command);
+            
+            if ( consumer !is null && consumer.isRunning )
             {
                 consumer.stopConsume();
             }
-            
-            {
-                scope (failure) if (this.barrier !is null) this.barrier.wait();
-                
-                consumer = new Consumer(this.config, command);
-                consumer.start;
-                
-                for (size_t i = 0; i < 10_000; ++i)
-                {
-                    command.push(this.epoll, this.queue_client, 2);
+        }  
+        finally consumer.stopConsume();
+        
+        consumer.join(false);
                     
-                    if (consumer.isRunning == false) break;
-                }
-            }
-    
-            size_t remaining, last;
-            
-            if (this.barrier !is null) this.barrier.wait();
-            
-            while (0 < (remaining = command.getChannelSize(this.epoll, 
-                                                           this.queue_client)))
-            {
-                logger.info("Waiting for consumer to consume {} bytes in the queue node", 
-                            remaining);
-                
-                if (remaining == last) throw new Exception("Consumer stopped consuming");
-                    
-                last = remaining;
-                
-                this.sleep(1);
-            }
-            
-            last = 0;
-            
-            while (0 < (remaining = command.itemsLeft))
-            {
-                logger.info("Waiting for consumer to process {} items", 
-                            remaining);
-                
-                if (remaining == last) 
-                {
-                    logger.error("Consumer did not consume anything the last"
-                                 " second ({} items left)", remaining);
-                    
-                    throw new Exception("Consumer stopped processing");
-                }
-                
-                last = remaining;
-                
-                this.sleep(1);
-            }
-            
-            consumer.stopConsume();
-            consumer.join(false);
-                        
-            command.finish();
-        }
+        push_command.finish();        
     }
           
+    void waitForItems ( ICommand push_command )
+    {
+        size_t remaining, last;
+        
+        while ( 0 < (remaining = push_command.getChannelSize(this.epoll, 
+                                                             this.queue_client)) )
+        {
+            logger.info("Waiting for consumer to consume {} bytes in the queue node", 
+                        remaining);
+            
+            if (remaining == last) throw new Exception("Consumer stopped consuming");
+                
+            last = remaining;
+            
+            this.sleep(1);
+        }
+        
+        last = 0;
+        
+        while ( 0 < (remaining = push_command.itemsLeft) )
+        {
+            logger.info("Waiting for consumer to process {} items", 
+                        remaining);
+            
+            if (remaining == last) 
+            {
+                logger.error("Consumer did not consume anything the last"
+                             " second ({} items left)", remaining);
+                
+                throw new Exception("Consumer stopped processing");
+            }
+            
+            last = remaining;
+            
+            this.sleep(1);
+        }       
+    }
+    
     /***************************************************************************
     
         Runs the fillPopCommand test which consists in pushing x entries
@@ -293,40 +316,37 @@ class Test : Thread
     
     ***************************************************************************/
         
-    private void fillPopCommand ( )
+    private void fillPopCommand ( ICommand push_command )
     {
-        logger.info("Pushing items till full, popping till empty:");
-        foreach (command; commands)
-        {            
-            logger.info("\t{} ...", command.name());
-            
-            try do command.push(this.epoll, this.queue_client, 5);
-            while (command.info.status != QueueConst.Status.OutOfMemory)
-            catch (UnexpectedResultException e) 
+        logger.info("\tpushing items till full, popping till empty ...");
+          
+        try do push_command.push(this.epoll, this.queue_client, 5);
+        while (push_command.info.status != QueueConst.Status.OutOfMemory)
+        catch (UnexpectedResultException e) 
+        {
+            if (e.result != QueueConst.Status.OutOfMemory)
             {
-                if (e.result != QueueConst.Status.OutOfMemory)
-                {
-                    throw e;
-                }
+                throw e;
             }
-                        
-            try do command.pop(this.epoll, this.queue_client, 2);            
-            while (command.itemsLeft > 0)
-            catch (Exception e) {}
-                        
-            if (this.barrier !is null) this.barrier.wait();
-               
-            auto remained = command.getChannelSize(this.epoll, this.queue_client); 
-            if (remained != 0)
-            {
-                logger.error("Not all items where popped. {} items remained",
-                             remained);
-                
-                throw new Exception("Not all items where popped!");
-            }
-            
-            command.finish();
         }
+                    
+        try do push_command.pop(this.epoll, this.queue_client, 2);            
+        while (push_command.itemsLeft > 0)
+        catch (EmptyQueueException e) {}
+                    
+        if (this.barrier !is null) this.barrier.wait();
+           
+        auto remained = push_command.getChannelSize(this.epoll, this.queue_client); 
+        if (remained != 0)
+        {
+            logger.error("Not all items where popped. {} items remained",
+                         remained);
+            
+            throw new Exception("Not all items where popped!");
+        }
+        
+        push_command.finish();
+        
     }
           
     /***************************************************************************
@@ -339,27 +359,23 @@ class Test : Thread
     
     ***************************************************************************/
         
-    private void fillConsumeComand ( )
+    private void fillConsumeComand ( ICommand push_command )
     {
-        logger.info("Pushing items till full, consuming till empty:");
-        foreach (command; commands)
-        {            
-            logger.info("\t{} ...", command.name());
-            
-            try do  command.push(this.epoll, this.queue_client, 10 );
-            while (command.info.status != QueueConst.Status.OutOfMemory)
-            catch (UnexpectedResultException e) 
+        logger.info("\tpushing items till full, consuming till empty ...");
+        
+        try do  push_command.push(this.epoll, this.queue_client, 10 );
+        while (push_command.info.status != QueueConst.Status.OutOfMemory)
+        catch (UnexpectedResultException e) 
+        {
+            if (e.result != QueueConst.Status.OutOfMemory)
             {
-                if (e.result != QueueConst.Status.OutOfMemory)
-                {
-                    throw e;
-                }
+                throw e;
             }
-            
-            command.consume(this.epoll, this.queue_client);
-            
-            command.finish();
         }
+        
+        push_command.consume(this.epoll, this.queue_client);
+        
+        push_command.finish();        
     }
 }
 
@@ -384,7 +400,7 @@ class Consumer : Thread
     
     QueueClient queue_client;
     
-    ICommand command;
+    ICommand push_command;
     
     /***************************************************************************
     
@@ -392,14 +408,14 @@ class Consumer : Thread
     
     ***************************************************************************/
         
-    this ( char[] config, ICommand command )
+    this ( char[] config, ICommand push_command )
     {       
         this.epoll  = new EpollSelectDispatcher;
                 
         this.queue_client = new QueueClient(epoll, 10);
         this.queue_client.addNodes(config);
         
-        this.command = command;
+        this.push_command = push_command;
         
         super(&this.run);
         
@@ -411,7 +427,7 @@ class Consumer : Thread
         logger.trace("running...");
         scope (exit) logger.trace("exiting ...");
         
-        try this.command.consume(this.epoll, this.queue_client);
+        try this.push_command.consume(this.epoll, this.queue_client);
         catch (Exception e) logger.error("Consumer Exception: {}", e.msg);
     }
     

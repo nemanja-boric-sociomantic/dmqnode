@@ -52,17 +52,6 @@ private import tango.math.random.Random,
 
 private import Integer = tango.text.convert.Integer;
 
-/*******************************************************************************
-
-    Constants
-    
-    TODO: move them to cmd line parameters
-
-*******************************************************************************/
-
-const QueuePushMultiNum = 3;
-const QueueMaxPushSize = 10;
-
 
 /*******************************************************************************
 
@@ -81,7 +70,7 @@ ICommand[] getCommands ( size_t size, size_t channels, size_t item_size )
     
     instance_counter++;
     
-    return [cast(ICommand)new Push(size, item_size, instance_counter), 
+    return [cast(ICommand) new Push(size, item_size, instance_counter), 
             new PushCompressed(size, item_size,instance_counter),
             new PushMulti(channels, size, item_size, instance_counter),
             new PushMultiCompressed(channels, size, item_size, instance_counter)
@@ -255,7 +244,7 @@ abstract class ICommand
     
     protected ubyte[] getRandom ( ubyte[] data, uint init )
     {
-        uint i = Fnv1(init) % (QueueMaxPushSize-uint.sizeof) + 1;
+        uint i = Fnv1(init) % (max_item_size-uint.sizeof) + 1;
  
         data[0 .. uint.sizeof] = (cast(ubyte*)&init) [0 .. uint.sizeof];
         
@@ -271,7 +260,7 @@ abstract class ICommand
            ( void delegate ( uint index, ubyte[] value ) success, char[] value,
              char[] file, size_t line )
     {
-        ubyte[QueueMaxPushSize] data = void;
+        ubyte[] data = new ubyte[max_item_size];
         ubyte[] gdata;
         
         if ( value.length > uint.sizeof )
@@ -333,7 +322,7 @@ abstract class ICommand
                               size_t incr = 1)
     {
         queue_client.requestFinishedCallback(&this.requestFinished);
-        ubyte[QueueMaxPushSize] data = void;
+        ubyte[] data = new ubyte[max_item_size];
         
         do synchronized (this)
         {
@@ -378,7 +367,7 @@ class Push : ICommand
         super(size, item_size, instance_counter);
     }
            
-    size_t getChannelSize ( EpollSelectDispatcher epoll, QueueClient queue_client )
+    override size_t getChannelSize ( EpollSelectDispatcher epoll, QueueClient queue_client )
     {
         size_t size;
         void receiver ( uint, char[], ushort, char[], ulong records, ulong bytes )
