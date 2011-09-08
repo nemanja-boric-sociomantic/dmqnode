@@ -71,7 +71,7 @@ void displayParallelOptions()
 
 void configureArguments ( Arguments args )
 {        
-    args("commands").aliased('t').params(0, 2).help("Command tests to run")
+    args("commands").aliased('t').params(0, 3).help("Command tests to run")
             .defaults("popper").defaults("consumer").defaults("fillPop")
             .restrict("consumer", "popper", "fillPop");
     args("config").required().aliased('C').params(1).help("Queue configuration file")
@@ -139,6 +139,8 @@ void setupLogger ( char[] level )
     Params:
         arguments = command line arguments
 
+    TODO: tango segfaults if you pass invalid arguments. Investigate.
+
 *******************************************************************************/
 
 int main ( char[][] arguments )
@@ -152,8 +154,8 @@ int main ( char[][] arguments )
     
     if ( !args.parse(arguments) )
     {
-        Trace.format("Error: ");
-        stderr (args.errors(&stderr.layout.sprint));
+	    Trace.format("Error: ");
+        Trace.formatln (args.errors(&stderr.layout.sprint));
         Trace.formatln("");
         displayCommands();
         displayParallelOptions();

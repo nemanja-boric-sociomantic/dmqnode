@@ -302,9 +302,12 @@ class Test : Thread
             
             try do command.push(this.epoll, this.queue_client, 5);
             while (command.info.status != QueueConst.Status.OutOfMemory)
-            catch (Exception e) if (command.info.status != QueueConst.Status.OutOfMemory)
+            catch (UnexpectedResultException e) 
             {
-                throw e;
+                if (e.result != QueueConst.Status.OutOfMemory)
+                {
+                    throw e;
+                }
             }
                         
             try do command.pop(this.epoll, this.queue_client, 2);            
@@ -343,9 +346,16 @@ class Test : Thread
         {            
             logger.info("\t{} ...", command.name());
             
-            do  command.push(this.epoll, this.queue_client, 10 );
+            try do  command.push(this.epoll, this.queue_client, 10 );
             while (command.info.status != QueueConst.Status.OutOfMemory)
-           
+            catch (UnexpectedResultException e) 
+            {
+                if (e.result != QueueConst.Status.OutOfMemory)
+                {
+                    throw e;
+                }
+            }
+            
             command.consume(this.epoll, this.queue_client);
             
             command.finish();

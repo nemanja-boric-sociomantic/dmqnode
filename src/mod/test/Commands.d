@@ -14,6 +14,14 @@ module src.mod.test.Commands;
 
 /*******************************************************************************
 
+    Internals Imports
+
+*******************************************************************************/
+
+public import src.mod.test.Exceptions;
+
+/*******************************************************************************
+
     Swarm Imports
 
 *******************************************************************************/
@@ -256,6 +264,64 @@ abstract class ICommand
        
         return data[0 .. i + uint.sizeof];
     }
+    
+    synchronized protected CommandsException validateValue 
+           ( void delegate ( uint index, ubyte[] value ) success, char[] value,
+             char[] file, size_t line )
+    {
+        ubyte[QueueMaxPushSize] data = void;
+        ubyte[] gdata;
+        
+        if ( value.length > uint.sizeof )
+        {                        
+            uint num = *(cast(uint*)value.ptr);
+            
+            gdata = this.getRandom(data, num);
+            
+            if ( num >= this.validator_array.length )
+            {
+                // Value refers to an index that we don't have
+                return new InvalidValueException(cast(ubyte[]) value,
+                                                 gdata, 
+                                                 this.validator_array.length,
+                                                 file, line);
+            }
+            else if ( gdata != cast(ubyte[]) value )
+            {
+                // Generated data is not the same as data in the value
+                return new InvalidValueException(cast(ubyte[]) value,
+                                                 gdata, 
+                                                 this.validator_array.length,
+                                                 file, line);
+            }
+            else if ( this.validator_array[num] == 0 )
+            {
+                // Value was already read or never sent
+                return new InconsistencyException(num, file, line);
+            }
+            else
+            {
+            	// Everything is fine
+                success(num, cast(ubyte[]) value);
+                
+                return null;
+            }
+            
+        }
+        else if ( value.length == 0 )
+        {
+	        // Empty response
+            return new EmptyQueueException(file, line);
+        }
+        else
+        {
+            // Value is too short
+            return new InvalidValueException(cast(ubyte[]) value,
+                                             null, 
+                                             this.validator_array.length,
+                                             file, line);
+        }
+    }
 }
 
 
@@ -323,11 +389,10 @@ class Push : ICommand
             epoll.eventLoop;            
             
             if (info.status != expected_result)
-            {
-                logger.error("push failed, expected status {}, got {}: {}", 
-                              expected_result, info.status, info.message);
-                
-                throw new Exception("Unexpected result");
+            {                
+                throw new UnexpectedResultException(info.status, 
+                                                    expected_result,
+                                                    __FILE__, __LINE__);
             }       
             
             this.validator_array[push_counter++] ++;
@@ -355,9 +420,8 @@ class Push : ICommand
                           size_t amount = 1, 
                           QueueConst.Status.BaseType expected_result = QueueConst.Status.Ok )
     {
-        bool error = false;
+        CommandsException exc = null;
         queue_client.requestFinishedCallback(&this.requestFinished);
-        ubyte[QueueMaxPushSize] data = void;
         
         do
         {                  
@@ -365,45 +429,12 @@ class Push : ICommand
             {              
                 void popper ( uint, char[] value )
                 {
-                    ubyte[] gdata;
-                    
-                    if ( value.length > uint.sizeof )
-                    {                        
-                        uint num = *(cast(uint*)value.ptr);
-                        
-                        gdata = this.getRandom(data, num);
-                        
-                        if ( num >= this.validator_array.length )
-                        {
-                            error = true;   
-                            logger.error("Popped value {} is invalid ({})", 
-                                         cast(ubyte[]) value, 
-                                         this.validator_array.length);
-                        }
-                        else if ( gdata != cast(ubyte[]) value )
-                        {
-                            error = true;   
-                            logger.error("Popped value {} differs from expected"
-                                         " value {}", cast(ubyte[]) value, gdata);
-                        }
-                        else if ( this.validator_array[num] == 0 )
-                        {
-                            error = true;   
-                            logger.error("Popped value {} was already popped earlier or never pushed",
-                                         cast(ubyte[]) value);
-                        }
-                        else
-                        {
-                            this.validator_array[num] --;
-                            this.push_counter --;
-                        }
-                        
-                        return;
-                    }
-                    
-                    logger.error("Popped value {} is too short", 
-                                 cast(ubyte[]) value);  
-                    error = true;    
+                    exc = this.validateValue((uint num, ubyte[])
+                          {
+                              this.validator_array[num] --;
+                              this.push_counter --;
+                          }, value, __FILE__, __LINE__);
+                 
                 }
                 
                 queue_client.pop(channel, &popper);            
@@ -413,13 +444,12 @@ class Push : ICommand
             
             if (info.status != expected_result)
             {
-                Trace.formatln("pop failed, expected status {}, got {}: {}", 
-                               expected_result, info.status, info.message);
-                
-                throw new Exception("Unexpected result");
+                throw new UnexpectedResultException(info.status, 
+                                                    expected_result,
+                                                    __FILE__, __LINE__);
             }
             
-            if (error) throw new Exception("Error while popping");
+            if (exc !is null) throw exc;
         }
         while (--amount > 0)
             
@@ -442,53 +472,16 @@ class Push : ICommand
                             QueueClient queue_client,
                             QueueConst.Status.BaseType expected_result = QueueConst.Status.Ok )
     {
+        CommandsException exc = null;
         queue_client.requestFinishedCallback(&this.requestFinished);
-        ubyte[QueueMaxPushSize] data = void;
         
         void consumer ( uint id, char[] value )
         {   
-            synchronized (this) 
-            {
-                ubyte[] gdata;
-                
-                if (value.length > uint.sizeof )
-                {                        
-                    uint num = *(cast(uint*)value.ptr);
-                    
-                    gdata = this.getRandom(data, num);
-                    
-                    if ( num >= this.validator_array.length )
-                    {
-                        epoll.shutdown;
-                        logger.error("Consumed value {} is invalid ({})", 
-                                     cast(ubyte[]) value, this.validator_array.length);
-                    }
-                    else if ( gdata != cast(ubyte[]) value )
-                    {
-                        epoll.shutdown;
-                        logger.error("Consumed value {} differs from expected"
-                                     " value {}", cast(ubyte[]) value, gdata);
-                    }
-                    else if ( this.validator_array[num] == 0 )
-                    {
-                        epoll.shutdown;
-                        logger.error("Consumed value {} was already popped earlier or never pushed",
-                                     cast(ubyte[]) value);
-                    }
-                    else
-                    {
-                        this.validator_array[num] --;
-                        this.push_counter --;
-                    }
-                    
-                    return;
-                }
-                
-                logger.error("Consumed value {} is too short", 
-                             cast(ubyte[]) value);            
-
-                epoll.shutdown;
-            }
+            exc = this.validateValue((uint num, ubyte[])
+                  {
+                      this.validator_array[num] --;
+                      this.push_counter --;
+                  }, value, __FILE__, __LINE__);
         }
         
         queue_client.consume(channel, 1, &consumer);
@@ -497,10 +490,9 @@ class Push : ICommand
                 
         if (info.status != expected_result)
         {
-            logger.error("consume failed, expected status {}, got {}: {}", 
-                           expected_result, info.status, info.message);
-            
-            throw new Exception("Unexpected result");
+            throw new UnexpectedResultException(info.status, 
+                                                expected_result,
+                                                __FILE__, __LINE__);
         }
     }   
         
@@ -570,10 +562,9 @@ class PushCompressed : Push
             
             if (info.status != expected_result)
             {
-                logger.error("pushCompressed failed, expected status {}, got {}: {}", 
-                               expected_result, info.status, info.message);
-                
-                throw new Exception("Unexpected result");
+                throw new UnexpectedResultException(info.status, 
+                                                    expected_result,
+                                                    __FILE__, __LINE__);
             }
                         
             this.validator_array[push_counter] = true;
@@ -653,10 +644,9 @@ class PushMulti : ICommand
 
             if (info.status != expected_result)
             {
-                logger.error("getChannelSize failed, expected status {}, got {}: {}", 
-                             expected_result, info.status, info.message);
-               
-                throw new Exception("Unexpected result");
+                throw new UnexpectedResultException(info.status, 
+                                                    expected_result,
+                                                    __FILE__, __LINE__);
             }
         }
         
@@ -701,10 +691,9 @@ class PushMulti : ICommand
             
             if (info.status != expected_result)
             {
-                logger.error("pushMulti failed,  expected status {}, got {}: {}", 
-                               expected_result, info.status, info.message);
-                
-                throw new Exception("Unexpected result");
+                throw new UnexpectedResultException(info.status, 
+                                                    expected_result,
+                                                    __FILE__, __LINE__);
             }
 
             this.validator_array[push_counter++] += num_channels;
@@ -733,56 +722,22 @@ class PushMulti : ICommand
                           QueueConst.Status.BaseType expected_result = QueueConst.Status.Ok )
     {        
         queue_client.requestFinishedCallback(&this.requestFinished);
-        bool error = false;
-        ubyte[QueueMaxPushSize] data = void;
+        CommandsException exc = null;
         
         synchronized (this)
         {
             do 
             {
-                for (size_t i = 0; i < this.num_channels; ++i, error = false)
+                for ( size_t i = 0; i < this.num_channels; ++i, exc = null )
                 { 
                     char[] chan = channel ~ "_" ~ Integer.toString(i);
                                
                     void popper ( uint, char[] value )
                     {
-                        ubyte[] gdata;
-                        if (value.length > uint.sizeof )
-                        {                        
-                            uint num = *(cast(uint*)value.ptr);
-                            
-                            gdata = this.getRandom(data, num);
-                            
-                            if ( num >= this.validator_array.length )
-                            {
-                                error = true;
-                                logger.error("Popped value {} is invalid ({})", 
-                                             cast(ubyte[]) value, this.validator_array.length);
-                            }
-                            else if ( gdata != cast(ubyte[]) value )
-                            {
-                                error = true;
-                                logger.error("Popped value {} differs from expected"
-                                             " value {}", cast(ubyte[]) value, gdata);
-                            }
-                            else if ( this.validator_array[num] == 0 )
-                            {
-                                error = true;
-                                logger.error("Popped value {} was already popped earlier or never pushed",
-                                             cast(ubyte[]) value);
-                            }
-                            else
-                            {
-                                this.validator_array[num] --;
-                            }
-                            
-                            return;
-                        }
-                        
-                        error = true;   
-                        
-                        logger.error("Popped value {} is too short", 
-                                     cast(ubyte[]) value);                       
+                        exc = this.validateValue((uint num, ubyte[])
+                              {
+                                  this.validator_array[num] --;
+                              }, value, __FILE__, __LINE__);                    
                     }
                     
                     queue_client.pop(chan, &popper);            
@@ -791,13 +746,12 @@ class PushMulti : ICommand
                                     
                     if (info.status != expected_result)
                     {
-                        logger.error("pop failed, expected status {}, got {}: {}", 
-                                       expected_result, info.status, info.message);
-                        
-                        throw new Exception("Unexpected result");
+                        throw new UnexpectedResultException(info.status, 
+                                                            expected_result,
+                                                            __FILE__, __LINE__);
                     }                
                     
-                    if (error) throw new Exception("Error while popping");
+                    if (exc !is null) throw exc;
                 }
                 
                 this.push_counter --;
@@ -824,60 +778,24 @@ class PushMulti : ICommand
                             QueueConst.Status.BaseType expected_result = QueueConst.Status.Ok )
     {
         queue_client.requestFinishedCallback(&this.requestFinished);
-        ubyte[QueueMaxPushSize] data = void;
+        CommandsException exc = null;
         uint c = 0;
         
         void consumer ( uint id, char[] value )
         {
-            synchronized (this) 
+            exc = this.validateValue((uint num, ubyte[])
             {
-                ubyte[] gdata;
+                this.validator_array[num] --;
+                multi_responses++;
                 
-                if (value.length > uint.sizeof )
-                {                        
-                    uint num = *(cast(uint*)value.ptr);
-                    
-                    gdata = this.getRandom(data, num);
-                    
-                    if ( num >= this.validator_array.length )
-                    {
-                        epoll.shutdown;
-                        logger.error("Consumed value {} is invalid ({})", 
-                                     cast(ubyte[]) value, this.validator_array.length);
-                    }
-                    else if ( gdata != cast(ubyte[]) value )
-                    {
-                        epoll.shutdown;
-                        logger.error("Consumed value {} differs from expected"
-                                     " value {}", cast(ubyte[]) value, gdata);
-                    }
-                    else if ( this.validator_array[num] == 0 )
-                    {
-                        epoll.shutdown;
-                        logger.error("Consumed value {} was already consumed earlier or never pushed",
-                                     cast(ubyte[]) value);
-                    }
-                    else
-                    {
-                        logger.trace("consumed:{}", cast(ubyte[]) value);
-                        this.validator_array[num] --;
-                        multi_responses++;
-                        
-                        if (multi_responses == num_channels)
-                        {
-                            this.push_counter --;
-                            multi_responses = 0;
-                        }
-                    }
-                    
-                    return;
+                if (multi_responses == num_channels)
+                {
+                    this.push_counter --;
+                    multi_responses = 0;
                 }
-                                
-                logger.error("Consumed value {} is too short", 
-                             cast(ubyte[]) value);            
-
-                epoll.shutdown;
-            }
+            }, value, __FILE__, __LINE__); 
+                        
+            if (exc !is null) epoll.shutdown;
         }
         
         char[] chan = null;
@@ -889,15 +807,19 @@ class PushMulti : ICommand
             queue_client.consume(chan, 1, &consumer, null, i);
         }
         
-        epoll.eventLoop;   
+        try epoll.eventLoop;
+        catch (Exception e) {}
+        
+        if (exc !is null) throw exc;
         
         if (info.status != expected_result)
         {
-            logger.error("consume failed, expected status {}, got {}: {}", 
-                           expected_result, info.status, info.message);
-            
-            throw new Exception("Unexpected result");
+            throw new UnexpectedResultException(info.status, 
+                                                expected_result,
+                                                __FILE__, __LINE__);
         }        
+        
+        
     }
         
     /***************************************************************************
@@ -969,10 +891,9 @@ class PushMultiCompressed : PushMulti
             
             if (info.status != expected_result)
             {
-                logger.error("pushMultiCompressed failed,  expected status {}, got {}: {}", 
-                               expected_result, info.status, info.message);
-                
-                throw new Exception("Unexpected result");
+                throw new UnexpectedResultException(info.status, 
+                                                    expected_result,
+                                                    __FILE__, __LINE__);
             }
             
             this.push_counter += num_channels;
