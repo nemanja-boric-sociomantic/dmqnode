@@ -73,15 +73,17 @@ void configureArguments ( Arguments args )
 {        
     args("commands").aliased('t').params(0, 3).help("Command tests to run")
             .defaults("popper").defaults("consumer").defaults("fillPop")
-            .restrict("consumer", "popper", "fillPop");
+            .restrict(["consumer", "popper", "fillPop"]);
     args("config").required().aliased('C').params(1).help("Queue configuration file")
             .defaults("etc/queuenodes.ini");
-    args("parallel").aliased('p').params(0, 4).help("Parallel execution options")
-            .defaults("single").defaults("same").defaults("other")
-            .restrict("single", "same", "other");
+    args("parallel").aliased('p').params(0, 3).help("Parallel execution options")
+            .defaults("other").defaults("single").defaults("same")
+            .restrict(["other", "single", "same"]);
     args("verbose").aliased('v').params(1,1).defaults("info").help("Verbosity output level");
     args("amount").aliased('a').params(1).defaults("10000").help("Amount of items to push");
     args("size").aliased('s').params(1).defaults("10").help("Maximum size an item");
+    args("channels").aliased('c').params(1).defaults("3").help("Amount of channels to use for pushMulti*");
+    
     args("help").aliased('h').help("Display help");
 }
 

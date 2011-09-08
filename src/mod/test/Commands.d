@@ -27,7 +27,8 @@ public import src.mod.test.Exceptions;
 *******************************************************************************/
 
 private import swarm.queue.QueueClient,
-               swarm.queue.QueueConst;
+               swarm.queue.QueueConst,
+               swarm.queue.client.request.params.RequestParams;
 
 /*******************************************************************************
 
@@ -59,7 +60,6 @@ private import Integer = tango.text.convert.Integer;
 
 *******************************************************************************/
 
-const QueueSize = 10 * 1024 * 1024;  // 10mb
 const QueuePushMultiNum = 3;
 const QueueMaxPushSize = 10;
 
@@ -75,16 +75,16 @@ const QueueMaxPushSize = 10;
 
 *******************************************************************************/
 
-ICommand[] getCommands ( )
+ICommand[] getCommands ( size_t size, size_t channels, size_t item_size )
 {   
     static size_t instance_counter = 0;
     
     instance_counter++;
     
-    return [cast(ICommand)new Push(QueueSize, instance_counter), 
-            //new PushCompressed(QueueSize),
-            new PushMulti(QueuePushMultiNum, QueueSize, instance_counter)
-            //new PushMultiCompressed(QueuePushMultiNum, QueueSize)
+    return [cast(ICommand)new Push(size, item_size, instance_counter), 
+            new PushCompressed(size, item_size,instance_counter),
+            new PushMulti(channels, size, item_size, instance_counter),
+            new PushMultiCompressed(channels, size, item_size, instance_counter)
            ];
 }
 
@@ -121,10 +121,12 @@ abstract class ICommand
     protected int[] validator_array;
     size_t instance_number;
     size_t push_counter = 0;
+    size_t max_item_size;
     
-    this ( size_t size, size_t instance_number )
-    {           
-        this.validator_array = new int[size];
+    this ( size_t size, size_t item_size, size_t instance_number )
+    {
+        this.max_item_size = item_size;
+        this.validator_array = new int[size*item_size];
         this.instance_number = instance_number;
         this.logger = Log.lookup("command." ~ this.name() ~ 
                                  "[" ~ Integer.toString(instance_number) ~ "]");
@@ -297,6 +299,7 @@ abstract class ICommand
             else if ( this.validator_array[num] == 0 )
             {
                 // Value was already read or never sent
+                logger.trace("Received: {}", cast(ubyte[]) value);
                 return new InconsistencyException(num, file, line);
             }
             else
@@ -322,6 +325,40 @@ abstract class ICommand
                                              file, line);
         }
     }
+    
+    protected void pushImpl ( QueueClient delegate ( char[], RequestParams.PutValueDg , uint ) pushFunc, 
+                              EpollSelectDispatcher epoll, 
+                              QueueClient queue_client, size_t amount, 
+                              QueueConst.Status.BaseType expected_result,
+                              size_t incr = 1)
+    {
+        queue_client.requestFinishedCallback(&this.requestFinished);
+        ubyte[QueueMaxPushSize] data = void;
+        
+        do synchronized (this)
+        {
+            auto rdata = getRandom(data, this.push_counter);
+            
+            char[] pusher ( uint id )
+            {
+                return cast(char[]) rdata;
+            }
+            
+            pushFunc(channel, &pusher, 0);
+            
+            epoll.eventLoop;            
+            
+            if (info.status != expected_result)
+            {                
+                throw new UnexpectedResultException(info.status, 
+                                                    expected_result,
+                                                    __FILE__, __LINE__);
+            }       
+            
+            this.validator_array[push_counter++] += incr;
+        }
+        while (--amount > 0) 
+    }    
 }
 
 
@@ -336,9 +373,9 @@ class Push : ICommand
     
     ***************************************************************************/
     
-    this ( size_t size, uint instance_counter )
+    this ( size_t size, size_t item_size, uint instance_counter )
     {        
-        super(size, instance_counter);
+        super(size, item_size, instance_counter);
     }
            
     size_t getChannelSize ( EpollSelectDispatcher epoll, QueueClient queue_client )
@@ -371,34 +408,12 @@ class Push : ICommand
     override void push ( EpollSelectDispatcher epoll, QueueClient queue_client, 
                          size_t amount = 1, 
                          QueueConst.Status.BaseType expected_result = QueueConst.Status.Ok )
-    {        
-        queue_client.requestFinishedCallback(&this.requestFinished);
-        ubyte[QueueMaxPushSize] data = void;
-        
-        do synchronized (this)
-        {
-            auto rdata = getRandom(data, this.push_counter);
-            
-            char[] pusher ( uint id )
-            {
-                return cast(char[]) rdata;
-            }
-            
-            queue_client.push(channel, &pusher);
-            
-            epoll.eventLoop;            
-            
-            if (info.status != expected_result)
-            {                
-                throw new UnexpectedResultException(info.status, 
-                                                    expected_result,
-                                                    __FILE__, __LINE__);
-            }       
-            
-            this.validator_array[push_counter++] ++;
-        }
-        while (--amount > 0) 
+    {
+        this.pushImpl(&queue_client.push, epoll, queue_client, amount, 
+                      expected_result);
     }
+    
+
         
     /***************************************************************************
     
@@ -434,7 +449,6 @@ class Push : ICommand
                               this.validator_array[num] --;
                               this.push_counter --;
                           }, value, __FILE__, __LINE__);
-                 
                 }
                 
                 queue_client.pop(channel, &popper);            
@@ -523,9 +537,9 @@ class PushCompressed : Push
     
     ***************************************************************************/
     
-    this ( size_t size, uint instance_counter )
+    this ( size_t size, size_t item_size, uint instance_counter )
     {
-        super(size, instance_counter);
+        super(size, item_size, instance_counter);
     }  
     
     /***************************************************************************
@@ -544,32 +558,8 @@ class PushCompressed : Push
                          size_t amount = 1, 
                          QueueConst.Status.BaseType expected_result = QueueConst.Status.Ok )
     {
-        queue_client.requestFinishedCallback(&this.requestFinished);
-        ubyte[QueueMaxPushSize] data = void;
-        
-        do synchronized (this) 
-        {               
-            auto rdata = getRandom(data, push_counter++);
-             
-            char[] pusher ( uint id )
-            {
-                return cast(char[]) rdata;
-            }
-            
-            queue_client.pushCompressed(channel, &pusher);
-            
-            epoll.eventLoop;        
-            
-            if (info.status != expected_result)
-            {
-                throw new UnexpectedResultException(info.status, 
-                                                    expected_result,
-                                                    __FILE__, __LINE__);
-            }
-                        
-            this.validator_array[push_counter] = true;
-        }
-        while (--amount > 0) 
+        this.pushImpl(&queue_client.pushCompressed, epoll, queue_client, amount, 
+                      expected_result);
     }
             
     /***************************************************************************
@@ -609,11 +599,12 @@ class PushMulti : ICommand
     
     ***************************************************************************/
     
-    this ( size_t num_channels, size_t size, uint instance_counter )
+    this ( size_t num_channels, size_t size, size_t item_size, 
+           uint instance_counter )
     {
         this.num_channels = num_channels;
         
-        super(size, instance_counter);
+        super(size, item_size, instance_counter);
     }
                 
     /***************************************************************************
@@ -670,37 +661,18 @@ class PushMulti : ICommand
                          QueueConst.Status.BaseType expected_result = QueueConst.Status.Ok )
     {
         scope char[][] channels = new char[][num_channels];
-        queue_client.requestFinishedCallback(&this.requestFinished);
-        ubyte[QueueMaxPushSize] data = void;
-        
         foreach (i, ref chan; channels) chan = channel ~ "_" ~ Integer.toString(i);
-                
-        do synchronized (this) 
-        {
-            auto rdata = getRandom(data, push_counter);
-            
-            char[] pusher ( uint id )
-            {
-                logger.trace("pushed:{}", cast(ubyte[]) rdata);
-                return cast(char[]) rdata;
-            }
-            
-            queue_client.pushMulti(channels, &pusher);
-            
-            epoll.eventLoop;        
-            
-            if (info.status != expected_result)
-            {
-                throw new UnexpectedResultException(info.status, 
-                                                    expected_result,
-                                                    __FILE__, __LINE__);
-            }
-
-            this.validator_array[push_counter++] += num_channels;
-        }
-        while (--amount > 0) 
-    }
         
+        QueueClient pushFunc ( char[] channel , RequestParams.PutValueDg dg, 
+                               uint context = 0)
+        {
+            return queue_client.pushMulti(channels, dg, context);
+        }
+        
+        super.pushImpl(&pushFunc, epoll, queue_client, amount, expected_result, 
+                       num_channels);
+    }
+            
     /***************************************************************************
     
         Pops an entry from the remote and local queue and compares the result.
@@ -721,43 +693,41 @@ class PushMulti : ICommand
                           size_t amount = 1, 
                           QueueConst.Status.BaseType expected_result = QueueConst.Status.Ok )
     {        
-        queue_client.requestFinishedCallback(&this.requestFinished);
         CommandsException exc = null;
-        
-        synchronized (this)
+        queue_client.requestFinishedCallback(&this.requestFinished);
+                
+        synchronized (this) do 
         {
-            do 
-            {
-                for ( size_t i = 0; i < this.num_channels; ++i, exc = null )
-                { 
-                    char[] chan = channel ~ "_" ~ Integer.toString(i);
-                               
-                    void popper ( uint, char[] value )
-                    {
-                        exc = this.validateValue((uint num, ubyte[])
-                              {
-                                  this.validator_array[num] --;
-                              }, value, __FILE__, __LINE__);                    
-                    }
-                    
-                    queue_client.pop(chan, &popper);            
-                    
-                    epoll.eventLoop;
-                                    
-                    if (info.status != expected_result)
-                    {
-                        throw new UnexpectedResultException(info.status, 
-                                                            expected_result,
-                                                            __FILE__, __LINE__);
-                    }                
-                    
-                    if (exc !is null) throw exc;
+            for ( size_t i = 0; i < this.num_channels; ++i, exc = null )
+            { 
+                char[] chan = channel ~ "_" ~ Integer.toString(i);
+                           
+                void popper ( uint, char[] value )
+                {
+                    exc = this.validateValue((uint num, ubyte[])
+                          {
+                              this.validator_array[num] --;
+                          }, value, __FILE__, __LINE__);                    
                 }
                 
-                this.push_counter --;
+                queue_client.pop(chan, &popper);            
+                
+                epoll.eventLoop;
+                                
+                if (info.status != expected_result)
+                {
+                    throw new UnexpectedResultException(info.status, 
+                                                        expected_result,
+                                                        __FILE__, __LINE__);
+                }                
+                
+                if (exc !is null) throw exc;
             }
-            while (--amount > 0)
+            
+            this.push_counter --;
         }
+        while (--amount > 0)
+                
         return amount;
     }
     
@@ -817,9 +787,7 @@ class PushMulti : ICommand
             throw new UnexpectedResultException(info.status, 
                                                 expected_result,
                                                 __FILE__, __LINE__);
-        }        
-        
-        
+        }
     }
         
     /***************************************************************************
@@ -849,9 +817,9 @@ class PushMultiCompressed : PushMulti
     
     ***************************************************************************/
     
-    this ( size_t num_channels, size_t size, uint instance_counter )
+    this ( size_t num_channels, size_t size, size_t item_size, uint instance_counter )
     {
-        super(num_channels, size, instance_counter);
+        super(num_channels, size, item_size, instance_counter);
     }
     
     /***************************************************************************
@@ -871,36 +839,16 @@ class PushMultiCompressed : PushMulti
                          QueueConst.Status.BaseType expected_result = QueueConst.Status.Ok )
     {
         scope char[][] channels = new char[][num_channels];
-        queue_client.requestFinishedCallback(&this.requestFinished);
-        ubyte[QueueMaxPushSize] data = void;
-        
         foreach (i, ref chan; channels) chan = channel ~ "_" ~ Integer.toString(i);
-                
-        do synchronized (this) 
+        
+        QueueClient pushFunc ( char[] channel , RequestParams.PutValueDg dg, 
+                               uint context = 0)
         {
-            auto rdata = getRandom(data, push_counter);
-            
-            char[] pusher ( uint id )
-            {
-                return cast(char[]) rdata;
-            }
-            
-            queue_client.pushMultiCompressed(channels, &pusher);
-            
-            epoll.eventLoop;        
-            
-            if (info.status != expected_result)
-            {
-                throw new UnexpectedResultException(info.status, 
-                                                    expected_result,
-                                                    __FILE__, __LINE__);
-            }
-            
-            this.push_counter += num_channels;
-            
-            push_counter++;
+            return queue_client.pushMultiCompressed(channels, dg, context);
         }
-        while (--amount > 0) 
+        
+        super.pushImpl(&pushFunc, epoll, queue_client, amount, expected_result, 
+                       num_channels);
     }
     
     /***************************************************************************
