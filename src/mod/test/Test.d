@@ -18,7 +18,7 @@ module src.mod.test.Test;
 
 *******************************************************************************/
 
-private import src.mod.test.Commands;
+private import src.mod.test.writeTests.WriteTests;
 
 /*******************************************************************************
 
@@ -78,15 +78,18 @@ private import tango.core.Thread,
 *******************************************************************************/
 
 class Test : Thread
-{
+{  
+    /***************************************************************************
+
+        Path to configuration file
+
+    ***************************************************************************/
+
     char[] config;
-    
-    bool error = false;
     
     /***************************************************************************
 
-        Epoll Select Dispatcher -- owned and managed by this class. The event
-        loop is never called by any other class.
+        Epoll Select Dispatcher
 
     ***************************************************************************/
 
@@ -110,11 +113,11 @@ class Test : Thread
         
     /***************************************************************************
     
-        Array of the push commands that will be tested
+        
     
     ***************************************************************************/
     
-    ICommand[] push_variations;
+    WriteTests write_tests;
       
     /***************************************************************************
     
@@ -124,6 +127,12 @@ class Test : Thread
     
     Barrier barrier;
     
+    /***************************************************************************
+    
+        Logger instance
+    
+    ***************************************************************************/
+    
     Logger logger;
     
     /***************************************************************************
@@ -131,12 +140,15 @@ class Test : Thread
         Constructor
         
         Params:
-            args =     arguments to test
-            commands = instances of command executers
+            args       = arguments to test
+            write_test = write_test instance to use 
+                         to communicate with the queue
+            barrier    = barrier that is shared with other threads using
+                         the same channel/ICommand instances
     
     ***************************************************************************/
         
-    this ( Arguments args, ICommand[] push_variations, Barrier barrier = null ) 
+    this ( Arguments args, WriteTests write_tests, Barrier barrier = null ) 
     {   
         this.logger = Log.lookup("Thread(" ~ 
                                  Integer.toString(cast(size_t)cast(void*)this) ~ 
@@ -151,7 +163,7 @@ class Test : Thread
         
         this.config = args("config").assigned[0];
         
-        this.push_variations = push_variations;
+        this.write_tests = write_tests;
     
         this.barrier = barrier;
         
@@ -167,21 +179,20 @@ class Test : Thread
     public void run ()
     {
         scope (exit) logger.trace("Thread exited"); 
-        foreach (push_command; push_variations) 
+        foreach (write_test; write_tests) 
         {
-            logger.info("Testing {}:", push_command.name());
+            logger.info("Testing {}:", write_test.writeCommandName());
             
             foreach (command; this.args("commands").assigned) 
             {   
-                size_t remaining = push_command.getChannelSize(this.epoll, this.queue_client);
+                size_t remaining = write_test.getChannelSize(this.epoll, this.queue_client);
+                
                 if (remaining > 0)
                 {
-                    try push_command.pop(epoll, queue_client, remaining);
+                    try write_test.pop(epoll, queue_client, remaining);
                     catch (EmptyQueueException) { }
-                    
-                    
-                    
-                    if (push_command.getChannelSize(this.epoll, this.queue_client) > 0)
+                                        
+                    if (write_test.getChannelSize(this.epoll, this.queue_client) > 0)
                     {
                         throw new Exception("Could not empty queue test channels for testing");
                     }
@@ -192,13 +203,13 @@ class Test : Thread
                 switch (command)
                 {
                     case "consumer":
-                        consumerCommand(push_command);
+                        consumerCommand(write_test);
                         break;
                     case "popper":
-                        popperCommand(push_command);
+                        popperCommand(write_test);
                         break;
                     case "fillPop":
-                        fillPopCommand(push_command);
+                        fillPopCommand(write_test);
                         break;
                 }
             }
@@ -209,32 +220,40 @@ class Test : Thread
     
         Runs the popperCommand test which consists in pushing x entries
         and popping them after each push command.
+          
+        Params:
+            write_test = write_test instance to use 
+                         to communicate with the queue
     
     ***************************************************************************/
         
-    private void popperCommand ( ICommand push_command )
+    private void popperCommand ( IWriteTest write_test )
     {
         logger.info("\tpushing and popping items ...");
 
-        for (size_t i = 0; i < 10_000; ++i)
+        for (size_t i = 0; i < 10_000; ++i) with (write_test)
         {
-            push_command.push(this.epoll, this.queue_client, 5);
-            push_command.pop(this.epoll, this.queue_client, 5);                
+            push(this.epoll, this.queue_client, 5);
+            pop(this.epoll, this.queue_client, 5);                
         }
         
         if (this.barrier !is null) this.barrier.wait();
         
-        push_command.finish();        
+        write_tests.finish();        
     }
           
     /***************************************************************************
     
         Runs the consumerCommand test which consists in pushing x entries
         and consuming them at the same time
+          
+        Params:
+            write_test = write_test instance to use 
+                         to communicate with the queue
     
     ***************************************************************************/
         
-    private void consumerCommand ( ICommand push_command )
+    private void consumerCommand ( IWriteTest write_test )
     {
         logger.info("\tpushing and consuming items ...");
   
@@ -244,19 +263,19 @@ class Test : Thread
         {
             try 
             {
-                consumer = new Consumer(this.config, push_command);
+                consumer = new Consumer(this.config, write_test);
                 consumer.start;
                 
                 for ( size_t i = 0; i < 10_000; ++i )
                 {
-                    push_command.push(this.epoll, this.queue_client, 2);
+                    write_test.push(this.epoll, this.queue_client, 2);
                     
                     if ( consumer.isRunning == false ) break;
                 }
             }
             finally  if ( this.barrier !is null ) this.barrier.wait();
             
-            this.waitForItems(push_command);
+            this.waitForItems(write_test);
             
             if ( consumer !is null && consumer.isRunning )
             {
@@ -267,14 +286,26 @@ class Test : Thread
         
         consumer.join(false);
                     
-        push_command.finish();        
+        write_tests.finish();        
     }
+
+    /***************************************************************************
+
+        Blocks till no items are left in the remote queue and according to the
+        local counter. Throws if the amount of items/counter doesn't change
+        within one second of waiting.
           
-    void waitForItems ( ICommand push_command )
+        Params:
+            write_test = write_test instance to use 
+                         to communicate with the queue
+
+    ***************************************************************************/
+          
+    void waitForItems ( IWriteTest write_test )
     {
         size_t remaining, last;
         
-        while ( 0 < (remaining = push_command.getChannelSize(this.epoll, 
+        while ( 0 < (remaining = write_test.getChannelSize(this.epoll, 
                                                              this.queue_client)) )
         {
             logger.info("Waiting for consumer to consume {} bytes in the queue node", 
@@ -289,7 +320,7 @@ class Test : Thread
         
         last = 0;
         
-        while ( 0 < (remaining = push_command.itemsLeft) )
+        while ( 0 < (remaining = this.write_tests.itemsLeft) )
         {
             logger.info("Waiting for consumer to process {} items", 
                         remaining);
@@ -313,15 +344,19 @@ class Test : Thread
         Runs the fillPopCommand test which consists in pushing x entries
         until the queue node tells us "OutOfMemory" and then popping 
         them until all are popped.
-    
+          
+        Params:
+            write_test = write_test instance to use 
+                         to communicate with the queue
+                         
     ***************************************************************************/
         
-    private void fillPopCommand ( ICommand push_command )
+    private void fillPopCommand ( IWriteTest write_test )
     {
         logger.info("\tpushing items till full, popping till empty ...");
           
-        try do push_command.push(this.epoll, this.queue_client, 5);
-        while (push_command.info.status != QueueConst.Status.OutOfMemory)
+        with (write_test) try do push(this.epoll, this.queue_client, 5);
+        while (info.status != QueueConst.Status.OutOfMemory)
         catch (UnexpectedResultException e) 
         {
             if (e.result != QueueConst.Status.OutOfMemory)
@@ -330,13 +365,13 @@ class Test : Thread
             }
         }
                     
-        try do push_command.pop(this.epoll, this.queue_client, 2);            
-        while (push_command.itemsLeft > 0)
+        try do write_test.pop(this.epoll, this.queue_client, 2);            
+        while (this.write_tests.itemsLeft > 0)
         catch (EmptyQueueException e) {}
                     
         if (this.barrier !is null) this.barrier.wait();
            
-        auto remained = push_command.getChannelSize(this.epoll, this.queue_client); 
+        auto remained = write_test.getChannelSize(this.epoll, this.queue_client); 
         if (remained != 0)
         {
             logger.error("Not all items where popped. {} items remained",
@@ -345,26 +380,27 @@ class Test : Thread
             throw new Exception("Not all items where popped!");
         }
         
-        push_command.finish();
-        
+        write_tests.finish();        
     }
           
     /***************************************************************************
     
         Runs the fillPopCommand test which consists in pushing x entries
         until the queue node tells us "OutOfMemory" and then consuming 
-        them until all are consumed
+        them until all are consumed        
         
-        TODO: currently no way of knowing when the consumer is done.
+        Params:
+            write_test = write_test instance to use 
+                         to communicate with the queue
     
     ***************************************************************************/
         
-    private void fillConsumeComand ( ICommand push_command )
+    private void fillConsumeComand ( IWriteTest write_test )
     {
         logger.info("\tpushing items till full, consuming till empty ...");
         
-        try do  push_command.push(this.epoll, this.queue_client, 10 );
-        while (push_command.info.status != QueueConst.Status.OutOfMemory)
+        with (write_test) try do  push(this.epoll, this.queue_client, 10 );
+        while (info.status != QueueConst.Status.OutOfMemory)
         catch (UnexpectedResultException e) 
         {
             if (e.result != QueueConst.Status.OutOfMemory)
@@ -373,20 +409,29 @@ class Test : Thread
             }
         }
         
-        push_command.consume(this.epoll, this.queue_client);
-        
-        push_command.finish();        
+        write_test.consume(this.epoll, this.queue_client);            
+        write_tests.finish();
     }
 }
+/*******************************************************************************
+
+    Consumer thread class. Used to run a consumer without blocking
+
+*******************************************************************************/
 
 class Consumer : Thread
 {
+    /***************************************************************************
+
+        Logger instance
+
+    ***************************************************************************/
+    
     Logger logger;
     
     /***************************************************************************
 
-        Epoll Select Dispatcher -- owned and managed by this class. The event
-        loop is never called by any other class.
+        Epoll Select Dispatcher
 
     ***************************************************************************/
 
@@ -400,22 +445,26 @@ class Consumer : Thread
     
     QueueClient queue_client;
     
-    ICommand push_command;
+    IWriteTest write_test;
     
     /***************************************************************************
     
+        Constructor
         
-    
+        Params:
+            config = configuration file
+            push_command = push command instance to be used for consuming
+                
     ***************************************************************************/
         
-    this ( char[] config, ICommand push_command )
+    this ( char[] config, IWriteTest write_test )
     {       
         this.epoll  = new EpollSelectDispatcher;
                 
         this.queue_client = new QueueClient(epoll, 10);
         this.queue_client.addNodes(config);
         
-        this.push_command = push_command;
+        this.write_test = write_test;
         
         super(&this.run);
         
@@ -427,7 +476,7 @@ class Consumer : Thread
         logger.trace("running...");
         scope (exit) logger.trace("exiting ...");
         
-        try this.push_command.consume(this.epoll, this.queue_client);
+        try this.write_test.consume(this.epoll, this.queue_client);
         catch (Exception e) logger.error("Consumer Exception: {}", e.msg);
     }
     

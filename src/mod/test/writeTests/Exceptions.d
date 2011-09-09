@@ -10,7 +10,7 @@
 
 *******************************************************************************/
 
-module src.mod.test.Exceptions;
+module src.mod.test.writeTests.Exceptions;
 
 private import tango.core.Exception;
 

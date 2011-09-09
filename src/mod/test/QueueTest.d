@@ -19,7 +19,7 @@ module src.mod.test.QueueTest;
 *******************************************************************************/
 
 private import src.mod.test.Test,
-               src.mod.test.Commands;
+               src.mod.test.writeTests.WriteTests;
 
 /*******************************************************************************
 
@@ -91,7 +91,7 @@ class QueueTest
             case "single":
             {
                 Trace.formatln("Running single test");
-                auto test = new Test(args, getCommands(size, channels, items_size));
+                auto test = new Test(args, new WriteTests(size, items_size, channels));
                 
                 test.start;
                 test.join;
@@ -100,7 +100,7 @@ class QueueTest
             }
             case "same":
                 Trace.formatln("Running parallel same-channel test");
-                auto cmds = getCommands(size, channels, items_size);
+                auto cmds = new WriteTests(size, items_size, channels);
                 auto barrier = new Barrier(5);
                 
                 Test[5] tests;
@@ -122,9 +122,9 @@ class QueueTest
                 for (uint i = 0; i < 5; ++i) 
                 {
                     (tests[i] = new Test(args, 
-                                         getCommands(size, 
-                                                     channels, 
-                                                     items_size))).start();
+                                         new WriteTests(size, 
+                                                        items_size, 
+                                                        channels))).start();
                 }
                 
                 foreach (test; tests) test.join;
