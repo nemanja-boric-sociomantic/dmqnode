@@ -67,14 +67,22 @@ abstract class IWriteTest
     ***************************************************************************/
     
     protected alias void delegate ( uint index, ubyte[] value ) SuccessDG;
-       
+         
+    /***************************************************************************
+    
+        Amount of channels
+    
+    ***************************************************************************/
+    
+    protected size_t num_channels;
+    
     /***************************************************************************
     
         Logger instance
     
     ***************************************************************************/
     
-    private Logger logger;
+    protected Logger logger;
     
     /***************************************************************************
     
@@ -82,7 +90,7 @@ abstract class IWriteTest
         
     ***************************************************************************/
     
-    QueueClient.RequestFinishedInfo info;
+    QueueClient.RequestNotification info;
     
     /***************************************************************************
     
@@ -98,11 +106,14 @@ abstract class IWriteTest
         
     ***************************************************************************/
     
-    this ( WriteTests write_tests )
+    this ( WriteTests write_tests, size_t num_channels = 1 )
     {
+        this.num_channels = num_channels;
         this.write_tests = write_tests;
         this.logger = Log.lookup("WriteTest." ~ this.writeCommandName() ~ 
                          "[" ~ Integer.toString(write_tests.instance_number) ~ "]");
+        
+        this.logger.trace("setup");
     }
             
     /***************************************************************************
@@ -173,7 +184,7 @@ abstract class IWriteTest
              
     ***************************************************************************/
     
-    protected void requestFinished ( QueueClient.RequestFinishedInfo info )
+    protected void requestFinished ( QueueClient.RequestNotification info )
     {
         this.info = info;
     }   
@@ -263,34 +274,34 @@ abstract class IWriteTest
                                              file, line);
         }
     }
-            
+         
+    abstract protected void doPush ( QueueClient, EpollSelectDispatcher, ubyte[] );
+        
     /***************************************************************************
     
         
         
     ***************************************************************************/
     
-    protected void pushImpl ( QueueClient delegate ( char[], RequestParams.PutValueDg , uint ) pushFunc, 
-                              EpollSelectDispatcher epoll, 
-                              QueueClient queue_client, size_t amount, 
-                              QueueConst.Status.BaseType expected_result,
-                              size_t incr = 1)
+    protected void push ( EpollSelectDispatcher epoll, 
+                          QueueClient queue_client, size_t amount, 
+                          QueueConst.Status.BaseType expected_result )
     {
-        queue_client.requestFinishedCallback(&this.requestFinished);
         ubyte[] data = new ubyte[this.write_tests.max_item_size];
         
         do synchronized (this)
         {
             auto rdata = getRandom(data, this.write_tests.push_counter);
-            
-            char[] pusher ( uint id )
+
+            char[] pusher ( QueueClient.RequestContext id )
             {
+                logger.trace("writing: {}", rdata);
                 return cast(char[]) rdata;
-            }
+            } 
             
-            pushFunc(this.write_tests.channel, &pusher, 0);
-            
-            epoll.eventLoop;            
+            this.doPush(queue_client, epoll, rdata);
+
+            epoll.eventLoop;
             
             if (info.status != expected_result)
             {                
@@ -299,7 +310,7 @@ abstract class IWriteTest
                                                     __FILE__, __LINE__);
             }       
             
-            this.write_tests.items[this.write_tests.push_counter++] += incr;
+            this.write_tests.items[this.write_tests.push_counter++] += this.num_channels;
         }
         while (--amount > 0) 
     }      

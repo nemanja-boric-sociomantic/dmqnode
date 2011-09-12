@@ -19,15 +19,6 @@ class PushMulti : IWriteTest
 {   
     protected size_t multi_responses;
     
-    
-    /***************************************************************************
-    
-        Amount of channels
-    
-    ***************************************************************************/
-    
-    protected size_t num_channels;
-    
     /***************************************************************************
     
         Constructor
@@ -39,8 +30,7 @@ class PushMulti : IWriteTest
     
     this ( WriteTests write_tests , size_t num_channels )
     {
-        this.num_channels = num_channels;
-        super(write_tests);
+        super(write_tests, num_channels);
     }
                 
     /***************************************************************************
@@ -54,18 +44,16 @@ class PushMulti : IWriteTest
         QueueConst.Status.BaseType expected_result = QueueConst.Status.Ok;
         size_t size;
         
-        void receiver ( uint, char[], ushort, char[], ulong, ulong bytes )
+        void receiver ( QueueClient.RequestContext, char[], ushort, char[], ulong, ulong bytes )
         {
             size += bytes;
         }
-
-        queue_client.requestFinishedCallback(&this.requestFinished);
         
         for (size_t i = 0; i < this.num_channels; ++i)
         { 
             char[] chan = this.write_tests.channel ~ "_" ~ Integer.toString(i);
                         
-            queue_client.getChannelSize(chan, &receiver);
+            with (queue_client) assign(getChannelSize(chan, &receiver, &requestFinished));
            
             epoll.eventLoop;
 
@@ -80,39 +68,29 @@ class PushMulti : IWriteTest
         return size;
     }
     
-    /***************************************************************************
-    
-        Pushes a test entry to the remote and local queue
-        
-        Params:
-            epoll           = epoll select dispatcher instance
-            queue_client    = queue client instance
-            amount          = optional, how many pushes to execute
-            expected_result = optional, expected result code, defaults to Ok
-            
-    ***************************************************************************/
-    
-    override void push ( EpollSelectDispatcher epoll, QueueClient queue_client, 
-                         size_t amount = 1, 
-                         QueueConst.Status.BaseType expected_result = QueueConst.Status.Ok )
+    override protected void doPush ( QueueClient queue_client, 
+                                     EpollSelectDispatcher epoll, ubyte[] data )
     {
         scope char[][] channels = new char[][num_channels];
-        
         foreach (i, ref chan; channels)
         {
             chan = this.write_tests.channel ~ "_" ~ Integer.toString(i);
         }
-        
-        QueueClient pushFunc ( char[] channel , RequestParams.PutValueDg dg, 
-                               uint context = 0)
+  
+        char[] pusher ( QueueClient.RequestContext id )
         {
-            return queue_client.pushMulti(channels, dg, context);
+            return cast(char[]) data;
         }
         
-        super.pushImpl(&pushFunc, epoll, queue_client, amount, expected_result, 
-                       num_channels);
+        with (queue_client) 
+        {
+            logger.trace("doing pushMulti on {}", channels);
+            assign(pushMulti(channels, &pusher, &requestFinished));
+        }        
+        
+        epoll.eventLoop;
     }
-            
+    
     /***************************************************************************
     
         Pops an entry from the remote and local queue and compares the result.
@@ -134,7 +112,6 @@ class PushMulti : IWriteTest
                           QueueConst.Status.BaseType expected_result = QueueConst.Status.Ok )
     {        
         CommandsException exc = null;
-        queue_client.requestFinishedCallback(&this.requestFinished);
                 
         synchronized (this) do 
         {
@@ -142,7 +119,7 @@ class PushMulti : IWriteTest
             { 
                 char[] chan = this.write_tests.channel ~ "_" ~ Integer.toString(i);
                            
-                void popper ( uint, char[] value )
+                void popper ( QueueClient.RequestContext, char[] value )
                 {
                     exc = this.validateValue((uint num, ubyte[])
                           {
@@ -150,7 +127,7 @@ class PushMulti : IWriteTest
                           }, value, __FILE__, __LINE__);                    
                 }
                 
-                queue_client.pop(chan, &popper);            
+                with(queue_client) assign(pop(chan, &popper, &requestFinished));            
                 
                 epoll.eventLoop;
                                 
@@ -187,11 +164,10 @@ class PushMulti : IWriteTest
                             QueueClient queue_client,
                             QueueConst.Status.BaseType expected_result = QueueConst.Status.Ok )
     {
-        queue_client.requestFinishedCallback(&this.requestFinished);
         CommandsException exc = null;
         uint c = 0;
         
-        void consumer ( uint id, char[] value )
+        void consumer ( QueueClient.RequestContext id, char[] value )
         {
             exc = this.validateValue((uint num, ubyte[])
             {
@@ -214,7 +190,7 @@ class PushMulti : IWriteTest
         {      
             chan = this.write_tests.channel ~ "_" ~ Integer.toString(i);
             
-            queue_client.consume(chan, 1, &consumer, null, i);
+            with (queue_client) assign(consume(chan, &consumer, &requestFinished));
         }
         
         try epoll.eventLoop;
@@ -261,37 +237,28 @@ class PushMultiCompressed : PushMulti
     {        
         super(write_tests, num_channels);
     }
-    
-    /***************************************************************************
-    
-        Pushes a test entry to the remote and local queue
         
-        Params:
-            epoll           = epoll select dispatcher instance
-            queue_client    = queue client instance
-            amount          = optional, how many pushes to execute
-            expected_result = optional, expected result code, defaults to Ok
-            
-    ***************************************************************************/
-    
-    override void push ( EpollSelectDispatcher epoll, QueueClient queue_client, 
-                         size_t amount = 1, 
-                         QueueConst.Status.BaseType expected_result = QueueConst.Status.Ok )
+    override protected void doPush ( QueueClient queue_client, 
+                                     EpollSelectDispatcher epoll, ubyte[] data )
     {
         scope char[][] channels = new char[][num_channels];
         foreach (i, ref chan; channels)
         {
             chan = this.write_tests.channel ~ "_" ~ Integer.toString(i);
         }
-        
-        QueueClient pushFunc ( char[] channel , RequestParams.PutValueDg dg, 
-                               uint context = 0)
+  
+        char[] pusher ( QueueClient.RequestContext id )
         {
-            return queue_client.pushMultiCompressed(channels, dg, context);
+            return cast(char[]) data;
         }
         
-        super.pushImpl(&pushFunc, epoll, queue_client, amount, expected_result, 
-                       num_channels);
+        with (queue_client) 
+        {
+            logger.trace("doing pushMulti on {}", channels);
+            assign(pushMulti(channels, &pusher, &requestFinished).compressed);
+        }  
+        
+        epoll.eventLoop;
     }
     
     /***************************************************************************

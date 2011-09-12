@@ -57,21 +57,33 @@ private import tango.core.sync.Barrier,
 
 class QueueTest
 {
+    /***************************************************************************
+
+        TODO: document
+        TODO: check requestFinished result
+
+     ***************************************************************************/
+
     static size_t getSizeLimit ( char[] config )
     {
-        auto epoll  = new EpollSelectDispatcher;
+        scope epoll  = new EpollSelectDispatcher;
                 
-        auto queue_client = new QueueClient(epoll, 10);
+        scope queue_client = new QueueClient(epoll, 10);
         queue_client.addNodes(config);
         
         size_t size;
         
-        void receiver ( uint, char[], ushort, ulong bytes )
+        void receiver ( QueueClient.RequestContext, char[], ushort, ulong bytes )
         {
             size = max!(uint)(size, bytes);
         }
-        
-        queue_client.getSizeLimit(&receiver);
+            
+        void requestFinished ( QueueClient.RequestNotification info )
+        {
+            
+        }   
+            
+        with(queue_client) assign(getSizeLimit(&receiver, &requestFinished));
         
         epoll.eventLoop;
         

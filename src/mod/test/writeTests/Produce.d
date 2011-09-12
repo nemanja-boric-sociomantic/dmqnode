@@ -10,13 +10,13 @@
 
 *******************************************************************************/
 
-module src.mod.test.writeTests.Push;
+module src.mod.test.writeTests.Produce;
 
 private import src.mod.test.writeTests.IWriteTest,
                src.mod.test.writeTests.WriteTests;
 
 
-class Push : IWriteTest
+class Produce : IWriteTest
 {     
     /***************************************************************************
     
@@ -52,15 +52,15 @@ class Push : IWriteTest
     
     protected void doPush ( QueueClient queue_client, 
                             EpollSelectDispatcher epoll, ubyte[] data )
-    {
-        char[] pusher ( QueueClient.RequestContext id )
+    {       
+        void producer ( QueueClient.RequestContext context, QueueClient.IProducer producer )
         {
-            logger.trace("writing: {}", data);
-            return cast(char[]) data;
+            producer(cast(char[])data);
+            data = [];
         }
         
-        with (queue_client) assign(push(this.write_tests.channel, &pusher, 
-                                        &requestFinished));
+        with (queue_client) assign(produce(this.write_tests.channel, &producer, 
+                                           &requestFinished));
         
         epoll.eventLoop;
     }
@@ -173,13 +173,13 @@ class Push : IWriteTest
     
     char[] writeCommandName ( )
     {
-        return "push";
+        return "produce";
     }
 }
 
 
 
-class PushCompressed : Push
+class ProduceCompressed : Produce
 {           
     
     /***************************************************************************
@@ -221,6 +221,6 @@ class PushCompressed : Push
     
     char[] writeCommandName ( )
     {
-        return "pushCompressed";
+        return "produceCompressed";
     }
 }

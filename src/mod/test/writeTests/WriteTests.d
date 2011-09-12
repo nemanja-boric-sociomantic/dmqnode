@@ -13,7 +13,8 @@
 module src.mod.test.writeTests.WriteTests;
 
 private import src.mod.test.writeTests.Push,
-               src.mod.test.writeTests.PushMulti;
+               src.mod.test.writeTests.PushMulti,
+               src.mod.test.writeTests.Produce;
 
 public import src.mod.test.writeTests.IWriteTest;
 
@@ -126,7 +127,8 @@ class WriteTests
             [cast(IWriteTest) new Push(this), 
                               new PushCompressed(this),
                               new PushMulti(this, channels),
-                              new PushMultiCompressed(this, channels)
+                              new PushMultiCompressed(this, channels),
+                              new Produce(this)
             ];
     }
     

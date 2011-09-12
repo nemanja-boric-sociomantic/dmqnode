@@ -231,9 +231,11 @@ class Test : Thread
     {
         logger.info("\tpushing and popping items ...");
 
-        for (size_t i = 0; i < 10_000; ++i) with (write_test)
+        for (size_t i = 0; i < 1_000; ++i) with (write_test)
         {
+            this.logger.trace("pushing 5");
             push(this.epoll, this.queue_client, 5);
+            this.logger.trace("popping 5");
             pop(this.epoll, this.queue_client, 5);                
         }
         
@@ -266,14 +268,14 @@ class Test : Thread
                 consumer = new Consumer(this.config, write_test);
                 consumer.start;
                 
-                for ( size_t i = 0; i < 10_000; ++i )
+                for ( size_t i = 0; i < 1_000; ++i )
                 {
                     write_test.push(this.epoll, this.queue_client, 2);
                     
                     if ( consumer.isRunning == false ) break;
                 }
             }
-            finally  if ( this.barrier !is null ) this.barrier.wait();
+            finally if ( this.barrier !is null ) this.barrier.wait();
             
             this.waitForItems(write_test);
             
