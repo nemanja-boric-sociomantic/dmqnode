@@ -10,6 +10,9 @@ REMOVE_OUTPUT = bin/dhtremove
 INFO_TARGET = src/main/dhtinfo.d
 INFO_OUTPUT = bin/dhtinfo
 
+TEST_TARGET = src/main/dhttest.d
+TEST_OUTPUT = bin/dhttest
+
 
 # ------------------------------------------------------------------------------
 # Xfbuild flags
@@ -24,7 +27,7 @@ XFBUILD_FLAGS =\
 FLAGS =\
 	-L-lminilzo \
     -L-ltokyocabinet \
-    -L/usr/lib/libglib-2.0.so \
+    -L-lglib-2.0 \
 	-L-lebtree \
     -L-ldl \
     -version=NewTango
@@ -74,16 +77,28 @@ info-release:
 
 
 # ------------------------------------------------------------------------------
+# test debug & release builds
+
+test:
+	xfbuild +D=.deps-test +O=.objs-test +o=${TEST_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${TEST_TARGET}
+
+test-release:
+	xfbuild +D=.deps-test +O=.objs-test +o=${TEST_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${TEST_TARGET}
+
+
+# ------------------------------------------------------------------------------
 # Cleanup
 
 clean:
 	xfbuild ${XFBUILD_FLAGS} +clean ${NODE_TARGET}
 	xfbuild ${XFBUILD_FLAGS} +clean ${REMOVE_TARGET}
 	xfbuild ${XFBUILD_FLAGS} +clean ${INFO_TARGET}
+	xfbuild ${XFBUILD_FLAGS} +clean ${TEST_TARGET}
 	@-rm .objs-node -rf
 	@-rm .deps-node -rf
 	@-rm .objs-remove -rf
 	@-rm .deps-remove -rf
 	@-rm .objs-info -rf
 	@-rm .deps-info -rf
-
+	@-rm .objs-test -rf
+	@-rm .deps-test -rf
