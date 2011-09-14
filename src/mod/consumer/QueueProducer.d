@@ -10,7 +10,7 @@
 
 *******************************************************************************/
 
-module src.mod.consumer.QueueConsumer;
+module src.mod.producer.QueueProducer;
 
 
 
@@ -31,7 +31,8 @@ private import swarm.queue.QueueClient;
 private import swarm.queue.QueueConst;
 
 private import tango.io.Stdout,
-               tango.core.Memory;
+               tango.core.Memory,
+               Integer = tango.text.convert.Integer;
 
 
 
@@ -41,7 +42,7 @@ private import tango.io.Stdout,
 
 *******************************************************************************/
 
-class QueueConsumer
+class QueueProducer
 {
     /***************************************************************************
     
@@ -170,12 +171,19 @@ class QueueConsumer
 
         Stdout.formatln("Consuming from channel '{}'", args.getString("channel"));
 
-        auto params = this.queue.consume(args.getString("channel"), 
-                      ( QueueClient.RequestContext context, char[] value )
+        ulong num;
+        char[512] buf;
+        
+        auto params = this.queue.produce(args.getString("channel"), 
+                      ( QueueClient.RequestContext context, QueueClient.IProducer producer )
                       {
+                          char[] str = Integer.format(buf, num++);
+                          
+                          producer(str);
+                          
                           if ( args.getBool("dump") )
                           {
-                              Stdout.formatln("'{}'", value);
+                              Stdout.formatln("'{}'", str);
                           }
                           
                           size_t free, used;
@@ -183,8 +191,8 @@ class QueueConsumer
                           GC.usage(free, used);
                           
                           StaticPeriodicTrace.format("Memory used: {:d10}, free: {:d10}", 
-                                              used/1024.0/1024.0, free/1024.0/1024.0);        
-                          
+                                              used/1024.0/1024.0, free/1024.0/1024.0);
+                                           
                       }, &this.notifier);
 
         this.queue.assign(params);
@@ -196,7 +204,5 @@ class QueueConsumer
     {
         Stderr.formatln("Queue: status={}, msg={}", info.status, info.message);
     } 
-    
-
 }
 
