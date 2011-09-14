@@ -190,8 +190,8 @@ class QueueProducer
                           
                           GC.usage(free, used);
                           
-                          StaticPeriodicTrace.format("Memory used: {:d10}, free: {:d10}", 
-                                              used/1024.0/1024.0, free/1024.0/1024.0);
+                          StaticPeriodicTrace.format("Memory used: {:d10}, free: {:d10}, produced: {}", 
+                                              used/1024.0/1024.0, free/1024.0/1024.0, num);
                                            
                       }, &this.notifier);
 

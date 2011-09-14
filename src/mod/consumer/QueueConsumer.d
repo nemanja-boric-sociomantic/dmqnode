@@ -170,6 +170,8 @@ class QueueConsumer
 
         Stdout.formatln("Consuming from channel '{}'", args.getString("channel"));
 
+        size_t num;
+        
         auto params = this.queue.consume(args.getString("channel"), 
                       ( QueueClient.RequestContext context, char[] value )
                       {
@@ -182,9 +184,9 @@ class QueueConsumer
                           
                           GC.usage(free, used);
                           
-                          StaticPeriodicTrace.format("Memory used: {:d10}, free: {:d10}", 
-                                              used/1024.0/1024.0, free/1024.0/1024.0);        
-                          
+                          StaticPeriodicTrace.format("Memory used: {:d10}, free: {:d10}, consumed: {}", 
+                                              used/1024.0/1024.0, free/1024.0/1024.0, ++num);
+                                         
                       }, &this.notifier);
 
         this.queue.assign(params);
