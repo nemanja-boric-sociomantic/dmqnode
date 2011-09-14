@@ -10,6 +10,9 @@ MONITOR_OUTPUT = bin/queuemonitor
 CONSUMER_TARGET = src/main/queueconsumer.d
 CONSUMER_OUTPUT = bin/queueconsumer
 
+PRODUCER_TARGET = src/main/queueproducer.d
+PRODUCER_OUTPUT = bin/queueproducer
+
 TEST_TARGET = src/main/queuetest.d
 TEST_OUTPUT = bin/queuetest
 
@@ -25,6 +28,7 @@ XFBUILD_FLAGS =\
 
 FLAGS =\
 	-version=NewTango \
+	-version=CDGC \
     -Isrc \
     -L-lminilzo \
     -L-lglib-2.0 \
@@ -76,6 +80,16 @@ consumer-release:
 
 
 # ------------------------------------------------------------------------------
+# Consumer debug & release builds
+
+producer:
+	xfbuild +D=.deps-producer +O=.objs-producer +o=${PRODUCER_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${PRODUCER_TARGET}
+
+producer-release:
+	xfbuild +D=.deps-producer +O=.objs-producer +o=${PRODUCER_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${PRODUCER_TARGET}
+
+
+# ------------------------------------------------------------------------------
 # Test debug & release builds
 
 test:
@@ -97,7 +111,9 @@ clean:
 	@-rm .objs-monitor -rf
 	@-rm .deps-monitor -rf
 	@-rm .objs-consumer -rf
-	@-rm .deps-consumer -rf
+	@-rm .deps-consumer -rf	
+	@-rm .objs-producer -rf
+	@-rm .deps-producer -rf
 	@-rm .objs-test -rf
 	@-rm .deps-test -rf	
 
