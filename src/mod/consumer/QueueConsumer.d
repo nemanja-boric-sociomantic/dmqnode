@@ -194,11 +194,24 @@ class QueueConsumer
         this.epoll.eventLoop;
     }
 
+
+    /***************************************************************************
+
+        Queue notification callback. As the only request invoked is a Consume
+        request, which should never finish, this callback only fires with type
+        Finished in the case of an error.
+    
+        Params:
+            info = request notification info
+    
+    ***************************************************************************/
+    
     void notifier ( QueueClient.RequestNotification info )
     {
-        Stderr.formatln("Queue: status={}, msg={}", info.status, info.message);
-    } 
-    
-
+        if ( info.type == info.type.Finished )
+        {
+            Stderr.formatln("Queue: status={}, msg={}", info.status, info.message);
+        }
+    }
 }
 
