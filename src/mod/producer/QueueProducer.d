@@ -146,7 +146,8 @@ class QueueProducer
 
         return true;
     }
-
+    
+    Arguments args;
 
     /***************************************************************************
 
@@ -167,39 +168,52 @@ class QueueProducer
 
         this.queue = new QueueClient(this.epoll);
 
+        this.args = args;
+        
         this.queue.addNodes(args.getString("source"));
 
         Stdout.formatln("Consuming from channel '{}'", args.getString("channel"));
 
-        ulong num;
-        char[512] buf;
+        this.startProduce;
         
+        this.epoll.eventLoop;
+        
+        Stdout.formatln("..EXIT");
+    }
+    
+    ulong num;
+    char[512] buf;
+                
+    void startProduce ( )
+    {
+
         auto params = this.queue.produce(args.getString("channel"), 
-                      ( QueueClient.RequestContext context, QueueClient.IProducer producer )
-                      {
-                          char[] str = Integer.format(buf, num++);
-                          
-                          producer(str);
-                          
-                          if ( args.getBool("dump") )
-                          {
-                              Stdout.formatln("'{}'", str);
-                          }
-                          
-                          size_t free, used;
-                          
-                          GC.usage(free, used);
-                          
-                          StaticPeriodicTrace.format("Memory used: {:d10}, free: {:d10}, produced: {}", 
-                                              used/1024.0/1024.0, free/1024.0/1024.0, num);
-                                           
-                      }, &this.notifier);
+          &this.producer, &this.notifier);
 
         this.queue.assign(params);
         
-        this.epoll.eventLoop;
     }
-
+    
+    void producer ( QueueClient.RequestContext context, QueueClient.IProducer producer )
+    {
+        char[] str = Integer.format(buf, num++);
+      
+        producer(str);
+      
+        if ( args.getBool("dump") )
+        {
+            Stdout.formatln("'{}'", str);
+        }
+      
+        size_t free, used;
+      
+        GC.usage(free, used);
+      
+        StaticPeriodicTrace.format("Memory used: {:d10}, free: {:d10}, produced: {}", 
+                                   used/1024.0/1024.0, free/1024.0/1024.0, num);
+                       
+    }
+    
 
     /***************************************************************************
 
@@ -213,11 +227,12 @@ class QueueProducer
     ***************************************************************************/
     
     void notifier ( QueueClient.RequestNotification info )
-    {
-        if ( info.type == info.type.Finished )
+    {        
+        if (info.type == info.type.Finished)
         {
-            Stderr.formatln("Queue: status={}, msg={}", info.status, info.message);
+        	Stderr.formatln("Queue: status={}, msg={}", info.status, info.message);
+            startProduce();
         }
-    }
+    } 
 }
 

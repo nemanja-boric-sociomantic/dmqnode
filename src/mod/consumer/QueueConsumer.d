@@ -173,21 +173,21 @@ class QueueConsumer
         size_t num;
         
         auto params = this.queue.consume(args.getString("channel"), 
-                      ( QueueClient.RequestContext context, char[] value )
-                      {
-                          if ( args.getBool("dump") )
-                          {
-                              Stdout.formatln("'{}'", value);
-                          }
-                          
-                          size_t free, used;
-                          
-                          GC.usage(free, used);
-                          
-                          StaticPeriodicTrace.format("Memory used: {:d10}, free: {:d10}, consumed: {}", 
-                                              used/1024.0/1024.0, free/1024.0/1024.0, ++num);
-                                         
-                      }, &this.notifier);
+          ( QueueClient.RequestContext context, char[] value )
+          {
+              if ( args.getBool("dump") )
+              {
+                  Stdout.formatln("'{}'", value);
+              }
+              
+              size_t free, used;
+              
+              GC.usage(free, used);
+              
+              StaticPeriodicTrace.format("Memory used: {:d10}, free: {:d10}, consumed: {}", 
+                                  used/1024.0/1024.0, free/1024.0/1024.0, ++num);
+                             
+          }, &this.notifier);
 
         this.queue.assign(params);
         
