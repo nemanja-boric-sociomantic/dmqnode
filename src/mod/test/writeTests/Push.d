@@ -13,7 +13,8 @@
 module src.mod.test.writeTests.Push;
 
 private import src.mod.test.writeTests.IWriteTest,
-               src.mod.test.writeTests.WriteTests;
+               src.mod.test.writeTests.WriteTests,
+               tango.core.sync.Atomic;
 
 
 class Push : IWriteTest
@@ -55,7 +56,7 @@ class Push : IWriteTest
     {
         char[] pusher ( QueueClient.RequestContext id )
         {
-            logger.trace("writing: {}", data);
+            //logger.info("writing: {}", data);
             return cast(char[]) data;
         }
         
@@ -93,7 +94,7 @@ class Push : IWriteTest
             {              
                 void popper ( QueueClient.RequestContext, char[] value )
                 {
-                    logger.trace("read: {}", cast(ubyte[]) value);
+                    //logger.trace("read: {}", cast(ubyte[]) value);
                     exc = this.validateValue((uint num, ubyte[])
                           {
                               this.write_tests.items[num] --;
@@ -138,22 +139,25 @@ class Push : IWriteTest
                             QueueConst.Status.BaseType expected_result = QueueConst.Status.Ok )
     {
         CommandsException exc = null;
-        
+
         void consumer ( QueueClient.RequestContext, char[] value )
-        {   
-            logger.trace("consumed: {}", cast(ubyte[])value);
+        {  
             exc = this.validateValue((uint num, ubyte[])
                   {
                       this.write_tests.items[num] --;
                       this.write_tests.push_counter --;
                   }, value, __FILE__, __LINE__);
+
+            if ( atomicLoad(this.stop_consume) ) 
+            {
+                throw new Exception("Termination requested");
+            }
         }
         
         with (queue_client) assign(consume(this.write_tests.channel,  
                                            &consumer, &this.requestFinished));
         
         epoll.eventLoop;        
-                
         if (info.status != expected_result)
         {
             throw new UnexpectedResultException(info.status, 

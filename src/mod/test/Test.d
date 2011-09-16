@@ -231,11 +231,11 @@ class Test : Thread
     {
         logger.info("\tpushing and popping items ...");
 
-        for (size_t i = 0; i < 1_000; ++i) with (write_test)
+        for (size_t i = 0; i < 1_00; ++i) with (write_test)
         {
-            this.logger.trace("pushing 5");
+            //this.logger.trace("pushing 5");
             push(this.epoll, this.queue_client, 5);
-            this.logger.trace("popping 5");
+            //this.logger.trace("popping 5");
             pop(this.epoll, this.queue_client, 5);                
         }
         
@@ -259,7 +259,7 @@ class Test : Thread
     {
         logger.info("\tpushing and consuming items ...");
   
-        Consumer consumer;
+        scope Consumer consumer;
         
         try 
         {
@@ -278,13 +278,12 @@ class Test : Thread
             finally if ( this.barrier !is null ) this.barrier.wait();
             
             this.waitForItems(write_test);
-            
-            if ( consumer !is null && consumer.isRunning )
-            {
-                consumer.stopConsume();
-            }
         }  
-        finally consumer.stopConsume();
+        finally if ( consumer !is null && consumer.isRunning )
+        {
+            consumer.stopConsume();
+            write_test.push(this.epoll, this.queue_client, 1);
+        }
         
         consumer.join(false);
                     
@@ -357,15 +356,18 @@ class Test : Thread
     {
         logger.info("\tpushing items till full, popping till empty ...");
           
-        with (write_test) try do push(this.epoll, this.queue_client, 5);
-        while (info.status != QueueConst.Status.OutOfMemory)
+        try do write_test.push(this.epoll, this.queue_client, 5);
+        while (write_test.info.status != QueueConst.Status.OutOfMemory)
         catch (UnexpectedResultException e) 
         {
+            logger.info("caught exception: {}", e.msg);
             if (e.result != QueueConst.Status.OutOfMemory)
             {
                 throw e;
             }
         }
+        
+        logger.info("now popping");
                     
         try do write_test.pop(this.epoll, this.queue_client, 2);            
         while (this.write_tests.itemsLeft > 0)
@@ -399,7 +401,7 @@ class Test : Thread
         
     private void fillConsumeComand ( IWriteTest write_test )
     {
-        logger.info("\tpushing items till full, consuming till empty ...");
+   /+     logger.info("\tpushing items till full, consuming till empty ...");
         
         with (write_test) try do  push(this.epoll, this.queue_client, 10 );
         while (info.status != QueueConst.Status.OutOfMemory)
@@ -412,7 +414,7 @@ class Test : Thread
         }
         
         write_test.consume(this.epoll, this.queue_client);            
-        write_tests.finish();
+        write_tests.finish();+/
     }
 }
 /*******************************************************************************
@@ -484,7 +486,8 @@ class Consumer : Thread
     
     public void stopConsume ( )
     {
-        this.epoll.shutdown;
+        this.write_test.stopConsume;
+        //this.epoll.shutdown;
     }    
 }
     

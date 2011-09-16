@@ -50,6 +50,7 @@ private import ocean.io.digest.Fnv1;
 private import tango.math.random.Random;
 
 private import tango.math.random.Random,
+               tango.core.sync.Atomic,
                tango.util.log.Log;
 
 /*******************************************************************************
@@ -60,6 +61,8 @@ private import tango.math.random.Random,
 
 abstract class IWriteTest
 {
+    public bool stop_consume = false;
+    
     /***************************************************************************
     
        
@@ -67,7 +70,7 @@ abstract class IWriteTest
     ***************************************************************************/
     
     protected alias void delegate ( uint index, ubyte[] value ) SuccessDG;
-         
+                 
     /***************************************************************************
     
         Amount of channels
@@ -253,6 +256,7 @@ abstract class IWriteTest
             }
             else
             {
+                
                 // Everything is fine
                 success(num, cast(ubyte[]) value);
                 
@@ -293,18 +297,13 @@ abstract class IWriteTest
         {
             auto rdata = getRandom(data, this.write_tests.push_counter);
 
-            char[] pusher ( QueueClient.RequestContext id )
-            {
-                logger.trace("writing: {}", rdata);
-                return cast(char[]) rdata;
-            } 
-            
             this.doPush(queue_client, epoll, rdata);
 
             epoll.eventLoop;
             
             if (info.status != expected_result)
             {                
+                this.logger.info("unexpected result");
                 throw new UnexpectedResultException(info.status, 
                                                     expected_result,
                                                     __FILE__, __LINE__);
@@ -325,4 +324,12 @@ abstract class IWriteTest
     ***************************************************************************/
     
     char[] writeCommandName ();  
+    
+    final void stopConsume ( )
+    {
+        logger.info("stopping consume");
+        atomicStore(this.stop_consume, true);
+        
+        assert(this.stop_consume == true, "uh?");
+    }
 }

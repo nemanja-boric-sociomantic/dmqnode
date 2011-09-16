@@ -169,6 +169,7 @@ class PushMulti : IWriteTest
         
         void consumer ( QueueClient.RequestContext id, char[] value )
         {
+            logger.trace("consumed: {}", cast(ubyte[])value);
             exc = this.validateValue((uint num, ubyte[])
             {
                 this.write_tests.items[num] --;

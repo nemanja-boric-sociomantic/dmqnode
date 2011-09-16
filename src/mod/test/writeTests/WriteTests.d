@@ -124,7 +124,7 @@ class WriteTests
         this.channel = "test_channel_" ~ Integer.toString(instance_number);
         
         this.write_tests = 
-            [cast(IWriteTest) new Push(this), 
+            [cast(IWriteTest) new Push(this),
                               new PushCompressed(this),
                               new PushMulti(this, channels),
                               new PushMultiCompressed(this, channels),

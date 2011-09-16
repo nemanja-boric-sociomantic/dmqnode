@@ -157,8 +157,8 @@ int main ( char[][] arguments )
     if ( !args.parse(arguments) )
     {
 	    Trace.format("Error: ");
-        Trace.formatln (args.errors(&stderr.layout.sprint));
-        Trace.formatln("");
+        
+	    args.displayErrors();
         displayCommands();
         displayParallelOptions();
         args.displayHelp(app_name);
