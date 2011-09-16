@@ -24,6 +24,8 @@ private import ocean.io.select.EpollSelectDispatcher;
 
 private import ocean.text.Arguments;
 
+private import ocean.text.util.DigitGrouping;
+
 private import ocean.util.log.PeriodicTrace;
 
 private import swarm.queue.QueueClient;
@@ -148,6 +150,17 @@ class QueueProducer
 
 
     /***************************************************************************
+
+        Strings used for free / used memory formatting.
+
+    ***************************************************************************/
+
+    char[] free_str;
+
+    char[] used_str;
+
+
+    /***************************************************************************
     
         Validates command line arguments.
     
@@ -255,8 +268,11 @@ class QueueProducer
         size_t free, used;
         GC.usage(free, used);
 
+        BitGrouping.format(free, this.free_str, "b");
+        BitGrouping.format(used, this.used_str, "b");
+
         StaticPeriodicTrace.format("Memory used: {:d10}, free: {:d10}, produced: {}", 
-                                   used/1024.0/1024.0, free/1024.0/1024.0, num);
+                                   this.used_str, this.free_str, num);
     }
 
 

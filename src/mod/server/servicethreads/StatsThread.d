@@ -25,6 +25,10 @@ private import src.mod.server.config.MainConfig;
 
 private import src.mod.server.servicethreads.model.IServiceThread;
 
+private import ocean.text.util.DigitGrouping;
+
+private import ocean.text.convert.Layout;
+
 private import ocean.util.log.MessageLogger;
 
 private import ocean.util.log.StaticTrace;
@@ -32,9 +36,9 @@ private import ocean.util.log.StaticTrace;
 private import swarm.queue.node.model.IQueueNode,
                swarm.queue.node.model.IQueueNodeInfo;
 
-private import ocean.text.convert.Layout;
-
 debug private import ocean.util.log.Trace;
+
+private import tango.core.Memory;
 
 
 
@@ -89,6 +93,17 @@ public class StatsThread : IServiceThread
 
     /***************************************************************************
 
+        Strings used for free / used memory formatting.
+    
+    ***************************************************************************/
+    
+    char[] free_str;
+    
+    char[] used_str;
+
+
+    /***************************************************************************
+
         Constructor.
         
         Params:
@@ -131,8 +146,14 @@ public class StatsThread : IServiceThread
 
         if ( MainConfig.console_stats_enabled )
         {
-            StaticTrace.format("  queue: {} sent ({} K/s), {} received ({} K/s), handling {} connections{}",
-                    sent, cast(float)(sent / 1024) / cast(float)seconds_elapsed,
+            size_t used, free;
+            GC.usage(used, free);
+
+            BitGrouping.format(free, this.free_str, "b");
+            BitGrouping.format(used, this.used_str, "b");
+
+            StaticTrace.format("  queue (used: {}, free: {}): {} sent ({} K/s), {} received ({} K/s), handling {} connections{}",
+                    this.used_str, this.free_str, sent, cast(float)(sent / 1024) / cast(float)seconds_elapsed,
                     received, cast(float)(received / 1024) / cast(float)seconds_elapsed,
                     node_info.numOpenConnections,
                     channels_string).flush;

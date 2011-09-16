@@ -29,16 +29,17 @@ XFBUILD_FLAGS =\
 FLAGS =\
 	-version=NewTango \
 	-version=CDGC \
-    -Isrc \
-    -L-lminilzo \
-    -L-lglib-2.0 \
-    -L-lebtree
+	-Isrc \
+	-L-lminilzo \
+	-L-lglib-2.0 \
+	-L-lebtree
 
 RELEASE_FLAGS = ${FLAGS}\
 	-L-s
 
 DEBUG_FLAGS = ${FLAGS}\
 	-debug -gc
+#-debug=ConnectionHandler
 #-debug=Raw
 #-debug=ISelectClient
 

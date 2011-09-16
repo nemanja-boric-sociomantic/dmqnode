@@ -24,6 +24,8 @@ private import ocean.io.select.EpollSelectDispatcher;
 
 private import ocean.text.Arguments;
 
+private import ocean.text.util.DigitGrouping;
+
 private import ocean.util.log.PeriodicTrace;
 
 private import swarm.queue.QueueClient;
@@ -119,6 +121,17 @@ class QueueConsumer
 
 
     /***************************************************************************
+
+        Strings used for free / used memory formatting.
+    
+    ***************************************************************************/
+    
+    char[] free_str;
+    
+    char[] used_str;
+
+
+    /***************************************************************************
     
         Validates command line arguments.
     
@@ -184,9 +197,11 @@ class QueueConsumer
               
               GC.usage(free, used);
               
-              StaticPeriodicTrace.format("Memory used: {:d10}, free: {:d10}, consumed: {}", 
-                                  used/1024.0/1024.0, free/1024.0/1024.0, ++num);
-                             
+              BitGrouping.format(free, this.free_str, "b");
+              BitGrouping.format(used, this.used_str, "b");
+
+              StaticPeriodicTrace.format("Memory used: {:d10}, free: {:d10}, produced: {}", 
+                                         this.used_str, this.free_str, num);
           }, &this.notifier);
 
         this.queue.assign(params);
