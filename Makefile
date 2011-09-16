@@ -99,6 +99,21 @@ test:
 test-release:
 	xfbuild +D=.deps-test +O=.objs-test +o=${TEST_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${TEST_TARGET}
 
+
+# ------------------------------------------------------------------------------
+# Server commands -- upload and connect to server
+
+SERVER = 8
+
+upload: upload-node
+
+upload-node:
+	scp -C ${NODE_OUTPUT} root@eq6-${SERVER}.sociomantic.com:/tmp/queue
+
+connect:
+	ssh root@eq6-${SERVER}.sociomantic.com
+
+
 # ------------------------------------------------------------------------------
 # Cleanup
 
