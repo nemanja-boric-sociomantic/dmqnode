@@ -26,8 +26,6 @@ private import src.mod.node.servicethreads.model.IServiceThread;
 private import swarm.dht.node.model.IDhtNode,
                swarm.dht.node.model.IDhtNodeInfo;
 
-private import swarm.dht.node.storage.engine.model.IStorageEngineService;
-
 debug private import ocean.util.log.Trace;
 
 

@@ -31,8 +31,6 @@ private import ocean.util.log.StaticTrace;
 private import swarm.dht.node.model.IDhtNode,
                swarm.dht.node.model.IDhtNodeInfo;
 
-private import swarm.dht.node.storage.engine.model.IStorageEngineService;
-
 private import ocean.text.convert.Layout;
 
 debug private import ocean.util.log.Trace;

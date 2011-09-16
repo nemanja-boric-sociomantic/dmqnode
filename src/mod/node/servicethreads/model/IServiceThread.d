@@ -29,9 +29,9 @@ private import tango.core.Thread;
 private import swarm.dht.node.model.IDhtNode,
                swarm.dht.node.model.IDhtNodeInfo;
 
-private import swarm.dht.node.storage.channels.model.IStorageChannelsService;
+private import swarm.dht.node.storage.model.IStorageChannelsService;
 
-private import swarm.dht.node.storage.engine.model.IStorageEngineService;
+private import swarm.dht.node.storage.model.IStorageEngineService;
 
 debug private import ocean.util.log.Trace;
 
@@ -39,6 +39,16 @@ debug private import ocean.util.log.Trace;
 
 public abstract class IServiceThread : Thread
 {
+    /***************************************************************************
+
+        Aliases for sub-classes to use.
+
+    ***************************************************************************/
+
+    protected alias .IStorageChannelsService IStorageChannelsService;
+    protected alias .IStorageEngineService IStorageEngineService;
+
+    
     /***************************************************************************
 
         Service interface to the storage channels.
