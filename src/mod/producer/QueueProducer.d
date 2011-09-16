@@ -120,6 +120,34 @@ class QueueProducer
 
 
     /***************************************************************************
+
+        Arguments read from the command line. Passed as a reference to the
+        run() method.
+
+    ***************************************************************************/
+
+    private Arguments args;
+
+
+    /***************************************************************************
+
+        Counter incremented once per record sent.
+
+    ***************************************************************************/
+
+    private ulong num;
+
+
+    /***************************************************************************
+
+        Buffer used for writing records.
+
+    ***************************************************************************/
+
+    private char[] buf;
+
+
+    /***************************************************************************
     
         Validates command line arguments.
     
@@ -136,7 +164,9 @@ class QueueProducer
     {
         args("source").required.params(1).aliased('S').help("config file listing queue nodes to connect to");
         args("channel").required.params(1).aliased('c').help("channel to consume");
+        args("size").params(1).defaults("8").aliased('s').help("size (in bytes) of records to produce. If >= 8, then the first 8 bytes will contain the record number as a ulong");
         args("dump").aliased('d').help("dump consumed records to console");
+        args("reconnect").aliased('r').help("reconnect on queue error");
 
         if ( arguments.length && !args.parse(arguments) )
         {
@@ -146,8 +176,7 @@ class QueueProducer
 
         return true;
     }
-    
-    Arguments args;
+
 
     /***************************************************************************
 
@@ -169,51 +198,67 @@ class QueueProducer
         this.queue = new QueueClient(this.epoll);
 
         this.args = args;
-        
-        this.queue.addNodes(args.getString("source"));
 
-        Stdout.formatln("Consuming from channel '{}'", args.getString("channel"));
+        this.buf.length = this.args.getInt!(size_t)("size");
+
+        this.queue.addNodes(this.args.getString("source"));
+
+        Stdout.formatln("Producing to channel '{}', record size = {} bytes", this.args.getString("channel"), this.buf.length);
 
         this.startProduce;
         
         this.epoll.eventLoop;
         
-        Stdout.formatln("..EXIT");
+        Stdout.formatln("...EXIT");
     }
-    
-    ulong num;
-    char[512] buf;
-                
-    void startProduce ( )
-    {
 
+
+    /***************************************************************************
+
+        Assigns a produce request to the queue client.
+
+    ***************************************************************************/
+
+    private void startProduce ( )
+    {
         auto params = this.queue.produce(args.getString("channel"), 
           &this.producer, &this.notifier);
 
         this.queue.assign(params);
-        
     }
-    
-    void producer ( QueueClient.RequestContext context, QueueClient.IProducer producer )
+
+
+    /***************************************************************************
+
+        Produce request callback. Writes the next record to the producer.
+
+        Params:
+            context = request context (not used)
+            producer = interface to receive a value to send
+
+    ***************************************************************************/
+
+    private void producer ( QueueClient.RequestContext context, QueueClient.IProducer producer )
     {
-        char[] str = Integer.format(buf, num++);
-      
-        producer(str);
-      
-        if ( args.getBool("dump") )
+        if ( this.buf.length >= 8 )
         {
-            Stdout.formatln("'{}'", str);
+            *(cast(ulong*)this.buf.ptr) = this.num++;
         }
-      
+
+        producer(this.buf);
+
+        if ( this.args.getBool("dump") )
+        {
+            Stdout.formatln("'{}'", this.buf);
+        }
+
         size_t free, used;
-      
         GC.usage(free, used);
-      
+
         StaticPeriodicTrace.format("Memory used: {:d10}, free: {:d10}, produced: {}", 
                                    used/1024.0/1024.0, free/1024.0/1024.0, num);
-                       
     }
-    
+
 
     /***************************************************************************
 
@@ -231,8 +276,12 @@ class QueueProducer
         if (info.type == info.type.Finished)
         {
         	Stderr.formatln("Queue: status={}, msg={}", info.status, info.message);
-            startProduce();
+
+            if ( this.args.getBool("reconnect") )
+            {
+                this.startProduce;
+            }
         }
-    } 
+    }
 }
 
