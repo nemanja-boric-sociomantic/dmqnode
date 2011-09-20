@@ -6,25 +6,54 @@
 
     version:        March 2011: Initial release
 
-    authors:        Gavin Norman
+    authors:        Mathias Baumann
 
 
 *******************************************************************************/
 
-module src.mod.test.tests.Commands;
+module src.mod.test.tests.Test;
+
+/*******************************************************************************
+
+        Notification type
+
+*******************************************************************************/
 
 private import ocean.io.select.EpollSelectDispatcher,
                ocean.io.digest.Fnv1,
                ocean.util.log.SimpleLayout;
-            
+
+/*******************************************************************************
+
+        Notification type
+
+*******************************************************************************/
+           
 private import swarm.dht.DhtClientNew;
+
+/*******************************************************************************
+
+        Notification type
+
+*******************************************************************************/
 
 private import tango.core.Thread,
                tango.util.log.Log,
                tango.util.container.HashSet;
 
+/*******************************************************************************
+
+        Notification type
+
+*******************************************************************************/
 
 private import Integer = tango.text.convert.Integer;
+
+/*******************************************************************************
+
+        Notification type
+
+*******************************************************************************/
 
 class EndException : Exception
 {
@@ -34,23 +63,78 @@ class EndException : Exception
     }
 }
 
-class Commands
-{
-    private HashSet!(size_t) values;
-    
-    private EpollSelectDispatcher epoll;
-    
-    private DhtClient dht;
-    
-    private char[] channel = "test_channel";
-    
-    private DhtClient.RequestNotification info;
-    
-    private Logger logger;
-    
+/*******************************************************************************
+
+        Notification type
+
+*******************************************************************************/
+
+class Test
+{    
+    /***************************************************************************
+
+        Notification type
+
+    ***************************************************************************/
+
+    protected HashSet!(size_t) values;
+
+    /***************************************************************************
+
+        Notification type
+
+    ***************************************************************************/
+
+    protected EpollSelectDispatcher epoll;
+
+    /***************************************************************************
+
+        Notification type
+
+    ***************************************************************************/
+
+    protected DhtClient dht;
+
+    /***************************************************************************
+
+        Notification type
+
+    ***************************************************************************/
+
+    protected char[] channel = "test_channel";
+
+    /***************************************************************************
+
+        Notification type
+
+    ***************************************************************************/
+
+    protected DhtClient.RequestNotification info;
+
+    /***************************************************************************
+
+        Notification type
+
+    ***************************************************************************/
+
+    protected Logger logger;
+
+    /***************************************************************************
+
+        Notification type
+
+    ***************************************************************************/
+
+    protected size_t Iterations = 10_000;
+
+    /***************************************************************************
+
+        Notification type
+
+    ***************************************************************************/
+
     this ( size_t connections, char[] config )
     {
-        this.logger = Log.lookup("Commands");
         this.epoll  = new EpollSelectDispatcher;
         this.dht    = new DhtClient(epoll, connections);
         this.values = new HashSet!(size_t);
@@ -70,73 +154,32 @@ class Commands
         
         this.runRequest(exception);
     }
-    
-    void run()
-    {
-        this.testRemoveChannel();
-        this.testPut();
-        this.testRemove();
-        this.testPut();
-        this.testRemoveChannel();
-        this.testListen();
-        
-    }
-    
-    private:
-          
-    void confirm ( )
-    {        
-        this.confirmGetAll();  
-        this.confirmGet();
-        this.confirmGetAllKeys();
-        this.confirmExists();
-        this.confirmChannelSize();
-    }
-    
-    void testPut ( )
-    {
-        logger.info("Testing put command (writing 10k entries)");
-        Exception exception = null;
-        ubyte[500] data = void;
-        
-        for ( size_t i = 0; i < 1000; ++i )
-        {
-            char[] putter ( DhtClient.RequestContext )
-            {
-                return cast(char[]) this.getRandom(data, i);
-            }
-            
-            with (this.dht) assign(put(channel, i, &putter, &this.requestNotifier));        
-                    
-            this.runRequest(exception);
-            
-            this.values.add(i);
-        }        
-        
-        this.confirm();
-    }
 
-    void testRemove ( )
-    {
-        logger.info("Testing remove command (removing {}k entries)", 
-                    this.values.size/1000);
-        Exception exception = null;
-        ubyte[500] data = void;
-        auto num = this.values.size;
-        
-        for ( size_t i = 0; i < num; ++i )
-        {
-            with(this.dht) assign(remove(channel, i, &this.requestNotifier));        
-                    
-            this.runRequest(exception);
-            
-            this.values.remove(i);
-        }        
-        
-        this.confirm();
-    }
+    /***************************************************************************
+
+        Notification type
+
+    ***************************************************************************/
+
+    abstract void run ( );
     
-    void testListen ( )
+    protected:
+
+    /***************************************************************************
+
+        Notification type
+
+    ***************************************************************************/
+    
+    abstract void confirm ( );
+
+    /***************************************************************************
+
+        Notification type
+
+    ***************************************************************************/
+
+    void testListen ( T ) ( T putFunc )
     {
         logger.info("Testing listen command (adding 10k entries)");
         
@@ -160,10 +203,10 @@ class Commands
             
             if ( exception !is null ) throw exception;
             
-            if ( ++pushed < 10_000 ) with (this.dht)
+            if ( ++pushed < Iterations ) with (this.dht)
             {
                 logger.trace("triggering put");
-                assign(put(channel, pushed, &putter, &this.requestNotifier));
+                assign(putFunc(channel, pushed, &putter, &this.requestNotifier));
             }
             else throw new EndException;
                 
@@ -172,14 +215,20 @@ class Commands
         with (this.dht) 
         {
             assign(listen(channel, &getter, &this.requestNotifier));
-            assign(put(channel, pushed, &putter, &this.requestNotifier));            
+            assign(putFunc(channel, pushed, &putter, &this.requestNotifier));            
         }
                 
         this.runRequest(exception);
 
         this.confirm();
     }
-    
+
+    /***************************************************************************
+
+        Notification type
+
+    ***************************************************************************/
+
     void testRemoveChannel ( )
     {
         logger.info("Testing removeChannel command (removing {})", 
@@ -196,7 +245,12 @@ class Commands
         this.confirm();
     }
 
-    
+    /***************************************************************************
+
+        Notification type
+
+    ***************************************************************************/
+
     void runRequest ( ref Exception exception ) 
     {        
         this.epoll.eventLoop;
@@ -206,7 +260,7 @@ class Commands
         if ( !this.info.succeeded )
         {
             if ( this.info.exception !is null )
-            {
+            {                
                 if ( !is (EndException : typeof(this.info.exception)) )
                 {
                     throw this.info.exception;
@@ -217,7 +271,13 @@ class Commands
             throw new Exception(info.message);
         }
     }
-    
+
+    /***************************************************************************
+
+        Notification type
+
+    ***************************************************************************/
+
     void confirmGetAll ( )
     {       
         logger.info("\tconfirming using getAll");
@@ -237,7 +297,13 @@ class Commands
                 
         this.runRequest(exception);
     }
-    
+
+    /***************************************************************************
+
+        Notification type
+
+    ***************************************************************************/
+
     void confirmGetAllKeys ( )
     {
         logger.info("\tconfirming using getAllKeys");
@@ -259,50 +325,13 @@ class Commands
                 
         this.runRequest(exception);
     }
-    
-    void confirmGet ( )
-    {
-        logger.info("\tconfirming using get");
-        Exception exception = null;
-                
-        foreach (key; this.values)
-        {        
-            void getter ( DhtClient.RequestContext, char[] value )
-            {
-                exception = validateValue(key, value);
-                
-                if ( exception !is null ) throw exception;
-            }
-            
-            with(this.dht) assign(get(channel, key, &getter, &this.requestNotifier));
-        
-            this.runRequest(exception);
-        }
-    }
-    
-    void confirmExists ( )
-    {
-        logger.info("\tconfirming using exists");
-        Exception exception = null;
-               
-        foreach (key; this.values)
-        {
-            void getter ( DhtClient.RequestContext, bool exists )
-            {
-                if ( this.values.contains(key) != exists )
-                {
-                    return new Exception("Key not found", __FILE__, __LINE__);
-                }
-                
-                if ( exception !is null ) throw exception;
-            }
-            
-            with (this.dht) assign(exists(channel, key, &getter, &this.requestNotifier));
-        
-            this.runRequest(exception);
-        }
-    }
-    
+
+    /***************************************************************************
+
+        Notification type
+
+    ***************************************************************************/
+
     void confirmChannelSize ( )
     {
         logger.info("\tconfirming using channelSize");
@@ -328,8 +357,13 @@ class Commands
                                             __FILE__, __LINE__);
         }
     }
-    
-    
+
+    /***************************************************************************
+
+        Notification type
+
+    ***************************************************************************/
+
     void requestNotifier ( DhtClient.RequestNotification info )
     {
         this.info = info;
@@ -340,8 +374,15 @@ class Commands
             logger.trace("exc: {}", info.exception);
         
         logger.trace("succeeded: {}", info.succeeded);
+        logger.trace("msg: {}", info.message);
     }
-    
+
+    /***************************************************************************
+
+        Notification type
+
+    ***************************************************************************/
+
     Exception validateValue ( uint key, char[] value )
     {
         ubyte[500] data = void;

@@ -13,7 +13,8 @@
 
 module src.mod.test.DhtTest;
 
-private import src.mod.test.tests.Commands;
+private import src.mod.test.tests.MemoryCommands,
+               src.mod.test.tests.LogfileCommands;
 
 private import ocean.text.Arguments;
 
@@ -27,7 +28,15 @@ class DhtTest
     }
     
     void run ( )
-    {
-        (new Commands(2, this.args("source").assigned[0])).run();
+    {   
+        switch (this.args("type").assigned[0])
+        {
+            case "memory":
+                (new MemoryCommands(2, this.args("source").assigned[0])).run();
+                return;
+            case "logfile":
+                (new LogfileCommands(2, this.args("source").assigned[0])).run();
+                return;
+        }
     }
 }

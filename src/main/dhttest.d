@@ -52,10 +52,12 @@ private import tango.io.Stdout,
 void configureArguments ( Arguments args )
 {        
     args("source").aliased('S').params(1).help("xml file containing the dht nodes")
-            .defaults("dhtnodes.xml");
+            .required.defaults("dhtnodes.xml");
     args("verbose").aliased('v').params(1,1).defaults("info").help("Verbosity output level");
-    
-    args("help").aliased('h').help("Display help");
+    args("type").aliased('t').params(1)
+        .defaults("memory").restrict(["memory", "logfile"])
+        .required.help("Type of the node");
+    args("help").aliased('h').help("Display help").halt();
 }
 
 void setupLogger ( char[] level )
@@ -132,6 +134,7 @@ void main ( char[][] arguments )
     }
     else
     {
+        args.displayErrors();
         args.displayHelp(app_name);
     }
 }
