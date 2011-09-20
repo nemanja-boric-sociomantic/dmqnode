@@ -26,7 +26,6 @@ XFBUILD_FLAGS =\
 
 FLAGS =\
 	-L-lminilzo \
-    -L-ltokyocabinet \
     -L-lglib-2.0 \
 	-L-lebtree \
     -L-ldl \
@@ -36,7 +35,8 @@ RELEASE_FLAGS = ${FLAGS}\
 	-L-s
 
 DEBUG_FLAGS = ${FLAGS}\
-	-debug -gc -debug=ConnectionHandler
+	-debug -gc -debug=ConnectionHandler 
+#-debug=SwarmClient
 #-debug=Raw
 
 
@@ -50,10 +50,11 @@ default: node remove info
 # node debug & release builds
 
 node:
-	xfbuild +D=.deps-node +O=.objs-node +o=${NODE_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${NODE_TARGET}
+	xfbuild +D=.deps-node +O=.objs-node +o=${NODE_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${NODE_TARGET} -L-ltokyocabinet
 
 node-release:
-	xfbuild +D=.deps-node +O=.objs-node +o=${NODE_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${NODE_TARGET}
+	xfbuild +D=.deps-node +O=.objs-node +o=${NODE_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${NODE_TARGET} -L-ltokyocabinet
+
 
 
 # ------------------------------------------------------------------------------
@@ -94,11 +95,5 @@ clean:
 	xfbuild ${XFBUILD_FLAGS} +clean ${REMOVE_TARGET}
 	xfbuild ${XFBUILD_FLAGS} +clean ${INFO_TARGET}
 	xfbuild ${XFBUILD_FLAGS} +clean ${TEST_TARGET}
-	@-rm .objs-node -rf
-	@-rm .deps-node -rf
-	@-rm .objs-remove -rf
-	@-rm .deps-remove -rf
-	@-rm .objs-info -rf
-	@-rm .deps-info -rf
-	@-rm .objs-test -rf
-	@-rm .deps-test -rf
+	@-rm .objs-* -rf
+	@-rm .deps-* -rf

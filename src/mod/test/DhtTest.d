@@ -28,6 +28,6 @@ class DhtTest
     
     void run ( )
     {
-        
+        (new Commands(2, this.args("source").assigned[0])).run();
     }
 }

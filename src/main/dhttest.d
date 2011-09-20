@@ -7,7 +7,7 @@
     version:        October 2010: Initial release
                     February 2011: Re-written using SourceDhtTool base class
 
-    authors:        Gavin Norman
+    authors:        Gavin Norman & Mathias Baumann
 
     Copies data from a source dht to the destination dht.
 
