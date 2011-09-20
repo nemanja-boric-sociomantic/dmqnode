@@ -1,13 +1,12 @@
 /*******************************************************************************
 
-    DHT node test
+    Abstract test class
 
     copyright:      Copyright (c) 2011 sociomantic labs. All rights reserved
 
-    version:        March 2011: Initial release
+    version:        September 2011: Initial release
 
     authors:        Mathias Baumann
-
 
 *******************************************************************************/
 
@@ -15,7 +14,15 @@ module src.mod.test.tests.Test;
 
 /*******************************************************************************
 
-        Notification type
+    Swarm Imports
+
+*******************************************************************************/
+           
+private import swarm.dht.DhtClientNew;
+
+/*******************************************************************************
+
+    Ocean Imports
 
 *******************************************************************************/
 
@@ -25,15 +32,7 @@ private import ocean.io.select.EpollSelectDispatcher,
 
 /*******************************************************************************
 
-        Notification type
-
-*******************************************************************************/
-           
-private import swarm.dht.DhtClientNew;
-
-/*******************************************************************************
-
-        Notification type
+    Tango Imports
 
 *******************************************************************************/
 
@@ -41,17 +40,12 @@ private import tango.core.Thread,
                tango.util.log.Log,
                tango.util.container.HashSet;
 
-/*******************************************************************************
-
-        Notification type
-
-*******************************************************************************/
-
 private import Integer = tango.text.convert.Integer;
 
 /*******************************************************************************
 
-        Notification type
+      Special Exception indicating the interruption of an otherwise
+      not interruptable command (e.g. the listen command)
 
 *******************************************************************************/
 
@@ -65,7 +59,7 @@ class EndException : Exception
 
 /*******************************************************************************
 
-        Notification type
+        Abstract Test class offering functions to test many commands
 
 *******************************************************************************/
 
@@ -73,7 +67,7 @@ class Test
 {    
     /***************************************************************************
 
-        Notification type
+        A local hash set to compare and validate with the remote dht node
 
     ***************************************************************************/
 
@@ -81,7 +75,7 @@ class Test
 
     /***************************************************************************
 
-        Notification type
+        The epoll instance
 
     ***************************************************************************/
 
@@ -89,7 +83,7 @@ class Test
 
     /***************************************************************************
 
-        Notification type
+        The DhtClient instance
 
     ***************************************************************************/
 
@@ -97,7 +91,7 @@ class Test
 
     /***************************************************************************
 
-        Notification type
+        The channel that will be tested
 
     ***************************************************************************/
 
@@ -105,7 +99,7 @@ class Test
 
     /***************************************************************************
 
-        Notification type
+        Request Notification info struct
 
     ***************************************************************************/
 
@@ -113,7 +107,7 @@ class Test
 
     /***************************************************************************
 
-        Notification type
+        Logger instance
 
     ***************************************************************************/
 
@@ -121,7 +115,7 @@ class Test
 
     /***************************************************************************
 
-        Notification type
+        Amount of iterations to do in each test
 
     ***************************************************************************/
 
@@ -129,7 +123,11 @@ class Test
 
     /***************************************************************************
 
-        Notification type
+        Constructor
+        
+        Params:
+            connections = amount of connections to use
+            config      = path to the xml configuration file
 
     ***************************************************************************/
 
@@ -157,7 +155,7 @@ class Test
 
     /***************************************************************************
 
-        Notification type
+        Run all tests of this test class
 
     ***************************************************************************/
 
@@ -167,7 +165,8 @@ class Test
 
     /***************************************************************************
 
-        Notification type
+        Abstract function that should confirm that the local and remote state
+        is the same
 
     ***************************************************************************/
     
@@ -175,13 +174,18 @@ class Test
 
     /***************************************************************************
 
-        Notification type
+        Tests the listen node command
+        
+         Params:
+             putFunc = address of the function that should be used to put
+                       values to the dht node
 
     ***************************************************************************/
 
     void testListen ( T ) ( T putFunc )
     {
-        logger.info("Testing listen command (adding 10k entries)");
+        logger.info("Testing listen command (writing {}k entries)" 
+                    Iterations / 1000,);
         
         Exception exception = null;
         ubyte[500] data = void;
@@ -225,7 +229,7 @@ class Test
 
     /***************************************************************************
 
-        Notification type
+        Tests the removeChannel node command
 
     ***************************************************************************/
 
@@ -247,7 +251,7 @@ class Test
 
     /***************************************************************************
 
-        Notification type
+        Runs the eventloop and handles any resulting errors
 
     ***************************************************************************/
 
@@ -274,7 +278,8 @@ class Test
 
     /***************************************************************************
 
-        Notification type
+        confirms that local and remote data is equal by 
+        comparing keys and values
 
     ***************************************************************************/
 
@@ -300,7 +305,7 @@ class Test
 
     /***************************************************************************
 
-        Notification type
+        confirms that local and remote data is equal by comparing the keys
 
     ***************************************************************************/
 
@@ -316,7 +321,7 @@ class Test
             if ( !this.values.contains(key) ) if ( exception is null )
             {
                 exception = new Exception("Key not found", 
-                                                __FILE__, __LINE__);
+                                          __FILE__, __LINE__);
             }
             
         }
@@ -328,7 +333,8 @@ class Test
 
     /***************************************************************************
 
-        Notification type
+        confirms that local and remote data is equal by comparing the amount
+        of elements
 
     ***************************************************************************/
 
@@ -360,7 +366,7 @@ class Test
 
     /***************************************************************************
 
-        Notification type
+        Request notifier callback
 
     ***************************************************************************/
 
@@ -379,7 +385,12 @@ class Test
 
     /***************************************************************************
 
-        Notification type
+        Validates the given key and value.
+        Checks that the key exists locally and that the value is correct
+        
+        Params:
+            key   = key to validate
+            value = value to validate 
 
     ***************************************************************************/
 
@@ -402,7 +413,11 @@ class Test
     
     /***************************************************************************
     
-        Creates a random amount of bytes
+        Takes a number and creates a chunk of data out of it
+        
+        Params:
+            data = buffer to write result to
+            init = number to create data from
              
     ***************************************************************************/
     

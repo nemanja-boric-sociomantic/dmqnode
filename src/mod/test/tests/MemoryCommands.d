@@ -1,13 +1,12 @@
 /*******************************************************************************
 
-    DHT node test
+    Memory commands test class
 
     copyright:      Copyright (c) 2011 sociomantic labs. All rights reserved
 
-    version:        March 2011: Initial release
+    version:        September 2011: Initial release
 
     authors:        Mathias Baumann
-
 
 *******************************************************************************/
 
@@ -15,25 +14,15 @@ module src.mod.test.tests.MemoryCommands;
 
 /*******************************************************************************
 
-        Notification type
+    Internal Imports
 
 *******************************************************************************/
 
 private import src.mod.test.tests.Test;
-
-/*******************************************************************************
-
-        Notification type
-
-*******************************************************************************/
-
-private import ocean.io.select.EpollSelectDispatcher,
-               ocean.io.digest.Fnv1,
-               ocean.util.log.SimpleLayout;
            
 /*******************************************************************************
 
-        Notification type
+    Swarm Imports
 
 *******************************************************************************/
  
@@ -41,7 +30,17 @@ private import swarm.dht.DhtClientNew;
 
 /*******************************************************************************
 
-        Notification type
+    Ocean Imports
+
+*******************************************************************************/
+
+private import ocean.io.select.EpollSelectDispatcher,
+               ocean.io.digest.Fnv1,
+               ocean.util.log.SimpleLayout;
+
+/*******************************************************************************
+
+    Tango Imports
 
 *******************************************************************************/
 
@@ -49,17 +48,11 @@ private import tango.core.Thread,
                tango.util.log.Log,
                tango.util.container.HashSet;
 
-/*******************************************************************************
-
-        Notification type
-
-*******************************************************************************/
-
 private import Integer = tango.text.convert.Integer;
 
 /*******************************************************************************
 
-        Notification type
+    Test class for the memory node commands
 
 *******************************************************************************/
 
@@ -67,7 +60,11 @@ class MemoryCommands : Test
 {
     /***************************************************************************
 
-        Notification type
+        Unspectacular Constructor
+        
+        Params:
+            connections = amount of connections to use
+            config      = path to the xml configuration file
 
     ***************************************************************************/
     
@@ -80,7 +77,7 @@ class MemoryCommands : Test
     
     /***************************************************************************
 
-        Notification type
+        Run a series of tests
 
     ***************************************************************************/
 
@@ -96,7 +93,7 @@ class MemoryCommands : Test
     
     /***************************************************************************
 
-        Notification type
+        Confirm that the remote and local states are the same
 
     ***************************************************************************/
   
@@ -113,7 +110,10 @@ class MemoryCommands : Test
         
     /***************************************************************************
 
-        Notification type
+        Tests the put command
+        
+        Params:
+            compress = whether to put compressed values or not
 
     ***************************************************************************/
 
@@ -148,7 +148,7 @@ class MemoryCommands : Test
 
     /***************************************************************************
 
-        Notification type
+        Tests the remove command
 
     ***************************************************************************/
 
@@ -174,7 +174,8 @@ class MemoryCommands : Test
     
     /***************************************************************************
 
-        Notification type
+        Confirms that the local and remote data is equal by getting each
+        local key from the node and validating the value.
 
     ***************************************************************************/
 
@@ -200,7 +201,8 @@ class MemoryCommands : Test
 
     /***************************************************************************
 
-        Notification type
+        Confirms that the local and remote data is equal by 
+        checking the existence of each local key at the dht node
 
     ***************************************************************************/
  

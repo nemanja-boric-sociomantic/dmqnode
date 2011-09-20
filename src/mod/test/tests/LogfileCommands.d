@@ -1,13 +1,12 @@
 /*******************************************************************************
 
-    DHT node test
+    Memory commands test class
 
     copyright:      Copyright (c) 2011 sociomantic labs. All rights reserved
 
-    version:        March 2011: Initial release
+    version:        September 2011: Initial release
 
     authors:        Mathias Baumann
-
 
 *******************************************************************************/
 
@@ -15,7 +14,7 @@ module src.mod.test.tests.LogfileCommands;
 
 /*******************************************************************************
 
-        Notification type
+    Internal Imports
 
 *******************************************************************************/
 
@@ -23,7 +22,15 @@ private import src.mod.test.tests.Test;
 
 /*******************************************************************************
 
-        Notification type
+    Swarm Imports
+
+*******************************************************************************/
+       
+private import swarm.dht.DhtClientNew;
+
+/*******************************************************************************
+
+    Ocean Imports
 
 *******************************************************************************/
 
@@ -33,15 +40,7 @@ private import ocean.io.select.EpollSelectDispatcher,
 
 /*******************************************************************************
 
-        Notification type
-
-*******************************************************************************/
-       
-private import swarm.dht.DhtClientNew;
-
-/*******************************************************************************
-
-        Notification type
+    Tango Imports
 
 *******************************************************************************/
 
@@ -53,19 +52,35 @@ private import Integer = tango.text.convert.Integer;
 
 /*******************************************************************************
 
-        Notification type
+    Logfile commands test class
 
 *******************************************************************************/
 
 class LogfileCommands : Test
 {
+    /***************************************************************************
+
+        Constructor
+        
+        Params:
+            connections = amount of connections to use
+            config      = path to the xml configuration file
+
+    ***************************************************************************/
+
     this ( size_t connections, char[] config )
     {
         this.logger = Log.lookup("LogfileCommands");
         
         super(connections, config);
     }
-    
+
+    /***************************************************************************
+
+        Run all tests of this test class
+
+    ***************************************************************************/
+
     override void run()
     {
         this.testRemoveChannel();
@@ -75,6 +90,12 @@ class LogfileCommands : Test
         this.testRemoveChannel();
         this.testListen(&this.dht.putDup!(uint));
     }
+    
+    /***************************************************************************
+
+        confirm that the local and remote state is the same
+
+    ***************************************************************************/
     
     protected override void confirm ( )
     {
@@ -88,7 +109,10 @@ class LogfileCommands : Test
         
     /***************************************************************************
 
-        Notification type
+        Tests the putDup command
+        
+        Params:
+            compress = whether to compress the commands or not
 
     ***************************************************************************/
 
@@ -121,7 +145,8 @@ class LogfileCommands : Test
 
     /***************************************************************************
 
-        Notification type
+        Confirm that the local and remote data is equal by using the 
+        getRange command and compare the results
 
     ***************************************************************************/
 
