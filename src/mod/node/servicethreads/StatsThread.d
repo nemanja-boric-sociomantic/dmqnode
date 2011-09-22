@@ -24,6 +24,10 @@ private import src.mod.node.config.MainConfig;
 
 private import src.mod.node.servicethreads.model.IServiceThread;
 
+private import ocean.math.SlidingAverage;
+
+private import ocean.text.util.DigitGrouping;
+
 private import ocean.util.log.MessageLogger;
 
 private import ocean.util.log.StaticTrace;
@@ -34,6 +38,8 @@ private import swarm.dht.node.model.IDhtNode,
 private import ocean.text.convert.Layout;
 
 debug private import ocean.util.log.Trace;
+
+private import tango.core.Memory;
 
 
 
@@ -63,20 +69,40 @@ public class StatsThread : IServiceThread
     
     ***************************************************************************/
     
-    uint elapsed_since_last_log_update;
+    private uint elapsed_since_last_log_update;
     
     
     /***************************************************************************
-    
+
         Count of bytes sent & received, written to the log file
-    
+
     ***************************************************************************/
-    
-    ulong total_sent;
-    
-    ulong total_received;
-    
-    
+
+    private ulong total_sent;
+
+    private ulong total_received;
+
+
+    /***************************************************************************
+
+        Average records per second counter
+
+    ***************************************************************************/
+
+    private SlidingAverageTime!(ulong) records_per_sec;
+
+
+    /***************************************************************************
+
+        Strings used for free / used memory formatting.
+
+    ***************************************************************************/
+
+    char[] free_str;
+
+    char[] used_str;
+
+
     /***************************************************************************
     
         Constructor.
@@ -90,7 +116,9 @@ public class StatsThread : IServiceThread
     public this ( IDhtNode dht, uint log_update_time )
     {
         super(dht, 1);
-    
+
+        this.records_per_sec = new SlidingAverageTime!(ulong)(5, 1_000, 1_000);
+
         this.log_update_time = log_update_time;
     
         if ( MainConfig.stats_log_enabled )
@@ -116,15 +144,26 @@ public class StatsThread : IServiceThread
     {
         auto received = node_info.bytesReceived;
         auto sent = node_info.bytesSent;
-    
+
+        this.records_per_sec = node_info.recordsHandled;
+        auto rec_per_sec = this.records_per_sec.push;
+        if ( seconds_elapsed > 1 )
+        {
+            for ( int i; i < seconds_elapsed - 1; i++ ) this.records_per_sec.push;
+        }
+
         if ( MainConfig.console_stats_enabled )
         {
-            StaticTrace.format("  dht: {} sent ({} K/s), {} received ({} K/s), handling {} connections",
-                    sent, cast(float)(sent / 1024) / cast(float)seconds_elapsed,
-                    received, cast(float)(received / 1024) / cast(float)seconds_elapsed,
-                    node_info.numOpenConnections).flush;
+            size_t used, free;
+            GC.usage(used, free);
+
+            BitGrouping.format(free, this.free_str, "b");
+            BitGrouping.format(used, this.used_str, "b");
+
+            StaticTrace.format("  dht (used: {}, free: {}): handling {} connections, {} records/s",
+                    this.used_str, this.free_str, node_info.numOpenConnections, rec_per_sec).flush;
         }
-    
+
         if ( MainConfig.stats_log_enabled )
         {
             this.elapsed_since_last_log_update += seconds_elapsed;
@@ -133,21 +172,21 @@ public class StatsThread : IServiceThread
     
             if ( this.elapsed_since_last_log_update >= this.log_update_time )
             {
-                this.log.write("Node stats: {} sent ({} K/s), {} received ({} K/s), handling {} connections",
+                this.log.write("Node stats: {} sent ({} K/s), {} received ({} K/s), handling {} connections, {} records/s",
                         this.total_sent, cast(float)(this.total_sent / 1024) / cast(float)seconds_elapsed,
                         this.total_received, cast(float)(this.total_received / 1024) / cast(float)seconds_elapsed,
-                        node_info.numOpenConnections);
-    
+                        node_info.numOpenConnections, rec_per_sec);
+
                 this.elapsed_since_last_log_update = 0;
                 this.total_sent = 0;
                 this.total_received = 0;
             }
         }
-    
-        node_info.resetByteCounters();
+
+        node_info.resetCounters();
     }
-    
-    
+
+
     /***************************************************************************
 
         Method called on the channel service interface of all storage channels

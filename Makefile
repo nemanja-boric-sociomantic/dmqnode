@@ -29,6 +29,7 @@ FLAGS =\
     -L-lglib-2.0 \
 	-L-lebtree \
     -L-ldl \
+	-version=CDGC \
     -version=NewTango
 
 UNITTESTFLAGS =\
