@@ -25,6 +25,8 @@ private import src.mod.server.config.MainConfig;
 
 private import src.mod.server.servicethreads.model.IServiceThread;
 
+private import ocean.math.SlidingAverage;
+
 private import ocean.text.util.DigitGrouping;
 
 private import ocean.text.convert.Layout;
@@ -93,6 +95,15 @@ public class StatsThread : IServiceThread
 
     /***************************************************************************
 
+        Average records per second counter
+
+    ***************************************************************************/
+
+    private SlidingAverageTime!(ulong) records_per_sec;
+
+
+    /***************************************************************************
+
         Strings used for free / used memory formatting.
     
     ***************************************************************************/
@@ -115,6 +126,8 @@ public class StatsThread : IServiceThread
     public this ( IQueueNode queue, uint log_update_time )
     {
         super(queue, 1);
+
+        this.records_per_sec = new SlidingAverageTime!(ulong)(5, 1_000, 1_000);
 
         this.log_update_time = log_update_time;
 
@@ -144,6 +157,13 @@ public class StatsThread : IServiceThread
         auto received = node_info.bytesReceived;
         auto sent = node_info.bytesSent;
 
+        this.records_per_sec = node_info.recordsHandled;
+        auto rec_per_sec = this.records_per_sec.push;
+        if ( seconds_elapsed > 1 )
+        {
+            for ( int i; i < seconds_elapsed - 1; i++ ) this.records_per_sec.push;
+        }
+
         if ( MainConfig.console_stats_enabled )
         {
             size_t used, free;
@@ -152,11 +172,8 @@ public class StatsThread : IServiceThread
             BitGrouping.format(free, this.free_str, "b");
             BitGrouping.format(used, this.used_str, "b");
 
-            StaticTrace.format("  queue (used: {}, free: {}): {} sent ({} K/s), {} received ({} K/s), handling {} connections{}",
-                    this.used_str, this.free_str, sent, cast(float)(sent / 1024) / cast(float)seconds_elapsed,
-                    received, cast(float)(received / 1024) / cast(float)seconds_elapsed,
-                    node_info.numOpenConnections,
-                    channels_string).flush;
+            StaticTrace.format("  queue (used: {}, free: {}): handling {} connections, {} records/s{}",
+                    this.used_str, this.free_str, node_info.numOpenConnections, rec_per_sec, channels_string).flush;
         }
 
         if ( MainConfig.stats_log_enabled )
@@ -167,10 +184,10 @@ public class StatsThread : IServiceThread
 
             if ( this.elapsed_since_last_log_update >= this.log_update_time )
             {
-                this.log.write("Node stats: {} sent ({} K/s), {} received ({} K/s), handling {} connections{}",
+                this.log.write("Node stats: {} sent ({} K/s), {} received ({} K/s), handling {} connections, {} records/s{}",
                         this.total_sent, cast(float)(this.total_sent / 1024) / cast(float)seconds_elapsed,
                         this.total_received, cast(float)(this.total_received / 1024) / cast(float)seconds_elapsed,
-                        node_info.numOpenConnections,
+                        node_info.numOpenConnections, rec_per_sec,
                         channels_string);
 
                 this.elapsed_since_last_log_update = 0;
@@ -179,7 +196,7 @@ public class StatsThread : IServiceThread
             }
         }
 
-        node_info.resetByteCounters();
+        node_info.resetCounters();
     }
 
 
