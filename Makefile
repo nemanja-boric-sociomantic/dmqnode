@@ -31,13 +31,16 @@ FLAGS =\
     -L-ldl \
     -version=NewTango
 
+UNITTESTFLAGS =\
+	-unittest \
+	-debug=OceanUnitTest
+
 RELEASE_FLAGS = ${FLAGS}\
 	-L-s
 
 DEBUG_FLAGS = ${FLAGS}\
-	-debug -gc -debug=ConnectionHandler 
-#-debug=SwarmClient
-#-debug=Raw
+	-debug -gc ${UNITTESTFLAGS}
+#-debug=ConnectionHandler -debug=Raw
 
 
 # ------------------------------------------------------------------------------
