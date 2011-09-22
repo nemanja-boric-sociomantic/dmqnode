@@ -30,6 +30,7 @@ private import  src.mod.node.servicethreads.ServiceThreads,
 
 private import  ocean.io.select.model.ISelectClient;
 
+private import  swarm.dht.DhtConst;
 private import  swarm.dht.DhtNode;
 private import  swarm.dht.DhtHash;
 
@@ -58,7 +59,7 @@ class DhtDaemon
     
     **************************************************************************/
     
-    alias DhtNode!(MemoryStorageChannels, char[]) MemoryNode;
+    private alias DhtNode!(MemoryStorageChannels, char[]) MemoryNode;
     
     /***************************************************************************
     
@@ -66,7 +67,7 @@ class DhtDaemon
     
     **************************************************************************/
     
-    alias DhtNode!(LogFilesStorageChannels, char[], size_t) LogFilesNode;
+    private alias DhtNode!(LogFilesStorageChannels, char[], size_t) LogFilesNode;
     
     /***************************************************************************
     
@@ -74,15 +75,23 @@ class DhtDaemon
     
     **************************************************************************/
     
-    alias       DhtConst.NodeItem       NodeItem;
+    private alias DhtConst.NodeItem NodeItem;
     
     /***************************************************************************
-    
-        alias for storage
-    
-    **************************************************************************/
-    
-    alias       DhtConst.Storage.BaseType   Storage;
+
+        Storage engine type enum
+
+    ***************************************************************************/
+
+    private enum Storage
+    {
+        None,
+        HashTable,
+        Btree,
+        FileSystem,
+        Memory,
+        LogFiles
+    }
 
     /***************************************************************************
     
@@ -90,7 +99,7 @@ class DhtDaemon
     
     **************************************************************************/
     
-    private     IDhtNode                node;
+    private IDhtNode node;
 
     /***************************************************************************
     
@@ -105,31 +114,36 @@ class DhtDaemon
          Constructor
     
     **************************************************************************/
-    
+
     public this ( )
     {
-        NodeItem node_item = this.getNodeItemConfiguration();
+        auto min = Config.Char["Server", "minval"];
+        auto max = Config.Char["Server", "maxval"];
+        auto min_hash = DhtHash.toHashRangeStart(min);
+        auto max_hash = DhtHash.toHashRangeEnd(max);
 
-        ulong   size_limit      = Config.get!(ulong)("Server", "size_limit");
-        char[]  data_dir        = Config.get!(char[])("Server", "data_dir");
+        ulong size_limit = Config.get!(ulong)("Server", "size_limit");
+        char[] data_dir = Config.get!(char[])("Server", "data_dir");
 
-        Storage storage         = this.getStorageConfiguration();
+        NodeItem node_item = NodeItem(Config.Char["Server", "address"], Config.Int["Server", "port"]);
 
-        if (storage == DhtConst.Storage.None)
-        {
-            throw new Exception("Invalid data storage");
-        }
-        
+        Storage storage = this.getStorageConfiguration();
+        assertEx(storage != Storage.None, "Invalid storage engine type");
+
         switch (storage)
         {
-            case DhtConst.Storage.Memory :
-                auto memory_node = new MemoryNode(node_item, size_limit, data_dir);
+            case Storage.Memory :
+                auto memory_node = new MemoryNode(node_item, min_hash, max_hash,
+                        size_limit, data_dir);
                 memory_node.error_callback(&this.dhtError);
                 this.node = memory_node;
                 break;
 
-            case DhtConst.Storage.LogFiles :
-                auto logfiles_node = new LogFilesNode(node_item, 0, data_dir, this.getLogFilesWriteBuffer());
+            case Storage.LogFiles :
+                size_limit = 0;
+
+                auto logfiles_node = new LogFilesNode(node_item, min_hash, max_hash,
+                        size_limit, data_dir, this.getLogFilesWriteBuffer());
                 logfiles_node.error_callback(&this.dhtError);
                 this.node = logfiles_node;
                 break;
@@ -169,28 +183,7 @@ class DhtDaemon
     {
         return this.node.shutdown();
     }
-    
-    /***************************************************************************
-    
-        Reads NodeItem configuration
-    
-    **************************************************************************/
-    
-    private NodeItem getNodeItemConfiguration ()
-    {
-        NodeItem node_item; 
-        
-        char[] minval = Config.Char["Server", "minval"];
-        char[] maxval = Config.Char["Server", "maxval"];
-        
-        node_item.Address  = Config.Char["Server", "address"];
-        node_item.Port     = Config.Int["Server", "port"];
-        node_item.MinValue = DhtHash.toHashRangeStart(minval);
-        node_item.MaxValue = DhtHash.toHashRangeEnd(maxval);
-        
-        return node_item;
-    }
-    
+
     /***************************************************************************
 
         Callback for exceptions inside the dht node event loop. Writes errors to
@@ -219,24 +212,24 @@ class DhtDaemon
         switch (Config.get!(char[])("Server", "storage_engine"))
         {
             case "hashtable" :
-                return DhtConst.Storage.HashTable;
+                return Storage.HashTable;
         
             case "btree" : 
-                return DhtConst.Storage.Btree;
+                return Storage.Btree;
         
             case "filesystem" : 
-                return DhtConst.Storage.FileSystem;
+                return Storage.FileSystem;
         
             case "memory" : 
-                return DhtConst.Storage.Memory;
+                return Storage.Memory;
         
             case "logfiles" :
-                return DhtConst.Storage.LogFiles;
+                return Storage.LogFiles;
         
             default :
         }
         
-        return DhtConst.Storage.None;
+        return Storage.None;
     }
     
     /***************************************************************************
