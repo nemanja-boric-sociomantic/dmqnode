@@ -88,7 +88,9 @@ class LogfileCommands : Commands
         this.testRemoveChannel();
         this.testPutDup(false);
         this.testRemoveChannel();
-        this.testListen(&this.dht.putDup!(uint));
+        this.testListen(&this.dht.putDup!(uint), true);
+        this.testRemoveChannel();        
+        this.testListen(&this.dht.putDup!(uint), false);
     }
     
     /***************************************************************************
@@ -97,12 +99,22 @@ class LogfileCommands : Commands
 
     ***************************************************************************/
     
-    protected override void confirm ( )
+    protected override void confirm ( ubyte[] filter = null )
     {
-        this.confirmGetAll();
-        this.confirmGetRange();
+        this.confirmGetAll(filter);
+        this.confirmGetRange(0, Iterations/3, filter);
+        this.confirmGetRange(Iterations/3, Iterations/3*2, filter); 
+        this.confirmGetRange(Iterations/3*2, Iterations, filter);        
         this.confirmGetAllKeys();
         this.confirmChannelSize();
+        
+        if ( filter !is null )
+        {
+            this.confirmGetAll(null);
+            this.confirmGetRange(0, Iterations/3, null);
+            this.confirmGetRange(Iterations/3, Iterations/3*2, null);
+            this.confirmGetRange(Iterations/3*2, Iterations, null);            
+        }
     }
     
     private:  
@@ -118,7 +130,7 @@ class LogfileCommands : Commands
 
     void testPutDup ( bool compress )
     {
-        logger.info("Testing put command (writing {}k {}entries)",
+        logger.info("Testing putDup command (writing {}k {}entries)",
                     Iterations / 1000,
                     compress ? "compressed " : "");
         Exception exception = null;
@@ -140,7 +152,7 @@ class LogfileCommands : Commands
             this.values.add(i);
         }        
         
-        this.confirm();
+        this.confirm(compress ? null : [cast(ubyte)98]);
     }   
 
     /***************************************************************************
@@ -150,10 +162,15 @@ class LogfileCommands : Commands
 
     ***************************************************************************/
 
-    void confirmGetRange ( )
+    void confirmGetRange ( size_t start = 0, size_t end = 0, 
+                           ubyte[] filter = null )
     {       
-        logger.info("\tconfirming using getRange");
+        logger.info("\tconfirming using getRange ({} - {}{})", 
+                    start, end, filter.length > 0 ? ", filtered" : "");
+        
         Exception exception = null;
+        size_t expecting    = 0;
+        ubyte[500] data     = void;
         
         void getter ( DhtClient.RequestContext, char[] key_str, char[] value )
         {    
@@ -162,12 +179,46 @@ class LogfileCommands : Commands
             auto key = Integer.parse(key_str, 16);
             exception = validateValue(key, value);
             
-            if ( exception !is null ) throw exception;
+            if ( exception !is null )
+            { 
+                throw exception;
+            }
+            else if ( filter.length > 0 )
+            {
+                if ( expecting == 0 ) 
+                {
+                    throw exception = new Exception("No more values expected");
+                }
+                else if ( !value.contains(cast(char[]) filter) ) 
+                {
+                    throw exception = new Exception("Value should be filtered");
+                }
+                else
+                {
+                    --expecting;
+                }
+            }
         }
+              
+        auto params = this.dht.getRange(channel, start, end, 
+                                        &getter, &this.requestNotifier);
         
-        with(this.dht) assign(getRange(channel, cast(uint)0, this.values.size, 
-                                     &getter, &this.requestNotifier));        
+        if ( filter.length > 0 ) 
+        {
+            params.filter(cast(char[]) filter);
+
+            foreach ( key; this.values ) if ( key >= start && key <= end )
+            {
+                auto value = this.getRandom(data, key);
+                
+                if ( value.contains(filter) ) expecting++;
+            }
+        }        
+
+        this.dht.assign(params);
                 
         this.runRequest(exception);
+        
+        if ( expecting != 0 ) throw new Exception("Not all expected results arrived");
     }
 }

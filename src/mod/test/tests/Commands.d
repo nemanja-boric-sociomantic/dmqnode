@@ -44,9 +44,10 @@ private import ocean.io.select.EpollSelectDispatcher,
 
 *******************************************************************************/
 
-private import tango.core.Thread,
-               tango.util.log.Log,
-               tango.util.container.HashSet;
+public import tango.core.Array,
+              tango.core.Thread,
+              tango.util.log.Log,
+              tango.util.container.HashSet;
 
 private import Integer = tango.text.convert.Integer;
 
@@ -95,7 +96,7 @@ class Commands : Test
 
     ***************************************************************************/
 
-    protected size_t Iterations = 100_000;
+    protected size_t Iterations = 50_000;
 
     /***************************************************************************
 
@@ -120,10 +121,13 @@ class Commands : Test
 
         Abstract function that should confirm that the local and remote state
         is the same
+        
+        Params:
+            filter = what to filter for in getAll/Range request
 
     ***************************************************************************/
     
-    abstract void confirm ( );
+    abstract void confirm ( ubyte[] filter = null );
 
     /***************************************************************************
 
@@ -135,10 +139,10 @@ class Commands : Test
 
     ***************************************************************************/
 
-    void testListen ( T ) ( T putFunc )
+    void testListen ( T ) ( T putFunc, bool compress )
     {
-        logger.info("Testing listen command (writing {}k entries)",
-                    Iterations / 1000);
+        logger.info("Testing listen command (writing {}k {}entries)",
+                    Iterations / 1000, compress ? "compressed " : "");
         
         Exception exception = null;
         ubyte[500] data = void;
@@ -177,7 +181,8 @@ class Commands : Test
                 
         this.runRequest(exception);
 
-        this.confirm();
+        //this.confirm(compress ? null : [cast(ubyte)98]);
+        this.confirm(null);
     }
 
     /***************************************************************************
@@ -209,10 +214,14 @@ class Commands : Test
 
     ***************************************************************************/
 
-    void confirmGetAll ( )
+    void confirmGetAll ( ubyte[] filter = null )
     {       
-        logger.info("\tconfirming using getAll");
+        logger.info("\tconfirming using getAll{}", 
+                    filter.length > 0 ? " (filtered)" : "");
+        
         Exception exception = null;
+        size_t expecting    = 0;
+        ubyte[500] data     = void;
         
         void getter ( DhtClient.RequestContext, char[] key_str, char[] value )
         {    
@@ -221,12 +230,48 @@ class Commands : Test
             auto key = Integer.parse(key_str, 16);
             exception = validateValue(key, value);
             
-            if ( exception !is null ) throw exception;
+            if ( exception !is null )
+            {
+                throw exception;
+            }
+            else if ( filter.length > 0 )
+            {
+                if ( expecting == 0 ) 
+                {
+                    throw exception = new Exception("No more values expected");
+                }
+                else if ( !value.contains(cast(char[]) filter) ) 
+                {
+                    throw exception = new Exception("Value should be filtered");
+                }
+                else
+                {
+                    --expecting;
+                }
+            }
         }
         
-        with(this.dht) assign(getAll(channel, &getter, &this.requestNotifier));        
+        auto params = this.dht.getAll(channel, &getter, &this.requestNotifier);
+        
+        if ( filter.length > 0 ) 
+        {
+            params.filter(cast(char[]) filter);
+
+            foreach ( key; this.values ) 
+            {
+                auto value = this.getRandom(data, key);
                 
+                if ( value.contains(filter) ) expecting++;
+            }
+        }
+        
+        this.dht.assign(params);
+
+        logger.trace("Expecting {} results", expecting);
+        
         this.runRequest(exception);
+        
+        if ( expecting != 0 ) throw new Exception("Not all expected results arrived");
     }
 
     /***************************************************************************

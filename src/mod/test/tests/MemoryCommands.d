@@ -88,9 +88,11 @@ class MemoryCommands : Commands
         this.testRemoveChannel();      
         this.testPut(false);
         this.testRemove();
-        this.testPut(false);
-        //this.testRemoveChannel();
-        //this.testListen(&this.dht.put!(uint));
+        this.testPut(true);
+        this.testRemoveChannel();
+        this.testListen(&this.dht.put!(uint), true);
+        this.testRemoveChannel();           
+        this.testListen(&this.dht.put!(uint), false);
     }
     
     /***************************************************************************
@@ -99,13 +101,14 @@ class MemoryCommands : Commands
 
     ***************************************************************************/
   
-    protected override void confirm ( )
+    protected override void confirm ( ubyte[] filter = null )
     {        
-        this.confirmGetAll();  
+        if ( filter !is null ) this.confirmGetAll();  
+        this.confirmGetAll(filter);
         this.confirmGet();
         this.confirmGetAllKeys();
         this.confirmExists();
-        this.confirmChannelSize();
+        this.confirmChannelSize();    
     }  
     
     private:
@@ -149,7 +152,7 @@ class MemoryCommands : Commands
             this.values.add(i);
         }        
         
-        this.confirm();
+        this.confirm(compress ? null : [cast(ubyte)98]);
     }   
 
     /***************************************************************************
