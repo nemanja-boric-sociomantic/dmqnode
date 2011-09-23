@@ -57,6 +57,7 @@ void configureArguments ( Arguments args )
     args("type").aliased('t').params(1)
         .defaults("memory").restrict(["memory", "logfile"])
         .required.help("Type of the node");
+    args("iterations").aliased('i').params(1).defaults("1").help("How often the test should run (0 for infinite)");
     args("help").aliased('h').help("Display help").halt();
 }
 

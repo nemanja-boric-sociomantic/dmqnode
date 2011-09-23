@@ -18,7 +18,7 @@ module src.mod.test.tests.LogfileCommands;
 
 *******************************************************************************/
 
-private import src.mod.test.tests.Test;
+private import src.mod.test.tests.Commands;
 
 /*******************************************************************************
 
@@ -26,7 +26,7 @@ private import src.mod.test.tests.Test;
 
 *******************************************************************************/
        
-private import swarm.dht.DhtClientNew;
+private import swarm.dht.DhtClient;
 
 /*******************************************************************************
 
@@ -56,7 +56,7 @@ private import Integer = tango.text.convert.Integer;
 
 *******************************************************************************/
 
-class LogfileCommands : Test
+class LogfileCommands : Commands
 {
     /***************************************************************************
 

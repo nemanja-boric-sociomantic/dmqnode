@@ -18,7 +18,7 @@ module src.mod.test.tests.MemoryCommands;
 
 *******************************************************************************/
 
-private import src.mod.test.tests.Test;
+private import src.mod.test.tests.Commands;
            
 /*******************************************************************************
 
@@ -26,7 +26,7 @@ private import src.mod.test.tests.Test;
 
 *******************************************************************************/
  
-private import swarm.dht.DhtClientNew;
+private import swarm.dht.DhtClient;
 
 /*******************************************************************************
 
@@ -48,6 +48,8 @@ private import tango.core.Thread,
                tango.util.log.Log,
                tango.util.container.HashSet;
 
+private import tango.core.Memory;
+
 private import Integer = tango.text.convert.Integer;
 
 /*******************************************************************************
@@ -56,7 +58,7 @@ private import Integer = tango.text.convert.Integer;
 
 *******************************************************************************/
 
-class MemoryCommands : Test
+class MemoryCommands : Commands
 {
     /***************************************************************************
 
@@ -84,11 +86,11 @@ class MemoryCommands : Test
     override void run()
     {
         this.testRemoveChannel();      
-        this.testPut(true);
+        this.testPut(false);
         this.testRemove();
         this.testPut(false);
-        this.testRemoveChannel();
-        this.testListen(&this.dht.put!(uint));
+        //this.testRemoveChannel();
+        //this.testListen(&this.dht.put!(uint));
     }
     
     /***************************************************************************
@@ -118,28 +120,32 @@ class MemoryCommands : Test
     ***************************************************************************/
 
     void testPut ( bool compress )
-    {
+    {        
         logger.info("Testing put command (writing {}k {}entries)", 
                     Iterations / 1000,
                     compress ? "compressed " : "");
         Exception exception = null;
-        ubyte[500] data = void;
+        ubyte[500] data = 0xCC;
         
         for ( size_t i = 0; i < Iterations; ++i )
-        {
+        {   
+            logger.trace("for begin {}", i);
             char[] putter ( DhtClient.RequestContext )
             {
+                logger.trace("before getRandom");
                 auto d = cast(char[]) this.getRandom(data, i);
-                logger.trace("put: {}", d);
+                logger.trace("put: {}", cast(ubyte[])d);
                 
                 return d;
             }
             
             with (this.dht) assign(put(channel, i, &putter, &this.requestNotifier)
                                    .compress(compress));        
-                    
+            
+            logger.trace("running req");
             this.runRequest(exception);
             
+            logger.trace("adding val");
             this.values.add(i);
         }        
         
