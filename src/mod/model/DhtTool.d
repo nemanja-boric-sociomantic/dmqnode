@@ -26,6 +26,8 @@ module src.mod.model.DhtTool;
 
 *******************************************************************************/
 
+private import ocean.io.select.EpollSelectDispatcher;
+
 private import ocean.text.Arguments;
 
 private import swarm.dht.DhtClient,
@@ -64,11 +66,29 @@ abstract class DhtTool
 
     /***************************************************************************
 
+        Epoll selector instance
+    
+    ***************************************************************************/
+
+    protected EpollSelectDispatcher epoll;
+
+
+    /***************************************************************************
+
+        Dht client instance
+    
+    ***************************************************************************/
+
+    protected DhtClient dht;
+
+
+    /***************************************************************************
+
         Parses and validates command line arguments using the passed Arguments
         object. The list of valid arguments for the base class (see module
         header) is set in the addArgs() method. Derived classes can override the
         addArgs_() method to specify additional arguments.
-    
+
         Params:
             args = arguments object used to parse command line arguments
             arguments = list of command line arguments (excluding the executable
@@ -108,21 +128,23 @@ abstract class DhtTool
     final public void process ( Arguments args )
     in
     {
-        assert(this.validArgs(args), typeof(this).stringof ~ "process - invalid arguments");
+        assert(this.validArgs(args), typeof(this).stringof ~ "process -- invalid arguments");
     }
     body
     {
         this.readArgs(args);
 
-        assert(this.dht_nodes_config.length, typeof(this).stringof ~ ".process - no xml node config file");
+        assert(this.dht_nodes_config.length, typeof(this).stringof ~ ".process -- no xml node config file");
 
-        auto dht = this.initDhtClient(this.dht_nodes_config);
+        this.epoll = new EpollSelectDispatcher;
 
-        this.init(dht);
-        
-        this.process_(dht);
+        this.dht = this.initDhtClient(this.dht_nodes_config);
 
-        this.finished(dht);
+        this.init();
+
+        this.process_();
+
+        this.finished();
     }
 
 
@@ -135,7 +157,7 @@ abstract class DhtTool
 
     ***************************************************************************/
 
-    abstract protected void process_ ( DhtClient dht );
+    abstract protected void process_ (  );
 
 
     /***************************************************************************
@@ -149,7 +171,7 @@ abstract class DhtTool
     
     ***************************************************************************/
     
-    protected void init ( DhtClient dht )
+    protected void init (  )
     {
     }
 
@@ -165,7 +187,7 @@ abstract class DhtTool
 
     ***************************************************************************/
 
-    protected void finished ( DhtClient dht )
+    protected void finished (  )
     {
     }
 
@@ -226,8 +248,10 @@ abstract class DhtTool
     }
     body
     {
+        this.readArgs_(args);
     }
 
+    abstract protected void readArgs_ ( Arguments args );
 
     /***************************************************************************
 
@@ -269,13 +293,20 @@ abstract class DhtTool
     {
         Stderr.formatln("Initialising dht client connections from {}", xml);
 
-        auto dht = new DhtClient();
-
-        dht.error_callback(&this.dhtError);
+        auto dht = new DhtClient(this.epoll);
 
         dht.addNodes(xml);
 
-        dht.nodeHandshake();
+        dht.nodeHandshake(
+                ( DhtClient.RequestContext, bool ok )
+                {
+                    if ( !ok )
+                    {
+                        this.dht_error = true;
+                    }
+                }, &this.notifier);
+        this.epoll.eventLoop();
+
         if ( this.strictHandshake )
         {
             assert(!this.dht_error, typeof(this).stringof ~ ".initDhtClient - error during dht client initialisation of " ~ xml);
@@ -311,10 +342,13 @@ abstract class DhtTool
 
     ***************************************************************************/
 
-    protected void dhtError ( DhtClient.RequestFinishedInfo e )
+    protected void notifier ( DhtClient.RequestNotification info )
     {
-        Stderr.format("DHT client error: {}\n", e.message);
-        this.dht_error = true;
+        if ( info.type == info.type.Finished && !info.succeeded )
+        {
+            Stderr.format("DHT client error: {}\n", info.message);
+            this.dht_error = true;
+        }
     }
 
 

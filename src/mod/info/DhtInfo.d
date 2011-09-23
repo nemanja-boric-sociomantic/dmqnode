@@ -180,10 +180,13 @@ class DhtInfo : DhtTool
 
     ***************************************************************************/
 
-    override protected void dhtError ( DhtClient.RequestFinishedInfo e )
+    override protected void notifier ( DhtClient.RequestNotification info )
     {
-        super.dht_error = true;
-        this.dht_errors.appendCopy(e.message);
+        if ( info.type == info.type.Finished && !info.succeeded )
+        {
+            super.dht_error = true;
+            this.dht_errors.appendCopy(info.message);
+        }
     }
 
 
@@ -197,15 +200,15 @@ class DhtInfo : DhtTool
     
     ***************************************************************************/
     
-    protected void process_ ( DhtClient dht )
+    protected void process_ ( )
     {
         // Get node addresses/ports
         size_t longest_node_name;
 
-        foreach ( node; dht )
+        foreach ( node; super.dht.nodeRegistry )
         {
-            this.nodes ~= NodeInfo(node.nodeitem.Address, node.nodeitem.Port,
-                    node.nodeitem.isResponsibleRangeQueried, node.nodeitem.MinValue, node.nodeitem.MaxValue);
+            this.nodes ~= NodeInfo(node.address, node.port,
+                    node.hash_range_queried, node.min_hash, node.max_hash);
 
             auto name_len = this.nodes[$-1].nameLength();
             if ( name_len > longest_node_name )
@@ -216,28 +219,28 @@ class DhtInfo : DhtTool
 
         if ( monitor )
         {
-            this.displayMonitor(dht, longest_node_name);
+            this.displayMonitor(longest_node_name);
         }
 
         // Display various forms of output
         if ( this.data )
         {
-            this.displayContents(dht, longest_node_name);
+            this.displayContents(longest_node_name);
         }
 
         if ( this.connections )
         {
-            this.displayNumConnections(dht, longest_node_name);
+            this.displayNumConnections(longest_node_name);
         }
 
         if ( this.api_version )
         {
-            this.displayApiVersions(dht, longest_node_name);
+            this.displayApiVersions(longest_node_name);
         }
 
         if ( this.hash_ranges )
         {
-            this.displayHashRanges(dht, longest_node_name);
+            this.displayHashRanges(longest_node_name);
         }
 
         // Show any errors which occurred
@@ -306,7 +309,7 @@ class DhtInfo : DhtTool
     
     ***************************************************************************/
     
-    override protected void readArgs ( Arguments args )
+    protected void readArgs_ ( Arguments args )
     {
         super.dht_nodes_config = args.getString("source");
 
@@ -357,7 +360,7 @@ class DhtInfo : DhtTool
     
     ***************************************************************************/
     
-    private void displayHashRanges ( DhtClient dht, size_t longest_node_name )
+    private void displayHashRanges ( size_t longest_node_name )
     {
         Stdout.formatln("\nHash ranges:");
         Stdout.formatln("------------------------------------------------------------------------------");
@@ -381,13 +384,13 @@ class DhtInfo : DhtTool
 
     ***************************************************************************/
     
-    private void displayApiVersions ( DhtClient dht, size_t longest_node_name )
+    private void displayApiVersions ( size_t longest_node_name )
     {
         Stdout.formatln("\nApi version:");
         Stdout.formatln("------------------------------------------------------------------------------");
 
         bool output;
-        dht.getVersion(
+        super.dht.assign(super.dht.getVersion(
                 ( DhtClient.RequestContext context, char[] api_version )
                 {
                     if ( api_version.length && !output )
@@ -395,7 +398,8 @@ class DhtInfo : DhtTool
                         Stdout.formatln("  API: {}", api_version);
                         output = true;
                     }
-                }).eventLoop;
+                }, &this.notifier));
+        super.epoll.eventLoop;
     }
 
 
@@ -409,7 +413,7 @@ class DhtInfo : DhtTool
 
     ***************************************************************************/
 
-    private void displayNumConnections ( DhtClient dht, size_t longest_node_name )
+    private void displayNumConnections ( size_t longest_node_name )
     {
         Stdout.formatln("\nConnections being handled:");
         Stdout.formatln("------------------------------------------------------------------------------");
@@ -421,14 +425,15 @@ class DhtInfo : DhtTool
         }
 
         // Query all nodes for their active connections
-        dht.getNumConnections(
+        super.dht.assign(super.dht.getNumConnections(
                 ( DhtClient.RequestContext context, char[] node_address, ushort node_port, size_t num_connections )
                 {
                     auto node = this.findNode(node_address, node_port);
                     assert(node, typeof(this).stringof ~ "Node mismatch!");
 
                     node.connections = num_connections;
-                }).eventLoop;
+                }, &this.notifier));
+        super.epoll.eventLoop;
 
         // Display connections per node
         foreach ( i, node; this.nodes )
@@ -452,18 +457,18 @@ class DhtInfo : DhtTool
 
     ***************************************************************************/
 
-    private void displayMonitor ( DhtClient dht, size_t longest_node_name )
+    private void displayMonitor ( size_t longest_node_name )
     {
         // Get channel names
         size_t longest_channel_name;
         char[][] channel_names;
 
-        this.getChannelNames(dht, channel_names, longest_channel_name);
+        this.getChannelNames(channel_names, longest_channel_name);
 
         // Get channel size info
         foreach ( channel; channel_names )
         {
-            this.getChannelSize(dht, channel);
+            this.getChannelSize(channel);
         }
 
         DhtMonitor.display(this.nodes, this.monitor_num_columns, channel_names, this.monitor_metric_display);
@@ -480,18 +485,18 @@ class DhtInfo : DhtTool
 
     ***************************************************************************/
 
-    private void displayContents ( DhtClient dht, size_t longest_node_name )
+    private void displayContents ( size_t longest_node_name )
     {
         // Get channel names
         size_t longest_channel_name;
         char[][] channel_names;
 
-        this.getChannelNames(dht, channel_names, longest_channel_name);
+        this.getChannelNames(channel_names, longest_channel_name);
 
         // Get channel size info
         foreach ( channel; channel_names )
         {
-            this.getChannelSize(dht, channel);
+            this.getChannelSize(channel);
         }
 
         // Display channels
@@ -606,23 +611,23 @@ class DhtInfo : DhtTool
     
     ***************************************************************************/
 
-    private void getChannelNames ( DhtClient dht, ref char[][] channel_names, out size_t longest_channel_name )
+    private void getChannelNames ( ref char[][] channel_names, out size_t longest_channel_name )
     {
-        dht.getChannels(
+        super.dht.assign(super.dht.getChannels(
                 ( DhtClient.RequestContext context, char[] channel )
                 {
                     if ( channel.length && !channel_names.contains(channel) )
                     {
-                        Trace.formatln("Channel = {}", channel);
                         channel_names.appendCopy(channel);
                         if ( channel.length > longest_channel_name )
                         {
                             longest_channel_name = channel.length;
                         }
                     }
-                }
-            ).eventLoop();
-    
+                }, &this.notifier));
+
+        super.epoll.eventLoop();
+
         channel_names.sort;
     }
 
@@ -637,16 +642,17 @@ class DhtInfo : DhtTool
     
     ***************************************************************************/
 
-    private void getChannelSize ( DhtClient dht, char[] channel )
+    private void getChannelSize ( char[] channel )
     {
-        dht.getChannelSize(channel,
+        super.dht.assign(super.dht.getChannelSize(channel,
                 ( DhtClient.RequestContext context, char[] address, ushort port, char[] channel, ulong records, ulong bytes )
                 {
                     auto node = this.findNode(address, port);
                     assert(node, typeof(this).stringof ~ "Node mismatch!");
 
                     node.setChannelSize(channel, records, bytes);
-                }).eventLoop();
+                }, &this.notifier));
+        super.epoll.eventLoop();
 
         Stdout.flush();
     }
