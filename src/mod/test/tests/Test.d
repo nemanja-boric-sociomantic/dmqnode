@@ -27,6 +27,7 @@ private import swarm.dht.DhtClient;
 *******************************************************************************/
 
 private import ocean.io.select.EpollSelectDispatcher,
+               ocean.io.select.event.IntervalClock,
                ocean.io.digest.Fnv1,
                ocean.util.log.SimpleLayout;
 
@@ -57,7 +58,7 @@ class Test
     ***************************************************************************/
 
     protected EpollSelectDispatcher epoll;
-
+    
     /***************************************************************************
 
         The DhtClient instance
@@ -96,6 +97,8 @@ class Test
     {
         this.epoll  = new EpollSelectDispatcher;
         this.dht    = new DhtClient(epoll, connections);
+
+        this.dht.enableScheduler(new IntervalClock);
         
         Exception exception = null;
         
@@ -146,6 +149,7 @@ class Test
 
     void requestNotifier ( DhtClient.RequestNotification info )
     {
+        logger.trace("Notify: command={}, type={}, succeeded={}", info.command, info.type, info.succeeded);
         if ( info.type == info.type.Finished && !info.succeeded )
         {
             if (info.exception !is null)
