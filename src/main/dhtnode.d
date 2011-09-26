@@ -10,7 +10,7 @@
 
 ******************************************************************************/
 
-module src.main.dhtnode2;
+module src.main.dhtnode;
 
 /*******************************************************************************
 
@@ -68,7 +68,7 @@ void printUsage ()
 {
     Stdout.formatln("
     Usage:
-        dhtnosed [-d]
+        dhtnode [-d]
                 
     Description:
         dht node server daemon
@@ -77,7 +77,7 @@ void printUsage ()
         -d, --daemon         start local dht node server
                 
     Example:
-        dhtnosed -d
+        dhtnode -d
     ");
 }
 
