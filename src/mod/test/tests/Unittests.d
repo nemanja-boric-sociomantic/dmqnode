@@ -109,7 +109,7 @@ class Unittests : Test
                 
             }
             
-            with(this.dht) assign(getAll(channel, &getter, 
+            with(this.dht) assign(getAll(name, &getter, 
                                          &this.requestNotifier));        
                     
             try this.runRequest(exception);
@@ -118,9 +118,9 @@ class Unittests : Test
                 exception = e;
             }
             
-            if ( exception !is null )
+            if ( exception is null )
             {
-                throw new Exception("Could create channel " ~ name);
+                throw new Exception("Could create channel with invalid name " ~ name);
             }
         }
     }
