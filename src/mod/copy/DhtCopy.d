@@ -39,21 +39,21 @@ module mod.copy.DhtCopy;
 
  ******************************************************************************/
 
-private import  src.mod.model.SourceDhtTool;
+private import src.mod.model.SourceDhtTool;
 
-private import  core.dht.DestinationQueue;
+private import core.dht.DestinationQueue;
 
-private import  ocean.core.Array;
+private import ocean.core.Array;
 
-private import  ocean.text.Arguments;
+private import ocean.text.Arguments;
 
-private import  ocean.util.log.PeriodicTrace;
+private import ocean.util.log.PeriodicTrace;
 
-private import  swarm.dht.DhtClient,
-                swarm.dht.DhtHash,
-                swarm.dht.DhtConst;
+private import swarm.dht.DhtClient,
+               swarm.dht.DhtHash,
+               swarm.dht.DhtConst;
 
-private import  tango.io.Stdout;
+private import tango.io.Stdout;
 
 
 
