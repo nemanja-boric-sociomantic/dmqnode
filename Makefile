@@ -29,6 +29,7 @@ FLAGS =\
     -L-lglib-2.0 \
 	-L-lebtree \
     -L-ldl \
+    -I../swarm \
 	-version=CDGC \
     -version=NewTango
 
@@ -41,7 +42,7 @@ RELEASE_FLAGS = ${FLAGS}\
 
 DEBUG_FLAGS = ${FLAGS}\
 	-debug -gc ${UNITTESTFLAGS}
-#-debug=ConnectionHandler -debug=Raw
+# -debug=ConnectionHandler -debug=Raw
 
 
 # ------------------------------------------------------------------------------
