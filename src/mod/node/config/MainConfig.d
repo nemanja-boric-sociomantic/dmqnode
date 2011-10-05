@@ -103,9 +103,7 @@ public static:
     char[] trace_log;
     
     char[] stats_log;
-    
-    uint stats_log_period;
-    
+
     bool stats_log_enabled;
     
     bool console_stats_enabled;
@@ -146,10 +144,8 @@ public static:
         TraceLog.console_enabled = Config.Bool["Log", "console_echo_trace"];
 
         stats_log = cmdpath.prepend(Config.Char["Log", "stats"]);
-        stats_log_period = Config.Int["Log", "stats_log_period"];
-
         stats_log_enabled = Config.Bool["Log", "stats_log_enabled"];
         console_stats_enabled = Config.Bool["Log", "console_stats_enabled"];
-}
+    }
 }
 
