@@ -59,7 +59,7 @@ class DhtDaemon
     
     **************************************************************************/
     
-    private alias DhtNode!(MemoryStorageChannels, char[]) MemoryNode;
+    private alias DhtNode!(MemoryStorageChannels) MemoryNode;
     
     /***************************************************************************
     
@@ -67,7 +67,7 @@ class DhtDaemon
     
     **************************************************************************/
     
-    private alias DhtNode!(LogFilesStorageChannels, char[], size_t) LogFilesNode;
+    private alias DhtNode!(LogFilesStorageChannels) LogFilesNode;
     
     /***************************************************************************
     
@@ -86,9 +86,6 @@ class DhtDaemon
     private enum Storage
     {
         None,
-        HashTable,
-        Btree,
-        FileSystem,
         Memory,
         LogFiles
     }
@@ -119,6 +116,9 @@ class DhtDaemon
     {
         auto min = Config.Char["Server", "minval"];
         auto max = Config.Char["Server", "maxval"];
+
+        // TODO: remove this hash range padding, always specify full 32-bit
+        // hexadecimal numbers
         auto min_hash = DhtHash.toHashRangeStart(min);
         auto max_hash = DhtHash.toHashRangeEnd(max);
 
@@ -132,18 +132,24 @@ class DhtDaemon
 
         switch (storage)
         {
-            case Storage.Memory :
+            case Storage.Memory:
+                MemoryStorageChannels.Args args;
+                args.bnum = Config.Int["Options_Memory", "bnum"];
+
                 auto memory_node = new MemoryNode(node_item, min_hash, max_hash,
-                        size_limit, data_dir);
+                        data_dir, size_limit, args);
                 memory_node.error_callback(&this.dhtError);
                 this.node = memory_node;
                 break;
 
-            case Storage.LogFiles :
-                size_limit = 0;
+            case Storage.LogFiles:
+                LogFilesStorageChannels.Args args;
+                args.write_buffer_size = this.getLogFilesWriteBuffer;
+
+                size_limit = 0; // logfiles node ignores size limit setting
 
                 auto logfiles_node = new LogFilesNode(node_item, min_hash, max_hash,
-                        size_limit, data_dir, this.getLogFilesWriteBuffer());
+                        data_dir, size_limit, args);
                 logfiles_node.error_callback(&this.dhtError);
                 this.node = logfiles_node;
                 break;
@@ -154,8 +160,8 @@ class DhtDaemon
         }
 
         this.service_threads = new ServiceThreads;
-        this.service_threads.add(new MaintenanceThread(this.node, Config.Int["ServiceThreads", "maintenance_sleep"]));
-        this.service_threads.add(new StatsThread(this.node, Config.Int["ServiceThreads", "stats_sleep"]));
+        this.service_threads.add(new MaintenanceThread(this.node, Config.Int["ServiceThreads", "maintenance_period"]));
+        this.service_threads.add(new StatsThread(this.node, Config.Int["Log", "stats_log_period"]));
     }
 
     /***************************************************************************
@@ -211,25 +217,15 @@ class DhtDaemon
     {
         switch (Config.get!(char[])("Server", "storage_engine"))
         {
-            case "hashtable" :
-                return Storage.HashTable;
-        
-            case "btree" : 
-                return Storage.Btree;
-        
-            case "filesystem" : 
-                return Storage.FileSystem;
-        
-            case "memory" : 
+            case "memory":
                 return Storage.Memory;
-        
-            case "logfiles" :
+
+            case "logfiles":
                 return Storage.LogFiles;
-        
-            default :
+
+            default:
+                return Storage.None;
         }
-        
-        return Storage.None;
     }
     
     /***************************************************************************
