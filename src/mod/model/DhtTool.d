@@ -128,7 +128,7 @@ abstract class DhtTool
     final public void process ( Arguments args )
     in
     {
-        assert(this.validArgs(args), typeof(this).stringof ~ "process -- invalid arguments");
+        assert(this.validArgs(args), typeof(this).stringof ~ ".process -- invalid arguments");
     }
     body
     {
