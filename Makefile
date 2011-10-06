@@ -93,6 +93,15 @@ test-release:
 
 
 # ------------------------------------------------------------------------------
+# Upload
+
+EU_SERVERS = 1 2 3 4 5 6 7
+
+upload-node-eu:
+	$(foreach srv, $(EU_SERVERS), scp -C ${NODE_OUTPUT} root@eq6-$(srv).sociomantic.com:/tmp/dht;)
+
+
+# ------------------------------------------------------------------------------
 # Cleanup
 
 clean:
