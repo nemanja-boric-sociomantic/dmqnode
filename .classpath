@@ -2,5 +2,15 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="descent.USER_LIBRARY/dlibs"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/swarm">
+		<accessrules>
+			<accessrule kind="accessible" pattern="."/>
+		</accessrules>
+	</classpathentry>
+	<classpathentry combineaccessrules="false" kind="src" path="/tango">
+		<accessrules>
+			<accessrule kind="accessible" pattern="."/>
+		</accessrules>
+	</classpathentry>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
