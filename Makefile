@@ -16,6 +16,7 @@ PRODUCER_OUTPUT = bin/queueproducer
 TEST_TARGET = src/main/queuetest.d
 TEST_OUTPUT = bin/queuetest
 
+
 # ------------------------------------------------------------------------------
 # Xfbuild flags
 
@@ -30,6 +31,7 @@ FLAGS =\
 	-version=NewTango \
 	-version=CDGC \
 	-Isrc \
+    -I../swarm \
 	-L-lminilzo \
 	-L-lglib-2.0 \
 	-L-lebtree
