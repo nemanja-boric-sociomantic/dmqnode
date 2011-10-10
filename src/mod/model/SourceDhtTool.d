@@ -249,7 +249,7 @@ abstract class SourceDhtTool : DhtTool
 
         Reads the tool's settings from validated command line arguments. This
         method reads only the base class' arguments (see module header), then
-        calls the readArgs_() method to read any additional command line
+        calls the readArgs__() method to read any additional command line
         arguments required by the derived class.
 
         Params:
@@ -257,7 +257,7 @@ abstract class SourceDhtTool : DhtTool
     
     ***************************************************************************/
 
-    final override protected void readArgs ( Arguments args )
+    final override protected void readArgs_ ( Arguments args )
     {
         super.dht_nodes_config = args.getString("source");
         
@@ -291,10 +291,10 @@ abstract class SourceDhtTool : DhtTool
             this.range.key2 = this.range.key1;
         }
 
-        this.readArgs_(args);
+        this.readArgs__(args);
     }
 
-    protected void readArgs_ ( Arguments args )
+    protected void readArgs__ ( Arguments args )
     {
     }
 

@@ -106,17 +106,27 @@ abstract class DhtTool
 
         if ( !args.parse(arguments) )
         {
-            args.displayHelp(exe_name);
-
             if ( !args.exists("help") )
             {
                 Stderr.formatln("Invalid arguments:");
                 args.displayErrors();
             }
+
+            args.displayHelp(exe_name);
+
             return false;
         }
 
-        return this.validArgs(args);
+        if ( this.validArgs(args) )
+        {
+            return true;
+        }
+        else
+        {
+            args.displayHelp(exe_name);
+
+            return false;
+        }
     }
 
 
@@ -231,10 +241,10 @@ abstract class DhtTool
     
     ***************************************************************************/
     
-    protected void readArgs ( Arguments args )
+    final protected void readArgs ( Arguments args )
     in
     {
-        assert(this.validArgs(args), typeof(this).stringof ~ "readArgs_ - invalid arguments");
+        assert(this.validArgs(args), typeof(this).stringof ~ ".readArgs_: invalid arguments");
     }
     body
     {
