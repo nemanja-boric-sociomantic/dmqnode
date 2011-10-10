@@ -25,7 +25,7 @@
 
 *******************************************************************************/
 
-module src.mod.dump.DhtRemove;
+module src.mod.remove.DhtRemove;
 
 
 
@@ -59,7 +59,7 @@ debug private import ocean.util.log.Trace;
 
 *******************************************************************************/
 
-class DhtRemove : SourceDhtTool
+public class DhtRemove : SourceDhtTool
 {
     /***************************************************************************
 
@@ -81,7 +81,7 @@ class DhtRemove : SourceDhtTool
             true if args are valid
     
     ***************************************************************************/
-    
+
     override protected bool validArgs_ ( Arguments args )
     {
         if ( args.exists("start") || args.exists("end") )
@@ -89,7 +89,7 @@ class DhtRemove : SourceDhtTool
             Stderr.formatln("Dht nodes do not currently support remove range");
             return false;
         }
-        
+
         return true;
     }
 
@@ -100,18 +100,18 @@ class DhtRemove : SourceDhtTool
         channel to stdout.
         
         Params:
-            dht = dht client to perform query with
             channel = name of channel to dump
             start = start of hash range to query
             end = end of hash range to query
     
     ***************************************************************************/
     
-    protected void processChannel ( DhtClient dht, char[] channel, hash_t start, hash_t end )
+    protected void processChannel ( char[] channel, hash_t start, hash_t end )
     {
         if ( start == hash_t.min && end == hash_t.max )
         {
-            dht.removeChannel(channel).eventLoop();
+            super.dht.assign(super.dht.removeChannel(channel, &super.notifier));
+            super.epoll.eventLoop();
         }
         else
         {
@@ -128,15 +128,15 @@ class DhtRemove : SourceDhtTool
         channel to stdout.
         
         Params:
-            dht = dht client to perform query with
             channel = channel to query
             key = hash of record to dump
     
     ***************************************************************************/
     
-    protected void processRecord ( DhtClient dht, char[] channel, hash_t key)
+    protected void processRecord ( char[] channel, hash_t key)
     {
-        dht.remove(channel, key).eventLoop();
+        super.dht.assign(super.dht.remove(channel, key, &super.notifier));
+        super.epoll.eventLoop();
         Stdout.formatln("Removed record 0x{:x8} from {}", key, channel);
     }
 }

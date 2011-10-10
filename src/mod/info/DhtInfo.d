@@ -271,25 +271,20 @@ class DhtInfo : DhtTool
 
 
     /***************************************************************************
-    
-        Checks whether the parsed command line args are valid.
-    
+
+        Performs any additional command line argument validation which cannot be
+        performed by the Arguments class.
+
         Params:
             args = command line arguments object to validate
-    
+
         Returns:
             true if args are valid
-    
+
     ***************************************************************************/
-    
+
     override protected bool validArgs ( Arguments args )
     {
-        if ( !args.exists("source") )
-        {
-            Stderr.formatln("No xml source file specified (use -S)");
-            return false;
-        }
-
         if ( args.getInt!(size_t)("width") < 1 )
         {
             Stderr.formatln("Cannot display monitor with < 1 columns!");
@@ -298,8 +293,8 @@ class DhtInfo : DhtTool
 
         return true;
     }
-    
-    
+
+
     /***************************************************************************
     
         Initialises this instance from the specified command line args.
@@ -391,11 +386,11 @@ class DhtInfo : DhtTool
 
         bool output;
         super.dht.assign(super.dht.getVersion(
-                ( DhtClient.RequestContext context, char[] api_version )
+                ( DhtClient.RequestContext context, char[] address, ushort port, char[] api_version )
                 {
                     if ( api_version.length && !output )
                     {
-                        Stdout.formatln("  API: {}", api_version);
+                        Stdout.formatln("  {}:{} API: {}", address, port, api_version);
                         output = true;
                     }
                 }, &this.notifier));

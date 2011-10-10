@@ -90,6 +90,7 @@ abstract class DhtTool
         addArgs_() method to specify additional arguments.
 
         Params:
+            exe_name = name of program executable
             args = arguments object used to parse command line arguments
             arguments = list of command line arguments (excluding the executable
                 name)
@@ -98,14 +99,20 @@ abstract class DhtTool
             true if the command line args are valid
 
     ***************************************************************************/
-    
-    final public bool validateArgs ( Arguments args, char[][] arguments )
+
+    final public bool validateArgs ( char[] exe_name, Arguments args, char[][] arguments )
     {
         this.addArgs(args);
 
-        if ( arguments.length && !args.parse(arguments) )
+        if ( !args.parse(arguments) )
         {
-            Stderr.formatln("Invalid arguments");
+            args.displayHelp(exe_name);
+
+            if ( !args.exists("help") )
+            {
+                Stderr.formatln("Invalid arguments:");
+                args.displayErrors();
+            }
             return false;
         }
 
@@ -194,33 +201,16 @@ abstract class DhtTool
 
     /***************************************************************************
 
-        Sets up the list of command line arguments handled by the derived class.
-        The base class' arguments are set up by the addArgs() method. Derived
-        classes should override this method to add any additional arguments.
-    
-        Params:
-            args = arguments object
-    
-    ***************************************************************************/
+        Performs any additional command line argument validation which cannot be
+        performed by the Arguments class. Derived classes should override
+        this method to perform any validation required.
 
-    protected void addArgs_ ( Arguments args )
-    {
-    }
-
-
-    /***************************************************************************
-
-        Validates command line arguments in the passed Arguments object. The
-        base class' arguments (see module header) are validated by the
-        validArgs() method. Derived classes should override this method to
-        validate any additional arguments.
-    
         Params:
             args = arguments object used to parse command line arguments
-    
+
         Returns:
             true if the command line args are valid
-    
+
     ***************************************************************************/
 
     protected bool validArgs ( Arguments args )
@@ -253,6 +243,7 @@ abstract class DhtTool
 
     abstract protected void readArgs_ ( Arguments args );
 
+
     /***************************************************************************
 
         Sets up the list of handled command line arguments. This method sets up
@@ -270,6 +261,22 @@ abstract class DhtTool
         args("help").aliased('?').aliased('h').help("display this help");
 
         this.addArgs_(args);
+    }
+
+
+    /***************************************************************************
+
+        Sets up the list of command line arguments handled by the derived class.
+        The base class' arguments are set up by the addArgs() method. Derived
+        classes should override this method to add any additional arguments.
+    
+        Params:
+            args = arguments object
+    
+    ***************************************************************************/
+
+    protected void addArgs_ ( Arguments args )
+    {
     }
 
 
@@ -409,6 +416,7 @@ abstract class DhtTool
             Parses and validates command line arguments.
             
             Params:
+                exe_name = name of program executable
                 args = arguments object
                 arguments = command line args (excluding the file name)
         
@@ -417,9 +425,9 @@ abstract class DhtTool
         
         ***********************************************************************/
         
-        static public bool parseArgs ( Arguments args, char[][] arguments )
+        static public bool parseArgs ( char[] exe_name, Arguments args, char[][] arguments )
         {
-            return instance().validateArgs(args, arguments);
+            return instance().validateArgs(exe_name, args, arguments);
         }
 
 

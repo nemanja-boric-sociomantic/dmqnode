@@ -53,16 +53,12 @@ void main ( char[][] arguments )
 {
     auto app_name = arguments[0];
 
-    // Define valid arguments
+    // parse arguments
     scope args = new Arguments();
-    if ( DhtRemove.parseArgs(args, arguments[1..$]) )
+    if ( DhtRemove.parseArgs(arguments[0], args, arguments[1..$]) )
     {
         // run app
         OceanException.run(&DhtRemove.run, args);
-    }
-    else
-    {
-        args.displayHelp(app_name);
     }
 }
 

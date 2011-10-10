@@ -30,7 +30,7 @@
 
 *******************************************************************************/
 
-module mod.model.SourceDhtTool;
+module src.mod.model.SourceDhtTool;
 
 
 
@@ -107,19 +107,16 @@ abstract class SourceDhtTool : DhtTool
         Main process method. Runs the tool based on the passed command line
         arguments.
     
-        Params:
-            dht = dht client to use
-
     ***************************************************************************/
     
-    final protected void process_ ( DhtClient dht )
+    final protected void process_ ( )
     {
         if ( this.channels.all_channels )
         {
             with ( this.range.RangeType ) switch ( this.range.type )
             {
                 case KeyRange:
-                    this.processAllChannels(dht, this.range.key1, this.range.key2);
+                    this.processAllChannels(this.range.key1, this.range.key2);
                     break;
             }
         }
@@ -128,11 +125,11 @@ abstract class SourceDhtTool : DhtTool
             with ( this.range.RangeType ) switch ( this.range.type )
             {
                 case SingleKey:
-                    this.processRecord(dht, this.channels.channel, this.range.key1);
+                    this.processRecord(this.channels.channel, this.range.key1);
                     break;
     
                 case KeyRange:
-                    this.processChannel(dht, this.channels.channel, this.range.key1, this.range.key2);
+                    this.processChannel(this.channels.channel, this.range.key1, this.range.key2);
                     break;
             }
         }
@@ -144,14 +141,13 @@ abstract class SourceDhtTool : DhtTool
         Runs the tool over the specified hash range on a single channel.
 
         Params:
-            dht = dht client
             channel = name of channel
             start = start of hash range
             end = end of hash range
     
     ***************************************************************************/
 
-    abstract protected void processChannel ( DhtClient dht, char[] channel, hash_t start, hash_t end );
+    abstract protected void processChannel ( char[] channel, hash_t start, hash_t end );
 
 
     /***************************************************************************
@@ -159,13 +155,12 @@ abstract class SourceDhtTool : DhtTool
         Runs the tool over the specified record in a single channel.
 
         Params:
-            dht = dht client
             channel = name of channel
             key = record hash
     
     ***************************************************************************/
 
-    abstract protected void processRecord ( DhtClient dht, char[] channel, hash_t key);
+    abstract protected void processRecord ( char[] channel, hash_t key);
 
 
     /***************************************************************************
@@ -200,11 +195,12 @@ abstract class SourceDhtTool : DhtTool
 
     /***************************************************************************
 
-        Validates command line arguments in the passed Arguments object. This
-        method validates only the base class' arguments (see module header),
-        then calls the validArgs_() method to validate any additional command
-        line arguments required by the derived class.
-    
+        Performs any additional command line argument validation which cannot be
+        performed by the Arguments class. This method validates only the base
+        class' arguments (see module header), then calls the validArgs_() method
+        to validate any additional command line arguments required by the
+        derived class.
+
         Params:
             args = arguments object used to parse command line arguments
     
@@ -215,12 +211,6 @@ abstract class SourceDhtTool : DhtTool
     
     final override protected bool validArgs ( Arguments args )
     {
-        if ( !args.exists("source") )
-        {
-            Stderr.formatln("No xml source file specified (use -S)");
-            return false;
-        }
-        
         bool all_channels = args.exists("all_channels");
         bool one_channel = args.exists("channel");
     
@@ -239,13 +229,13 @@ abstract class SourceDhtTool : DhtTool
             Stderr.formatln("Please specify exactly one of the following options: complete range (-C), key range (-s .. -e) or single key (-k)");
             return false;
         }
-        
+
         if ( single_key && all_channels )
         {
             Stderr.formatln("Cannot process a single key (-k) over all channels (-A)");
             return false;
         }
-    
+
         return this.validArgs_(args);
     }
 
@@ -315,28 +305,29 @@ abstract class SourceDhtTool : DhtTool
         dht node cluster. The channels are processed in series.
 
         Params:
-            dht = dht client
             start = start of hash range
             end = end of hash range
 
     ***************************************************************************/
 
-    private void processAllChannels ( DhtClient dht, hash_t start, hash_t end )
+    private void processAllChannels ( hash_t start, hash_t end )
     {
         char[][] channels;
-        dht.getChannels(
+        super.dht.assign(super.dht.getChannels(
                 ( DhtClient.RequestContext context, char[] channel )
                 {
                     if ( channel.length && !channels.contains(channel) )
                     {
                         channels.appendCopy(channel);
                     }
-                }
-            ).eventLoop();
-    
+                },
+                &super.notifier)
+            );
+        super.epoll.eventLoop;
+
         foreach ( channel; channels )
         {
-            this.processChannel(dht, channel, start, end);
+            this.processChannel(channel, start, end);
         }
     }
 }

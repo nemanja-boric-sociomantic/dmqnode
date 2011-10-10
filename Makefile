@@ -48,7 +48,7 @@ DEBUG_FLAGS = ${FLAGS}\
 # ------------------------------------------------------------------------------
 # Debug build of all targets (default)
 
-default: node remove info
+default: node remove info test
 
 
 # ------------------------------------------------------------------------------
