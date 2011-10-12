@@ -30,19 +30,17 @@ private import  ocean.text.Arguments;
 
 /*******************************************************************************
 
-    Arguments Handler
-    
-    Checks if command line argument is valid and starts module
-    
+    Parse command line arguments looking for options
+
     Params:
-        arguments = array of command line arguments
-    
-    Returns: 
-        false if no or wrong argument is given
+        arguments = array with raw command line arguments
+
+    Returns:
+        Parsed arguments
 
 ******************************************************************************/
 
-bool isArgument ( char[][] arguments )
+Arguments parseArguments ( char[][] arguments )
 {
     Arguments args = new Arguments;
 
@@ -50,11 +48,26 @@ bool isArgument ( char[][] arguments )
 
     args.parse(arguments);
 
+    return args;
+}
+
+/*******************************************************************************
+
+    Validate the parsed command line arguments
+
+    Params:
+        args = command line arguments
+
+    Returns:
+        false if wrong arguments are given
+
+******************************************************************************/
+
+bool validateArguments ( Arguments args )
+{
     if ( args.exists("daemon") )
-    {
-        return OceanException.run(&DhtNodeServer.run);
-    }
-    
+        return true;
+
     return false;
 }
 
@@ -90,13 +103,21 @@ void printUsage ()
 
 ******************************************************************************/
 
-void main ( char[][] args )
+int main ( char[][] args )
 {
-    MainConfig.init(args[0]);
-    
-    if (!isArgument(args))
+    auto arguments = parseArguments(args);
+
+    if (!validateArguments(arguments))
     {
         printUsage();
+        return 1;
     }
+
+    MainConfig.init(args[0]);
+
+    if (OceanException.run(&DhtNodeServer.run))
+        return 0;
+
+    return 2;
 }
 
