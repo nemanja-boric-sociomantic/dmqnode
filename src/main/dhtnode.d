@@ -1,9 +1,9 @@
 /*******************************************************************************
 
     DHT Node Server Daemon
-    
+
     copyright:      Copyright (c) 2009 sociomantic labs. All rights reserved
-    
+
     version:        Jun 2009: Initial release
 
     authors:        Thomas Nicolai & Lars Kirchhoff
@@ -14,7 +14,7 @@ module src.main.dhtnode;
 
 /*******************************************************************************
 
-    Imports 
+    Imports
 
 ******************************************************************************/
 
@@ -45,6 +45,7 @@ Arguments parseArguments ( char[][] arguments )
     Arguments args = new Arguments;
 
     args("daemon").aliased('d');
+    args("config").aliased('c').params(1);
 
     args.parse(arguments);
 
@@ -81,23 +82,25 @@ void printUsage ()
 {
     Stdout.formatln("
     Usage:
-        dhtnode [-d]
-                
+        dhtnode [-d] [-c CONFIG]
+
     Description:
         dht node server daemon
-    
+
     Parameter:
         -d, --daemon         start local dht node server
-                
+        -c, --config CONFIG  use the configuration file CONFIG instead of the
+                             default <bin-dir>/etc/config.ini.
+
     Example:
-        dhtnode -d
+        dhtnode -d -c path/to/config.ini
     ");
 }
 
 /*******************************************************************************
 
     Main (Start)
-    
+
     Param:
         args = command line arguments
 
@@ -113,7 +116,11 @@ int main ( char[][] args )
         return 1;
     }
 
-    MainConfig.init(args[0]);
+    char[] config;
+    if (arguments("config").set)
+        config = arguments("config").assigned[$-1];
+
+    MainConfig.init(args[0], config);
 
     if (OceanException.run(&DhtNodeServer.run))
         return 0;

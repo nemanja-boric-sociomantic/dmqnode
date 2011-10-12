@@ -73,14 +73,19 @@ static:
         Params
             exepath = path to running executable as given by command line
                       argument 0
+            config_file = config file to read, if not specified uses
+                          <exepath>/etc/config.ini.
     
      **************************************************************************/
 
-    public void init ( char[] exepath )
+    public void init ( char[] exepath, char[] config_file = null )
     {
         cmdpath.set(exepath);
 
-        Config.init(cmdpath.prepend(["etc", "config.ini"]));
+        if (config_file)
+            Config.init(config_file);
+        else
+            Config.init(cmdpath.prepend(["etc", "config.ini"]));
 
         // Log
         auto error_log = Config.Char["Log", "error"];
