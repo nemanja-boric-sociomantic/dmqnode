@@ -134,7 +134,7 @@ class DhtDaemon
         {
             case Storage.Memory:
                 MemoryStorageChannels.Args args;
-                args.bnum = Config.Int["Options_Memory", "bnum"];
+                Config.get(args.bnum, "Options_Memory", "bnum");
 
                 auto memory_node = new MemoryNode(node_item, min_hash, max_hash,
                         data_dir, size_limit, args);
@@ -144,7 +144,7 @@ class DhtDaemon
 
             case Storage.LogFiles:
                 LogFilesStorageChannels.Args args;
-                args.write_buffer_size = this.getLogFilesWriteBuffer;
+                Config.get(args.write_buffer_size, "Options_LogFiles", "write_buffer_size");
 
                 size_limit = 0; // logfiles node ignores size limit setting
 
@@ -159,9 +159,15 @@ class DhtDaemon
                 break;
         }
 
+        uint stats_log_period = 300;
+        Config.get(stats_log_period, "Log", "stats_log_period");
+
+        uint maintenance_period = 3600;
+        Config.get(stats_log_period, "ServiceThreads", "maintenance_period");
+
         this.service_threads = new ServiceThreads;
-        this.service_threads.add(new MaintenanceThread(this.node, Config.Int["ServiceThreads", "maintenance_period"]));
-        this.service_threads.add(new StatsThread(this.node, Config.Int["Log", "stats_log_period"]));
+        this.service_threads.add(new MaintenanceThread(this.node, maintenance_period));
+        this.service_threads.add(new StatsThread(this.node, stats_log_period));
     }
 
     /***************************************************************************
@@ -226,22 +232,6 @@ class DhtDaemon
             default:
                 return Storage.None;
         }
-    }
-    
-    /***************************************************************************
-    
-        Reads the file output write buffer size for the LogFiles storage engine,
-        using the default if not specified in configuration.
-        
-    **************************************************************************/
-    
-    private size_t getLogFilesWriteBuffer ()
-    {
-        size_t wbs = LogFilesStorageChannels.DefaultWriteBufferSize;
-
-        Config.get(wbs, "Options_LogFiles", "write_buffer_size");
-
-        return wbs;
     }
 }
 
