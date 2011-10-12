@@ -43,65 +43,8 @@ private import tango.io.Stdout,
 
 *******************************************************************************/
 
-class QueueConsumer
+public class QueueConsumer
 {
-    /***************************************************************************
-    
-        Singleton instance of this class, used in static methods.
-    
-    ***************************************************************************/
-
-    private static typeof(this) singleton;
-
-    static private typeof(this) instance ( )
-    {
-        if ( !singleton )
-        {
-            singleton = new typeof(this);
-        }
-
-        return singleton;
-    }
-
-
-    /***************************************************************************
-
-        Parses and validates command line arguments.
-
-        Params:
-            args = arguments object
-            arguments = command line args (excluding the file name)
-
-        Returns:
-            true if the arguments are valid
-
-    ***************************************************************************/
-
-    static public bool parseArgs ( Arguments args, char[][] arguments )
-    {
-        return instance().validateArgs(args, arguments);
-    }
-
-
-    /***************************************************************************
-    
-        Main run method, called by OceanException.run.
-        
-        Params:
-            args = processed arguments
-    
-        Returns:
-            always true
-    
-    ***************************************************************************/
-
-    static public bool run ( Arguments args )
-    {
-        instance().process(args);
-        return true;
-    }
-
-
     /***************************************************************************
 
         Epoll select dispatcher.
@@ -132,26 +75,27 @@ class QueueConsumer
 
 
     /***************************************************************************
-    
-        Validates command line arguments.
-    
+
+        Parses and validates command line arguments.
+
         Params:
-            args = arguments processor
-            arguments = command line args
+            args = arguments object
+            arguments = command line args (excluding the file name)
 
         Returns:
-            true if arguments are valid
+            true if the arguments are valid
 
     ***************************************************************************/
 
-    private bool validateArgs ( Arguments args, char[][] arguments )
+    public bool parseArgs ( Arguments args, char[][] arguments )
     {
         args("source").required.params(1).aliased('S').help("config file listing queue nodes to connect to");
         args("channel").required.params(1).aliased('c').help("channel to consume");
         args("dump").aliased('d').help("dump consumed records to console");
 
-        if ( arguments.length && !args.parse(arguments) )
+        if ( !args.parse(arguments) )
         {
+            Stderr.formatln("Invalid arguments:");
             args.displayErrors();
             return false;
         }
@@ -171,7 +115,7 @@ class QueueConsumer
 
     ***************************************************************************/
 
-    private void process ( Arguments args )
+    public void run ( Arguments args )
     {
         uint pushed, returned;
 
@@ -192,15 +136,20 @@ class QueueConsumer
               {
                   Stdout.formatln("'{}'", value);
               }
-              
+
+              if ( value.length )
+              {
+                  num++;
+              }
+
               size_t free, used;
-              
+
               GC.usage(free, used);
-              
+
               BitGrouping.format(free, this.free_str, "b");
               BitGrouping.format(used, this.used_str, "b");
 
-              StaticPeriodicTrace.format("Memory used: {:d10}, free: {:d10}, produced: {}", 
+              StaticPeriodicTrace.format("Memory used: {:d10}, free: {:d10}, consumed: {}", 
                                          this.used_str, this.free_str, num);
           }, &this.notifier);
 
@@ -221,7 +170,7 @@ class QueueConsumer
     
     ***************************************************************************/
     
-    void notifier ( QueueClient.RequestNotification info )
+    private void notifier ( QueueClient.RequestNotification info )
     {
         if ( info.type == info.type.Finished )
         {

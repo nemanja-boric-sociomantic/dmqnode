@@ -49,13 +49,13 @@ debug private import tango.util.log.Trace;
 void main ( char[][] arguments )
 {
     auto app_name = arguments[0];
-    
-    // Define valid arguments
-    scope args = new Arguments();
-    if ( QueueConsumer.parseArgs(args, arguments[1..$]) )
+
+    scope args = new Arguments;
+    scope consumer = new QueueConsumer;
+
+    if ( consumer.parseArgs(args, arguments[1..$]) )
     {
-        // run app
-        OceanException.run(&QueueConsumer.run, args);
+        consumer.run(args);
     }
     else
     {
