@@ -44,7 +44,6 @@ Arguments parseArguments ( char[][] arguments )
 {
     Arguments args = new Arguments;
 
-    args("daemon").aliased('d');
     args("config").aliased('c').params(1);
 
     args.parse(arguments);
@@ -66,10 +65,7 @@ Arguments parseArguments ( char[][] arguments )
 
 bool validateArguments ( Arguments args )
 {
-    if ( args.exists("daemon") )
-        return true;
-
-    return false;
+    return true;
 }
 
 /*******************************************************************************
@@ -88,7 +84,7 @@ void printUsage ()
         dht node server daemon
 
     Parameter:
-        -d, --daemon         start local dht node server
+        -d, --daemon         start local dht node server [DEPRECATED]
         -c, --config CONFIG  use the configuration file CONFIG instead of the
                              default <bin-dir>/etc/config.ini.
 
