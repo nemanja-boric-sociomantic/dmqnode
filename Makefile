@@ -26,8 +26,6 @@ XFBUILD_FLAGS =\
 
 FLAGS =\
 	-L-lminilzo \
-    -L-lglib-2.0 \
-	-L-lebtree \
     -L-ldl \
     -I../swarm \
 	-version=CDGC \
@@ -44,6 +42,11 @@ DEBUG_FLAGS = ${FLAGS}\
 	-debug -gc ${UNITTESTFLAGS}
 # -debug=ConnectionHandler -debug=Raw
 
+NODE_FLAGS =\
+	-L-ltokyocabinet \
+	-version=GCSignalProtection \
+	-debug=SignalMask
+
 
 # ------------------------------------------------------------------------------
 # Debug build of all targets (default)
@@ -55,10 +58,10 @@ default: node remove info test
 # node debug & release builds
 
 node:
-	xfbuild +D=.deps-node +O=.objs-node +o=${NODE_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${NODE_TARGET} -L-ltokyocabinet
+	xfbuild +D=.deps-node +O=.objs-node +o=${NODE_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${NODE_FLAGS} ${NODE_TARGET}
 
 node-release:
-	xfbuild +D=.deps-node +O=.objs-node +o=${NODE_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${NODE_TARGET} -L-ltokyocabinet
+	xfbuild +D=.deps-node +O=.objs-node +o=${NODE_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${NODE_FLAGS} ${NODE_TARGET}
 
 
 
