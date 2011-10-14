@@ -609,7 +609,8 @@ class DhtInfo : DhtTool
     private void getChannelNames ( ref char[][] channel_names, out size_t longest_channel_name )
     {
         super.dht.assign(super.dht.getChannels(
-                ( DhtClient.RequestContext context, char[] channel )
+                ( DhtClient.RequestContext context, char[] address, ushort port,
+                  char[] channel )
                 {
                     if ( channel.length && !channel_names.contains(channel) )
                     {
