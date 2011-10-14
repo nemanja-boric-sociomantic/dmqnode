@@ -198,7 +198,7 @@ class DhtDaemon
         while ( this.service_threads.busy )
         {
             Trace.formatln("Shut down: Waiting for service threads to finish...");
-            Thread.sleep(1);
+            Thread.sleep(0.95); // 0.95 to avoid synching with stats thread!
         }
 
         this.service_threads.stop();
