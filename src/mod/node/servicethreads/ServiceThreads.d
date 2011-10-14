@@ -63,5 +63,40 @@ class ServiceThreads
             thread.start();
         }
     }
+
+
+    /***************************************************************************
+
+        Stops all service threads.
+    
+    ***************************************************************************/
+
+    public void stop ( )
+    {
+        foreach ( thread; this.threads )
+        {
+            thread.stop();
+        }
+    }
+
+
+    /***************************************************************************
+
+        Returns:
+            true if one or more service threads are busy
+    
+    ***************************************************************************/
+
+    public bool busy ( )
+    {
+        bool busy;
+
+        foreach ( thread; this.threads )
+        {
+            busy = busy || thread.busy;
+        }
+
+        return busy;
+    }
 }
 

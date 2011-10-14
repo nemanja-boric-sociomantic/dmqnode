@@ -22,26 +22,28 @@ module src.mod.node.DhtDaemon;
 
 *******************************************************************************/
 
-private import  src.mod.node.config.MainConfig;
+private import src.mod.node.config.MainConfig;
 
-private import  src.mod.node.servicethreads.ServiceThreads,
-                src.mod.node.servicethreads.StatsThread,
-                src.mod.node.servicethreads.MaintenanceThread;
+private import src.mod.node.servicethreads.ServiceThreads,
+               src.mod.node.servicethreads.StatsThread,
+               src.mod.node.servicethreads.MaintenanceThread;
 
-private import  ocean.io.select.model.ISelectClient;
+private import ocean.io.select.model.ISelectClient;
 
-private import  swarm.dht.DhtConst;
-private import  swarm.dht.DhtNode;
-private import  swarm.dht.DhtHash;
+private import swarm.dht.DhtConst;
+private import swarm.dht.DhtNode;
+private import swarm.dht.DhtHash;
 
-private import  swarm.dht.node.storage.MemoryStorageChannels;
-private import  swarm.dht.node.storage.LogFilesStorageChannels;
+private import swarm.dht.node.storage.MemoryStorageChannels;
+private import swarm.dht.node.storage.LogFilesStorageChannels;
 
-private import  swarm.dht.node.model.IDhtNode;
+private import swarm.dht.node.model.IDhtNode;
 
-private import  tango.util.log.Log, tango.util.log.AppendConsole;
+private import tango.core.Thread;
 
-debug private import ocean.util.log.Trace;
+private import tango.util.log.Log, tango.util.log.AppendConsole;
+
+private import ocean.util.log.Trace;
 
 
 
@@ -163,7 +165,7 @@ class DhtDaemon
         Config.get(stats_log_period, "Log", "stats_log_period");
 
         uint maintenance_period = 3600;
-        Config.get(stats_log_period, "ServiceThreads", "maintenance_period");
+        Config.get(maintenance_period, "ServiceThreads", "maintenance_period");
 
         this.service_threads = new ServiceThreads;
         this.service_threads.add(new MaintenanceThread(this.node, maintenance_period));
@@ -193,6 +195,14 @@ class DhtDaemon
     
     public void shutdown ( )
     {
+        while ( this.service_threads.busy )
+        {
+            Trace.formatln("Shut down: Waiting for service threads to finish...");
+            Thread.sleep(1);
+        }
+
+        this.service_threads.stop();
+
         return this.node.shutdown();
     }
 
@@ -210,7 +220,8 @@ class DhtDaemon
 
     private void dhtError ( Exception exception, IAdvancedSelectClient.Event event_info )
     {
-        OceanException.Warn("Exception caught in eventLoop: {}", exception.msg);
+        OceanException.Warn("Exception caught in eventLoop: '{}' @ {}:{}",
+                exception.msg, exception.file, exception.line);
     }
 
     /***************************************************************************

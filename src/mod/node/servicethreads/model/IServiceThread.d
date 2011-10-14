@@ -74,6 +74,25 @@ public abstract class IServiceThread : Thread
     ***************************************************************************/
 
     private uint update_time;
+    
+
+    /***************************************************************************
+
+        Flag set to true when busy.
+
+    ***************************************************************************/
+
+    private bool busy_;
+
+
+    /***************************************************************************
+
+        Flag set to true when stop has been requested. If the service thread is
+        busy it will be stopped when it has finished what it's doing.
+
+    ***************************************************************************/
+
+    private bool stop_;
 
 
     /***************************************************************************
@@ -100,6 +119,32 @@ public abstract class IServiceThread : Thread
 
     /***************************************************************************
 
+        Returns:
+            true if this service thread is busy
+
+    ***************************************************************************/
+
+    public bool busy ( )
+    {
+        return this.busy_;
+    }
+
+
+    /***************************************************************************
+
+        Requests this service thread to stop. If the service thread is busy it
+        will be stopped when it has finished what it's doing.
+
+    ***************************************************************************/
+
+    public void stop ( )
+    {
+        this.stop_ = true;
+    }
+
+
+    /***************************************************************************
+
         Thread main method. Repeatedly sleeps then calls the service methods on
         the node and on each channel in the node.
 
@@ -107,14 +152,17 @@ public abstract class IServiceThread : Thread
 
     private void run ( )
     {
-        while ( !Terminator.terminating )
+        while ( !Terminator.terminating && !this.stop_ ) // TODO: checking the term flag && stop isn't necessary, I think
         {
             try
             {
                 Thread.sleep(this.update_time);
 
-                if ( !Terminator.terminating )
+                if ( !Terminator.terminating && !this.stop_ )
                 {
+                    this.busy_ = true;
+                    scope ( exit ) this.busy_ = false;
+
                     this.serviceNode(this.node_info, this.update_time);
         
                     foreach ( channel; this.channels_service )
