@@ -28,7 +28,6 @@ FLAGS =\
 	-L-lminilzo \
     -L-ldl \
     -I../swarm \
-	-version=CDGC \
     -version=NewTango
 
 UNITTESTFLAGS =\
@@ -43,9 +42,10 @@ DEBUG_FLAGS = ${FLAGS}\
 # -debug=ConnectionHandler -debug=Raw
 
 NODE_FLAGS =\
-	-L-ltokyocabinet \
-	-version=GCSignalProtection \
-	-debug=SignalMask
+	-L-ltokyocabinet
+
+CLIENT_FLAGS =\
+	-L-lebtree
 
 
 # ------------------------------------------------------------------------------
@@ -69,30 +69,30 @@ node-release:
 # remove debug & release builds
 
 remove:
-	xfbuild +D=.deps-remove +O=.objs-remove +o=${REMOVE_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${REMOVE_TARGET}
+	xfbuild +D=.deps-remove +O=.objs-remove +o=${REMOVE_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${CLIENT_FLAGS} ${REMOVE_TARGET}
 
 remove-release:
-	xfbuild +D=.deps-remove +O=.objs-remove +o=${REMOVE_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${REMOVE_TARGET}
+	xfbuild +D=.deps-remove +O=.objs-remove +o=${REMOVE_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${CLIENT_FLAGS} ${REMOVE_TARGET}
 
 
 # ------------------------------------------------------------------------------
 # info debug & release builds
 
 info:
-	xfbuild +D=.deps-info +O=.objs-info +o=${INFO_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${INFO_TARGET}
+	xfbuild +D=.deps-info +O=.objs-info +o=${INFO_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${CLIENT_FLAGS} ${INFO_TARGET}
 
 info-release:
-	xfbuild +D=.deps-info +O=.objs-info +o=${INFO_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${INFO_TARGET}
+	xfbuild +D=.deps-info +O=.objs-info +o=${INFO_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${CLIENT_FLAGS} ${INFO_TARGET}
 
 
 # ------------------------------------------------------------------------------
 # test debug & release builds
 
 test:
-	xfbuild +D=.deps-test +O=.objs-test +o=${TEST_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${TEST_TARGET}
+	xfbuild +D=.deps-test +O=.objs-test +o=${TEST_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${CLIENT_FLAGS} ${TEST_TARGET}
 
 test-release:
-	xfbuild +D=.deps-test +O=.objs-test +o=${TEST_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${TEST_TARGET}
+	xfbuild +D=.deps-test +O=.objs-test +o=${TEST_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${CLIENT_FLAGS} ${TEST_TARGET}
 
 
 # ------------------------------------------------------------------------------
