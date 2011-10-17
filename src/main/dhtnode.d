@@ -8,119 +8,114 @@
 
     authors:        Thomas Nicolai & Lars Kirchhoff
 
-******************************************************************************/
+*******************************************************************************/
 
 module src.main.dhtnode;
+
+
 
 /*******************************************************************************
 
     Imports
 
-******************************************************************************/
+*******************************************************************************/
 
-private import  src.mod.node.config.MainConfig;
+private import src.mod.node.DhtNode;
 
-private import  src.mod.node.DhtNodeServer;
+private import src.mod.node.config.MainConfig;
 
-private import  ocean.util.OceanException;
+private import src.mod.node.util.Terminator;
 
-private import  tango.io.Stdout;
+private import ocean.sys.SignalHandler;
 
-private import  ocean.text.Arguments;
+private import tango.io.Stdout;
+
+private import ocean.text.Arguments;
+
+debug private import ocean.util.log.Trace;
+
+
 
 /*******************************************************************************
 
     Parse command line arguments looking for options
 
     Params:
+        args = arguments parser
         arguments = array with raw command line arguments
 
     Returns:
-        Parsed arguments
+        true if arguments parsed ok, false on error
 
-******************************************************************************/
+*******************************************************************************/
 
-Arguments parseArguments ( char[][] arguments )
+private bool parseArguments ( Arguments args, char[][] arguments )
 {
-    Arguments args = new Arguments;
+    args("config").aliased('c').params(1).help("use the configuration file CONFIG instead of the default <bin-dir>/etc/config.ini");
+    args("daemonize").aliased('d').help("start daemonized dht node server [DEPRECATED]");
+    args("help").aliased('h').help("display help");
 
-    args("config").aliased('c').params(1);
-
-    args.parse(arguments);
-
-    return args;
+    return args.parse(arguments);
 }
+
 
 /*******************************************************************************
 
-    Validate the parsed command line arguments
-
-    Params:
-        args = command line arguments
-
-    Returns:
-        false if wrong arguments are given
-
-******************************************************************************/
-
-bool validateArguments ( Arguments args )
-{
-    return true;
-}
-
-/*******************************************************************************
-
-    Print usage
-
-******************************************************************************/
-
-void printUsage ()
-{
-    Stdout.formatln("
-    Usage:
-        dhtnode [-d] [-c CONFIG]
-
-    Description:
-        dht node server daemon
-
-    Parameter:
-        -d, --daemon         start local dht node server [DEPRECATED]
-        -c, --config CONFIG  use the configuration file CONFIG instead of the
-                             default <bin-dir>/etc/config.ini.
-
-    Example:
-        dhtnode -d -c path/to/config.ini
-    ");
-}
-
-/*******************************************************************************
-
-    Main (Start)
+    Main function. Parses command line arguments and either displays help or
+    starts dht node.
 
     Param:
-        args = command line arguments
+        arguments = array with raw command line arguments
 
-******************************************************************************/
+*******************************************************************************/
 
-int main ( char[][] args )
+private int main ( char[][] arguments )
 {
-    auto arguments = parseArguments(args);
+    auto app_name = arguments[0];
 
-    if (!validateArguments(arguments))
+    auto args = new Arguments;
+    auto args_ok   = parseArguments(args, arguments);
+
+    if ( !args_ok || args("help").set )
     {
-        printUsage();
-        return 1;
+        args.displayErrors();
+        args.displayHelp(app_name);
+
+        return args_ok ? 0 : 1;
     }
 
     char[] config;
-    if (arguments("config").set)
-        config = arguments("config").assigned[$-1];
+    if ( args("config").set )
+    {
+        config = args("config").assigned[$-1];
+    }
 
-    MainConfig.init(args[0], config);
+    MainConfig.init(app_name, config);
 
-    if (OceanException.run(&DhtNodeServer.run))
-        return 0;
+    SignalHandler.register(SignalHandler.AppTermination, &shutdown);
 
-    return 2;
+    auto dht = new DhtNodeServer;
+    dht.run;
+
+    return 0;
+}
+
+
+/*******************************************************************************
+
+    SIGINT handler. Sets the termination flag.
+
+    Returns:
+        false to prevent the default SIGINT signal handler from being called
+
+*******************************************************************************/
+
+private bool shutdown ( int code )
+{
+    debug Trace.formatln('\n' ~ SignalHandler.getId(code));
+
+    Terminator.terminating = true;
+
+    return false;
 }
 

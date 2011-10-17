@@ -32,16 +32,22 @@ private import ocean.util.log.MessageLogger;
 
 private import ocean.util.log.StaticTrace;
 
-private import swarm.dht.node.model.IDhtNode,
-               swarm.dht.node.model.IDhtNodeInfo;
-
 private import ocean.text.convert.Layout;
 
 debug private import ocean.util.log.Trace;
 
+private import swarm.dht.node.model.IDhtNode,
+               swarm.dht.node.model.IDhtNodeInfo;
+
 private import tango.core.Memory;
 
 
+
+/*******************************************************************************
+
+    Stats service thread.
+
+*******************************************************************************/
 
 public class StatsThread : IServiceThread
 {
@@ -115,7 +121,7 @@ public class StatsThread : IServiceThread
     
     public this ( IDhtNode dht, uint log_update_time )
     {
-        super(dht, 1);
+        super(dht, 1000);
 
         this.records_per_sec = new SlidingAverageTime!(ulong)(5, 1_000, 1_000);
 
@@ -155,7 +161,7 @@ public class StatsThread : IServiceThread
         if ( MainConfig.console_stats_enabled )
         {
             size_t used, free;
-            GC.usage(used, free);
+//            GC.usage(used, free);
 
             BitGrouping.format(free, this.free_str, "b");
             BitGrouping.format(used, this.used_str, "b");
@@ -218,97 +224,3 @@ public class StatsThread : IServiceThread
     }
 }
 
-
-/+
-/*******************************************************************************
-
-    Imports
-
-*******************************************************************************/
-
-private import src.mod.node.servicethreads.model.IServiceThread;
-
-private import ocean.util.TraceLog;
-
-private import swarm.dht.node.model.IDhtNode,
-               swarm.dht.node.model.IDhtNodeInfo;
-
-private import swarm.dht.node.storage.engine.model.IStorageEngineService;
-
-debug private import ocean.util.log.Trace;
-
-
-
-class StatsThread : IServiceThread
-{
-    /***************************************************************************
-
-        Constructor.
-        
-        Params:
-            dht = dht node to service
-            update_time = time to sleep between runs of the service
-    
-    ***************************************************************************/
-
-    public this ( IDhtNode dht, uint update_time )
-    {
-        super(dht, update_time);
-    }
-
-
-    /***************************************************************************
-
-        Method called on the node info interface once per service run. Outputs
-        stats info to the trace log.
-
-        Params:
-            node_info = node information interface
-            seconds_elapsed = time since this service was last performed
-    
-    ***************************************************************************/
-
-    protected void serviceNode ( IDhtNodeInfo node_info, uint seconds_elapsed )
-    {
-        auto received = node_info.bytesReceived;
-        auto sent = node_info.bytesSent;
-        TraceLog.write("Node stats: {} sent ({} K/s), {} received ({} K/s), handling {} connections",
-                sent, cast(float)(sent / 1024) / cast(float)seconds_elapsed,
-                received, cast(float)(received / 1024) / cast(float)seconds_elapsed,
-                node_info.numOpenConnections);
-        node_info.resetByteCounters();
-    }
-
-
-    /***************************************************************************
-
-        Method called on the channel service interface of all storage channels
-        once per service run. Does nothing (required by base class).
-    
-        Params:
-            channel = channel service interface
-            seconds_elapsed = time since this service was last performed
-    
-    ***************************************************************************/
-
-    protected void serviceChannel ( IStorageEngineService channel, uint seconds_elapsed )
-    {
-    }
-
-
-    /***************************************************************************
-
-        Gets the identifying string for this class (used for message printing).
-    
-        Returns:
-            class id
-    
-    ***************************************************************************/
-    
-    protected char[] id ( )
-    {
-        return typeof(this).stringof;
-    }
-}
-
-+/

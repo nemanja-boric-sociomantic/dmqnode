@@ -12,7 +12,7 @@
 
 ******************************************************************************/
 
-module src.mod.node.DhtDaemon;
+module src.mod.node.DhtNode;
 
 
 
@@ -49,11 +49,11 @@ private import ocean.util.log.Trace;
 
 /*******************************************************************************
 
-    DhtDaemon
+    DhtNode
 
 ******************************************************************************/
 
-class DhtDaemon
+public class DhtNodeServer
 {
     /***************************************************************************
     
@@ -167,17 +167,17 @@ class DhtDaemon
         uint maintenance_period = 3600;
         Config.get(maintenance_period, "ServiceThreads", "maintenance_period");
 
-        this.service_threads = new ServiceThreads;
+        this.service_threads = new ServiceThreads(&this.shutdown);
         this.service_threads.add(new MaintenanceThread(this.node, maintenance_period));
         this.service_threads.add(new StatsThread(this.node, stats_log_period));
     }
 
     /***************************************************************************
-    
+
         Runs the DHT node
-    
-    **************************************************************************/
-    
+
+    ***************************************************************************/
+
     public int run ( )
     {
         this.service_threads.start();
@@ -186,24 +186,17 @@ class DhtDaemon
 
         return true;
     }
-    
+
     /***************************************************************************
-    
-        Shuts down the DHT node
-    
-    **************************************************************************/
-    
+
+        Service threads finished callback (called when all service threads have
+        finished). Shuts down the DHT node.
+
+    ***************************************************************************/
+
     public void shutdown ( )
     {
-        while ( this.service_threads.busy )
-        {
-            Trace.formatln("Shut down: Waiting for service threads to finish...");
-            Thread.sleep(0.95); // 0.95 to avoid synching with stats thread!
-        }
-
-        this.service_threads.stop();
-
-        return this.node.shutdown();
+        this.node.shutdown();
     }
 
     /***************************************************************************
@@ -216,7 +209,7 @@ class DhtDaemon
             exception = exception which occurred
             event_info = info about epoll event during which exception occurred
 
-    **************************************************************************/
+    ***************************************************************************/
 
     private void dhtError ( Exception exception, IAdvancedSelectClient.Event event_info )
     {

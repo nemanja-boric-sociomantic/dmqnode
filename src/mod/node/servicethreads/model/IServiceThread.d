@@ -37,7 +37,13 @@ debug private import ocean.util.log.Trace;
 
 
 
-public abstract class IServiceThread : Thread
+/*******************************************************************************
+
+    Service thread abstract base class.
+
+*******************************************************************************/
+
+abstract public class IServiceThread : Thread
 {
     /***************************************************************************
 
@@ -46,9 +52,19 @@ public abstract class IServiceThread : Thread
     ***************************************************************************/
 
     protected alias .IStorageChannelsService IStorageChannelsService;
+
     protected alias .IStorageEngineService IStorageEngineService;
 
     
+    /***************************************************************************
+
+        Delegate to be called on thread exit.
+
+    ***************************************************************************/
+
+    public void delegate ( char[] id ) finished_callback;
+
+
     /***************************************************************************
 
         Service interface to the storage channels.
@@ -78,25 +94,6 @@ public abstract class IServiceThread : Thread
 
     /***************************************************************************
 
-        Flag set to true when busy.
-
-    ***************************************************************************/
-
-    private bool busy_;
-
-
-    /***************************************************************************
-
-        Flag set to true when stop has been requested. If the service thread is
-        busy it will be stopped when it has finished what it's doing.
-
-    ***************************************************************************/
-
-    private bool stop_;
-
-
-    /***************************************************************************
-
         Constructor.
         
         Params:
@@ -119,52 +116,35 @@ public abstract class IServiceThread : Thread
 
     /***************************************************************************
 
-        Returns:
-            true if this service thread is busy
-
-    ***************************************************************************/
-
-    public bool busy ( )
-    {
-        return this.busy_;
-    }
-
-
-    /***************************************************************************
-
-        Requests this service thread to stop. If the service thread is busy it
-        will be stopped when it has finished what it's doing.
-
-    ***************************************************************************/
-
-    public void stop ( )
-    {
-        this.stop_ = true;
-    }
-
-
-    /***************************************************************************
-
         Thread main method. Repeatedly sleeps then calls the service methods on
-        the node and on each channel in the node.
+        the node and on each channel in the node. The finished delegate is
+        called last thing.
 
     ***************************************************************************/
 
     private void run ( )
     {
-        while ( !Terminator.terminating && !this.stop_ ) // TODO: checking the term flag && stop isn't necessary, I think
+        scope ( exit )
+        {
+            if ( this.finished_callback !is null )
+            {
+                this.finished_callback(this.id);
+            }
+        }
+
+        while ( !Terminator.terminating )
         {
             try
             {
-                Thread.sleep(this.update_time);
-
-                if ( !Terminator.terminating && !this.stop_ )
+                for ( int i; i < this.update_time && !Terminator.terminating; i++ )
                 {
-                    this.busy_ = true;
-                    scope ( exit ) this.busy_ = false;
+                    Thread.sleep(1);
+                }
 
+                if ( !Terminator.terminating )
+                {
                     this.serviceNode(this.node_info, this.update_time);
-        
+
                     foreach ( channel; this.channels_service )
                     {
                         this.serviceChannel(channel, this.update_time);

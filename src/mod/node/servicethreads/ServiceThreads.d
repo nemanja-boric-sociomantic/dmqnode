@@ -22,9 +22,21 @@ module src.mod.node.servicethreads.ServiceThreads;
 
 private import src.mod.node.servicethreads.model.IServiceThread;
 
+private import ocean.util.log.Trace;
 
 
-class ServiceThreads
+
+/*******************************************************************************
+
+    Service threads set class.
+
+    The constructor takes a delegate, which is called upon completion of all
+    service threads in the set. (Each service thread executes in a loop,
+    stopping on receipt of the SIGINT signal.)
+
+*******************************************************************************/
+
+public class ServiceThreads
 {
     /***************************************************************************
 
@@ -37,8 +49,47 @@ class ServiceThreads
 
     /***************************************************************************
 
+        Count of service threads which have finished.
+
+    ***************************************************************************/
+
+    private size_t finished_count;
+
+
+    /***************************************************************************
+
+        Delegate to call when all service threads have finished.
+
+    ***************************************************************************/
+
+    private void delegate ( ) finished_callback;
+
+
+    /***************************************************************************
+
+        Constructor.
+
+        Params:
+            finished_callback = delegate to call when all service threads have
+                finished
+
+    ***************************************************************************/
+
+    public this ( void delegate ( ) finished_callback )
+    in
+    {
+        assert(finished_callback !is null, typeof(this).stringof ~ ".ctor: finished callback is null");
+    }
+    body
+    {
+        this.finished_callback = finished_callback;
+    }
+
+
+    /***************************************************************************
+
         Adds a new service thread.
-        
+
         Params:
             thread = thread to add
 
@@ -46,6 +97,7 @@ class ServiceThreads
 
     public void add ( IServiceThread thread )
     {
+        thread.finished_callback = &this.threadFinished;
         this.threads ~= thread;
     }
 
@@ -60,43 +112,28 @@ class ServiceThreads
     {
         foreach ( thread; this.threads )
         {
-            thread.start();
+            thread.start;
         }
     }
 
 
     /***************************************************************************
 
-        Stops all service threads.
-    
+        Service thread finished callback. Each service thread will call this
+        method once upon finishing. When all service threads have finished, the
+        overall finished callback is invoked.
+
+        Params:
+            id = identifier string of service thread which has finished
+
     ***************************************************************************/
 
-    public void stop ( )
+    private void threadFinished ( char[] id )
     {
-        foreach ( thread; this.threads )
+        if ( ++this.finished_count == this.threads.length )
         {
-            thread.stop();
+            this.finished_callback();
         }
-    }
-
-
-    /***************************************************************************
-
-        Returns:
-            true if one or more service threads are busy
-    
-    ***************************************************************************/
-
-    public bool busy ( )
-    {
-        bool busy;
-
-        foreach ( thread; this.threads )
-        {
-            busy = busy || thread.busy;
-        }
-
-        return busy;
     }
 }
 
