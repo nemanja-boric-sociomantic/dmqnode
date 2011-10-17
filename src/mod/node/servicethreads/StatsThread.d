@@ -121,7 +121,7 @@ public class StatsThread : IServiceThread
     
     public this ( IDhtNode dht, uint log_update_time )
     {
-        super(dht, 1000);
+        super(dht, 1);
 
         this.records_per_sec = new SlidingAverageTime!(ulong)(5, 1_000, 1_000);
 
