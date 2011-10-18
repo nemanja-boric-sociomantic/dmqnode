@@ -10,6 +10,9 @@ REMOVE_OUTPUT = bin/dhtremove
 INFO_TARGET = src/main/dhtinfo.d
 INFO_OUTPUT = bin/dhtinfo
 
+CLIENT_TARGET = src/main/dhtclient.d
+CLIENT_OUTPUT = bin/dhtclient
+
 TEST_TARGET = src/main/dhttest.d
 TEST_OUTPUT = bin/dhttest
 
@@ -51,7 +54,7 @@ CLIENT_FLAGS =\
 # ------------------------------------------------------------------------------
 # Debug build of all targets (default)
 
-default: node remove info test
+default: node remove info test client
 
 
 # ------------------------------------------------------------------------------
@@ -86,6 +89,16 @@ info-release:
 
 
 # ------------------------------------------------------------------------------
+# client debug & release builds
+
+client:
+	xfbuild +D=.deps-client +O=.objs-client +o=${CLIENT_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${CLIENT_TARGET}
+
+client-release:
+	xfbuild +D=.deps-client+O=.objs-client +o=${CLIENT_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${CLIENT_TARGET}
+
+
+# ------------------------------------------------------------------------------
 # test debug & release builds
 
 test:
@@ -111,6 +124,7 @@ clean:
 	xfbuild ${XFBUILD_FLAGS} +clean ${NODE_TARGET}
 	xfbuild ${XFBUILD_FLAGS} +clean ${REMOVE_TARGET}
 	xfbuild ${XFBUILD_FLAGS} +clean ${INFO_TARGET}
+	xfbuild ${XFBUILD_FLAGS} +clean ${CLIENT_TARGET}
 	xfbuild ${XFBUILD_FLAGS} +clean ${TEST_TARGET}
 	@-rm .objs-* -rf
 	@-rm .deps-* -rf
