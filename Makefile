@@ -92,10 +92,10 @@ info-release:
 # client debug & release builds
 
 client:
-	xfbuild +D=.deps-client +O=.objs-client +o=${CLIENT_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${CLIENT_TARGET}
+	xfbuild +D=.deps-client +O=.objs-client +o=${CLIENT_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${CLIENT_FLAGS} ${CLIENT_TARGET}
 
 client-release:
-	xfbuild +D=.deps-client+O=.objs-client +o=${CLIENT_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${CLIENT_TARGET}
+	xfbuild +D=.deps-client+O=.objs-client +o=${CLIENT_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${CLIENT_FLAGS} ${CLIENT_TARGET}
 
 
 # ------------------------------------------------------------------------------
