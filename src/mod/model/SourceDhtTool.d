@@ -314,7 +314,8 @@ abstract class SourceDhtTool : DhtTool
     {
         char[][] channels;
         super.dht.assign(super.dht.getChannels(
-                ( DhtClient.RequestContext context, char[] channel )
+                ( DhtClient.RequestContext context, char[] address, ushort port,
+                        char[] channel )
                 {
                     if ( channel.length && !channels.contains(channel) )
                     {
