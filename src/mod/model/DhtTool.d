@@ -28,7 +28,7 @@ module src.mod.model.DhtTool;
 
 private import ocean.io.select.EpollSelectDispatcher;
 
-private import ocean.text.Arguments;
+private import ocean.text.Arguments : Arguments;
 
 private import swarm.dht.DhtClient,
                swarm.dht.DhtHash,
