@@ -22,7 +22,7 @@ module src.mod.client.DhtClientTool;
 
 *******************************************************************************/
 
-private import src.mod.client.Commands : getCommand, printCommandsHelp;
+private import src.mod.client.Commands : Command, Info;
 
 private import src.mod.model.DhtTool;
 
@@ -138,11 +138,11 @@ public class DhtClientTool : DhtTool
 
         auto cmd_name = this.arguments[0];
         auto args = this.arguments[1..$];
-        auto cmd = getCommand(cmd_name, args);
+        auto cmd = Command.get(cmd_name, args);
         if (cmd is null)
         {
             Stderr.formatln("Invalid command: {}", cmd_name);
-            printCommandsHelp(Stderr);
+            Command.printCommandsHelp(Stderr);
             return;
         }
 
@@ -154,7 +154,7 @@ public class DhtClientTool : DhtTool
             return;
         }
 
-        cmd.assignTo(dht, &this.notifier);
+        cmd.execute(new Info(dht, &this.notifier, super.epoll));
         super.epoll.eventLoop();
     }
 
@@ -197,7 +197,7 @@ public class DhtClientTool : DhtTool
         {
             Stderr.formatln("You have to specify a command to execute");
             Stderr.newline;
-            printCommandsHelp(Stderr);
+            Command.printCommandsHelp(Stderr);
             return false;
         }
 

@@ -8,16 +8,9 @@
 
     authors:        Leandro Lucarella
 
-    This module define all the available commands, and provides a framework to
-    validate and show help messages about the available commands.
-
-    The public interface is extremely simple, just use the getCommand() function
-    to get a Command instance for a particular command name and then use the
-    public interface of the Command class. Also you can print a help message
-    with the available commands using printCommandsHelp().
-
-    Commands are not meant to be instantiated anywhere else but in this module.
-    They are singletons stored in an internal list.
+    This module define all DHT-client specific commands, using the Command
+    framework. Each command register itself in the Command registry using the
+    static constructor to make maintenance easier.
 
 *******************************************************************************/
 
@@ -31,28 +24,17 @@ module src.mod.client.Commands;
 
 *******************************************************************************/
 
+private import src.mod.client.Command;
+
 private import swarm.dht.DhtClient,
                swarm.dht.DhtConst,
                swarm.dht.client.RequestNotification,
                swarm.dht.client.request.params.RequestParams;
 
+private import ocean.io.select.EpollSelectDispatcher;
+
 private import tango.io.Stdout;
-private import tango.io.stream.Format : FormatOutput;
-private import tango.text.Util : join;
 
-
-
-/*******************************************************************************
-
-    Argument help tuple, consisting in the argument name and help message.
-
-*******************************************************************************/
-
-private struct ArgHelp
-{
-    char[] name;
-    char[] help;
-}
 
 
 /*******************************************************************************
@@ -68,141 +50,54 @@ private
     ArgHelp help_value   = ArgHelp("value", "Value to put");
     /// ditto
     ArgHelp help_key     = ArgHelp("key",   "Name of the key to get");
-    /// ditto
-    ArgHelp help_key_min = ArgHelp("key-min",
-                                   "Lower bound key from the range to get");
-    /// ditto
-    ArgHelp help_key_max = ArgHelp("key-max",
-                                   "Upper bound key from the range to get");
 }
 
 
 /*******************************************************************************
 
-    String used as a tab for help messages.
+    DHT-client specific info to pass to commands when executing them.
 
 *******************************************************************************/
 
-private const char[] TAB = "    ";
+private class Info
+{
+    public DhtClient dht;
+    public RequestNotification.Callback notifier;
+    public EpollSelectDispatcher epoll;
+    this(DhtClient dht, RequestNotification.Callback notifier,
+            EpollSelectDispatcher epoll)
+    {
+        this.dht = dht;
+        this.notifier = notifier;
+        this.epoll = epoll;
+    }
+}
 
 
 /*******************************************************************************
 
-    Base Command class.
+    Base class for all DHT-client specific commands.
 
-    It provides the common framework to define the available commands. All the
-    commands derive from this class.
-
-    Commands are created by this module are are not meant to be initialized
-    anywhere else. Commands are instantiated by themselves once in theirs static
-    constructor, as if they where singletons.
-
-    All derived classes should create an instance of themselves in theirs static
-    constructor, initialize all these public attributes except args and add the
-    initialized instance to the list of commands using the add_command()
-    function.
+    This class just check the user_data passed to the execute() method and calls
+    an specific method assignTo() that each subclass should implement to
+    actually send the command to the DHT-nodes. Finally the eventLoop() is
+    invoked.
 
 *******************************************************************************/
 
-public abstract class Command
+public abstract class DhtCommand : Command
 {
 
-    /// Arguments the user passed to the command.
-    protected char[][] args;
-
-    /// Command name and aliases the user can type.
-    protected char[][] command_names;
-
-    /// Help message for this command.
-    protected char[] help_msg;
-
-    /// List of arguments this command takes and their help message.
-    protected ArgHelp[] args_help;
-
-
-    /***************************************************************************
-
-        Get a list of arguments names.
-
-        Returns:
-            list of arguments names.
-
-    ***************************************************************************/
-
-    protected char[][] arg_names()
+    public override void execute(Object user_data = null)
     {
-        char[][] args;
-        foreach (arg; this.args_help)
-            args ~= arg.name;
-        return args;
+        assert (user_data !is null, "user_data can't be null");
+        Info info = cast(Info) user_data;
+        assert (info !is null, "user_data should have Info type");
+        this.assignTo(info.dht, info.notifier);
+        info.epoll.eventLoop();
     }
 
-
-    /***************************************************************************
-
-        Validate the command arguments.
-
-        Returns:
-            null if the command arguments are valid, a string with an error
-            message otherwise.
-
-    ***************************************************************************/
-
-    public char[] validate()
-    {
-        if (args.length < this.args_help.length)
-            return "Too few arguments, missing argument(s): " ~
-                join(this.arg_names[args.length .. $], ", ");
-        if (args.length > this.args_help.length)
-            return "Too many arguments, unrecognized argument(s): " ~
-                join(args[this.args_help.length .. $], " ");
-        //foreach (i, arg; args)
-        //    if (arg.length == 0)
-        //        return "argument '" ~ this.args_help[i].name ~ "' is empty";
-        return null;
-    }
-
-
-    /***************************************************************************
-
-        Print a help message for this command.
-
-        Params:
-            output = Where to print the message to.
-
-    ***************************************************************************/
-
-    public void printHelp(FormatOutput!(char) output)
-    {
-        output.format("Command usage: {}", this.command_names[0]);
-        if (this.command_names.length > 1)
-            output.format(" (or {})", join(this.command_names[1..$], ", "));
-        if (this.arg_names)
-            output(" ")(join(this.arg_names, " "));
-        output.newline;
-        output(this.help_msg).newline;
-        if (this.args_help)
-        {
-            output.formatln("Arguments: ");
-            foreach (arg; this.args_help)
-                output.formatln("{}{}: {}", TAB, arg.name, arg.help);
-        }
-    }
-
-
-    /***************************************************************************
-
-        Assign this command as a DHT request.
-
-        Commands *must* be validate()d before calling this method.
-
-        Params:
-            dht = DHT client to assign the request to.
-            notifier = Notification callback to use.
-
-    ***************************************************************************/
-
-    abstract public void assignTo(DhtClient dht,
+    protected abstract void assignTo(DhtClient dht,
             RequestNotification.Callback notifier);
 
 }
@@ -210,85 +105,55 @@ public abstract class Command
 
 /*******************************************************************************
 
-    List of commands known by the command line client.
-
-    Command should register themselves using the add_command() function.
+    Get command (see Command and DhtCommand documentation for details).
 
 *******************************************************************************/
 
-private Command[] commands;
-
-/// ditto
-private Command[char[]] commands_by_name;
-
-
-/*******************************************************************************
-
-    Add a command to the list of commands known by the command line client.
-
-*******************************************************************************/
-
-private void add_command(Command c)
+private class Get : DhtCommand
 {
-    commands ~= c;
-    foreach (name; c.command_names)
+    this()
     {
-        debug
-        {
-            Command* c2 = name in commands_by_name;
-            assert (c2 is null, "Command name '" ~ name ~
-                "' registered by command " ~ c2.classinfo.name ~
-                " already used by command " ~ c.classinfo.name);
-        }
-        commands_by_name[name] = c;
+        this.command_names = [ "get", "g" ];
+        this.help_msg = "Get the associated value to a channel's key";
+        this.req_args = [ help_chan, help_key ];
     }
-}
 
-
-/// Get command (see Command documentation for details).
-private class Get : Command
-{
-
-    /// Initialize the command and add it to the internal list.
     static this()
     {
-        Command c = new Get;
-        c.command_names = [ "get", "g" ];
-        c.help_msg = "Get the associated value to a channel's key";
-        c.args_help ~= help_chan;
-        c.args_help ~= help_key;
-        add_command(c);
+        Command.register(new Get);
     }
 
-    /// Assign this command as a DHT request (see Command for details).
-    override public void assignTo(DhtClient dht,
+    protected override void assignTo(DhtClient dht,
             RequestNotification.Callback notifier)
     {
         dht.assign(dht.get(this.args[0], this.args[1],
             (DhtClient.RequestContext c, char[] val) { Stdout(val).newline; },
             notifier));
     }
-
 }
 
-/// Put command (see Command documentation for details).
-private class Put : Command
-{
 
-    /// Initialize the command and add it to the internal list.
-    static this()
+/*******************************************************************************
+
+    Put command (see Command and DhtCommand documentation for details).
+
+*******************************************************************************/
+
+private class Put : DhtCommand
+{
+    this()
     {
-        Command c = new Put;
-        c.command_names = [ "put", "p" ];
-        c.help_msg = "Associate a channel's key to a value";
-        c.args_help ~= help_chan;
-        c.args_help ~= help_key;
-        c.args_help ~= help_value;
-        add_command(c);
+        this.command_names = [ "put", "p" ];
+        this.help_msg = "Associate a channel's key to a value";
+        this.req_args = [ help_chan, help_key, help_value ];
     }
 
-    /// Assign this command as a DHT request (see Command for details).
-    override public void assignTo(DhtClient dht,
+    static this()
+    {
+        Command.register(new Put);
+    }
+
+    protected override void assignTo(DhtClient dht,
             RequestNotification.Callback notifier)
     {
         // the delegate literal trick doesn't work here because it uses data
@@ -297,56 +162,64 @@ private class Put : Command
         dht.assign(dht.put(this.args[0], this.args[1], &this.cb, notifier));
     }
 
-    /// Returns the value to put (DHT client request callback)
     public char[] cb(DhtClient.RequestContext c)
     {
         return this.args[2];
     }
 }
 
-/// PutDup command (see Command documentation for details).
+
+/*******************************************************************************
+
+    PutDup command (see Command and DhtCommand documentation for details).
+
+*******************************************************************************/
+
 private class PutDup : Put
 {
-
-    /// Initialize the command and add it to the internal list.
-    static this()
+    this()
     {
-        Command c = new PutDup;
-        c.command_names = [ "putdup", "pd" ];
-        c.help_msg = "Associate a channel's key to a value (allowing "
+        this.command_names = [ "putdup", "pd" ];
+        this.help_msg = "Associate a channel's key to a value (allowing "
                 "multiple values)";
-        c.args_help ~= help_chan;
-        c.args_help ~= help_key;
-        c.args_help ~= help_value;
-        add_command(c);
+        this.req_args = [ help_chan, help_key, help_value ];
     }
 
-    /// Assign this command as a DHT request (see Command for details).
-    override public void assignTo(DhtClient dht,
+    static this()
+    {
+        Command.register(new PutDup);
+    }
+
+    protected override void assignTo(DhtClient dht,
             RequestNotification.Callback notifier)
     {
-        // see Put comment, we reuse it's callback delegate.
+        // see Put comment, we reuse its callback delegate.
         dht.assign(dht.putDup(this.args[0], this.args[1], &this.cb, notifier));
     }
 }
 
-/// Exists command (see Command documentation for details).
-private class Exists : Command
-{
 
-    /// Initialize the command and add it to the internal list.
-    static this()
+/*******************************************************************************
+
+    Exists command (see Command and DhtCommand documentation for details).
+
+*******************************************************************************/
+
+private class Exists : DhtCommand
+{
+    this()
     {
-        Command c = new Exists;
-        c.command_names = [ "exists", "e" ];
-        c.help_msg = "Print 1/0 if the key do/doesn't exist in the channel";
-        c.args_help ~= help_chan;
-        c.args_help ~= help_key;
-        add_command(c);
+        this.command_names = [ "exists", "e" ];
+        this.help_msg = "Print 1/0 if the key do/doesn't exist in the channel";
+        this.req_args = [ help_chan, help_key ];
     }
 
-    /// Assign this command as a DHT request (see Command for details).
-    override public void assignTo(DhtClient dht,
+    static this()
+    {
+        Command.register(new Exists);
+    }
+
+    protected override void assignTo(DhtClient dht,
             RequestNotification.Callback notifier)
     {
         dht.assign(dht.exists(this.args[0], this.args[1],
@@ -355,53 +228,64 @@ private class Exists : Command
             },
             notifier));
     }
-
 }
 
-/// Exists command (see Command documentation for details).
-private class Remove : Command
-{
 
-    /// Initialize the command and add it to the internal list.
-    static this()
+/*******************************************************************************
+
+    Exists command (see Command and DhtCommand documentation for details).
+
+*******************************************************************************/
+
+private class Remove : DhtCommand
+{
+    this()
     {
-        Command c = new Remove;
-        c.command_names = [ "remove", "r" ];
-        c.help_msg = "Remove the value associated to a channel's key";
-        c.args_help ~= help_chan;
-        c.args_help ~= help_key;
-        add_command(c);
+        this.command_names = [ "remove", "r" ];
+        this.help_msg = "Remove the value associated to a channel's key";
+        this.req_args = [ help_chan, help_key ];
     }
 
-    /// Assign this command as a DHT request (see Command for details).
-    override public void assignTo(DhtClient dht,
+    static this()
+    {
+        Command.register(new Remove);
+    }
+
+    protected override void assignTo(DhtClient dht,
             RequestNotification.Callback notifier)
     {
         dht.assign(dht.remove(this.args[0], this.args[1], notifier));
     }
-
 }
 
-/// GetRange command (see Command documentation for details).
-private class GetRange : Command
-{
 
-    /// Initialize the command and add it to the internal list.
-    static this()
+/*******************************************************************************
+
+    GetRange command (see Command and DhtCommand documentation for details).
+
+*******************************************************************************/
+
+private class GetRange : DhtCommand
+{
+    this()
     {
-        Command c = new GetRange;
-        c.command_names = [ "getrange", "gr" ];
-        c.help_msg = "Get the values associated to a range of channel's keys "
+        this.command_names = [ "getrange", "gr" ];
+        this.help_msg = "Get the values associated to a range of channel's keys "
                 "(this probably only makes sense in combination with the "
                 "--numeric-keys options)";
-        c.args_help ~= help_chan;
-        c.args_help ~= help_key_min;
-        c.args_help ~= help_key_max;
-        add_command(c);
+        this.req_args = [
+            help_chan,
+            ArgHelp("key-min", "Lower bound key from the range to get"),
+            ArgHelp("key-max", "Upper bound key from the range to get")
+        ];
     }
 
-    /// Assign this command as a DHT request (see Command for details).
-    override public void assignTo(DhtClient dht,
+    static this()
+    {
+        Command.register(new GetRange);
+    }
+
+    protected override void assignTo(DhtClient dht,
             RequestNotification.Callback notifier)
     {
         dht.assign(dht.getRange(this.args[0], this.args[1], this.args[2],
@@ -410,25 +294,30 @@ private class GetRange : Command
             },
             notifier));
     }
-
 }
 
-/// GetAll command (see Command documentation for details).
-private class GetAll : Command
-{
 
-    /// Initialize the command and add it to the internal list.
-    static this()
+/*******************************************************************************
+
+    GetAll command (see Command and DhtCommand documentation for details).
+
+*******************************************************************************/
+
+private class GetAll : DhtCommand
+{
+    this()
     {
-        Command c = new GetAll;
-        c.command_names = [ "getall", "ga" ];
-        c.help_msg = "Get all the key/values present in a channel";
-        c.args_help ~= help_chan;
-        add_command(c);
+        this.command_names = [ "getall", "ga" ];
+        this.help_msg = "Get all the key/values present in a channel";
+        this.req_args = [ help_chan ];
     }
 
-    /// Assign this command as a DHT request (see Command for details).
-    override public void assignTo(DhtClient dht,
+    static this()
+    {
+        Command.register(new GetAll);
+    }
+
+    protected override void assignTo(DhtClient dht,
             RequestNotification.Callback notifier)
     {
         dht.assign(dht.getAll(this.args[0],
@@ -437,25 +326,30 @@ private class GetAll : Command
             },
             notifier));
     }
-
 }
 
-/// GetAllKeys command (see Command documentation for details).
-private class GetAllKeys : Command
-{
 
-    /// Initialize the command and add it to the internal list.
-    static this()
+/*******************************************************************************
+
+    GetAllKeys command (see Command and DhtCommand documentation for details).
+
+*******************************************************************************/
+
+private class GetAllKeys : DhtCommand
+{
+    this()
     {
-        Command c = new GetAllKeys;
-        c.command_names = [ "getallkeys", "gak", "gk" ];
-        c.help_msg = "Get all the keys present in a channel";
-        c.args_help ~= help_chan;
-        add_command(c);
+        this.command_names = [ "getallkeys", "gak", "gk" ];
+        this.help_msg = "Get all the keys present in a channel";
+        this.req_args = [ help_chan ];
     }
 
-    /// Assign this command as a DHT request (see Command for details).
-    override public void assignTo(DhtClient dht,
+    static this()
+    {
+        Command.register(new GetAllKeys);
+    }
+
+    protected override void assignTo(DhtClient dht,
             RequestNotification.Callback notifier)
     {
         dht.assign(dht.getAllKeys(this.args[0],
@@ -464,25 +358,30 @@ private class GetAllKeys : Command
             },
             notifier));
     }
-
 }
 
-/// Listen command (see Command documentation for details).
-private class Listen : Command
-{
 
-    /// Initialize the command and add it to the internal list.
-    static this()
+/*******************************************************************************
+
+    Listen command (see Command and DhtCommand documentation for details).
+
+*******************************************************************************/
+
+private class Listen : DhtCommand
+{
+    this()
     {
-        Command c = new Listen;
-        c.command_names = [ "listen", "l" ];
-        c.help_msg = "Get all the key/values from a channel";
-        c.args_help ~= help_chan;
-        add_command(c);
+        this.command_names = [ "listen", "l" ];
+        this.help_msg = "Get all the key/values from a channel";
+        this.req_args = [ help_chan ];
     }
 
-    /// Assign this command as a DHT request (see Command for details).
-    override public void assignTo(DhtClient dht,
+    static this()
+    {
+        Command.register(new Listen);
+    }
+
+    protected override void assignTo(DhtClient dht,
             RequestNotification.Callback notifier)
     {
         dht.assign(dht.listen(this.args[0],
@@ -491,52 +390,63 @@ private class Listen : Command
             },
             notifier));
     }
-
 }
 
-/// GetChannels command (see Command documentation for details).
-private class GetChannels : Command
-{
 
-    /// Initialize the command and add it to the internal list.
-    static this()
+/*******************************************************************************
+
+    GetChannels command (see Command and DhtCommand documentation for details).
+
+*******************************************************************************/
+
+private class GetChannels : DhtCommand
+{
+    this()
     {
-        Command c = new GetChannels;
-        c.command_names = [ "getchannels", "gc", "c" ];
-        c.help_msg = "Get the names of all the channels";
-        add_command(c);
+        this.command_names = [ "getchannels", "gc", "c" ];
+        this.help_msg = "Get the names of all the channels";
     }
 
-    /// Assign this command as a DHT request (see Command for details).
-    override public void assignTo(DhtClient dht,
+    static this()
+    {
+        Command.register(new GetChannels);
+    }
+
+    protected override void assignTo(DhtClient dht,
             RequestNotification.Callback notifier)
     {
         dht.assign(dht.getChannels(
             (DhtClient.RequestContext c, char[] addr, ushort port,
                     char[] chan_name) {
-                Stdout.formatln("{}:{} {}", addr, port, chan_name);
+                if (chan_name.length) // ignore end of list
+                    Stdout.formatln("{}:{} '{}'", addr, port, chan_name);
             },
             notifier));
     }
-
 }
 
-/// GetSize command (see Command documentation for details).
-private class GetSize : Command
-{
 
-    /// Initialize the command and add it to the internal list.
-    static this()
+/*******************************************************************************
+
+    GetSize command (see Command and DhtCommand documentation for details).
+
+*******************************************************************************/
+
+private class GetSize : DhtCommand
+{
+    this()
     {
-        Command c = new GetSize;
-        c.command_names = [ "getsize", "gs", "s" ];
-        c.help_msg = "Get the number of records and bytes for all channel "
+        this.command_names = [ "getsize", "gs", "s" ];
+        this.help_msg = "Get the number of records and bytes for all channel "
             "on each node";
-        add_command(c);
     }
 
-    /// Assign this command as a DHT request (see Command for details).
-    override public void assignTo(DhtClient dht,
+    static this()
+    {
+        Command.register(new GetSize);
+    }
+
+    protected override void assignTo(DhtClient dht,
             RequestNotification.Callback notifier)
     {
         dht.assign(dht.getSize(
@@ -547,26 +457,32 @@ private class GetSize : Command
             },
             notifier));
     }
-
 }
 
-/// GetChannelSize command (see Command documentation for details).
-private class GetChannelSize : Command
-{
 
-    /// Initialize the command and add it to the internal list.
-    static this()
+/*******************************************************************************
+
+    GetChannelSize command (see Command and DhtCommand documentation for
+    details).
+
+*******************************************************************************/
+
+private class GetChannelSize : DhtCommand
+{
+    this()
     {
-        Command c = new GetChannelSize;
-        c.command_names = [ "getchannelsize", "gcs" ];
-        c.help_msg = "Get the number of records and bytes for a channel "
+        this.command_names = [ "getchannelsize", "gcs" ];
+        this.help_msg = "Get the number of records and bytes for a channel "
             "on each node";
-        c.args_help ~= help_chan;
-        add_command(c);
+        this.req_args = [ help_chan ];
     }
 
-    /// Assign this command as a DHT request (see Command for details).
-    override public void assignTo(DhtClient dht,
+    static this()
+    {
+        Command.register(new GetChannelSize);
+    }
+
+    protected override void assignTo(DhtClient dht,
             RequestNotification.Callback notifier)
     {
         dht.assign(dht.getChannelSize(this.args[0],
@@ -577,47 +493,59 @@ private class GetChannelSize : Command
             },
             notifier));
     }
-
 }
 
-/// RemoveChannel command (see Command documentation for details).
-private class RemoveChannel : Command
-{
 
-    /// Initialize the command and add it to the internal list.
-    static this()
+/*******************************************************************************
+
+    RemoveChannel command (see Command and DhtCommand documentation for
+    details).
+
+*******************************************************************************/
+
+private class RemoveChannel : DhtCommand
+{
+    this()
     {
-        Command c = new RemoveChannel;
-        c.command_names = [ "removechannel", "rc" ];
-        c.help_msg = "Remove a channel and all its associated data";
-        c.args_help ~= help_chan;
-        add_command(c);
+        this.command_names = [ "removechannel", "rc" ];
+        this.help_msg = "Remove a channel and all its associated data";
+        this.req_args = [ help_chan ];
     }
 
-    /// Assign this command as a DHT request (see Command for details).
-    override public void assignTo(DhtClient dht,
+    static this()
+    {
+        Command.register(new RemoveChannel);
+    }
+
+    protected override void assignTo(DhtClient dht,
             RequestNotification.Callback notifier)
     {
         dht.assign(dht.removeChannel(this.args[0], notifier));
     }
-
 }
 
-/// GetNumConnections command (see Command documentation for details).
-private class GetNumConnections : Command
-{
 
-    /// Initialize the command and add it to the internal list.
-    static this()
+/*******************************************************************************
+
+    GetNumConnections command (see Command and DhtCommand documentation for
+    details).
+
+*******************************************************************************/
+
+private class GetNumConnections : DhtCommand
+{
+    this()
     {
-        Command c = new GetNumConnections;
-        c.command_names = [ "getnumconnections", "gnc" ];
-        c.help_msg = "Get the number of connections of each node";
-        add_command(c);
+        this.command_names = [ "getnumconnections", "gnc" ];
+        this.help_msg = "Get the number of connections of each node";
     }
 
-    /// Assign this command as a DHT request (see Command for details).
-    override public void assignTo(DhtClient dht,
+    static this()
+    {
+        Command.register(new GetNumConnections);
+    }
+
+    protected override void assignTo(DhtClient dht,
             RequestNotification.Callback notifier)
     {
         dht.assign(dht.getNumConnections(
@@ -626,24 +554,29 @@ private class GetNumConnections : Command
             },
             notifier));
     }
-
 }
 
-/// GetVersion command (see Command documentation for details).
-private class GetVersion : Command
-{
 
-    /// Initialize the command and add it to the internal list.
-    static this()
+/*******************************************************************************
+
+    GetVersion command (see Command and DhtCommand documentation for details).
+
+*******************************************************************************/
+
+private class GetVersion : DhtCommand
+{
+    this()
     {
-        Command c = new GetVersion;
-        c.command_names = [ "getversion", "gv", "v" ];
-        c.help_msg = "Get the version of each node";
-        add_command(c);
+        this.command_names = [ "getversion", "gv", "v" ];
+        this.help_msg = "Get the version of each node";
     }
 
-    /// Assign this command as a DHT request (see Command for details).
-    override public void assignTo(DhtClient dht,
+    static this()
+    {
+        Command.register(new GetVersion);
+    }
+
+    protected override void assignTo(DhtClient dht,
             RequestNotification.Callback notifier)
     {
         dht.assign(dht.getVersion(
@@ -652,24 +585,30 @@ private class GetVersion : Command
             },
             notifier));
     }
-
 }
 
-/// GetReponsibleRange command (see Command documentation for details).
-private class GetReponsibleRange : Command
-{
 
-    /// Initialize the command and add it to the internal list.
-    static this()
+/*******************************************************************************
+
+    GetReponsibleRange command (see Command and DhtCommand documentation for
+    details).
+
+*******************************************************************************/
+
+private class GetReponsibleRange : DhtCommand
+{
+    this()
     {
-        Command c = new GetReponsibleRange;
-        c.command_names = [ "getreponsiblerange", "grr" ];
-        c.help_msg = "Get the range of keys each node handles";
-        add_command(c);
+        this.command_names = [ "getreponsiblerange", "grr" ];
+        this.help_msg = "Get the range of keys each node handles";
     }
 
-    /// Assign this command as a DHT request (see Command for details).
-    override public void assignTo(DhtClient dht,
+    static this()
+    {
+        Command.register(new GetReponsibleRange);
+    }
+
+    protected override void assignTo(DhtClient dht,
             RequestNotification.Callback notifier)
     {
         dht.assign(dht.getResponsibleRange(
@@ -679,30 +618,37 @@ private class GetReponsibleRange : Command
             },
             notifier));
     }
-
 }
 
-/// GetSupportedCommands command (see Command documentation for details).
-private class GetSupportedCommands : Command
-{
 
-    /// Initialize the command and add it to the internal list.
-    static this()
+/*******************************************************************************
+
+    GetSupportedCommands command (see Command and DhtCommand documentation for
+    details).
+
+*******************************************************************************/
+
+private class GetSupportedCommands : DhtCommand
+{
+    this()
     {
-        Command c = new GetSupportedCommands;
-        c.command_names = [ "getsupportedcommands", "gsc" ];
-        c.help_msg = "Get the list of supported commands each node supports";
-        add_command(c);
+        this.command_names = [ "getsupportedcommands", "gsc" ];
+        this.help_msg = "Get the list of supported commands each node supports";
     }
 
-    /// Assign this command as a DHT request (see Command for details).
-    override public void assignTo(DhtClient dht,
+    static this()
+    {
+        Command.register(new GetSupportedCommands);
+    }
+
+    protected override void assignTo(DhtClient dht,
             RequestNotification.Callback notifier)
     {
         dht.assign(dht.getSupportedCommands(
             (DhtClient.RequestContext c, char[] addr, ushort port,
                         DhtConst.Command.BaseType[] cmds) {
-                foreach (cmd; cmds) {
+                foreach (cmd; cmds)
+                {
                     auto cmd_desc = DhtConst.Command.description(cmd);
                     Stdout.formatln("{}:{} {} ({})", addr, port,
                             cmd_desc !is null ? *cmd_desc : null, cmd);
@@ -710,51 +656,5 @@ private class GetSupportedCommands : Command
             },
             notifier));
     }
-
 }
 
-
-
-/*******************************************************************************
-
-    Get a command based on a command name and arguments to pass to it.
-
-    Params:
-        name = Name of the command to search for.
-        args = Arguments to pass to the command.
-
-    Returns:
-        Command derived class or null if no command was found.
-
-*******************************************************************************/
-
-public Command getCommand(char[] name, char[][] args)
-{
-    Command* cmd = name in commands_by_name;
-    if (cmd is null)
-        return null;
-    cmd.args = args.dup; // duplicate the arguments, just in case
-    return *cmd;
-}
-
-
-/*******************************************************************************
-
-    Print a help message for this command.
-
-    Params:
-        output = Where to print the message to.
-
-*******************************************************************************/
-
-public void printCommandsHelp(FormatOutput!(char) output)
-{
-    output.formatln("Available commands:");
-    foreach (cmd; commands)
-    {
-        output.format("{}{}", TAB, cmd.command_names[0]);
-        if (cmd.command_names.length > 1)
-            output.format(" (or {})", join(cmd.command_names[1..$], ", "));
-        output.formatln(": {}", cmd.help_msg);
-    }
-}
