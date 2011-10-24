@@ -29,7 +29,6 @@ XFBUILD_FLAGS =\
 
 FLAGS =\
 	-version=NewTango \
-	-version=CDGC \
 	-Isrc \
     -I../swarm \
 	-L-lminilzo \

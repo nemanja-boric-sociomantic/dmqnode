@@ -167,7 +167,7 @@ public class StatsThread : IServiceThread
         if ( MainConfig.console_stats_enabled )
         {
             size_t used, free;
-            GC.usage(used, free);
+//            GC.usage(used, free);
 
             BitGrouping.format(free, this.free_str, "b");
             BitGrouping.format(used, this.used_str, "b");
