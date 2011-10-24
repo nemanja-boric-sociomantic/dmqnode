@@ -66,7 +66,7 @@ private struct ArgHelp
     anywhere else. Commands are instantiated by themselves once in theirs static
     constructor, as if they where singletons.
 
-    All derived classes should create an instance of themselves in theirs static
+    All derived classes should create an instance of themselves in their static
     constructor, initialize all these public attributes except args and add the
     initialized instance to the registry using the register() method.
 
@@ -74,7 +74,6 @@ private struct ArgHelp
 
 public abstract class Command
 {
-
     /***************************************************************************
 
         String used as a tab for help messages.
@@ -82,6 +81,73 @@ public abstract class Command
     ***************************************************************************/
 
     public static char[] tab = "    ";
+
+
+    /***************************************************************************
+
+        List of commands known by the command line client.
+
+        Command should register themselves using the register() method.
+
+    ***************************************************************************/
+
+    private static Command[] commands;
+
+
+    /***************************************************************************
+
+        Map of commands known by the command line client, indexed by name.
+
+        Command should register themselves using the register() method.
+
+    ***************************************************************************/
+
+    private static Command[char[]] commands_by_name;
+
+
+    /***************************************************************************
+
+        Arguments the user passed to the command.
+
+    ***************************************************************************/
+
+    protected char[][] args;
+
+
+    /***************************************************************************
+
+        Command name and aliases the user can type.
+
+    ***************************************************************************/
+
+    protected char[][] command_names;
+
+
+    /***************************************************************************
+
+        Help message for this command.
+
+    ***************************************************************************/
+
+    protected char[] help_msg;
+
+
+    /***************************************************************************
+
+        List of arguments this command requires and their help message.
+
+    ***************************************************************************/
+
+    protected ArgHelp[] req_args;
+
+
+    /***************************************************************************
+
+        List of optional arguments this command takes and their help message.
+
+    ***************************************************************************/
+
+    protected ArgHelp[] opt_args;
 
 
     /***************************************************************************
@@ -237,23 +303,6 @@ public abstract class Command
     public abstract void execute(Object user_data = null);
 
 
-
-    /// Arguments the user passed to the command.
-    protected char[][] args;
-
-    /// Command name and aliases the user can type.
-    protected char[][] command_names;
-
-    /// Help message for this command.
-    protected char[] help_msg;
-
-    /// List of arguments this command requires and their help message.
-    protected ArgHelp[] req_args;
-
-    /// List of optional arguments this command takes and their help message.
-    protected ArgHelp[] opt_args;
-
-
     /***************************************************************************
 
         Get a list of required arguments names.
@@ -293,7 +342,7 @@ public abstract class Command
         return args;
     }
 
-
+    
     /***************************************************************************
 
         Add a command to the list of commands known by the command registry.
@@ -318,21 +367,6 @@ public abstract class Command
             this.commands_by_name[name] = cmd;
         }
     }
-
-
-    /***************************************************************************
-
-        List of commands known by the command line client.
-
-        Command should register themselves using the register() method.
-
-    ***************************************************************************/
-
-    private static Command[] commands;
-
-    /// ditto
-    private static Command[char[]] commands_by_name;
-
 }
 
 
