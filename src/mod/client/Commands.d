@@ -35,6 +35,8 @@ private import ocean.io.select.EpollSelectDispatcher;
 
 private import tango.io.Stdout;
 
+private import Integer = tango.text.convert.Integer;
+
 
 
 /*******************************************************************************
@@ -64,6 +66,7 @@ private class Info
     public DhtClient dht;
     public RequestNotification.Callback notifier;
     public EpollSelectDispatcher epoll;
+
     this(DhtClient dht, RequestNotification.Callback notifier,
             EpollSelectDispatcher epoll)
     {
@@ -87,7 +90,6 @@ private class Info
 
 public abstract class DhtCommand : Command
 {
-
     public override void execute(Object user_data = null)
     {
         assert (user_data !is null, "user_data can't be null");
@@ -100,6 +102,47 @@ public abstract class DhtCommand : Command
     protected abstract void assignTo(DhtClient dht,
             RequestNotification.Callback notifier);
 
+
+    /***************************************************************************
+
+        Converts a key string into a hash. The default is to interpret key
+        strings as integers using tango's Integer.toLong function. This allows
+        strings such as "23", "0xfff22233", etc to be handled.
+
+        Params:
+            key = key to hash
+
+        Returns:
+            hashed string
+
+        TODO: add a command line option to Fnv hash keys, rather than integer
+        converting them
+
+    ***************************************************************************/
+
+    protected hash_t hash ( char[] key )
+    {
+        return cast(hash_t)Integer.toLong(key);
+    }
+
+
+    /***************************************************************************
+
+        Displays a record key & value received from the dht.
+
+        Params:
+            key = key to display
+            val = value to display
+
+        TODO: add a command line option to display values as arrays of hex
+        bytes (cast to ubyte[]), rather than displaying as a string
+
+    ***************************************************************************/
+
+    protected void printValue ( char[] key, char[] val )
+    {
+        Stdout.format("{}: {}", key, val);
+    }
 }
 
 
@@ -113,9 +156,9 @@ private class Get : DhtCommand
 {
     this()
     {
-        this.command_names = [ "get", "g" ];
-        this.help_msg = "Get the associated value to a channel's key";
-        this.req_args = [ help_chan, help_key ];
+        super.command_names = [ "get", "g" ];
+        super.help_msg = "Get the associated value to a channel's key";
+        super.req_args = [ help_chan, help_key ];
     }
 
     static this()
@@ -126,9 +169,13 @@ private class Get : DhtCommand
     protected override void assignTo(DhtClient dht,
             RequestNotification.Callback notifier)
     {
-        dht.assign(dht.get(this.args[0], this.args[1],
-            (DhtClient.RequestContext c, char[] val) { Stdout(val).newline; },
-            notifier));
+        dht.assign(dht.get(super.args[0], super.hash(super.args[1]),
+            &this.cb, notifier));
+    }
+
+    private void cb ( DhtClient.RequestContext c, char[] val )
+    {
+        super.printValue(super.args[1], val);
     }
 }
 
@@ -143,9 +190,9 @@ private class Put : DhtCommand
 {
     this()
     {
-        this.command_names = [ "put", "p" ];
-        this.help_msg = "Associate a channel's key to a value";
-        this.req_args = [ help_chan, help_key, help_value ];
+        super.command_names = [ "put", "p" ];
+        super.help_msg = "Associate a channel's key to a value";
+        super.req_args = [ help_chan, help_key, help_value ];
     }
 
     static this()
@@ -159,12 +206,12 @@ private class Put : DhtCommand
         // the delegate literal trick doesn't work here because it uses data
         // from the outer scope but it survives the scope of the function, so
         // the stack is used by somebody else and bad corruption happens (yei!)
-        dht.assign(dht.put(this.args[0], this.args[1], &this.cb, notifier));
+        dht.assign(dht.put(super.args[0], super.hash(super.args[1]), &this.cb, notifier));
     }
 
     public char[] cb(DhtClient.RequestContext c)
     {
-        return this.args[2];
+        return super.args[2];
     }
 }
 
@@ -179,10 +226,10 @@ private class PutDup : Put
 {
     this()
     {
-        this.command_names = [ "putdup", "pd" ];
-        this.help_msg = "Associate a channel's key to a value (allowing "
+        super.command_names = [ "putdup", "pd" ];
+        super.help_msg = "Associate a channel's key to a value (allowing "
                 "multiple values)";
-        this.req_args = [ help_chan, help_key, help_value ];
+        super.req_args = [ help_chan, help_key, help_value ];
     }
 
     static this()
@@ -194,7 +241,7 @@ private class PutDup : Put
             RequestNotification.Callback notifier)
     {
         // see Put comment, we reuse its callback delegate.
-        dht.assign(dht.putDup(this.args[0], this.args[1], &this.cb, notifier));
+        dht.assign(dht.putDup(super.args[0], super.hash(super.args[1]), &super.cb, notifier));
     }
 }
 
@@ -209,9 +256,9 @@ private class Exists : DhtCommand
 {
     this()
     {
-        this.command_names = [ "exists", "e" ];
-        this.help_msg = "Print 1/0 if the key do/doesn't exist in the channel";
-        this.req_args = [ help_chan, help_key ];
+        super.command_names = [ "exists", "e" ];
+        super.help_msg = "Print 1/0 if the key do/doesn't exist in the channel";
+        super.req_args = [ help_chan, help_key ];
     }
 
     static this()
@@ -222,8 +269,9 @@ private class Exists : DhtCommand
     protected override void assignTo(DhtClient dht,
             RequestNotification.Callback notifier)
     {
-        dht.assign(dht.exists(this.args[0], this.args[1],
-            (DhtClient.RequestContext c, bool exists) {
+        dht.assign(dht.exists(super.args[0], super.hash(super.args[1]),
+            (DhtClient.RequestContext c, bool exists)
+            {
                 Stdout(exists ? 1 : 0).newline;
             },
             notifier));
@@ -241,9 +289,9 @@ private class Remove : DhtCommand
 {
     this()
     {
-        this.command_names = [ "remove", "r" ];
-        this.help_msg = "Remove the value associated to a channel's key";
-        this.req_args = [ help_chan, help_key ];
+        super.command_names = [ "remove", "r" ];
+        super.help_msg = "Remove the value associated to a channel's key";
+        super.req_args = [ help_chan, help_key ];
     }
 
     static this()
@@ -254,7 +302,7 @@ private class Remove : DhtCommand
     protected override void assignTo(DhtClient dht,
             RequestNotification.Callback notifier)
     {
-        dht.assign(dht.remove(this.args[0], this.args[1], notifier));
+        dht.assign(dht.remove(super.args[0], super.hash(super.args[1]), notifier));
     }
 }
 
@@ -269,11 +317,11 @@ private class GetRange : DhtCommand
 {
     this()
     {
-        this.command_names = [ "getrange", "gr" ];
-        this.help_msg = "Get the values associated to a range of channel's keys "
+        super.command_names = [ "getrange", "gr" ];
+        super.help_msg = "Get the values associated to a range of channel's keys "
                 "(this probably only makes sense in combination with the "
                 "--numeric-keys options)";
-        this.req_args = [
+        super.req_args = [
             help_chan,
             ArgHelp("key-min", "Lower bound key from the range to get"),
             ArgHelp("key-max", "Upper bound key from the range to get")
@@ -288,9 +336,12 @@ private class GetRange : DhtCommand
     protected override void assignTo(DhtClient dht,
             RequestNotification.Callback notifier)
     {
-        dht.assign(dht.getRange(this.args[0], this.args[1], this.args[2],
-            (DhtClient.RequestContext c, char[] key, char[] val) {
-                Stdout.formatln("{}: {}", key, val);
+        dht.assign(dht.getRange(super.args[0],
+                super.hash(super.args[1]),
+                super.hash(super.args[2]),
+            (DhtClient.RequestContext c, char[] key, char[] val)
+            {
+                super.printValue(key, val);
             },
             notifier));
     }
@@ -307,9 +358,9 @@ private class GetAll : DhtCommand
 {
     this()
     {
-        this.command_names = [ "getall", "ga" ];
-        this.help_msg = "Get all the key/values present in a channel";
-        this.req_args = [ help_chan ];
+        super.command_names = [ "getall", "ga" ];
+        super.help_msg = "Get all the key/values present in a channel";
+        super.req_args = [ help_chan ];
     }
 
     static this()
@@ -320,9 +371,10 @@ private class GetAll : DhtCommand
     protected override void assignTo(DhtClient dht,
             RequestNotification.Callback notifier)
     {
-        dht.assign(dht.getAll(this.args[0],
-            (DhtClient.RequestContext c, char[] key, char[] val) {
-                    Stdout.formatln("{}: {}", key, val);
+        dht.assign(dht.getAll(super.args[0],
+            (DhtClient.RequestContext c, char[] key, char[] val)
+            {
+                super.printValue(key, val);
             },
             notifier));
     }
@@ -339,9 +391,9 @@ private class GetAllKeys : DhtCommand
 {
     this()
     {
-        this.command_names = [ "getallkeys", "gak", "gk" ];
-        this.help_msg = "Get all the keys present in a channel";
-        this.req_args = [ help_chan ];
+        super.command_names = [ "getallkeys", "gak", "gk" ];
+        super.help_msg = "Get all the keys present in a channel";
+        super.req_args = [ help_chan ];
     }
 
     static this()
@@ -352,8 +404,9 @@ private class GetAllKeys : DhtCommand
     protected override void assignTo(DhtClient dht,
             RequestNotification.Callback notifier)
     {
-        dht.assign(dht.getAllKeys(this.args[0],
-            (DhtClient.RequestContext c, char[] key) {
+        dht.assign(dht.getAllKeys(super.args[0],
+            (DhtClient.RequestContext c, char[] key)
+            {
                 Stdout(key).newline;
             },
             notifier));
@@ -371,9 +424,9 @@ private class Listen : DhtCommand
 {
     this()
     {
-        this.command_names = [ "listen", "l" ];
-        this.help_msg = "Get all the key/values from a channel";
-        this.req_args = [ help_chan ];
+        super.command_names = [ "listen", "l" ];
+        super.help_msg = "Get all the key/values from a channel";
+        super.req_args = [ help_chan ];
     }
 
     static this()
@@ -384,9 +437,10 @@ private class Listen : DhtCommand
     protected override void assignTo(DhtClient dht,
             RequestNotification.Callback notifier)
     {
-        dht.assign(dht.listen(this.args[0],
-            (DhtClient.RequestContext c, char[] key, char[] val) {
-                Stdout.formatln("{}: {}", key, val);
+        dht.assign(dht.listen(super.args[0],
+            (DhtClient.RequestContext c, char[] key, char[] val)
+            {
+                super.printValue(key, val);
             },
             notifier));
     }
@@ -403,8 +457,8 @@ private class GetChannels : DhtCommand
 {
     this()
     {
-        this.command_names = [ "getchannels", "gc", "c" ];
-        this.help_msg = "Get the names of all the channels";
+        super.command_names = [ "getchannels", "gc", "c" ];
+        super.help_msg = "Get the names of all the channels";
     }
 
     static this()
@@ -417,9 +471,12 @@ private class GetChannels : DhtCommand
     {
         dht.assign(dht.getChannels(
             (DhtClient.RequestContext c, char[] addr, ushort port,
-                    char[] chan_name) {
-                if (chan_name.length) // ignore end of list
+                    char[] chan_name)
+            {
+                if ( chan_name.length ) // ignore end of list
+                {
                     Stdout.formatln("{}:{} '{}'", addr, port, chan_name);
+                }
             },
             notifier));
     }
@@ -436,8 +493,8 @@ private class GetSize : DhtCommand
 {
     this()
     {
-        this.command_names = [ "getsize", "gs", "s" ];
-        this.help_msg = "Get the number of records and bytes for all channel "
+        super.command_names = [ "getsize", "gs", "s" ];
+        super.help_msg = "Get the number of records and bytes for all channel "
             "on each node";
     }
 
@@ -451,7 +508,8 @@ private class GetSize : DhtCommand
     {
         dht.assign(dht.getSize(
             (DhtClient.RequestContext c, char[] addr, ushort port,
-                    ulong records, ulong bytes) {
+                    ulong records, ulong bytes)
+            {
                 Stdout.formatln("{}:{} {} records, {} bytes", addr, port,
                     records, bytes);
             },
@@ -471,10 +529,10 @@ private class GetChannelSize : DhtCommand
 {
     this()
     {
-        this.command_names = [ "getchannelsize", "gcs" ];
-        this.help_msg = "Get the number of records and bytes for a channel "
+        super.command_names = [ "getchannelsize", "gcs" ];
+        super.help_msg = "Get the number of records and bytes for a channel "
             "on each node";
-        this.req_args = [ help_chan ];
+        super.req_args = [ help_chan ];
     }
 
     static this()
@@ -485,9 +543,10 @@ private class GetChannelSize : DhtCommand
     protected override void assignTo(DhtClient dht,
             RequestNotification.Callback notifier)
     {
-        dht.assign(dht.getChannelSize(this.args[0],
+        dht.assign(dht.getChannelSize(super.args[0],
             (DhtClient.RequestContext c, char[] addr, ushort port,
-                    char[] chan_name, ulong records, ulong bytes) {
+                    char[] chan_name, ulong records, ulong bytes)
+            {
                 Stdout.formatln("{}:{} '{}' {} records, {} bytes", addr, port,
                     chan_name, records, bytes);
             },
@@ -507,9 +566,9 @@ private class RemoveChannel : DhtCommand
 {
     this()
     {
-        this.command_names = [ "removechannel", "rc" ];
-        this.help_msg = "Remove a channel and all its associated data";
-        this.req_args = [ help_chan ];
+        super.command_names = [ "removechannel", "rc" ];
+        super.help_msg = "Remove a channel and all its associated data";
+        super.req_args = [ help_chan ];
     }
 
     static this()
@@ -520,7 +579,7 @@ private class RemoveChannel : DhtCommand
     protected override void assignTo(DhtClient dht,
             RequestNotification.Callback notifier)
     {
-        dht.assign(dht.removeChannel(this.args[0], notifier));
+        dht.assign(dht.removeChannel(super.args[0], notifier));
     }
 }
 
@@ -536,8 +595,8 @@ private class GetNumConnections : DhtCommand
 {
     this()
     {
-        this.command_names = [ "getnumconnections", "gnc" ];
-        this.help_msg = "Get the number of connections of each node";
+        super.command_names = [ "getnumconnections", "gnc" ];
+        super.help_msg = "Get the number of connections of each node";
     }
 
     static this()
@@ -549,7 +608,8 @@ private class GetNumConnections : DhtCommand
             RequestNotification.Callback notifier)
     {
         dht.assign(dht.getNumConnections(
-            (DhtClient.RequestContext c, char[] addr, ushort port, size_t n) {
+            (DhtClient.RequestContext c, char[] addr, ushort port, size_t n)
+            {
                 Stdout.formatln("{}:{} {} connections", addr, port, n);
             },
             notifier));
@@ -567,8 +627,8 @@ private class GetVersion : DhtCommand
 {
     this()
     {
-        this.command_names = [ "getversion", "gv", "v" ];
-        this.help_msg = "Get the version of each node";
+        super.command_names = [ "getversion", "gv", "v" ];
+        super.help_msg = "Get the version of each node";
     }
 
     static this()
@@ -580,7 +640,8 @@ private class GetVersion : DhtCommand
             RequestNotification.Callback notifier)
     {
         dht.assign(dht.getVersion(
-            (DhtClient.RequestContext c, char[] addr, ushort port, char[] ver) {
+            (DhtClient.RequestContext c, char[] addr, ushort port, char[] ver)
+            {
                 Stdout.formatln("{}:{} version {}", addr, port, ver);
             },
             notifier));
@@ -599,8 +660,8 @@ private class GetReponsibleRange : DhtCommand
 {
     this()
     {
-        this.command_names = [ "getreponsiblerange", "grr" ];
-        this.help_msg = "Get the range of keys each node handles";
+        super.command_names = [ "getreponsiblerange", "grr" ];
+        super.help_msg = "Get the range of keys each node handles";
     }
 
     static this()
@@ -613,7 +674,8 @@ private class GetReponsibleRange : DhtCommand
     {
         dht.assign(dht.getResponsibleRange(
             (DhtClient.RequestContext c, char[] addr, ushort port,
-                    RequestParams.Range r) {
+                    RequestParams.Range r)
+            {
                 Stdout.formatln("{}:{} {} - {}", addr, port, r.min, r.max);
             },
             notifier));
@@ -632,8 +694,8 @@ private class GetSupportedCommands : DhtCommand
 {
     this()
     {
-        this.command_names = [ "getsupportedcommands", "gsc" ];
-        this.help_msg = "Get the list of supported commands each node supports";
+        super.command_names = [ "getsupportedcommands", "gsc" ];
+        super.help_msg = "Get the list of supported commands each node supports";
     }
 
     static this()
@@ -646,7 +708,8 @@ private class GetSupportedCommands : DhtCommand
     {
         dht.assign(dht.getSupportedCommands(
             (DhtClient.RequestContext c, char[] addr, ushort port,
-                        DhtConst.Command.BaseType[] cmds) {
+                        DhtConst.Command.BaseType[] cmds)
+            {
                 foreach (cmd; cmds)
                 {
                     auto cmd_desc = DhtConst.Command.description(cmd);
