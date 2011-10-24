@@ -46,9 +46,15 @@ DEBUG_FLAGS = ${FLAGS}\
 
 NODE_FLAGS =\
 	-L-ltokyocabinet
+#	-debug=Raw
+#	-debug=ISelectClient
+#	-debug=ConnectionHandler
+#	-debug=Raw
 
 CLIENT_FLAGS =\
 	-L-lebtree
+#	-debug=Raw
+#	-debug=ISelectClient
 
 
 # ------------------------------------------------------------------------------
