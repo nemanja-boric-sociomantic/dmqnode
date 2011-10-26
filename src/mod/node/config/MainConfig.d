@@ -83,9 +83,9 @@ static:
         cmdpath.set(exepath);
 
         if (config_file)
-            Config.init(config_file);
+            Config.initSingleton(config_file);
         else
-            Config.init(cmdpath.prepend(["etc", "config.ini"]));
+            Config.initSingleton(cmdpath.prepend(["etc", "config.ini"]));
 
         // Log
         auto error_log = Config.Char["Log", "error"];

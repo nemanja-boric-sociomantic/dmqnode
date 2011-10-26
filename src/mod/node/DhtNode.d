@@ -116,18 +116,19 @@ public class DhtNodeServer
 
     public this ( )
     {
-        auto min = Config.Char["Server", "minval"];
-        auto max = Config.Char["Server", "maxval"];
+        auto min = Config().Char["Server", "minval"];
+        auto max = Config().Char["Server", "maxval"];
 
         // TODO: remove this hash range padding, always specify full 32-bit
         // hexadecimal numbers
         auto min_hash = DhtHash.toHashRangeStart(min);
         auto max_hash = DhtHash.toHashRangeEnd(max);
 
-        ulong size_limit = Config.get!(ulong)("Server", "size_limit");
-        char[] data_dir = Config.get!(char[])("Server", "data_dir");
+        ulong size_limit = Config().get!(ulong)("Server", "size_limit");
+        char[] data_dir = Config().get!(char[])("Server", "data_dir");
 
-        NodeItem node_item = NodeItem(Config.Char["Server", "address"], Config.Int["Server", "port"]);
+        NodeItem node_item = NodeItem(Config().Char["Server", "address"],
+                Config().Int["Server", "port"]);
 
         Storage storage = this.getStorageConfiguration();
         assertEx(storage != Storage.None, "Invalid storage engine type");
@@ -136,7 +137,7 @@ public class DhtNodeServer
         {
             case Storage.Memory:
                 MemoryStorageChannels.Args args;
-                Config.get(args.bnum, "Options_Memory", "bnum");
+                Config().get(args.bnum, "Options_Memory", "bnum");
 
                 auto memory_node = new MemoryNode(node_item, min_hash, max_hash,
                         data_dir, size_limit, args);
@@ -146,7 +147,7 @@ public class DhtNodeServer
 
             case Storage.LogFiles:
                 LogFilesStorageChannels.Args args;
-                Config.get(args.write_buffer_size, "Options_LogFiles", "write_buffer_size");
+                Config().get(args.write_buffer_size, "Options_LogFiles", "write_buffer_size");
 
                 size_limit = 0; // logfiles node ignores size limit setting
 
@@ -162,10 +163,10 @@ public class DhtNodeServer
         }
 
         uint stats_log_period = 300;
-        Config.get(stats_log_period, "Log", "stats_log_period");
+        Config().get(stats_log_period, "Log", "stats_log_period");
 
         uint maintenance_period = 3600;
-        Config.get(maintenance_period, "ServiceThreads", "maintenance_period");
+        Config().get(maintenance_period, "ServiceThreads", "maintenance_period");
 
         this.service_threads = new ServiceThreads(&this.shutdown);
         this.service_threads.add(new MaintenanceThread(this.node, maintenance_period));
@@ -225,7 +226,7 @@ public class DhtNodeServer
     
     private Storage getStorageConfiguration ( )
     {
-        switch (Config.get!(char[])("Server", "storage_engine"))
+        switch (Config().get!(char[])("Server", "storage_engine"))
         {
             case "memory":
                 return Storage.Memory;
