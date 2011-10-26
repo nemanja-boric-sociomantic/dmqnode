@@ -104,15 +104,27 @@ test-release:
 # ------------------------------------------------------------------------------
 # Server commands -- upload and connect to server
 
-SERVER = 8
+EU_SERVER = 8
 
-upload: upload-node
+US_SERVER = 1
 
-upload-node:
-	scp -C ${NODE_OUTPUT} root@eq6-${SERVER}.sociomantic.com:/tmp/queue
+upload-node-eu:
+	scp -C ${NODE_OUTPUT} root@eq6-${EU_SERVER}.sociomantic.com:/tmp/queue
 
-connect:
-	ssh root@eq6-${SERVER}.sociomantic.com
+upload-node-us:
+	scp -C ${NODE_OUTPUT} root@rs-${US_SERVER}.sociomantic.com:/tmp/queue
+
+connect-eu:
+	ssh root@eq6-${EU_SERVER}.sociomantic.com
+
+connect-us:
+	ssh root@eq6-${US_SERVER}.sociomantic.com
+
+connect-main-eu:
+	ssh -t root@eq6-${EU_SERVER}.sociomantic.com "screen -rx queue"
+
+connect-main-us:
+	ssh -t root@rs-${US_SERVER}.sociomantic.com "screen -rx queue"
 
 
 # ------------------------------------------------------------------------------
