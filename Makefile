@@ -16,6 +16,9 @@ PRODUCER_OUTPUT = bin/queueproducer
 TEST_TARGET = src/main/queuetest.d
 TEST_OUTPUT = bin/queuetest
 
+PERFORMANCE_TARGET = src/main/queueperformance.d
+PERFORMANCE_OUTPUT = bin/queueperformance
+
 
 # ------------------------------------------------------------------------------
 # Xfbuild flags
@@ -102,6 +105,16 @@ test-release:
 
 
 # ------------------------------------------------------------------------------
+# Performance test debug & release builds
+
+performance:
+	xfbuild +D=.deps-performance +O=.objs-performance +o=${PERFORMANCE_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${PERFORMANCE_TARGET}
+
+performance-release:
+	xfbuild +D=.deps-performance +O=.objs-performance +o=${PERFORMANCE_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${PERFORMANCE_TARGET}
+
+
+# ------------------------------------------------------------------------------
 # Server commands -- upload and connect to server
 
 EU_SERVER = 8
@@ -135,14 +148,17 @@ clean:
 	xfbuild ${XFBUILD_FLAGS} +clean ${MONITOR_TARGET}
 	xfbuild ${XFBUILD_FLAGS} +clean ${CONSUMER_TARGET}
 	xfbuild ${XFBUILD_FLAGS} +clean ${TEST_TARGET}
+	xfbuild ${XFBUILD_FLAGS} +clean ${PERFORMANCE_TARGET}
 	@-rm .objs-node -rf
 	@-rm .deps-node -rf
 	@-rm .objs-monitor -rf
 	@-rm .deps-monitor -rf
 	@-rm .objs-consumer -rf
-	@-rm .deps-consumer -rf	
+	@-rm .deps-consumer -rf
 	@-rm .objs-producer -rf
 	@-rm .deps-producer -rf
 	@-rm .objs-test -rf
-	@-rm .deps-test -rf	
+	@-rm .deps-test -rf
+	@-rm .objs-performance -rf
+	@-rm .deps-performance -rf
 
