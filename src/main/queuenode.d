@@ -32,7 +32,7 @@ private import ocean.sys.CmdPath,
 
 private import tango.core.Memory;
 
-debug private import tango.util.log.Trace;
+debug private import ocean.util.log.Trace;
 
 
 
@@ -85,6 +85,6 @@ bool terminate ( int code )
 
     queue.shutdown();
 
-    return true;
+    return false;
 }
 
