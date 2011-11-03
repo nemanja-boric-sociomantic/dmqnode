@@ -65,7 +65,7 @@ CLIENT_FLAGS =\
 # ------------------------------------------------------------------------------
 # Debug build of all targets (default)
 
-default: node remove copy info test cli performance
+default: node remove info test cli performance
 
 
 # ------------------------------------------------------------------------------
