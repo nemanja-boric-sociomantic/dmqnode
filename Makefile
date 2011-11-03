@@ -140,17 +140,26 @@ performance-release:
 
 
 # ------------------------------------------------------------------------------
-# Upload
+# Upload node
 
-EU_SERVERS = 1 2 3 4 5 6 7
+EU_NODE_SERVERS = 1 2 3 4 5 6 7
 
-US_SERVERS = 2
+US_NODE_SERVERS = 2
 
 upload-node-eu:
-	$(foreach srv, $(EU_SERVERS), scp -C ${NODE_OUTPUT} root@eq6-$(srv).sociomantic.com:/tmp/dht;)
+	$(foreach srv, $(EU_NODE_SERVERS), scp -C ${NODE_OUTPUT} root@eq6-$(srv).sociomantic.com:/tmp/dht;)
 
 upload-node-us:
-	$(foreach srv, $(US_SERVERS), scp -C ${NODE_OUTPUT} root@rs-$(srv).sociomantic.com:/tmp/dht;)
+	$(foreach srv, $(US_NODE_SERVERS), scp -C ${NODE_OUTPUT} root@rs-$(srv).sociomantic.com:/tmp/dht;)
+
+
+# ------------------------------------------------------------------------------
+# Upload Command line client
+
+EU_CLI_SERVERS = 10
+
+upload-cli-eu:
+	$(foreach srv, $(EU_CLI_SERVERS), scp -C ${CLI_OUTPUT} root@eq6-$(srv).sociomantic.com:/tmp/dht;)
 
 
 # ------------------------------------------------------------------------------
