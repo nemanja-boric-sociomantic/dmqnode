@@ -424,9 +424,14 @@ class DhtInfo : DhtTool
                 ( DhtClient.RequestContext context, char[] node_address, ushort node_port, size_t num_connections )
                 {
                     auto node = this.findNode(node_address, node_port);
-                    assert(node, typeof(this).stringof ~ "Node mismatch!");
-
-                    node.connections = num_connections;
+                    if ( !node )
+                    {
+                        Stderr.formatln("Node mismatch");
+                    }
+                    else
+                    {
+                        node.connections = num_connections;
+                    }
                 }, &this.notifier));
         super.epoll.eventLoop;
 
@@ -644,9 +649,15 @@ class DhtInfo : DhtTool
                 ( DhtClient.RequestContext context, char[] address, ushort port, char[] channel, ulong records, ulong bytes )
                 {
                     auto node = this.findNode(address, port);
-                    assert(node, typeof(this).stringof ~ "Node mismatch!");
+                    if ( !node )
+                    {
+                        Stderr.formatln("Node mismatch");
+                    }
+                    else
+                    {
+                        node.setChannelSize(channel, records, bytes);
+                    }
 
-                    node.setChannelSize(channel, records, bytes);
                 }, &this.notifier));
         super.epoll.eventLoop();
 
