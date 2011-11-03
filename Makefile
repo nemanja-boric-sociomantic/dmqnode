@@ -13,8 +13,8 @@ COPY_OUTPUT = bin/dhtcopy
 INFO_TARGET = src/main/dhtinfo.d
 INFO_OUTPUT = bin/dhtinfo
 
-CLIENT_TARGET = src/main/dhtclient.d
-CLIENT_OUTPUT = bin/dhtclient
+CLI_TARGET = src/main/dhtcli.d
+CLI_OUTPUT = bin/dhtcli
 
 TEST_TARGET = src/main/dhttest.d
 TEST_OUTPUT = bin/dhttest
@@ -65,7 +65,7 @@ CLIENT_FLAGS =\
 # ------------------------------------------------------------------------------
 # Debug build of all targets (default)
 
-default: node remove copy info test client performance
+default: node remove copy info test cli performance
 
 
 # ------------------------------------------------------------------------------
@@ -110,13 +110,13 @@ info-release:
 
 
 # ------------------------------------------------------------------------------
-# client debug & release builds
+# command line client debug & release builds
 
-client:
-	xfbuild +D=.deps-client +O=.objs-client +o=${CLIENT_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${CLIENT_FLAGS} ${CLIENT_TARGET}
+cli:
+	xfbuild +D=.deps-$@ +O=.objs-$@ +o=${CLI_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${CLIENT_FLAGS} ${CLI_TARGET}
 
-client-release:
-	xfbuild +D=.deps-client+O=.objs-client +o=${CLIENT_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${CLIENT_FLAGS} ${CLIENT_TARGET}
+cli-release:
+	xfbuild +D=.deps-$@+O=.objs-$@ +o=${CLI_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${CLIENT_FLAGS} ${CLI_TARGET}
 
 
 # ------------------------------------------------------------------------------
@@ -161,7 +161,7 @@ clean:
 	xfbuild ${XFBUILD_FLAGS} +clean ${REMOVE_TARGET}
 	xfbuild ${XFBUILD_FLAGS} +clean ${COPY_TARGET}
 	xfbuild ${XFBUILD_FLAGS} +clean ${INFO_TARGET}
-	xfbuild ${XFBUILD_FLAGS} +clean ${CLIENT_TARGET}
+	xfbuild ${XFBUILD_FLAGS} +clean ${CLI_TARGET}
 	xfbuild ${XFBUILD_FLAGS} +clean ${TEST_TARGET}
 	xfbuild ${XFBUILD_FLAGS} +clean ${PERFORMANCE_TARGET}
 	@-rm .objs-* -rf

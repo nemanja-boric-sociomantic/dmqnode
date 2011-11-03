@@ -14,7 +14,7 @@
 
 *******************************************************************************/
 
-module src.mod.client.Commands;
+module src.mod.cli.Commands;
 
 
 
@@ -24,7 +24,7 @@ module src.mod.client.Commands;
 
 *******************************************************************************/
 
-private import src.mod.client.Command;
+private import src.mod.cli.Command;
 
 private import swarm.dht.DhtClient,
                swarm.dht.DhtConst,

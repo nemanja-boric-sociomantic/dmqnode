@@ -19,7 +19,7 @@
 
 *******************************************************************************/
 
-module src.mod.client.Command;
+module src.mod.cli.Command;
 
 
 

@@ -12,7 +12,7 @@
 
 *******************************************************************************/
 
-module src.mod.client.DhtClientTool;
+module src.mod.cli.DhtCli;
 
 
 
@@ -22,7 +22,7 @@ module src.mod.client.DhtClientTool;
 
 *******************************************************************************/
 
-private import src.mod.client.Commands : Command, Info;
+private import src.mod.cli.Commands : Command, Info;
 
 private import src.mod.model.DhtTool;
 

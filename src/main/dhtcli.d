@@ -8,11 +8,11 @@
 
     authors:        Leandro Lucarella
 
-    See src.mod.client.DhtClient documentation for details.
+    See src.mod.cli.DhtCli documentation for details.
 
 *******************************************************************************/
 
-module src.main.dhtclient;
+module src.main.dhtcli;
 
 
 
@@ -22,7 +22,7 @@ module src.main.dhtclient;
 
 *******************************************************************************/
 
-private import src.mod.client.DhtClientTool;
+private import src.mod.cli.DhtCli;
 
 private import ocean.text.Arguments;
 
