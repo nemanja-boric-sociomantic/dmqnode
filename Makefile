@@ -4,9 +4,6 @@
 NODE_TARGET = src/main/dhtnode.d
 NODE_OUTPUT = bin/dhtnode
 
-REMOVE_TARGET = src/main/dhtremove.d
-REMOVE_OUTPUT = bin/dhtremove
-
 COPY_TARGET = src/main/dhtcopy.d
 COPY_OUTPUT = bin/dhtcopy
 
@@ -51,6 +48,7 @@ DEBUG_FLAGS = ${FLAGS}\
 
 NODE_FLAGS =\
 	-L-ltokyocabinet
+#	-debug=Raw
 #	-debug=SelectFiber\
 #	-debug=ISelectClient\
 #	-debug=ConnectionHandler
@@ -65,7 +63,7 @@ CLIENT_FLAGS =\
 # ------------------------------------------------------------------------------
 # Debug build of all targets (default)
 
-default: node remove info test cli performance
+default: node info test cli performance
 
 
 # ------------------------------------------------------------------------------
@@ -77,16 +75,6 @@ node:
 node-release:
 	xfbuild +D=.deps-node +O=.objs-node +o=${NODE_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${NODE_FLAGS} ${NODE_TARGET}
 
-
-
-# ------------------------------------------------------------------------------
-# remove debug & release builds
-
-remove:
-	xfbuild +D=.deps-remove +O=.objs-remove +o=${REMOVE_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${CLIENT_FLAGS} ${REMOVE_TARGET}
-
-remove-release:
-	xfbuild +D=.deps-remove +O=.objs-remove +o=${REMOVE_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${CLIENT_FLAGS} ${REMOVE_TARGET}
 
 
 # ------------------------------------------------------------------------------
@@ -167,7 +155,6 @@ upload-cli-eu:
 
 clean:
 	xfbuild ${XFBUILD_FLAGS} +clean ${NODE_TARGET}
-	xfbuild ${XFBUILD_FLAGS} +clean ${REMOVE_TARGET}
 	xfbuild ${XFBUILD_FLAGS} +clean ${COPY_TARGET}
 	xfbuild ${XFBUILD_FLAGS} +clean ${INFO_TARGET}
 	xfbuild ${XFBUILD_FLAGS} +clean ${CLI_TARGET}
