@@ -107,9 +107,9 @@ class Produce : IWriteTest
                 epoll.eventLoop;
             }
             
-            if (info.status != expected_result)
+            if (super.status != expected_result)
             {
-                throw new UnexpectedResultException(info.status, 
+                throw new UnexpectedResultException(super.status, 
                                                     expected_result,
                                                     __FILE__, __LINE__);
             }
@@ -154,9 +154,9 @@ class Produce : IWriteTest
         
         epoll.eventLoop;        
                 
-        if (info.status != expected_result)
+        if (super.status != expected_result)
         {
-            throw new UnexpectedResultException(info.status, 
+            throw new UnexpectedResultException(super.status, 
                                                 expected_result,
                                                 __FILE__, __LINE__);
         }

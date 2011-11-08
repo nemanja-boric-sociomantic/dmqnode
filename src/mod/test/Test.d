@@ -357,7 +357,7 @@ class Test : Thread
         logger.info("\tpushing items till full, popping till empty ...");
           
         try do write_test.push(this.epoll, this.queue_client, 5);
-        while (write_test.info.status != QueueConst.Status.OutOfMemory)
+        while (write_test.status != QueueConst.Status.OutOfMemory)
         catch (UnexpectedResultException e) 
         {
             logger.info("caught exception: {}", e.msg);

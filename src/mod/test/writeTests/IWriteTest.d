@@ -89,11 +89,11 @@ abstract class IWriteTest
     
     /***************************************************************************
     
-        Info struct of the last request
+        Status of the last request
         
     ***************************************************************************/
     
-    QueueClient.RequestNotification info;
+    QueueConst.Status.BaseType status;
     
     /***************************************************************************
     
@@ -183,13 +183,16 @@ abstract class IWriteTest
        
     /***************************************************************************
     
-        request finished dg. Sets the info struct.
+        request finished dg. Sets the status.
              
     ***************************************************************************/
     
     protected void requestFinished ( QueueClient.RequestNotification info )
     {
-        this.info = info;
+        if ( info.type == info.type.Finished )
+        {
+            this.status = info.status;
+        }
     }   
     
     /***************************************************************************
@@ -301,10 +304,10 @@ abstract class IWriteTest
 
             epoll.eventLoop;
             
-            if (info.status != expected_result)
+            if (this.status != expected_result)
             {                
                 this.logger.info("unexpected result");
-                throw new UnexpectedResultException(info.status, 
+                throw new UnexpectedResultException(this.status, 
                                                     expected_result,
                                                     __FILE__, __LINE__);
             }       
