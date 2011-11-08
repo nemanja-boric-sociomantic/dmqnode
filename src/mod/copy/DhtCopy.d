@@ -1,6 +1,6 @@
 /*******************************************************************************
 
-    DHT node copy 
+    DHT node copy
 
     copyright:      Copyright (c) 2011 sociomantic labs. All rights reserved
 
@@ -20,6 +20,7 @@
     Inherited from super class:
         -h = display help
         -S = dhtnodes.xml source file
+        -t = type of dht (memory / logfiles)
         -k = copy just a single record with the specified key (hash)
         -s = start of range to copy (hash value - defaults to 0x00000000)
         -e = end of range to copy   (hash value - defaults to 0xFFFFFFFF)
@@ -29,7 +30,7 @@
 
  ******************************************************************************/
 
-module mod.copy.DhtCopy;
+module src.mod.copy.DhtCopy;
 
 
 
@@ -41,17 +42,19 @@ module mod.copy.DhtCopy;
 
 private import src.mod.model.SourceDhtTool;
 
-private import core.dht.DestinationQueue;
-
 private import ocean.core.Array;
 
 private import ocean.text.Arguments;
 
 private import ocean.util.log.PeriodicTrace;
 
+private import swarm.core.client.helper.SuspendableThrottler;
+
 private import swarm.dht.DhtClient,
                swarm.dht.DhtHash,
                swarm.dht.DhtConst;
+
+private import swarm.dht.node.storage.filesystem.LogRecord;
 
 private import tango.io.Stdout;
 
@@ -63,17 +66,8 @@ private import tango.io.Stdout;
 
 *******************************************************************************/
 
-class DhtCopy : SourceDhtTool
+public class DhtCopy : SourceDhtTool
 {
-    /***************************************************************************
-    
-        Singleton parseArgs() and run() methods.
-    
-    ***************************************************************************/
-    
-    mixin SingletonMethods;
-
-
     /***************************************************************************
 
         Xml nodes config file for destination dht
@@ -91,16 +85,21 @@ class DhtCopy : SourceDhtTool
 
     private DhtClient dst_dht;
 
+    private DhtClient src_dht ( )
+    {
+        return super.dht;
+    }
+
 
     /***************************************************************************
 
-        Queue of records being pushed in batches to the dht.
-    
-    ***************************************************************************/
-    
-    private DestinationQueue put_queue;
+        Pool of records being written to the dht.
 
-    
+    ***************************************************************************/
+
+    private SuspendableThrottlerStringPool put_pool;
+
+
     /***************************************************************************
 
         Toggles compare vs copy
@@ -120,6 +119,47 @@ class DhtCopy : SourceDhtTool
 
 
     /***************************************************************************
+
+        Flag indicating whether the dhts being copied from/to are memory dhts.
+        (true = memory, false = logfiles)
+
+    ***************************************************************************/
+
+    private bool memory;
+
+
+    /***************************************************************************
+
+        Set to true when not copying a complete channel (i.e. rather copying a
+        sub-range of a channel).
+
+    ***************************************************************************/
+
+    private bool not_copying_all;
+
+
+    /***************************************************************************
+
+        When copying a complete channel, a GetChannelSize request is performed
+        to find the total number of records in the channel. This member stores
+        the results of the request, and is used to display a percentage progress
+        output.
+
+    ***************************************************************************/
+
+    private ulong records_in_src;
+
+
+    /***************************************************************************
+
+        Count of records processed.
+
+    ***************************************************************************/
+
+    private ulong processed;
+
+
+    /***************************************************************************
     
         Adds command line arguments specific to this tool.
         
@@ -130,11 +170,12 @@ class DhtCopy : SourceDhtTool
     
     override protected void addArgs__ ( Arguments args )
     {
-        args("dest").params(1).required().aliased('D').help("path of dhtnodes.xml file defining nodes to import records to");
+        args("type").params(1).required.aliased('t').help("type of dht (memory / logfiles");
+        args("dest").params(1).required.aliased('D').help("path of dhtnodes.xml file defining nodes to import records to");
         args("compare").aliased('X').help("compare specified data in source & destination dhts (do not copy)");
     }
-    
-    
+
+
     /***************************************************************************
     
         Checks whether the parsed command line args are valid.
@@ -149,16 +190,29 @@ class DhtCopy : SourceDhtTool
     
     override protected bool validArgs_ ( Arguments args )
     {
-        if ( !args.exists("dest") )
+        auto type = args.getString("type");
+
+        switch ( type )
         {
-            Stderr.formatln("No xml destination file specified (use -D)");
+            case "memory":
+            case "logfiles":
+            break;
+
+            default:
+                Stderr.formatln("Dht type must be one of: [memory, logfiles]");
+                return false;
+        }
+
+        if ( type == "logfiles" && args.getBool("compare") == true )
+        {
+            Stderr.formatln("Compare mode doesn't work with logfiles dhts");
             return false;
         }
 
         return true;
     }
-    
-    
+
+
     /***************************************************************************
     
         Initialises this instance from the specified command line args.
@@ -167,79 +221,103 @@ class DhtCopy : SourceDhtTool
             args = command line arguments object to read settings from
     
     ***************************************************************************/
-    
-    override protected void readArgs_ ( Arguments args )
+
+    override protected void readArgs__ ( Arguments args )
     {
         this.dst_config = args.getString("dest");
 
         this.compare = args.getBool("compare");
 
-        this.dst_dht = super.initDhtClient(this.dst_config);
-        this.put_queue = new DestinationQueue(this.dst_dht);
+        this.memory = args.getString("type") == "memory";
     }
 
 
     /***************************************************************************
     
+        Initialises the destination dht client and the record pool.
+    
+        Params:
+            args = command line arguments object to read settings from
+    
+    ***************************************************************************/
+
+    private void initDst ( )
+    {
+        this.dst_dht = super.initDhtClient(this.dst_config, 20_000);
+
+        this.put_pool = new SuspendableThrottlerStringPool;
+    }
+
+
+    /***************************************************************************
+
         Copies dht records in the specified hash range in the specified
         channel to the destination dht.
-        
+
         Params:
             src_dht = dht client to perform copy from
             channel = name of channel to copy from
             start = start of hash range to copy
             end = end of hash range to copy
-    
-    ***************************************************************************/
-    
-    protected void processChannel ( DhtClient src_dht, char[] channel, hash_t start, hash_t end )
-    {
-        bool not_copying_all;
-        ulong received, processed;
 
+    ***************************************************************************/
+
+    protected void processChannel ( char[] channel, hash_t start, hash_t end )
+    {
         void getDg ( DhtClient.RequestContext c, char[] key, char[] value )
         {
             if ( value.length )
             {
-                received++;
-
                 auto hash = DhtHash.straightToHash(key);
 
                 if ( hash >= start && hash <= end )
                 {
+                    this.processed++;
                     this.handleRecord(channel, hash, value);
-                    processed++;
                 }
 
-                this.progressDisplay(channel, processed, received, not_copying_all);
+                this.progressDisplay();
             }
         }
 
-        this.put_queue.setChannel(channel);
-
-        if ( src_dht.commandSupported(DhtConst.Command.GetRange) )
+        if ( start > hash_t.min || end < hash_t.max )
         {
-            src_dht.getRangeRaw(channel, start, end, &getDg).eventLoop;
+            not_copying_all = true;
         }
         else
         {
-            if ( start > hash_t.min || end < hash_t.max )
+            void channelSizeCb ( DhtClient.RequestContext c, char[] address, ushort port, char[] channel, ulong records, ulong bytes )
             {
-                not_copying_all = true;
+                this.records_in_src = records;
             }
-            src_dht.getAllRaw(channel, &getDg).eventLoop;
+
+            src_dht.assign(src_dht.getChannelSize(channel, &channelSizeCb, &super.notifier));
+            super.epoll.eventLoop;
         }
 
-        this.put_queue.flush();
+        this.initDst();
 
-        if ( this.compare )
+        if ( this.memory )
         {
-            Stdout.formatln("Compared {} records from channel {}, {} didn't match", channel, processed, this.non_compare_count);
+            src_dht.assign(src_dht.getAll(channel, &getDg, &super.notifier).raw
+                    .suspendable(&this.put_pool.suspender));
         }
         else
         {
-            Stdout.formatln("Copied {} records from channel {}", channel, processed);
+            hash_t bucket_mask = (1 << LogRecord.SplitBits.key_bits) - 1;
+
+            Stdout.formatln("Channel '{}', start = {:x}, end = {:x}", channel, start, end);
+
+            assert((start & bucket_mask) == 0, "I don't do that sort of thing: bad start");
+            assert((end & bucket_mask) == bucket_mask, "I don't do that sort of thing: bad end");
+
+            src_dht.assign(src_dht.getRange(channel, start, end, &getDg, &super.notifier)
+                    .raw.suspendable(&this.put_pool.suspender));
         }
+
+        super.epoll.eventLoop;
+
+        this.finishedOutput(channel);
     }
 
 
@@ -255,21 +333,24 @@ class DhtCopy : SourceDhtTool
     
     ***************************************************************************/
     
-    protected void processRecord ( DhtClient src_dht, char[] channel, hash_t key )
+    protected void processRecord ( char[] channel, hash_t key )
     {
         void getDg ( DhtClient.RequestContext c, char[] value )
         {
             if ( value.length )
             {
+                this.processed++;
+
                 this.handleRecord(channel, key, value);
             }
         }
 
-        this.put_queue.setChannel(channel);
+        this.initDst();
 
-        src_dht.getRaw(channel, key, &getDg).eventLoop;
+        src_dht.assign(src_dht.get(channel, key, &getDg, &super.notifier).raw);
+        this.epoll.eventLoop;
 
-        this.put_queue.flush();
+        this.finishedOutput(channel);
     }
 
 
@@ -278,37 +359,66 @@ class DhtCopy : SourceDhtTool
         Outputs a progress display when copying / comparing a channel.
         
         Params:
-            channel = channel to copy from
             processed = count of processed records
             received = count of received records
             not_copying_all = if true, indicates that received may be >
                 processed
-    
+
     ***************************************************************************/
 
-    private void progressDisplay ( char[] channel, ulong processed, ulong received, bool not_copying_all )
+    private void progressDisplay ( )
     {
-        if ( this.compare )
+        if ( this.not_copying_all )
         {
-            if ( not_copying_all )
+            if ( this.compare )
             {
-                StaticPeriodicTrace.format("{}: compared {} / {}, {} non-matching", channel, processed, received, this.non_compare_count);
+                StaticPeriodicTrace.format("{} compared, {} non-matching",
+                        this.processed, this.non_compare_count);
             }
             else
             {
-                StaticPeriodicTrace.format("{}: compared {}, {} non-matching", channel, processed, this.non_compare_count);
+                StaticPeriodicTrace.format("{} copied, {} pending",
+                        this.processed, this.put_pool.length);
             }
         }
         else
         {
-            if ( not_copying_all )
+            auto percent = (cast(double)processed / cast(double)this.records_in_src) * 100.0;
+
+            if ( this.compare )
             {
-                StaticPeriodicTrace.format("{}: copied {} / {}", channel, processed, received);
+                StaticPeriodicTrace.format("{} / {} compared ({}%), {} non-matching",
+                        this.processed, this.records_in_src, percent, this.non_compare_count);
             }
             else
             {
-                StaticPeriodicTrace.format("{}: copied {}", channel, processed);
+                StaticPeriodicTrace.format("{} / {} copied ({}%), {} pending",
+                        this.processed, this.records_in_src, percent, this.put_pool.length);
             }
+        }
+    }
+
+
+    /***************************************************************************
+    
+        Outputs a final message when all records have been copied.
+
+        Params:
+            channel = channel copied / compared from
+
+    ***************************************************************************/
+
+    private void finishedOutput ( char[] channel )
+    {
+        if ( this.compare )
+        {
+            Stdout.formatln("\nCompared {} records from channel {}, {} didn't match",
+                    this.processed, channel, this.non_compare_count);
+        }
+        else
+        {
+            Stdout.formatln("\nCopied {} records from channel {}",
+                    this.processed, channel);
         }
     }
 
@@ -326,22 +436,79 @@ class DhtCopy : SourceDhtTool
 
     private void handleRecord ( char[] channel, hash_t key, char[] value )
     {
+        auto context = this.put_pool.put(value);
+
         if ( this.compare )
         {
             void getDg ( DhtClient.RequestContext c, char[] dst_value )
             {
-                if ( value != dst_value )
+                if ( dst_value != this.put_pool.get(c) )
                 {
                     this.non_compare_count++;
                 }
             }
 
-            this.dst_dht.getRaw(channel, key, &getDg).eventLoop;
+            this.dst_dht.assign(this.dst_dht.get(channel, key, &getDg, &handleNotifier).raw.context(context));
         }
         else
         {
-            this.put_queue.put(key, value);
+            if ( memory )
+            {
+                this.dst_dht.assign(this.dst_dht.put(channel, key, &putDg, &handleNotifier).context(context));
+            }
+            else
+            {
+                this.dst_dht.assign(this.dst_dht.putDup(channel, key, &putDg, &handleNotifier).context(context));
+            }
         }
+    }
+
+
+    /***************************************************************************
+
+        Callback for Put / PutDup requests.
+
+        Params:
+            c = request context (contains a reference to an item in the pool of
+                pending items)
+
+        Returns:
+            record to put to dht
+
+    ***************************************************************************/
+
+    private char[] putDg ( DhtClient.RequestContext c )
+    {
+        return this.put_pool.get(c);
+    }
+
+
+    /***************************************************************************
+
+        Notification callback used by handleRecord() method, above. Updates the
+        progress display, and recycles a pending item into the pool when it has
+        finished.
+
+        Params:
+            info = notification infor struct
+
+    ***************************************************************************/
+
+    private void handleNotifier ( DhtClient.RequestNotification info )
+    {
+        if ( info.type == info.type.Finished )
+        {
+            if ( this.compare && !info.succeeded )
+            {
+                this.non_compare_count++;
+            }
+
+            this.progressDisplay();
+
+            this.put_pool.finished(info.context);
+        }
+
+        super.notifier(info);
     }
 }
 
