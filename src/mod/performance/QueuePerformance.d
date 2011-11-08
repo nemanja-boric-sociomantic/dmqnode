@@ -162,17 +162,17 @@ public class QueuePerformance
 
     public void run ( Arguments args )
     {
-        this.epoll = new EpollSelectDispatcher;
-
-        this.queue = new QueueClient(this.epoll);
-
-        this.queue.addNodes(args.getString("source"));
-
         auto count = args.getInt!(uint)("count");
 
         auto parallel = args.getInt!(uint)("parallel");
 
         this.record.length = args.getInt!(size_t)("size");
+
+        this.epoll = new EpollSelectDispatcher;
+
+        this.queue = new QueueClient(this.epoll, parallel);
+
+        this.queue.addNodes(args.getString("source"));
 
         Stdout.formatln("Queue performance tester:");
         Stdout.formatln("    performing {} pushes then {} pops each cycle, with up to {} requets in parallel", count, count, parallel);
