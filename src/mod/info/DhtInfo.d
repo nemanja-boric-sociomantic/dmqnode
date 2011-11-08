@@ -68,17 +68,8 @@ private import tango.text.convert.Layout;
 
 *******************************************************************************/
 
-class DhtInfo : DhtTool
+public class DhtInfo : DhtTool
 {
-    /***************************************************************************
-    
-        Singleton parseArgs() and run() methods.
-    
-    ***************************************************************************/
-    
-    mixin SingletonMethods;
-
-
     /***************************************************************************
 
         Array of info on all dht nodes

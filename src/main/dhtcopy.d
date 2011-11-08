@@ -27,7 +27,7 @@
 
  ******************************************************************************/
 
-module main.dhtcopy;
+module src.main.dhtcopy;
 
 
 
@@ -58,16 +58,12 @@ void main ( char[][] arguments )
 {
     auto app_name = arguments[0];
 
-    // Define valid arguments
-    scope args = new Arguments();
-    if ( DhtCopy.parseArgs(args, arguments[1..$]) )
+    scope args = new Arguments;
+    scope app = new DhtCopy;
+
+    if ( app.parseArgs(app_name, args, arguments[1..$]) )
     {
-        // run app
-        OceanException.run(&DhtCopy.run, args);
-    }
-    else
-    {
-        args.displayHelp(app_name);
+        app.run(args);
     }
 }
 

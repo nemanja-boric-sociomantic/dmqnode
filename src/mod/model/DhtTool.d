@@ -100,7 +100,7 @@ abstract class DhtTool
 
     ***************************************************************************/
 
-    final public bool validateArgs ( char[] exe_name, Arguments args, char[][] arguments )
+    final public bool parseArgs ( char[] exe_name, Arguments args, char[][] arguments )
     {
         this.addArgs(args);
 
@@ -142,7 +142,7 @@ abstract class DhtTool
 
     ***************************************************************************/
     
-    final public void process ( Arguments args )
+    final public void run ( Arguments args )
     in
     {
         assert(this.validArgs(args), typeof(this).stringof ~ ".process -- invalid arguments");
@@ -306,11 +306,13 @@ abstract class DhtTool
 
     ***************************************************************************/
 
-    protected DhtClient initDhtClient ( char[] xml )
+    protected DhtClient initDhtClient ( char[] xml, uint request_queue_size = 1000 )
     {
         Stderr.formatln("Initialising dht client connections from {}", xml);
 
-        auto dht = new DhtClient(this.epoll);
+        const num_conn = 10;
+
+        auto dht = new DhtClient(this.epoll, num_conn, request_queue_size);
 
         dht.addNodes(xml);
 
@@ -391,73 +393,6 @@ abstract class DhtTool
         }
 
         return true_count == 1;
-    }
-
-
-    /***************************************************************************
-
-        Template used to mixin static singleton methods to derived classes.
-    
-    ***************************************************************************/
-
-    template SingletonMethods ( )
-    {
-        /***********************************************************************
-        
-            Singleton instance of this class, used in static methods.
-        
-        ***********************************************************************/
-        
-        private static typeof(this) singleton;
-        
-        static private typeof(this) instance ( )
-        {
-            if ( !singleton )
-            {
-                singleton = new typeof(this);
-            }
-        
-            return singleton;
-        }
-        
-        
-        /***********************************************************************
-        
-            Parses and validates command line arguments.
-            
-            Params:
-                exe_name = name of program executable
-                args = arguments object
-                arguments = command line args (excluding the file name)
-        
-            Returns:
-                true if the arguments are valid
-        
-        ***********************************************************************/
-        
-        static public bool parseArgs ( char[] exe_name, Arguments args, char[][] arguments )
-        {
-            return instance().validateArgs(exe_name, args, arguments);
-        }
-
-
-        /***********************************************************************
-        
-            Main run method, called by OceanException.run.
-            
-            Params:
-                args = processed arguments
-        
-            Returns:
-                always true
-        
-        ***********************************************************************/
-        
-        static public bool run ( Arguments args )
-        {
-            instance().process(args);
-            return true;
-        }
     }
 }
 

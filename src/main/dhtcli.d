@@ -41,8 +41,12 @@ void main ( char[][] arguments )
 {
     auto app_name = arguments[0];
 
-    scope args = new Arguments();
-    if ( DhtClientTool.parseArgs(arguments[0], args, arguments[1..$]) )
-        DhtClientTool.run(args);
+    scope args = new Arguments;
+    scope app = new DhtCli;
+
+    if ( app.parseArgs(app_name, args, arguments[1..$]) )
+    {
+        app.run(args);
+    }
 }
 
