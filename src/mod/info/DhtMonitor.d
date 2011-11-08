@@ -91,7 +91,7 @@ public class DhtMonitor
                 ( NodeInfo* node, ref Table.Cell cell1, ref Table.Cell cell2 )
                 {
                     cell1.setMerged;
-                    cell2.setString(node.address);
+                    cell2.setString(node.address ~ ":" ~ Integer.toString(node.port));
                 });
 
         // Node hash ranges
