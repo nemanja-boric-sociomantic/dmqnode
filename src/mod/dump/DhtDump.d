@@ -472,7 +472,7 @@ public class DhtDump : SourceDhtTool
 
     private void receiveRecord ( char[] channel, char[] key, char[] value )
     {
-        if ( hash_str.length && value.length )
+        if ( key.length && value.length )
         {
             auto hash = DhtHash.straightToHash(key);
             if ( hash >= super.range.key1 && hash <= super.range.key2 )
