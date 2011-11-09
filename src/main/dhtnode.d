@@ -32,30 +32,30 @@ private import tango.io.Stdout;
 
 private import ocean.text.Arguments;
 
+private import ocean.util.Main;
+
 debug private import ocean.util.log.Trace;
 
 
 
 /*******************************************************************************
 
-    Parse command line arguments looking for options
-
-    Params:
-        args = arguments parser
-        arguments = array with raw command line arguments
+    Initialises command line arguments parser with options available to this
+    application.
 
     Returns:
-        true if arguments parsed ok, false on error
+        arguments parser instance
 
 *******************************************************************************/
 
-private bool parseArguments ( Arguments args, char[][] arguments )
+private Arguments initArguments ( )
 {
+    auto args = new Arguments;
+
     args("config").aliased('c').params(1).help("use the configuration file CONFIG instead of the default <bin-dir>/etc/config.ini");
     args("daemonize").aliased('d').help("start daemonized dht node server [DEPRECATED]");
-    args("help").aliased('h').help("display help");
 
-    return args.parse(arguments);
+    return args;
 }
 
 
@@ -71,33 +71,26 @@ private bool parseArguments ( Arguments args, char[][] arguments )
 
 private int main ( char[][] arguments )
 {
-    auto app_name = arguments[0];
+    auto args = initArguments();
 
-    auto args = new Arguments;
-    auto args_ok   = parseArguments(args, arguments);
-
-    if ( !args_ok || args("help").set )
+    auto run = Main.processArgs(arguments, args, "dht node server");
+    if ( run )
     {
-        args.displayErrors();
-        args.displayHelp(app_name);
+        char[] config;
+        if ( args.exists("config") )
+        {
+            config = args.getString("config");
+        }
 
-        return args_ok ? 0 : 1;
+        MainConfig.init(arguments[0], config);
+
+        SignalHandler.register(SignalHandler.AppTermination, &shutdown);
+
+        auto dht = new DhtNodeServer;
+        dht.run;
     }
 
-    char[] config;
-    if ( args("config").set )
-    {
-        config = args("config").assigned[$-1];
-    }
-
-    MainConfig.init(app_name, config);
-
-    SignalHandler.register(SignalHandler.AppTermination, &shutdown);
-
-    auto dht = new DhtNodeServer;
-    dht.run;
-
-    return 0;
+    return run ? 0 : 1;
 }
 
 
