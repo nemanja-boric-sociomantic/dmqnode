@@ -46,7 +46,7 @@ class DhtTest
                 case "memory":
                     (new MemoryCommands(2, this.args("source").assigned[0])).run();
                     return;
-                case "logfile":
+                case "logfiles":
                     (new LogfileCommands(2, this.args("source").assigned[0])).run();
                     return;
             }

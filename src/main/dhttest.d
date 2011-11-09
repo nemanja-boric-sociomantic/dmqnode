@@ -55,7 +55,7 @@ void configureArguments ( Arguments args )
             .required.defaults("dhtnodes.xml");
     args("verbose").aliased('v').params(1,1).defaults("info").help("Verbosity output level");
     args("type").aliased('t').params(1)
-        .defaults("memory").restrict(["memory", "logfile"])
+        .defaults("memory").restrict(["memory", "logfiles"])
         .required.help("Type of the node");
     args("iterations").aliased('i').params(1).defaults("1").help("How often the test should run (0 for infinite)");
     args("help").aliased('h').help("Display help").halt();
