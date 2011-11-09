@@ -31,6 +31,7 @@ XFBUILD_FLAGS =\
 # dmd flags
 
 FLAGS =\
+	-J.\
 	-version=NewTango \
 	-Isrc \
     -I../swarm \
@@ -51,16 +52,32 @@ DEBUG_FLAGS = ${FLAGS}\
 # ------------------------------------------------------------------------------
 # Debug build of node & monitor (default)
 
+.PHONY: revision node monitor consumer test
+
 default: node monitor consumer test
+
+
+# ------------------------------------------------------------------------------
+# Revision file build
+
+DEP_BASE_DIR = ../
+DEPENDENCIES = ocean swarm tango
+
+revision:
+	@logname > revisions.txt
+	@date >> revisions.txt
+	@svnversion >> revisions.txt
+	@$(foreach x,$(DEPENDENCIES), echo $(x) $$(svnversion $(DEP_BASE_DIR)$(x)) >> revisions.txt;)
+	@touch $(DEP_BASE_DIR)ocean/util/Version.d
 
 
 # ------------------------------------------------------------------------------
 # Node debug & release builds
 
-node:
+node: revision
 	xfbuild +D=.deps-node +O=.objs-node +o=${NODE_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${NODE_TARGET}
 
-node-release:
+node-release: revision
 	xfbuild +D=.deps-node +O=.objs-node +o=${NODE_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${NODE_TARGET}
 
 

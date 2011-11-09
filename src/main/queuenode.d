@@ -30,6 +30,8 @@ private import src.mod.server.config.MainConfig;
 private import ocean.sys.CmdPath,
                ocean.sys.SignalHandler;
 
+private import ocean.util.Main;
+
 private import tango.core.Memory;
 
 debug private import ocean.util.log.Trace;
@@ -51,17 +53,23 @@ QueueServer queue;
 
  ******************************************************************************/
 
-void main ( char[][] args )
+int main ( char[][] arguments )
 {
 //    GC.disable;
 
-    MainConfig.init(args[0]);
+    auto run = Main.run(arguments, "queue node server");
+    if ( run )
+    {
+        MainConfig.init(arguments[0]);
 
-    queue = new QueueServer();
+        queue = new QueueServer();
 
-    SignalHandler.register(SignalHandler.AppTermination, &terminate);
+        SignalHandler.register(SignalHandler.AppTermination, &terminate);
 
-    queue.run();
+        queue.run();
+    }
+
+    return run ? 0 : 1;
 }
 
 
