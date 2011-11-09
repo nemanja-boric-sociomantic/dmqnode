@@ -57,7 +57,7 @@ int main ( char[][] arguments )
 {
 //    GC.disable;
 
-    auto run = Main.run(arguments, "queue node server");
+    auto run = Main.processArgs(arguments, "queue node server");
     if ( run )
     {
         MainConfig.init(arguments[0]);
