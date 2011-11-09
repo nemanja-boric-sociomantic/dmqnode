@@ -7,6 +7,9 @@ NODE_OUTPUT = bin/dhtnode
 COPY_TARGET = src/main/dhtcopy.d
 COPY_OUTPUT = bin/dhtcopy
 
+DUMP_TARGET = src/main/dhtdump.d
+DUMP_OUTPUT = bin/dhtdump
+
 INFO_TARGET = src/main/dhtinfo.d
 INFO_OUTPUT = bin/dhtinfo
 
@@ -56,12 +59,16 @@ NODE_FLAGS =\
 
 CLIENT_FLAGS =\
 	-L-lebtree
+#	-debug=ISelectClient\
+#	-debug=SwarmClient
 #	-debug=Raw
 #	-debug=ISelectClient
 
 
 # ------------------------------------------------------------------------------
 # Debug build of all targets (default)
+
+.PHONY: node info test cli performance
 
 default: node info test cli performance
 
@@ -85,6 +92,16 @@ copy:
 
 copy-release:
 	xfbuild +D=.deps-copy +O=.objs-copy +o=${COPY_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${CLIENT_FLAGS} ${COPY_TARGET}
+
+
+# ------------------------------------------------------------------------------
+# dump debug & release builds
+
+dump:
+	xfbuild +D=.deps-dump +O=.objs-dump +o=${DUMP_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${CLIENT_FLAGS} ${DUMP_TARGET}
+
+dump-release:
+	xfbuild +D=.deps-dump +O=.objs-dump +o=${DUMP_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${CLIENT_FLAGS} ${DUMP_TARGET}
 
 
 # ------------------------------------------------------------------------------
@@ -156,6 +173,7 @@ upload-cli-eu:
 clean:
 	xfbuild ${XFBUILD_FLAGS} +clean ${NODE_TARGET}
 	xfbuild ${XFBUILD_FLAGS} +clean ${COPY_TARGET}
+	xfbuild ${XFBUILD_FLAGS} +clean ${DUMP_TARGET}
 	xfbuild ${XFBUILD_FLAGS} +clean ${INFO_TARGET}
 	xfbuild ${XFBUILD_FLAGS} +clean ${CLI_TARGET}
 	xfbuild ${XFBUILD_FLAGS} +clean ${TEST_TARGET}
