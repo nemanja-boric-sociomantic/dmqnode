@@ -16,6 +16,7 @@
     Command line parameters:
         -D = dhtnodes.xml file for destination dht
         -X = compare specified data in source & destination dhts (do not copy)
+        -t = type of dht (memory / logfiles)
 
     Inherited from super class:
         -h = display help
