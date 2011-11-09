@@ -18,6 +18,7 @@
         -f = dumps records to a file, instead of to stdout
         -r = dumps raw records exactly as stored in the node, without
              decompressing
+        -t = type of dht (memory / logfiles)
 
     Inherited from super class:
         -h = display help
@@ -74,17 +75,8 @@ debug private import ocean.util.log.Trace;
 
 *******************************************************************************/
 
-class DhtDump : SourceDhtTool
+public class DhtDump : SourceDhtTool
 {
-    /***************************************************************************
-
-        Singleton parseArgs() and run() methods.
-    
-    ***************************************************************************/
-
-    mixin SingletonMethods;
-
-
     /***************************************************************************
 
         Progress tracer.
@@ -175,7 +167,17 @@ class DhtDump : SourceDhtTool
 
     private ulong channel_records, channel_bytes;
 
-    
+
+    /***************************************************************************
+
+        Flag indicating whether the dhts being copied from/to are memory dhts.
+        (true = memory, false = logfiles)
+
+    ***************************************************************************/
+
+    private bool memory;
+
+
     /***************************************************************************
 
         Constructor.
@@ -202,6 +204,7 @@ class DhtDump : SourceDhtTool
 
     override protected void addArgs__ ( Arguments args )
     {
+        args("type").params(1).required.aliased('t').help("type of dht (memory / logfiles");
         args("count").aliased('n').help("count records, do not dump contents");
         args("hex").aliased('x').help("displays records as hexadecimal dump (default is a string dump)");
         args("limit").params(1).defaults("0xffffffff").aliased('l').help("limits the length of text displayed for each record (defaults to no limit)");
@@ -224,10 +227,17 @@ class DhtDump : SourceDhtTool
 
     override protected bool validArgs_ ( Arguments args )
     {
-        if ( args.exists("key") && args.exists("count") )
+        auto type = args.getString("type");
+
+        switch ( type )
         {
-            Stderr.formatln("You want to count a single record? The result is 1.");
-            return false;
+            case "memory":
+            case "logfiles":
+            break;
+
+            default:
+                Stderr.formatln("Dht type must be one of: [memory, logfiles]");
+                return false;
         }
 
         if ( args.exists("file") )
@@ -263,8 +273,9 @@ class DhtDump : SourceDhtTool
 
     ***************************************************************************/
 
-    override protected void readArgs_ ( Arguments args )
+    protected void readArgs__ ( Arguments args )
     {
+        this.memory = args.getString("type") == "memory";
         this.count_records = args.getBool("count");
         this.hex_output = args.getBool("hex");
         this.text_limit = args.getInt!(uint)("limit");
@@ -286,7 +297,7 @@ class DhtDump : SourceDhtTool
 
     ***************************************************************************/
 
-    override protected void finished ( DhtClient dht )
+    override protected void finished ( )
     {
         if ( this.count_records )
         {
@@ -313,54 +324,39 @@ class DhtDump : SourceDhtTool
     
     ***************************************************************************/
 
-    protected void processChannel ( DhtClient dht, char[] channel, hash_t start, hash_t end )
+    protected void processChannel ( char[] channel, hash_t start, hash_t end )
     {
-        void receiveRecord ( DhtClient.RequestContext context, char[] key, char[] value )
+        void getDg ( DhtClient.RequestContext context, char[] hash_str, char[] value )
         {
-            if ( key.length && value.length )
-            {
-                this.outputRecord(channel, key, value);
-            }
+            this.receiveRecord(channel, hash_str, value);
         }
 
         this.channel_records = 0;
         this.channel_bytes = 0;
 
-        this.displayChannelSize(dht, channel);
+        this.displayChannelSize(channel);
 
-        if ( dht.commandSupported(DhtConst.Command.GetRange) )
+        if ( this.memory )
         {
-            dht.getRange(channel, start, end, &receiveRecord).eventLoop();
+            auto request = super.dht.getAll(channel, &getDg, &super.notifier);
+            this.setRaw(request);
+            super.dht.assign(request);
         }
         else
         {
-            void getAllDg ( DhtClient.RequestContext context, char[] hash_str, char[] value )
-            {
-                if ( hash_str.length )
-                {
-                    auto hash = DhtHash.straightToHash(hash_str);
-                    if ( hash >= start && hash <= end )
-                    {
-                        receiveRecord(context, hash_str, value);
-                    }
-                }
-            }
-            
-            if ( this.raw_dump )
-            {
-                dht.getAllRaw(channel, &getAllDg).eventLoop();
-            }
-            else
-            {
-                dht.getAll(channel, &getAllDg).eventLoop();
-            }
+            auto request = super.dht.getRange(channel, start, end, &getDg, &super.notifier);
+            this.setRaw(request);
+            super.dht.assign(request);
         }
+
+        super.epoll.eventLoop;
 
         this.records += this.channel_records;
         this.bytes += this.channel_bytes;
         if ( this.count_records || this.file_dump )
         {
-            Stdout.format("Channel {} contains {} records ({} bytes) in the specified range\n\n", channel, this.channel_records, this.channel_bytes);
+            Stdout.format("Channel {} contains {} records ({} bytes) in the specified range\n\n",
+                channel, this.channel_records, this.channel_bytes);
         }
     }
 
@@ -377,7 +373,7 @@ class DhtDump : SourceDhtTool
     
     ***************************************************************************/
 
-    protected void processRecord ( DhtClient dht, char[] channel, hash_t key )
+    protected void processRecord ( char[] channel, hash_t key )
     {
         void getDg ( DhtClient.RequestContext context, char[] value )
         {
@@ -391,13 +387,49 @@ class DhtDump : SourceDhtTool
             }
         }
 
-        if ( this.raw_dump )
+        void getRangeDg ( DhtClient.RequestContext context, char[] hash_str, char[] value )
         {
-            dht.getRaw(channel, key, &getDg).eventLoop();
+            this.receiveRecord(channel, hash_str, value);
+        }
+
+        if ( this.memory )
+        {
+            auto request = super.dht.get(channel, key, &getDg, &super.notifier);
+            this.setRaw(request);
+            super.dht.assign(request);
         }
         else
         {
-            dht.get(channel, key, &getDg).eventLoop();
+            auto request = super.dht.getRange(channel, key, key, &getRangeDg, &super.notifier);
+            this.setRaw(request);
+            super.dht.assign(request);
+        }
+
+        super.epoll.eventLoop;
+
+        this.records += this.channel_records;
+        this.bytes += this.channel_bytes;
+    }
+
+
+    /***************************************************************************
+
+        Sets a dht request to receive raw (not de-compressed) data if the user
+        has requested this.
+
+        Template params:
+            T = type of request init struct
+
+        Params:
+            request = request init struct from dht client
+
+    ***************************************************************************/
+
+    private void setRaw ( T ) ( T request )
+    {
+        if ( this.raw_dump )
+        {
+            request.raw;
         }
     }
 
@@ -412,15 +444,42 @@ class DhtDump : SourceDhtTool
 
     ***************************************************************************/
     
-    private void displayChannelSize ( DhtClient dht, char[] channel  )
+    private void displayChannelSize ( char[] channel  )
     {
-        dht.getChannelSize(channel,
+        super.dht.assign(super.dht.getChannelSize(channel,
                 ( DhtClient.RequestContext context, char[] address, ushort port, char[] channel, ulong records, ulong bytes )
                 {
                     Stdout.formatln("{}:{} {} - {} records, {} bytes", address, port, channel, records, bytes);
-                }).eventLoop();
+                }, &super.notifier));
+
+        super.epoll.eventLoop();
 
         Stdout.flush();
+    }
+
+
+    /***************************************************************************
+
+        Handles a record received from the node. If the record is within the
+        specified range it is output.
+
+        Params:
+            channel = channel record was received from
+            key = string containing record's key
+            value = record's value
+
+    ***************************************************************************/
+
+    private void receiveRecord ( char[] channel, char[] key, char[] value )
+    {
+        if ( hash_str.length && value.length )
+        {
+            auto hash = DhtHash.straightToHash(key);
+            if ( hash >= super.range.key1 && hash <= super.range.key2 )
+            {
+                this.outputRecord(channel, key, value);
+            }
+        }
     }
 
 
