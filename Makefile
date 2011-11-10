@@ -34,6 +34,7 @@ XFBUILD_FLAGS =\
 # dmd flags
 
 FLAGS =\
+	-J.\
 	-L-lminilzo \
     -L-ldl \
     -I../swarm \
@@ -68,20 +69,35 @@ CLIENT_FLAGS =\
 # ------------------------------------------------------------------------------
 # Debug build of all targets (default)
 
-.PHONY: node info test cli performance
+.PHONY: revision node info test cli performance
 
 default: node info test cli performance
 
 
 # ------------------------------------------------------------------------------
+# Revision file build
+
+REVISION_FILE = src/main/Version.d
+DEP_BASE_DIR = ../
+DEPENDENCIES = ocean swarm tango
+
+revision:
+	@echo "// This file was automatically generated at compile time by the Makefile" > $(REVISION_FILE)
+	@echo "// (it should not be added to source control)" >> $(REVISION_FILE)
+	@printf "module %s;\n" `echo $(REVISION_FILE) | sed -e 's|/|.|g' -e 's|.d||g'` >> $(REVISION_FILE)
+	@printf "public const revision = \"%s - %s: %s" "`logname`" "`date`" "`svnversion`" >> $(REVISION_FILE)
+	@$(foreach x,$(DEPENDENCIES), printf ", %s %s" $(x) $$(svnversion $(DEP_BASE_DIR)$(x)) >> $(REVISION_FILE);)
+	@printf "\";" >> $(REVISION_FILE)
+
+
+# ------------------------------------------------------------------------------
 # node debug & release builds
 
-node:
+node: revision
 	xfbuild +D=.deps-node +O=.objs-node +o=${NODE_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${NODE_FLAGS} ${NODE_TARGET}
 
-node-release:
+node-release: revision
 	xfbuild +D=.deps-node +O=.objs-node +o=${NODE_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${NODE_FLAGS} ${NODE_TARGET}
-
 
 
 # ------------------------------------------------------------------------------
@@ -178,5 +194,6 @@ clean:
 	xfbuild ${XFBUILD_FLAGS} +clean ${CLI_TARGET}
 	xfbuild ${XFBUILD_FLAGS} +clean ${TEST_TARGET}
 	xfbuild ${XFBUILD_FLAGS} +clean ${PERFORMANCE_TARGET}
+	@-rm revisions.txt
 	@-rm .objs-* -rf
 	@-rm .deps-* -rf

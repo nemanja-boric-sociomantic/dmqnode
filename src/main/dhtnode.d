@@ -20,6 +20,8 @@ module src.main.dhtnode;
 
 *******************************************************************************/
 
+private import Version = src.main.Version;
+
 private import src.mod.node.DhtNode;
 
 private import src.mod.node.config.MainConfig;
@@ -73,7 +75,7 @@ private int main ( char[][] arguments )
 {
     auto args = initArguments();
 
-    auto run = Main.processArgs(arguments, args, "dht node server");
+    auto run = Main.processArgs(arguments, args, Version.revision, "dht node server");
     if ( run )
     {
         char[] config;
