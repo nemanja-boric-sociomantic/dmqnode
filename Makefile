@@ -31,7 +31,6 @@ XFBUILD_FLAGS =\
 # dmd flags
 
 FLAGS =\
-	-J.\
 	-version=NewTango \
 	-Isrc \
     -I../swarm \
@@ -60,15 +59,17 @@ default: node monitor consumer test
 # ------------------------------------------------------------------------------
 # Revision file build
 
+VERSION_FILE = src/main/Version.d
 DEP_BASE_DIR = ../
 DEPENDENCIES = ocean swarm tango
 
 revision:
-	@logname > revisions.txt
-	@date >> revisions.txt
-	@svnversion >> revisions.txt
-	@$(foreach x,$(DEPENDENCIES), echo $(x) $$(svnversion $(DEP_BASE_DIR)$(x)) >> revisions.txt;)
-	@touch $(DEP_BASE_DIR)ocean/util/Version.d
+	@echo "// This file was automatically generated at compile time by the Makefile" > $(VERSION_FILE)
+	@echo "// (it should not be added to source control)" >> $(VERSION_FILE)
+	@echo "module src.main.Version;" >> $(VERSION_FILE)
+	@printf "public const revision = \"%s - %s: %s" "`logname`" "`date`" "`svnversion`" >> $(VERSION_FILE)
+	@$(foreach x,$(DEPENDENCIES), printf ", %s %s" $(x) $$(svnversion $(DEP_BASE_DIR)$(x)) >> $(VERSION_FILE);)
+	@printf "\";" >> $(VERSION_FILE)
 
 
 # ------------------------------------------------------------------------------

@@ -21,6 +21,8 @@ module src.main.queuenode;
 
  ******************************************************************************/
 
+private import Version = src.main.Version;
+
 private import src.mod.server.QueueServer;
 
 private import src.mod.server.util.Terminator;
@@ -57,7 +59,7 @@ int main ( char[][] arguments )
 {
 //    GC.disable;
 
-    auto run = Main.processArgs(arguments, "queue node server");
+    auto run = Main.processArgs(arguments, Version.revision, "queue node server");
     if ( run )
     {
         MainConfig.init(arguments[0]);
