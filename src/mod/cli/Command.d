@@ -47,12 +47,33 @@ private import tango.core.Array : map;
 
 *******************************************************************************/
 
-private struct ArgHelp
+public struct ArgHelp
 {
-    char[] name; /// Name of the argument
-    char[] help; /// Help message
+    private char[] name; /// Name of the argument
+    private char[] help; /// Help message
 }
 
+
+/*******************************************************************************
+
+    ArgHelp to indicate variable number of arguments.
+
+    If the last argument of the Command.opt_args has this name, is assumed that
+    the command can take a variable number of arguments.
+
+*******************************************************************************/
+
+public struct VarArgHelp
+{
+    static ArgHelp opCall(char[] help)
+    {
+        return ArgHelp("…", help);
+    }
+    public static bool isVarArg(ArgHelp arg)
+    {
+        return arg.name == "…";
+    }
+}
 
 
 /*******************************************************************************
@@ -216,6 +237,11 @@ public abstract class Command
         {
             return "Too few arguments, missing argument(s): " ~
                 join(this.req_arg_names[args.length .. $], ", ");
+        }
+        if (this.opt_args.length && VarArgHelp.isVarArg(this.opt_args[$-1]))
+        {
+            // no maximum number of arguments
+            return null;
         }
         auto max_args = min_args + this.opt_args.length;
         if (args.length > max_args)
@@ -387,7 +413,7 @@ private class Help : Command
                 "detailed help about the commands passed as arguments, if any";
         this.opt_args = [
                 ArgHelp("cmd", "Get detailed help about this command"),
-                ArgHelp("...", "Get detailed help about more commands")];
+                VarArgHelp("Get detailed help about more commands")];
     }
 
     static this()
@@ -397,6 +423,12 @@ private class Help : Command
 
     override public char[] validate()
     {
+        char[] error = super.validate();
+        if (error.length)
+        {
+            return error;
+        }
+
         // Search for unknown commands
         char[][] unknown;
         foreach (arg; this.args)

@@ -47,11 +47,15 @@ private import Integer = tango.text.convert.Integer;
 
 private
 {
-    ArgHelp help_chan    = ArgHelp("chan",  "Name of the channel to use");
+    auto help_chan       = ArgHelp("chan",  "Name of the channel to use");
     /// ditto
-    ArgHelp help_value   = ArgHelp("value", "Value to put");
+    auto help_value      = ArgHelp("value", "Value to put");
     /// ditto
-    ArgHelp help_key     = ArgHelp("key",   "Name of the key to get");
+    auto help_key        = ArgHelp("key",   "Name of the key to use");
+    /// ditto
+    auto help_key_more   = VarArgHelp("More keys to use");
+    /// ditto
+    auto help_chan_more  = VarArgHelp("More channels to use");
 }
 
 
@@ -220,6 +224,7 @@ private class Get : DhtCommand
         super.command_names = [ "get", "g" ];
         super.help_msg = "Get the associated value to a channel's key";
         super.req_args = [ help_chan, help_key ];
+        super.opt_args = [ help_key_more ];
     }
 
     static this()
@@ -230,13 +235,17 @@ private class Get : DhtCommand
     protected override void assignTo(DhtClient dht,
             RequestNotification.Callback notifier)
     {
-        dht.assign(dht.get(super.args[0], super.hash(super.args[1]),
-            &this.cb, notifier));
+        auto chan_name = super.args[0];
+        foreach (i, key; super.args[1..$])
+        {
+            dht.assign(dht.get(chan_name, super.hash(key), &this.cb,
+                    notifier).context(i + 1));
+        }
     }
 
     private void cb ( DhtClient.RequestContext c, char[] val )
     {
-        super.printKeyValue(super.args[1], val);
+        super.printKeyValue(super.args[c.integer], val);
     }
 }
 
@@ -267,7 +276,8 @@ private class Put : DhtCommand
         // the delegate literal trick doesn't work here because it uses data
         // from the outer scope but it survives the scope of the function, so
         // the stack is used by somebody else and bad corruption happens (yei!)
-        dht.assign(dht.put(super.args[0], super.hash(super.args[1]), &this.cb, notifier));
+        dht.assign(dht.put(super.args[0], super.hash(super.args[1]),
+                &this.cb, notifier));
     }
 
     public char[] cb(DhtClient.RequestContext c)
@@ -320,6 +330,7 @@ private class Exists : DhtCommand
         super.command_names = [ "exists", "e" ];
         super.help_msg = "Print 1/0 if the key do/doesn't exist in the channel";
         super.req_args = [ help_chan, help_key ];
+        super.opt_args = [ help_key_more ];
     }
 
     static this()
@@ -330,12 +341,17 @@ private class Exists : DhtCommand
     protected override void assignTo(DhtClient dht,
             RequestNotification.Callback notifier)
     {
-        dht.assign(dht.exists(super.args[0], super.hash(super.args[1]),
-            (DhtClient.RequestContext c, bool exists)
-            {
-                super.printKeyValue(super.args[1], exists ? "1" : "0");
-            },
-            notifier));
+        auto chan_name = super.args[0];
+        foreach (i, key; super.args[1..$])
+        {
+            dht.assign(dht.exists(chan_name, super.hash(key),
+                (DhtClient.RequestContext c, bool exists)
+                {
+                    super.printKeyValue(super.args[c.integer],
+                            exists ? "1" : "0");
+                },
+                notifier).context(i + 1));
+        }
     }
 }
 
@@ -353,6 +369,7 @@ private class Remove : DhtCommand
         super.command_names = [ "remove", "r" ];
         super.help_msg = "Remove the value associated to a channel's key";
         super.req_args = [ help_chan, help_key ];
+        super.opt_args = [ help_key_more ];
     }
 
     static this()
@@ -363,7 +380,11 @@ private class Remove : DhtCommand
     protected override void assignTo(DhtClient dht,
             RequestNotification.Callback notifier)
     {
-        dht.assign(dht.remove(super.args[0], super.hash(super.args[1]), notifier));
+        auto chan_name = super.args[0];
+        foreach (key; super.args[1..$])
+        {
+            dht.assign(dht.remove(chan_name, super.hash(key), notifier));
+        }
     }
 }
 
@@ -631,6 +652,7 @@ private class RemoveChannel : DhtCommand
         super.command_names = [ "removechannel", "rc" ];
         super.help_msg = "Remove a channel and all its associated data";
         super.req_args = [ help_chan ];
+        super.opt_args = [ help_chan_more ];
     }
 
     static this()
@@ -641,7 +663,10 @@ private class RemoveChannel : DhtCommand
     protected override void assignTo(DhtClient dht,
             RequestNotification.Callback notifier)
     {
-        dht.assign(dht.removeChannel(super.args[0], notifier));
+        foreach (chan_name; super.args)
+        {
+            dht.assign(dht.removeChannel(chan_name, notifier));
+        }
     }
 }
 
