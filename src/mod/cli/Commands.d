@@ -138,21 +138,72 @@ public abstract class DhtCommand : Command
 
     /***************************************************************************
 
-        Displays a record key & value received from the dht.
+        Displays a record key.
+
+        Params:
+            key = key to display
+
+        TODO: add a command line option to change the key display format, like
+              decimal hexa or plain ASCII.
+
+    ***************************************************************************/
+
+    protected typeof(Stdout) printKey ( char[] key )
+    {
+        return Stdout.format("0x{:x8}", Integer.toLong(key, 16));
+    }
+
+
+    /***************************************************************************
+
+        Displays a record value.
+
+        Params:
+            val = value to display
+
+        TODO: add a command line option to change the value display format, like
+              bytes in hexa, raw or ASCII escaping unprintable characters.
+
+    ***************************************************************************/
+
+    protected typeof(Stdout) printValue ( char[] val )
+    {
+        return Stdout(val);
+    }
+
+
+    /***************************************************************************
+
+        Displays a record key & value.
 
         Params:
             key = key to display
             val = value to display
 
-        TODO: add a command line option to display values as arrays of hex
-        bytes (cast to ubyte[]), rather than displaying as a string
+    ***************************************************************************/
+
+    protected typeof(Stdout) printKeyValue ( char[] key, char[] val )
+    {
+        this.printKey(key)(": ");
+        return printValue(val).newline;
+    }
+
+
+    /***************************************************************************
+
+        Displays the address & port of a DHT node.
+
+        Params:
+            addr = address to display
+            port = port to display
 
     ***************************************************************************/
 
-    protected void printValue ( char[] key, char[] val )
+    protected typeof(Stdout) printAddrPort ( char[] addr, ushort port )
     {
-        Stdout.format("{}: {}", key, val);
+        return Stdout.format("{}:{}", addr, port);
     }
+
 }
 
 
@@ -185,7 +236,7 @@ private class Get : DhtCommand
 
     private void cb ( DhtClient.RequestContext c, char[] val )
     {
-        super.printValue(super.args[1], val);
+        super.printKeyValue(super.args[1], val);
     }
 }
 
@@ -282,7 +333,7 @@ private class Exists : DhtCommand
         dht.assign(dht.exists(super.args[0], super.hash(super.args[1]),
             (DhtClient.RequestContext c, bool exists)
             {
-                Stdout(exists ? 1 : 0).newline;
+                super.printKeyValue(super.args[1], exists ? "1" : "0");
             },
             notifier));
     }
@@ -351,7 +402,7 @@ private class GetRange : DhtCommand
                 super.hash(super.args[2]),
             (DhtClient.RequestContext c, char[] key, char[] val)
             {
-                super.printValue(key, val);
+                super.printKeyValue(key, val);
             },
             notifier));
     }
@@ -384,7 +435,7 @@ private class GetAll : DhtCommand
         dht.assign(dht.getAll(super.args[0],
             (DhtClient.RequestContext c, char[] key, char[] val)
             {
-                super.printValue(key, val);
+                super.printKeyValue(key, val);
             },
             notifier));
     }
@@ -417,7 +468,7 @@ private class GetAllKeys : DhtCommand
         dht.assign(dht.getAllKeys(super.args[0],
             (DhtClient.RequestContext c, char[] key)
             {
-                Stdout(key).newline;
+                super.printKey(key).newline;
             },
             notifier));
     }
@@ -450,7 +501,7 @@ private class Listen : DhtCommand
         dht.assign(dht.listen(super.args[0],
             (DhtClient.RequestContext c, char[] key, char[] val)
             {
-                super.printValue(key, val);
+                super.printKeyValue(key, val);
             },
             notifier));
     }
@@ -485,7 +536,8 @@ private class GetChannels : DhtCommand
             {
                 if ( chan_name.length ) // ignore end of list
                 {
-                    Stdout.formatln("{}:{} '{}'", addr, port, chan_name);
+                    super.printAddrPort(addr, port).formatln(" '{}'",
+                            chan_name);
                 }
             },
             notifier));
@@ -520,8 +572,8 @@ private class GetSize : DhtCommand
             (DhtClient.RequestContext c, char[] addr, ushort port,
                     ulong records, ulong bytes)
             {
-                Stdout.formatln("{}:{} {} records, {} bytes", addr, port,
-                    records, bytes);
+                super.printAddrPort(addr, port).formatln(
+                        " {} records, {} bytes", records, bytes);
             },
             notifier));
     }
@@ -557,8 +609,8 @@ private class GetChannelSize : DhtCommand
             (DhtClient.RequestContext c, char[] addr, ushort port,
                     char[] chan_name, ulong records, ulong bytes)
             {
-                Stdout.formatln("{}:{} '{}' {} records, {} bytes", addr, port,
-                    chan_name, records, bytes);
+                super.printAddrPort(addr, port).formatln(
+                        " '{}' {} records, {} bytes", chan_name, records, bytes);
             },
             notifier));
     }
@@ -620,7 +672,7 @@ private class GetNumConnections : DhtCommand
         dht.assign(dht.getNumConnections(
             (DhtClient.RequestContext c, char[] addr, ushort port, size_t n)
             {
-                Stdout.formatln("{}:{} {} connections", addr, port, n);
+                super.printAddrPort(addr, port).formatln(" {} connections", n);
             },
             notifier));
     }
@@ -652,7 +704,7 @@ private class GetVersion : DhtCommand
         dht.assign(dht.getVersion(
             (DhtClient.RequestContext c, char[] addr, ushort port, char[] ver)
             {
-                Stdout.formatln("{}:{} version {}", addr, port, ver);
+                super.printAddrPort(addr, port).formatln(" version {}", ver);
             },
             notifier));
     }
@@ -686,7 +738,8 @@ private class GetReponsibleRange : DhtCommand
             (DhtClient.RequestContext c, char[] addr, ushort port,
                     RequestParams.Range r)
             {
-                Stdout.formatln("{}:{} {} - {}", addr, port, r.min, r.max);
+                super.printAddrPort(addr, port).formatln(" {} - {}",
+                        r.min, r.max);
             },
             notifier));
     }
@@ -723,8 +776,8 @@ private class GetSupportedCommands : DhtCommand
                 foreach (cmd; cmds)
                 {
                     auto cmd_desc = DhtConst.Command.description(cmd);
-                    Stdout.formatln("{}:{} {} ({})", addr, port,
-                            cmd_desc !is null ? *cmd_desc : null, cmd);
+                    super.printAddrPort(addr, port).formatln(" {} ({})",
+                            (cmd_desc !is null) ? *cmd_desc : null, cmd);
                 }
             },
             notifier));
