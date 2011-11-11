@@ -71,7 +71,7 @@ CLIENT_FLAGS =\
 
 .PHONY: revision node info test cli performance
 
-default: node info test cli performance
+default: node info cli
 
 
 # ------------------------------------------------------------------------------
