@@ -291,7 +291,9 @@ public abstract class Command
 
     /***************************************************************************
 
-        Assign this command as a DHT request.
+        Executes the command.
+
+        This is where the user should put the code the command will execute.
 
         Commands *must* be validate()d before calling this method.
 

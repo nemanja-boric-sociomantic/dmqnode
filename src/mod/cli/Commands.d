@@ -90,6 +90,16 @@ private class Info
 
 public abstract class DhtCommand : Command
 {
+
+    /***************************************************************************
+
+        Send requests to the DHT.
+
+        Params:
+            user_data = User data needed for the processing.
+
+    ***************************************************************************/
+
     public override void execute(Object user_data = null)
     {
         assert (user_data !is null, "user_data can't be null");
