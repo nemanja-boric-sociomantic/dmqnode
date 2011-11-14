@@ -38,9 +38,9 @@ XFBUILD_FLAGS =\
 
 FLAGS =\
 	-L-lminilzo \
-    -L-ldl \
-    -I../swarm \
-    -version=NewTango
+	-L-ldl \
+	-I../swarm \
+	-version=NewTango
 
 UNITTESTFLAGS =\
 	-unittest \
