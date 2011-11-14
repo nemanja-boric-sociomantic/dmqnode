@@ -20,7 +20,7 @@ module src.main.dhtnode;
 
 *******************************************************************************/
 
-private import Version = src.main.Version;
+private import src.main.Version;
 
 private import src.mod.node.DhtNode;
 
@@ -75,24 +75,27 @@ private int main ( char[][] arguments )
 {
     auto args = initArguments();
 
-    auto run = Main.processArgs(arguments, args, Version.revision, "dht node server");
-    if ( run )
+    bool run = Main.processArgs(arguments, args, Version, "dht node server");
+
+    if (!run)
     {
-        char[] config;
-        if ( args.exists("config") )
-        {
-            config = args.getString("config");
-        }
-
-        MainConfig.init(arguments[0], config);
-
-        SignalHandler.register(SignalHandler.AppTermination, &shutdown);
-
-        auto dht = new DhtNodeServer;
-        dht.run;
+        return 1;
     }
 
-    return run ? 0 : 1;
+    char[] config;
+    if ( args.exists("config") )
+    {
+        config = args.getString("config");
+    }
+
+    MainConfig.init(arguments[0], config);
+
+    SignalHandler.register(SignalHandler.AppTermination, &shutdown);
+
+    auto dht = new DhtNodeServer;
+    dht.run;
+
+    return 0;
 }
 
 
