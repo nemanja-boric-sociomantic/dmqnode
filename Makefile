@@ -22,6 +22,9 @@ TEST_OUTPUT = bin/dhttest
 PERFORMANCE_TARGET = src/main/dhtperformance.d
 PERFORMANCE_OUTPUT = bin/dhtperformance
 
+HASHRANGE_TARGET = src/main/dhthashrange.d
+HASHRANGE_OUTPUT = bin/dhthashrange
+
 
 # ------------------------------------------------------------------------------
 # Xfbuild flags
@@ -34,7 +37,6 @@ XFBUILD_FLAGS =\
 # dmd flags
 
 FLAGS =\
-	-J.\
 	-L-lminilzo \
     -L-ldl \
     -I../swarm \
@@ -161,11 +163,21 @@ performance-release:
 
 
 # ------------------------------------------------------------------------------
+# hash range debug & release builds
+
+hashrange:
+	xfbuild +D=.deps-hashrange +O=.objs-hashrange +o=${HASHRANGE_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${CLIENT_FLAGS} ${HASHRANGE_TARGET}
+
+hashrange-release:
+	xfbuild +D=.deps-hashrange +O=.objs-hashrange +o=${HASHRANGE_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${CLIENT_FLAGS} ${HASHRANGE_TARGET}
+
+
+# ------------------------------------------------------------------------------
 # Upload node
 
 EU_NODE_SERVERS = 1 2 3 4 5 6 7
 
-US_NODE_SERVERS = 2
+US_NODE_SERVERS = 1 2 3 4 5 6
 
 upload-node-eu:
 	$(foreach srv, $(EU_NODE_SERVERS), scp -C ${NODE_OUTPUT} root@eq6-$(srv).sociomantic.com:/tmp/dht;)
