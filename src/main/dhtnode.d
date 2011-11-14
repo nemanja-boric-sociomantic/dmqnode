@@ -75,11 +75,11 @@ private int main ( char[][] arguments )
 {
     auto args = initArguments();
 
-    bool run = Main.processArgs(arguments, args, Version, "dht node server");
+    auto r = Main.processArgs(arguments, args, Version, "dht node server");
 
-    if (!run)
+    if ( r.exit )
     {
-        return 1;
+        return r.exit_code;
     }
 
     char[] config;
