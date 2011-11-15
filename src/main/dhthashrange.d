@@ -8,6 +8,11 @@
 
     authors:        Gavin Norman
 
+    Command line arguments:
+
+      -n, --nodes  the number of dht nodes to calculate the hash ranges for
+      -b, --bits   the number of bits for the hashes (defaults to 32)
+
 *******************************************************************************/
 
 module src.main.dhthashrange;
@@ -54,14 +59,15 @@ void main ( char[][] cl_args )
         range = max / nodes;
 
         ulong start;
+        uint i;
 
-        for ( uint i = 0; i < nodes - 1; i++ )
+        for ( i = 0; i < nodes - 1; i++ )
         {
-            printRange(bits, start, start + range);
+            printRange(bits, i, start, start + range);
             start = start + range + 1;
         }
 
-        printRange(bits, start, max);
+        printRange(bits, i, start, max);
     }
     else
     {
@@ -78,17 +84,18 @@ void main ( char[][] cl_args )
 
     Params:
         bits = bits in a dht hash
+        number = node number
         start = start hash
         end = end hash
 
 *******************************************************************************/
 
-private void printRange ( uint bits, ulong start, ulong end )
+private void printRange ( uint bits, uint number, ulong start, ulong end )
 {
     switch ( bits )
     {
-        case 32: Stdout.formatln("{:X8} .. {:X8}", start, end);   break; 
-        case 64: Stdout.formatln("{:X16} .. {:X16}", start, end); break; 
+        case 32: Stdout.formatln("{,3}: {:X8} .. {:X8}", number, start, end);   break; 
+        case 64: Stdout.formatln("{,3}: {:X16} .. {:X16}", number, start, end); break; 
         default: assert(false); break;
     }
 }
