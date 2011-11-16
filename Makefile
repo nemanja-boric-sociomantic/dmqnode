@@ -32,6 +32,11 @@ HASHRANGE_OUTPUT = bin/dhthashrange
 XFBUILD_FLAGS =\
 	+c=dmd
 
+# ------------------------------------------------------------------------------
+# GC to use (export is needed!)
+
+export D_GC := basic
+
 
 # ------------------------------------------------------------------------------
 # dmd flags
@@ -82,7 +87,7 @@ default: node info cli
 DEPENDENCIES = ocean swarm tango
 
 revision:
-	@../ocean/script/mkversion.sh $(DEPENDENCIES)
+	@../ocean/script/mkversion.sh $(D_GC) $(DEPENDENCIES)
 
 
 # ------------------------------------------------------------------------------
