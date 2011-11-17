@@ -32,6 +32,7 @@ HASHRANGE_OUTPUT = bin/dhthashrange
 XFBUILD_FLAGS =\
 	+c=dmd
 
+
 # ------------------------------------------------------------------------------
 # GC to use (export is needed!)
 
@@ -204,6 +205,5 @@ clean:
 	xfbuild ${XFBUILD_FLAGS} +clean ${CLI_TARGET}
 	xfbuild ${XFBUILD_FLAGS} +clean ${TEST_TARGET}
 	xfbuild ${XFBUILD_FLAGS} +clean ${PERFORMANCE_TARGET}
-	@-rm revisions.txt
 	@-rm .objs-* -rf
 	@-rm .deps-* -rf
