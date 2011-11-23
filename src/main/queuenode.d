@@ -21,7 +21,7 @@ module src.main.queuenode;
 
  ******************************************************************************/
 
-private import Version = src.main.Version;
+private import src.main.Version;
 
 private import src.mod.server.QueueServer;
 
@@ -49,29 +49,41 @@ debug private import ocean.util.log.Trace;
 QueueServer queue;
 
 
+/*******************************************************************************
+
+    Application description
+
+*******************************************************************************/
+
+private const app_description = "queue node server";
+
+
 /******************************************************************************
 
     main method
 
  ******************************************************************************/
 
-int main ( char[][] arguments )
+int main ( char[][] cl_args )
 {
 //    GC.disable;
 
-    auto run = Main.processArgs(arguments, Version.revision, "queue node server");
-    if ( run )
+    auto r = Main.processArgs(cl_args, Version, app_description);
+
+    if ( r.exit )
     {
-        MainConfig.init(arguments[0]);
-
-        queue = new QueueServer();
-
-        SignalHandler.register(SignalHandler.AppTermination, &terminate);
-
-        queue.run();
+        return r.exit_code;
     }
 
-    return run ? 0 : 1;
+    MainConfig.init(cl_args[0]);
+
+    queue = new QueueServer();
+
+    SignalHandler.register(SignalHandler.AppTermination, &terminate);
+
+    queue.run();
+
+    return 0;
 }
 
 

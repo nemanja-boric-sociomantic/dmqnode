@@ -87,29 +87,29 @@ public static:
         CmdPath cmdpath;
         cmdpath.set(exepath);
 
-        Config.init(cmdpath.prepend("etc", "config.ini"));
+        Config().initSingleton(cmdpath.prepend("etc", "config.ini"));
 
         // Server
-        address = Config.Char["Server", "address"];
-        port = Config.Int["Server", "port"];
-        size_limit = Config.Int["Server", "size_limit"];
-        channel_size_limit = Config.Int["Server", "channel_size_limit"];
-        data_dir = Config.Char["Server", "data_dir"];
+        address = Config().Char["Server", "address"];
+        port = Config().Int["Server", "port"];
+        size_limit = Config().Int["Server", "size_limit"];
+        channel_size_limit = Config().Int["Server", "channel_size_limit"];
+        data_dir = Config().Char["Server", "data_dir"];
 
         // Log
-        error_log = Config.Char["Log", "error"];
+        error_log = Config().Char["Log", "error"];
         OceanException.setOutput(new AppendFile(cmdpath.prepend([error_log])));
-        OceanException.console_output = Config.Bool["Log", "console_echo_error"];
+        OceanException.console_output = Config().Bool["Log", "console_echo_error"];
 
-        trace_log = Config.Char["Log", "trace"];
+        trace_log = Config().Char["Log", "trace"];
         TraceLog.init(cmdpath.prepend([trace_log]));
-        TraceLog.console_enabled = Config.Bool["Log", "console_echo_trace"];
+        TraceLog.console_enabled = Config().Bool["Log", "console_echo_trace"];
 
-        stats_log = cmdpath.prepend(Config.Char["Log", "stats"]);
-        stats_log_period = Config.Int["Log", "stats_log_period"];
+        stats_log = cmdpath.prepend(Config().Char["Log", "stats"]);
+        stats_log_period = Config().Int["Log", "stats_log_period"];
 
-        stats_log_enabled = Config.Bool["Log", "stats_log_enabled"];
-        console_stats_enabled = Config.Bool["Log", "console_stats_enabled"];
+        stats_log_enabled = Config().Bool["Log", "stats_log_enabled"];
+        console_stats_enabled = Config().Bool["Log", "console_stats_enabled"];
     }
 }
 

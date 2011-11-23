@@ -28,6 +28,12 @@ XFBUILD_FLAGS =\
 
 
 # ------------------------------------------------------------------------------
+# GC to use (export is needed!)
+
+export D_GC := basic
+
+
+# ------------------------------------------------------------------------------
 # dmd flags
 
 FLAGS =\
@@ -59,17 +65,11 @@ default: node monitor consumer test
 # ------------------------------------------------------------------------------
 # Revision file build
 
-REVISION_FILE = src/main/Version.d
-DEP_BASE_DIR = ../
 DEPENDENCIES = ocean swarm tango
 
 revision:
-	@echo "// This file was automatically generated at compile time by the Makefile" > $(REVISION_FILE)
-	@echo "// (it should not be added to source control)" >> $(REVISION_FILE)
-	@printf "module %s;\n" `echo $(REVISION_FILE) | sed -e 's|/|.|g' -e 's|.d||g'` >> $(REVISION_FILE)
-	@printf "public const revision = \"%s - %s: %s" "`logname`" "`date`" "`svnversion`" >> $(REVISION_FILE)
-	@$(foreach x,$(DEPENDENCIES), printf ", %s %s" $(x) $$(svnversion $(DEP_BASE_DIR)$(x)) >> $(REVISION_FILE);)
-	@printf "\";" >> $(REVISION_FILE)
+	@../ocean/script/mkversion.sh $(D_GC) $(DEPENDENCIES)
+
 
 
 # ------------------------------------------------------------------------------
