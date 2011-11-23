@@ -87,7 +87,7 @@ public static:
         CmdPath cmdpath;
         cmdpath.set(exepath);
 
-        Config().initSingleton(cmdpath.prepend("etc", "config.ini"));
+        Config.initSingleton(cmdpath.prepend("etc", "config.ini"));
 
         // Server
         address = Config().Char["Server", "address"];
