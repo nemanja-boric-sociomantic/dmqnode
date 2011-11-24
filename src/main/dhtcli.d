@@ -37,7 +37,7 @@ private import ocean.text.Arguments;
 
 *******************************************************************************/
 
-void main ( char[][] arguments )
+int main ( char[][] arguments )
 {
     auto app_name = arguments[0];
 
@@ -47,6 +47,12 @@ void main ( char[][] arguments )
     if ( app.parseArgs(app_name, args, arguments[1..$]) )
     {
         app.run(args);
+        if (app.succeeded)
+        {
+            return 0;
+        }
     }
+
+    return 1;
 }
 

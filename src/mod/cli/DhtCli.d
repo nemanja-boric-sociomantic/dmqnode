@@ -72,6 +72,19 @@ public class DhtCli : DhtTool
 
     /***************************************************************************
 
+        Returns:
+            true if there were no errors during the processing
+
+    ***************************************************************************/
+
+    public bool succeeded ( )
+    {
+        return this.dht_errors.length == 0;
+    }
+
+
+    /***************************************************************************
+
         Overridden dht error callback. Stores the error message for display
         after processing.  The error messages are displayed all together at the
         end of processing so that the normal output is still readable.
