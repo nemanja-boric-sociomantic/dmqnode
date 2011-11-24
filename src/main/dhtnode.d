@@ -90,6 +90,8 @@ private int main ( char[][] arguments )
 
     MainConfig.init(arguments[0], config);
 
+    Main.logVersion(arguments[0], Version);
+
     SignalHandler.register(SignalHandler.AppTermination, &shutdown);
 
     auto dht = new DhtNodeServer;
