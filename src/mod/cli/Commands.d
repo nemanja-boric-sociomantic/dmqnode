@@ -557,8 +557,7 @@ private class GetChannels : DhtCommand
             {
                 if ( chan_name.length ) // ignore end of list
                 {
-                    super.printAddrPort(addr, port).formatln(" '{}'",
-                            chan_name);
+                    super.printAddrPort(addr, port).formatln(" {}", chan_name);
                 }
             },
             notifier));
