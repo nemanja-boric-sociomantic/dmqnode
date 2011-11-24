@@ -89,14 +89,14 @@ static:
 
         // Log
         auto error_log = Config.Char["Log", "error"];
-        OceanException.setOutput(new AppendFile(cmdpath.prepend([error_log])));
+        OceanException.setOutput(new AppendFile(error_log));
         OceanException.console_output = Config.Bool["Log", "console_echo_error"];
 
         auto trace_log = Config.Char["Log", "trace"];
-        TraceLog.init(cmdpath.prepend([trace_log]));
+        TraceLog.init(trace_log);
         TraceLog.console_enabled = Config.Bool["Log", "console_echo_trace"];
 
-        stats_log = cmdpath.prepend(Config.Char["Log", "stats"]);
+        stats_log = Config.Char["Log", "stats"];
         stats_log_enabled = Config.Bool["Log", "stats_log_enabled"];
         console_stats_enabled = Config.Bool["Log", "console_stats_enabled"];
     }
