@@ -308,7 +308,7 @@ abstract class DhtTool
 
     protected DhtClient initDhtClient ( char[] xml, uint request_queue_size = 1000 )
     {
-        Stderr.formatln("Initialising dht client connections from {}", xml);
+        debug (DhtTool) Stderr.formatln("Initialising dht client connections from {}", xml);
 
         const num_conn = 10;
 
@@ -331,7 +331,7 @@ abstract class DhtTool
             assert(!this.dht_error, typeof(this).stringof ~ ".initDhtClient - error during dht client initialisation of " ~ xml);
         }
 
-        Stderr.formatln("Dht client connections initialised");
+        debug (DhtTool) Stderr.formatln("Dht client connections initialised");
 
         return dht;
     }
