@@ -101,7 +101,7 @@ int main ( char[][] cl_args )
 
 bool terminate ( int code )
 {
-    debug Trace.formatln('\n' ~ SignalHandler.getId(code));
+    debug Trace.formatln("\n{}", SignalHandler.getId(code));
 
     Terminator.terminating = true;
 
