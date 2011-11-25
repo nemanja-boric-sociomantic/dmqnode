@@ -26,10 +26,9 @@ private import ocean.util.OceanException;
 
 private import tango.core.Thread;
 
-private import swarm.queue.node.model.IQueueNode,
-               swarm.queue.node.model.IQueueNodeInfo;
+private import swarm.queue.node.model.IQueueNodeInfo;
 
-debug private import tango.util.log.Trace;
+debug private import ocean.util.log.Trace;
 
 
 
@@ -63,11 +62,11 @@ public abstract class IServiceThread : Thread
 
     ***************************************************************************/
 
-    public this ( IQueueNode queue, uint update_time )
+    public this ( IQueueNodeInfo node_info, uint update_time )
     {
         this.update_time = update_time;
 
-        this.node_info = queue.nodeInfo();
+        this.node_info = node_info;
 
         super(&this.run);
     }

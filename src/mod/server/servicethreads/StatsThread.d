@@ -35,8 +35,7 @@ private import ocean.util.log.MessageLogger;
 
 private import ocean.util.log.StaticTrace;
 
-private import swarm.queue.node.model.IQueueNode,
-               swarm.queue.node.model.IQueueNodeInfo;
+private import swarm.queue.node.model.IQueueNodeInfo;
 
 debug private import ocean.util.log.Trace;
 
@@ -123,9 +122,9 @@ public class StatsThread : IServiceThread
     
     ***************************************************************************/
 
-    public this ( IQueueNode queue, uint log_update_time )
+    public this ( IQueueNodeInfo node_info, uint log_update_time )
     {
-        super(queue, 1);
+        super(node_info, 1);
 
         this.records_per_sec = new SlidingAverageTime!(ulong)(5, 1_000, 1_000);
 
@@ -228,11 +227,15 @@ public class StatsThread : IServiceThread
     private char[] channelSizesString ( IQueueNodeInfo node_info )
     {
         this.channel_sizes.length = 0;
-    
-        foreach ( name, size, limit; node_info )
+
+        foreach ( channel_info; node_info )
         {
-            auto percent = (cast(float)size / cast(float)limit) * 100.0;
-            Layout!(char).print(this.channel_sizes, ", {}: {}%", name, percent);
+            ulong limit = node_info.channelSizeLimit;
+            ulong records, bytes;
+            channel_info.getSize(records, bytes);
+
+            auto percent = (cast(float)bytes / cast(float)limit) * 100.0;
+            Layout!(char).print(this.channel_sizes, ", {}: {}%", channel_info.id, percent);
         }
     
         return this.channel_sizes;

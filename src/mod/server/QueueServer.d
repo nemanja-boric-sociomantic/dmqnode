@@ -21,26 +21,22 @@ module src.mod.server.QueueServer;
 
  ******************************************************************************/
 
-private import  src.mod.server.config.MainConfig;
+private import src.mod.server.config.MainConfig;
 
-private import  src.mod.server.servicethreads.ServiceThreads,
-                src.mod.server.servicethreads.StatsThread;
+private import src.mod.server.servicethreads.ServiceThreads,
+               src.mod.server.servicethreads.StatsThread;
 
-private import  swarm.queue.QueueNode;
+private import swarm.queue.QueueNode;
 
-private import  swarm.queue.QueueConst;
+private import swarm.queue.QueueConst;
 
-private import  swarm.queue.node.model.IQueueNode;
+private import swarm.queue.node.storage.Ring;
 
-private import  swarm.queue.node.storage.Ring;
-
-private import  ocean.core.Exception: assertEx;
+private import ocean.core.Exception : assertEx;
 
 debug private import ocean.util.log.Trace;
 
-private import  tango.core.Exception: IllegalArgumentException;
-
-private import	tango.util.log.Log, tango.util.log.AppendConsole;
+private import tango.core.Exception : IllegalArgumentException;
 
 
 
@@ -50,24 +46,15 @@ private import	tango.util.log.Log, tango.util.log.AppendConsole;
 
  ******************************************************************************/
 
-class QueueServer
+public class QueueServer
 {
     /***************************************************************************
 
-        Queue node type alias
-    
-     **************************************************************************/
-
-    private alias QueueNode!(RingNode, char[]) Queue;
-
-
-    /***************************************************************************
-
-        Queue node object
+        Queue node instance
 
      **************************************************************************/
 
-    private IQueueNode node;
+    private QueueNode node;
 
 
     /***************************************************************************
@@ -89,16 +76,14 @@ class QueueServer
     {
         assertEx!(IllegalArgumentException)(MainConfig.size_limit, "size limit 0 specified in configuration");
 
-        this.node = new Queue(
+        this.node = new QueueNode(
                 QueueConst.NodeItem(MainConfig.address, MainConfig.port),
-                MainConfig.size_limit, MainConfig.channel_size_limit, MainConfig.data_dir);
-
-        debug Trace.formatln("Queue node: {}:{}", MainConfig.address, MainConfig.port);
+                new RingNode(MainConfig.data_dir, MainConfig.size_limit, MainConfig.channel_size_limit));
 
         this.service_threads = new ServiceThreads;
         if ( MainConfig.stats_log_enabled || MainConfig.console_stats_enabled )
         {
-            this.service_threads.add(new StatsThread(this.node, MainConfig.stats_log_period));
+            this.service_threads.add(new StatsThread(this.node.node_info, MainConfig.stats_log_period));
         }
     }
 
@@ -127,7 +112,7 @@ class QueueServer
 
     public void shutdown ( )
     {
-        return this.node.shutdown();
+        this.node.shutdown();
     }
 }
 
