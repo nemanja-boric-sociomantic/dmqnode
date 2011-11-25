@@ -30,11 +30,6 @@ public  import ocean.util.Config,
 
 private import tango.util.log.AppendFile;
 
-// Can't use just Log because of the (in)famous DMD bug:
-// http://d.puremagic.com/issues/show_bug.cgi?id=314
-// Using Log instead of LogUtil will make it conflict with tango.util.log.Log.
-private import LogUtil = ocean.util.log.Util;
-
 
 
 /*******************************************************************************
@@ -104,10 +99,6 @@ static:
         stats_log = Config.Char["Log", "stats"];
         stats_log_enabled = Config.Bool["Log", "stats_log_enabled"];
         console_stats_enabled = Config.Bool["Log", "console_stats_enabled"];
-
-        // LOG
-        LogUtil.configureLoggers(Config().iterateClasses!(LogUtil.Config)("LOG"),
-                Config().get!(LogUtil.MetaConfig)("LOG"));
     }
 }
 

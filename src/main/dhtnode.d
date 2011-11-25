@@ -54,7 +54,6 @@ private Arguments initArguments ( )
 {
     auto args = new Arguments;
 
-    args("config").aliased('c').params(1).help("use the configuration file CONFIG instead of the default <bin-dir>/etc/config.ini");
     args("daemonize").aliased('d').help("start daemonized dht node server [DEPRECATED]");
 
     return args;
@@ -75,22 +74,13 @@ private int main ( char[][] arguments )
 {
     auto args = initArguments();
 
-    auto r = Main.processArgs(arguments, args, Version, "dht node server");
+    auto r = Main.processArgsConfig!(MainConfig)(arguments, args, Version,
+            "dht node server");
 
     if ( r.exit )
     {
         return r.exit_code;
     }
-
-    char[] config;
-    if ( args.exists("config") )
-    {
-        config = args.getString("config");
-    }
-
-    MainConfig.init(arguments[0], config);
-
-    Main.logVersion(arguments[0], Version);
 
     SignalHandler.register(SignalHandler.AppTermination, &shutdown);
 
