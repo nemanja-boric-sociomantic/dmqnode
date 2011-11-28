@@ -16,7 +16,7 @@ module src.mod.node.config.MainConfig;
 
 /*******************************************************************************
 
-        imports
+    Imports
 
  ******************************************************************************/
 
@@ -43,6 +43,17 @@ private import tango.util.log.AppendFile;
 public struct MainConfig
 {
 static:
+
+    /***************************************************************************
+
+        Server
+    
+    ***************************************************************************/
+
+    char[] address;
+
+    ushort port;
+
 
     /***************************************************************************
 
@@ -86,6 +97,10 @@ static:
             Config.initSingleton(config_file);
         else
             Config.initSingleton(cmdpath.prepend(["etc", "config.ini"]));
+
+        // Server
+        address = Config().Char["Server", "address"];
+        port = Config().Int["Server", "port"];
 
         // Log
         auto error_log = Config.Char["Log", "error"];

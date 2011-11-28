@@ -106,7 +106,7 @@ abstract public class IServiceThread : Thread
     {
         this.update_time = update_time;
 
-        this.node_info = dht.nodeInfo();
+        this.node_info = cast(IDhtNodeInfo)dht;
 
         this.channels_service = dht.channelsService();
 

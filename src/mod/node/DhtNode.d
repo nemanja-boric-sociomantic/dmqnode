@@ -10,7 +10,7 @@
     authors:        David Eckardt, Gavin Norman 
                     Thomas Nicolai, Lars Kirchhoff
 
-******************************************************************************/
+*******************************************************************************/
 
 module src.mod.node.DhtNode;
 
@@ -34,6 +34,8 @@ private import swarm.dht.DhtConst;
 private import swarm.dht.DhtNode;
 private import swarm.dht.DhtHash;
 
+private import swarm.dht.node.storage.model.StorageChannels;
+
 private import swarm.dht.node.storage.MemoryStorageChannels;
 private import swarm.dht.node.storage.LogFilesStorageChannels;
 
@@ -51,116 +53,42 @@ private import ocean.util.log.Trace;
 
     DhtNode
 
-******************************************************************************/
+*******************************************************************************/
 
 public class DhtNodeServer
 {
     /***************************************************************************
     
-        alias for Memory node 
-    
-    **************************************************************************/
-    
-    private alias DhtNode!(MemoryStorageChannels) MemoryNode;
-    
-    /***************************************************************************
-    
-        alias for LogFiles node 
-    
-    **************************************************************************/
-    
-    private alias DhtNode!(LogFilesStorageChannels) LogFilesNode;
-    
-    /***************************************************************************
-    
-        alias for node item 
-    
-    **************************************************************************/
-    
-    private alias DhtConst.NodeItem NodeItem;
-    
-    /***************************************************************************
-
-        Storage engine type enum
-
-    ***************************************************************************/
-
-    private enum Storage
-    {
-        None,
-        Memory,
-        LogFiles
-    }
-
-    /***************************************************************************
-    
         Dht node instance
     
-    **************************************************************************/
-    
-    private IDhtNode node;
+    ***************************************************************************/
+
+    private DhtNode node;
+
 
     /***************************************************************************
     
         Service threads handler
     
-    **************************************************************************/
+    ***************************************************************************/
 
     private ServiceThreads service_threads;
 
+
     /***************************************************************************
     
-         Constructor
+        Constructor
     
-    **************************************************************************/
+    ***************************************************************************/
 
     public this ( )
     {
-        auto min = Config().Char["Server", "minval"];
-        auto max = Config().Char["Server", "maxval"];
+        this.node = new DhtNode(
+                DhtConst.NodeItem(MainConfig.address, MainConfig.port),
+                this.newStorageChannels(),
+                this.min_hash, this.max_hash);
 
-        // TODO: remove this hash range padding, always specify full 32-bit
-        // hexadecimal numbers
-        auto min_hash = DhtHash.toHashRangeStart(min);
-        auto max_hash = DhtHash.toHashRangeEnd(max);
-
-        ulong size_limit = Config().get!(ulong)("Server", "size_limit");
-        char[] data_dir = Config().get!(char[])("Server", "data_dir");
-
-        NodeItem node_item = NodeItem(Config().Char["Server", "address"],
-                Config().Int["Server", "port"]);
-
-        Storage storage = this.getStorageConfiguration();
-        assertEx(storage != Storage.None, "Invalid storage engine type");
-
-        switch (storage)
-        {
-            case Storage.Memory:
-                MemoryStorageChannels.Args args;
-                Config().get(args.bnum, "Options_Memory", "bnum");
-
-                auto memory_node = new MemoryNode(node_item, min_hash, max_hash,
-                        data_dir, size_limit, args);
-                memory_node.error_callback(&this.dhtError);
-                this.node = memory_node;
-                break;
-
-            case Storage.LogFiles:
-                LogFilesStorageChannels.Args args;
-                Config().get(args.write_buffer_size, "Options_LogFiles", "write_buffer_size");
-
-                size_limit = 0; // logfiles node ignores size limit setting
-
-                auto logfiles_node = new LogFilesNode(node_item, min_hash, max_hash,
-                        data_dir, size_limit, args);
-                logfiles_node.error_callback(&this.dhtError);
-                this.node = logfiles_node;
-                break;
-
-            default:
-                throw new Exception("Invalid / unsupported data storage");
-                break;
-        }
+        this.node.error_callback = &this.dhtError;
 
         uint stats_log_period = 300;
         Config().get(stats_log_period, "Log", "stats_log_period");
@@ -172,6 +100,7 @@ public class DhtNodeServer
         this.service_threads.add(new MaintenanceThread(this.node, maintenance_period));
         this.service_threads.add(new StatsThread(this.node, stats_log_period));
     }
+
 
     /***************************************************************************
 
@@ -188,6 +117,7 @@ public class DhtNodeServer
         return true;
     }
 
+
     /***************************************************************************
 
         Service threads finished callback (called when all service threads have
@@ -199,6 +129,81 @@ public class DhtNodeServer
     {
         this.node.shutdown();
     }
+
+
+    /***************************************************************************
+
+        Creates a new instance of the storage channels type specified in the
+        config file.
+
+        Returns:
+            StorageChannels instance
+
+        Throws:
+            if no valid storage channels type is specified in config file
+
+    ***************************************************************************/
+
+    private StorageChannels newStorageChannels ( )
+    {
+        ulong size_limit = Config().get!(ulong)("Server", "size_limit");
+        char[] data_dir = Config().get!(char[])("Server", "data_dir");
+
+        switch ( Config().get!(char[])("Server", "storage_engine") )
+        {
+            case "memory":
+                MemoryStorageChannels.Args args;
+                Config().get(args.bnum, "Options_Memory", "bnum");
+
+                return new MemoryStorageChannels(data_dir, size_limit, args);
+
+            case "logfiles":
+                LogFilesStorageChannels.Args args;
+                Config().get(args.write_buffer_size, "Options_LogFiles", "write_buffer_size");
+
+                size_limit = 0; // logfiles node ignores size limit setting
+
+                return new LogFilesStorageChannels(data_dir, size_limit, args);
+
+            default:
+                throw new Exception("Invalid / unsupported data storage");
+        }
+    }
+
+
+    /***************************************************************************
+
+        Returns:
+            minimum hash value handled by this node, as defined in config file
+
+    ***************************************************************************/
+
+    private hash_t min_hash ( )
+    {
+        auto min = Config().Char["Server", "minval"];
+        
+        // TODO: remove this hash range padding, always specify full 32-bit
+        // hexadecimal numbers
+        return DhtHash.toHashRangeStart(min);
+    }
+
+
+    /***************************************************************************
+
+        Returns:
+            maximum hash value handled by this node, as defined in config file
+
+    ***************************************************************************/
+
+    private hash_t max_hash ( )
+    {
+        auto max = Config().Char["Server", "maxval"];
+
+        // TODO: remove this hash range padding, always specify full 32-bit
+        // hexadecimal numbers
+        return DhtHash.toHashRangeEnd(max);
+    }
+
 
     /***************************************************************************
 
@@ -216,27 +221,6 @@ public class DhtNodeServer
     {
         OceanException.Warn("Exception caught in eventLoop: '{}' @ {}:{}",
                 exception.msg, exception.file, exception.line);
-    }
-
-    /***************************************************************************
-    
-        Get storage configuration
-    
-    **************************************************************************/
-    
-    private Storage getStorageConfiguration ( )
-    {
-        switch (Config().get!(char[])("Server", "storage_engine"))
-        {
-            case "memory":
-                return Storage.Memory;
-
-            case "logfiles":
-                return Storage.LogFiles;
-
-            default:
-                return Storage.None;
-        }
     }
 }
 
