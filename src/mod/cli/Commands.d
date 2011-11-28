@@ -90,6 +90,11 @@ private class Info
     actually send the command to the DHT-nodes. Finally the eventLoop() is
     invoked.
 
+    FIXME: the final protected methods in this class are only final due to an
+    unidentifiable compiler bug which caused segmentation faults upon using the
+    Stdout instance inside printKey() and printValue(). Would be good to look
+    into this in more depth...
+
 *******************************************************************************/
 
 public abstract class DhtCommand : Command
@@ -134,7 +139,7 @@ public abstract class DhtCommand : Command
 
     ***************************************************************************/
 
-    protected hash_t hash ( char[] key )
+    final protected hash_t hash ( char[] key )
     {
         return cast(hash_t)Integer.toLong(key);
     }
@@ -152,7 +157,7 @@ public abstract class DhtCommand : Command
 
     ***************************************************************************/
 
-    protected typeof(Stdout) printKey ( char[] key )
+    final protected typeof(Stdout) printKey ( char[] key )
     {
         return Stdout.format("0x{:x8}", Integer.toLong(key, 16));
     }
@@ -170,7 +175,7 @@ public abstract class DhtCommand : Command
 
     ***************************************************************************/
 
-    protected typeof(Stdout) printValue ( char[] val )
+    final protected typeof(Stdout) printValue ( char[] val )
     {
         return Stdout(val);
     }
@@ -186,7 +191,7 @@ public abstract class DhtCommand : Command
 
     ***************************************************************************/
 
-    protected typeof(Stdout) printKeyValue ( char[] key, char[] val )
+    final protected typeof(Stdout) printKeyValue ( char[] key, char[] val )
     {
         this.printKey(key)(": ");
         return printValue(val).newline;
@@ -203,7 +208,7 @@ public abstract class DhtCommand : Command
 
     ***************************************************************************/
 
-    protected typeof(Stdout) printAddrPort ( char[] addr, ushort port )
+    final protected typeof(Stdout) printAddrPort ( char[] addr, ushort port )
     {
         return Stdout.format("{}:{}", addr, port);
     }
