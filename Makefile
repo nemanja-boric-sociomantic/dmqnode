@@ -181,8 +181,35 @@ US_NODE_SERVERS = 1 2 3 4 5 6
 upload-node-eu:
 	$(foreach srv, $(EU_NODE_SERVERS), scp -C ${NODE_OUTPUT} root@eq6-$(srv).sociomantic.com:/tmp/dht;)
 
+#TODO: get this script working:	@../ocean/script/tmuxconnect.sh eu_dht_servers root@eq6- .sociomantic.com ${EU_NODE_SERVERS}
+connect-eu:
+	tmux new-session -d -s eu_dht_servers
+	tmux new-window 'ssh root@eq6-$(firstword $(EU_NODE_SERVERS)).sociomantic.com'
+	$(foreach srv, $(wordlist 2, $(words $(EU_NODE_SERVERS)), $(EU_NODE_SERVERS)), tmux split-window 'ssh root@eq6-${srv}.sociomantic.com'; tmux select-layout even-vertical; )
+	tmux -2 attach-session -d
+
+connect-memory-eu:
+	@tmux new-session -d -s eu_mem_dht_nodes
+	@tmux new-window 'ssh -t root@eq6-$(firstword $(EU_NODE_SERVERS)).sociomantic.com "screen -rx memory"'
+	@$(foreach srv, $(wordlist 2, $(words $(EU_NODE_SERVERS)), $(EU_NODE_SERVERS)), tmux split-window 'ssh -t root@eq6-${srv}.sociomantic.com "screen -rx memory"';  tmux select-layout even-vertical; )
+	@tmux select-layout even-vertical
+	@tmux -2 attach-session -d
+
 upload-node-us:
 	$(foreach srv, $(US_NODE_SERVERS), scp -C ${NODE_OUTPUT} root@rs-$(srv).sociomantic.com:/tmp/dht;)
+
+connect-us:
+	@tmux new-session -d -s us_dht_servers
+	@tmux new-window 'ssh root@rs-$(firstword $(US_NODE_SERVERS)).sociomantic.com'
+	@$(foreach srv, $(wordlist 2, $(words $(US_NODE_SERVERS)), $(US_NODE_SERVERS)), tmux split-window 'ssh root@rs-${srv}.sociomantic.com'; tmux select-layout even-vertical; )
+	@tmux -2 attach-session -d
+
+connect-dht-us:
+	@tmux new-session -d -s us_dht_nodes
+	@tmux new-window 'ssh -t root@rs-$(firstword $(US_NODE_SERVERS)).sociomantic.com "screen -rx dht"'
+	@$(foreach srv, $(wordlist 2, $(words $(US_NODE_SERVERS)), $(US_NODE_SERVERS)), tmux split-window 'ssh -t root@rs-${srv}.sociomantic.com "screen -rx dht"';  tmux select-layout even-vertical; )
+	@tmux select-layout even-vertical
+	@tmux -2 attach-session -d
 
 
 # ------------------------------------------------------------------------------
