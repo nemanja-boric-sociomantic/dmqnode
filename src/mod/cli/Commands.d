@@ -243,7 +243,7 @@ private class Get : DhtCommand
         auto chan_name = super.args[0];
         foreach (i, key; super.args[1..$])
         {
-            dht.assign(dht.get(chan_name, super.hash(key), &this.cb,
+            dht.assign(dht.get(chan_name, this.hash(key), &this.cb,
                     notifier).context(i + 1));
         }
     }
@@ -349,14 +349,14 @@ private class Exists : DhtCommand
         auto chan_name = super.args[0];
         foreach (i, key; super.args[1..$])
         {
-            dht.assign(dht.exists(chan_name, super.hash(key),
-                (DhtClient.RequestContext c, bool exists)
-                {
-                    super.printKeyValue(super.args[c.integer],
-                            exists ? "1" : "0");
-                },
+            dht.assign(dht.exists(chan_name, this.hash(key), &this.cb,
                 notifier).context(i + 1));
         }
+    }
+
+    private void cb ( DhtClient.RequestContext c, bool exists )
+    {
+        this.printKeyValue(this.args[c.integer], exists ? "1" : "0");
     }
 }
 
@@ -423,14 +423,14 @@ private class GetRange : DhtCommand
     protected override void assignTo(DhtClient dht,
             RequestNotification.Callback notifier)
     {
-        dht.assign(dht.getRange(super.args[0],
-                super.hash(super.args[1]),
-                super.hash(super.args[2]),
-            (DhtClient.RequestContext c, char[] key, char[] val)
-            {
-                super.printKeyValue(key, val);
-            },
+        dht.assign(dht.getRange(this.args[0], this.hash(this.args[1]),
+                this.hash(this.args[2]), &this.cb,
             notifier));
+    }
+
+    private void cb ( DhtClient.RequestContext c, char[] key, char[] val )
+    {
+        this.printKeyValue(key, val);
     }
 }
 
@@ -458,12 +458,12 @@ private class GetAll : DhtCommand
     protected override void assignTo(DhtClient dht,
             RequestNotification.Callback notifier)
     {
-        dht.assign(dht.getAll(super.args[0],
-            (DhtClient.RequestContext c, char[] key, char[] val)
-            {
-                super.printKeyValue(key, val);
-            },
-            notifier));
+        dht.assign(dht.getAll(this.args[0], &this.cb, notifier));
+    }
+
+    private void cb ( DhtClient.RequestContext c, char[] key, char[] val )
+    {
+        this.printKeyValue(key, val);
     }
 }
 
@@ -491,12 +491,12 @@ private class GetAllKeys : DhtCommand
     protected override void assignTo(DhtClient dht,
             RequestNotification.Callback notifier)
     {
-        dht.assign(dht.getAllKeys(super.args[0],
-            (DhtClient.RequestContext c, char[] key)
-            {
-                super.printKey(key).newline;
-            },
+        dht.assign(dht.getAllKeys(this.args[0], &this.cb,
             notifier));
+    }
+    private void cb ( DhtClient.RequestContext c, char[] key )
+    {
+        this.printKey(key).newline;
     }
 }
 
@@ -524,12 +524,12 @@ private class Listen : DhtCommand
     protected override void assignTo(DhtClient dht,
             RequestNotification.Callback notifier)
     {
-        dht.assign(dht.listen(super.args[0],
-            (DhtClient.RequestContext c, char[] key, char[] val)
-            {
-                super.printKeyValue(key, val);
-            },
-            notifier));
+        dht.assign(dht.listen(this.args[0], &this.cb, notifier));
+    }
+
+    private void cb ( DhtClient.RequestContext c, char[] key, char[] val )
+    {
+        this.printKeyValue(key, val);
     }
 }
 
@@ -556,16 +556,16 @@ private class GetChannels : DhtCommand
     protected override void assignTo(DhtClient dht,
             RequestNotification.Callback notifier)
     {
-        dht.assign(dht.getChannels(
-            (DhtClient.RequestContext c, char[] addr, ushort port,
-                    char[] chan_name)
-            {
-                if ( chan_name.length ) // ignore end of list
-                {
-                    super.printAddrPort(addr, port).formatln(" {}", chan_name);
-                }
-            },
-            notifier));
+        dht.assign(dht.getChannels(&this.cb, notifier));
+    }
+
+    private void cb ( DhtClient.RequestContext c, char[] addr, ushort port,
+            char[] chan_name)
+    {
+        if ( chan_name.length ) // ignore end of list
+        {
+            this.printAddrPort(addr, port).formatln(" {}", chan_name);
+        }
     }
 }
 
@@ -593,14 +593,13 @@ private class GetSize : DhtCommand
     protected override void assignTo(DhtClient dht,
             RequestNotification.Callback notifier)
     {
-        dht.assign(dht.getSize(
-            (DhtClient.RequestContext c, char[] addr, ushort port,
-                    ulong records, ulong bytes)
-            {
-                super.printAddrPort(addr, port).formatln(
-                        " {} records, {} bytes", records, bytes);
-            },
-            notifier));
+        dht.assign(dht.getSize(&this.cb, notifier));
+    }
+    private void cb ( DhtClient.RequestContext c, char[] addr, ushort port,
+            ulong records, ulong bytes)
+    {
+        this.printAddrPort(addr, port).formatln(" {} records, {} bytes",
+                records, bytes);
     }
 }
 
@@ -630,14 +629,14 @@ private class GetChannelSize : DhtCommand
     protected override void assignTo(DhtClient dht,
             RequestNotification.Callback notifier)
     {
-        dht.assign(dht.getChannelSize(super.args[0],
-            (DhtClient.RequestContext c, char[] addr, ushort port,
-                    char[] chan_name, ulong records, ulong bytes)
-            {
-                super.printAddrPort(addr, port).formatln(
-                        " '{}' {} records, {} bytes", chan_name, records, bytes);
-            },
-            notifier));
+        dht.assign(dht.getChannelSize(this.args[0], &this.cb, notifier));
+    }
+
+    private void cb ( DhtClient.RequestContext c, char[] addr, ushort port,
+            char[] chan_name, ulong records, ulong bytes )
+    {
+        this.printAddrPort(addr, port).formatln(" '{}' {} records, {} bytes",
+                chan_name, records, bytes);
     }
 }
 
@@ -698,12 +697,13 @@ private class GetNumConnections : DhtCommand
     protected override void assignTo(DhtClient dht,
             RequestNotification.Callback notifier)
     {
-        dht.assign(dht.getNumConnections(
-            (DhtClient.RequestContext c, char[] addr, ushort port, size_t n)
-            {
-                super.printAddrPort(addr, port).formatln(" {} connections", n);
-            },
-            notifier));
+        dht.assign(dht.getNumConnections(&this.cb, notifier));
+    }
+
+    private void cb ( DhtClient.RequestContext c, char[] addr, ushort port,
+            size_t n )
+    {
+        this.printAddrPort(addr, port).formatln(" {} connections", n);
     }
 }
 
@@ -730,12 +730,13 @@ private class GetVersion : DhtCommand
     protected override void assignTo(DhtClient dht,
             RequestNotification.Callback notifier)
     {
-        dht.assign(dht.getVersion(
-            (DhtClient.RequestContext c, char[] addr, ushort port, char[] ver)
-            {
-                super.printAddrPort(addr, port).formatln(" version {}", ver);
-            },
-            notifier));
+        dht.assign(dht.getVersion(&this.cb, notifier));
+    }
+
+    private void cb ( DhtClient.RequestContext c, char[] addr, ushort port,
+            char[] ver )
+    {
+        this.printAddrPort(addr, port).formatln(" version {}", ver);
     }
 }
 
@@ -763,14 +764,12 @@ private class GetReponsibleRange : DhtCommand
     protected override void assignTo(DhtClient dht,
             RequestNotification.Callback notifier)
     {
-        dht.assign(dht.getResponsibleRange(
-            (DhtClient.RequestContext c, char[] addr, ushort port,
-                    RequestParams.Range r)
-            {
-                super.printAddrPort(addr, port).formatln(" {} - {}",
-                        r.min, r.max);
-            },
-            notifier));
+        dht.assign(dht.getResponsibleRange(&this.cb, notifier));
+    }
+    private void cb ( DhtClient.RequestContext c, char[] addr, ushort port,
+            RequestParams.Range r )
+    {
+        this.printAddrPort(addr, port).formatln(" {} - {}", r.min, r.max);
     }
 }
 
@@ -798,18 +797,18 @@ private class GetSupportedCommands : DhtCommand
     protected override void assignTo(DhtClient dht,
             RequestNotification.Callback notifier)
     {
-        dht.assign(dht.getSupportedCommands(
-            (DhtClient.RequestContext c, char[] addr, ushort port,
-                        DhtConst.Command.BaseType[] cmds)
-            {
-                foreach (cmd; cmds)
-                {
-                    auto cmd_desc = DhtConst.Command.description(cmd);
-                    super.printAddrPort(addr, port).formatln(" {} ({})",
-                            (cmd_desc !is null) ? *cmd_desc : null, cmd);
-                }
-            },
-            notifier));
+        dht.assign(dht.getSupportedCommands(&this.cb, notifier));
+    }
+
+    private void cb ( DhtClient.RequestContext c, char[] addr, ushort port,
+            DhtConst.Command.BaseType[] cmds )
+    {
+        foreach (cmd; cmds)
+        {
+            auto cmd_desc = DhtConst.Command.description(cmd);
+            this.printAddrPort(addr, port).formatln(" {} ({})",
+                    (cmd_desc !is null) ? *cmd_desc : null, cmd);
+        }
     }
 }
 
