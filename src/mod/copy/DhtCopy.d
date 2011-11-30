@@ -57,7 +57,7 @@ private import swarm.dht.DhtClient,
 
 private import swarm.dht.node.storage.filesystem.LogRecord;
 
-private import tango.io.Stdout;
+private import ocean.io.Stdout;
 
 
 
@@ -80,16 +80,13 @@ public class DhtCopy : SourceDhtTool
 
     /***************************************************************************
 
-        Destination dht
-    
+        Source & destination dht clients
+
     ***************************************************************************/
 
-    private DhtClient dst_dht;
+    private alias dht src_dht; // super.dht
 
-    private DhtClient src_dht ( )
-    {
-        return super.dht;
-    }
+    private DhtClient dst_dht;
 
 
     /***************************************************************************
@@ -99,6 +96,17 @@ public class DhtCopy : SourceDhtTool
     ***************************************************************************/
 
     private SuspendableThrottlerStringPool put_pool;
+
+
+    /***************************************************************************
+
+        Maximum number of pending records per node in the source dht before the
+        input is suspended. Input is resumed when the size of the pending pool
+        reduces once more.
+
+    ***************************************************************************/
+
+    private const per_connection_suspend_point = 5_000;
 
 
     /***************************************************************************
@@ -161,6 +169,15 @@ public class DhtCopy : SourceDhtTool
 
 
     /***************************************************************************
+
+        Channel being processed (set by the processChannel() method).
+
+    ***************************************************************************/
+
+    private char[] channel;
+
+
+    /***************************************************************************
     
         Adds command line arguments specific to this tool.
         
@@ -171,7 +188,7 @@ public class DhtCopy : SourceDhtTool
     
     override protected void addArgs__ ( Arguments args )
     {
-        args("type").params(1).required.aliased('t').help("type of dht (memory / logfiles");
+        args("type").params(1).required.aliased('t').restrict(["memory", "logfiles"]).help("type of dht (memory / logfiles");
         args("dest").params(1).required.aliased('D').help("path of dhtnodes.xml file defining nodes to import records to");
         args("compare").aliased('X').help("compare specified data in source & destination dhts (do not copy)");
     }
@@ -192,17 +209,6 @@ public class DhtCopy : SourceDhtTool
     override protected bool validArgs_ ( Arguments args )
     {
         auto type = args.getString("type");
-
-        switch ( type )
-        {
-            case "memory":
-            case "logfiles":
-            break;
-
-            default:
-                Stderr.formatln("Dht type must be one of: [memory, logfiles]");
-                return false;
-        }
 
         if ( type == "logfiles" && args.getBool("compare") == true )
         {
@@ -244,9 +250,19 @@ public class DhtCopy : SourceDhtTool
 
     private void initDst ( )
     {
-        this.dst_dht = super.initDhtClient(this.dst_config, 20_000);
+        this.processed = 0;
+        this.non_compare_count = 0;
 
-        this.put_pool = new SuspendableThrottlerStringPool;
+        if ( this.dst_dht is null )
+        {
+            this.dst_dht = super.initDhtClient(this.dst_config, 1_000_000);
+        }
+
+        if ( this.put_pool is null )
+        {
+            this.put_pool = new SuspendableThrottlerStringPool(
+                    this.src_dht.registry.length * this.per_connection_suspend_point);
+        }
     }
 
 
@@ -281,6 +297,8 @@ public class DhtCopy : SourceDhtTool
             }
         }
 
+        this.channel = channel;
+
         if ( start > hash_t.min || end < hash_t.max )
         {
             not_copying_all = true;
@@ -289,9 +307,10 @@ public class DhtCopy : SourceDhtTool
         {
             void channelSizeCb ( DhtClient.RequestContext c, char[] address, ushort port, char[] channel, ulong records, ulong bytes )
             {
-                this.records_in_src = records;
+                this.records_in_src += records;
             }
 
+            this.records_in_src = 0;
             src_dht.assign(src_dht.getChannelSize(channel, &channelSizeCb, &super.notifier));
             super.epoll.eventLoop;
         }
@@ -323,17 +342,17 @@ public class DhtCopy : SourceDhtTool
 
 
     /***************************************************************************
-    
+
         Copies a single dht record with the specified hash in the specified
         channel to the destination dht.
-        
+
         Params:
             src_dht = dht client to perform copy from
             channel = channel to copy from
             key = hash of record to copy
-    
+
     ***************************************************************************/
-    
+
     protected void processRecord ( char[] channel, hash_t key )
     {
         void getDg ( DhtClient.RequestContext c, char[] value )
@@ -373,13 +392,13 @@ public class DhtCopy : SourceDhtTool
         {
             if ( this.compare )
             {
-                StaticPeriodicTrace.format("{} compared, {} non-matching",
-                        this.processed, this.non_compare_count);
+                StaticPeriodicTrace.format("{}: {} compared, {} pending, {} non-matching",
+                        this.channel, this.processed, this.put_pool.length, this.non_compare_count);
             }
             else
             {
-                StaticPeriodicTrace.format("{} copied, {} pending",
-                        this.processed, this.put_pool.length);
+                StaticPeriodicTrace.format("{}: {} copied, {} pending",
+                        this.channel, this.processed, this.put_pool.length);
             }
         }
         else
@@ -388,20 +407,22 @@ public class DhtCopy : SourceDhtTool
 
             if ( this.compare )
             {
-                StaticPeriodicTrace.format("{} / {} compared ({}%), {} non-matching",
-                        this.processed, this.records_in_src, percent, this.non_compare_count);
+                StaticPeriodicTrace.format("{}: {} / {} compared ({}%), {} pending, {} non-matching",
+                        this.channel, this.processed, this.records_in_src, percent,
+                        this.put_pool.length, this.non_compare_count);
             }
             else
             {
-                StaticPeriodicTrace.format("{} / {} copied ({}%), {} pending",
-                        this.processed, this.records_in_src, percent, this.put_pool.length);
+                StaticPeriodicTrace.format("{}: {} / {} copied ({}%), {} pending",
+                        this.channel, this.processed, this.records_in_src, percent,
+                        this.put_pool.length);
             }
         }
     }
 
 
     /***************************************************************************
-    
+
         Outputs a final message when all records have been copied.
 
         Params:
@@ -413,21 +434,20 @@ public class DhtCopy : SourceDhtTool
     {
         if ( this.compare )
         {
-            Stdout.formatln("\nCompared {} records from channel {}, {} didn't match",
-                    this.processed, channel, this.non_compare_count);
+            Stdout.formatln("{}: {} compared, {} non-matching",
+                    channel, this.processed, this.non_compare_count).clearline;
         }
         else
         {
-            Stdout.formatln("\nCopied {} records from channel {}",
-                    this.processed, channel);
+            Stdout.formatln("{}: copied {}", channel, this.processed).clearline;
         }
     }
 
 
     /***************************************************************************
-    
-        Copies / comapres a single dht record.
-        
+
+        Copies / compares a single dht record.
+
         Params:
             channel = channel to copy / compare from
             key = hash of record to copy / compare
@@ -441,26 +461,43 @@ public class DhtCopy : SourceDhtTool
 
         if ( this.compare )
         {
-            void getDg ( DhtClient.RequestContext c, char[] dst_value )
-            {
-                if ( dst_value != this.put_pool.get(c) )
-                {
-                    this.non_compare_count++;
-                }
-            }
-
-            this.dst_dht.assign(this.dst_dht.get(channel, key, &getDg, &handleNotifier).raw.context(context));
+            this.dst_dht.assign(this.dst_dht.get(channel, key, &this.compareGetDg,
+                    &handleNotifier).raw.context(context));
         }
         else
         {
             if ( memory )
             {
-                this.dst_dht.assign(this.dst_dht.put(channel, key, &putDg, &handleNotifier).context(context));
+                this.dst_dht.assign(this.dst_dht.put(channel, key, &this.putDg,
+                        &handleNotifier).context(context));
             }
             else
             {
-                this.dst_dht.assign(this.dst_dht.putDup(channel, key, &putDg, &handleNotifier).context(context));
+                this.dst_dht.assign(this.dst_dht.putDup(channel, key, &this.putDg,
+                        &handleNotifier).context(context));
             }
+        }
+    }
+
+
+    /***************************************************************************
+
+        Callback for Get requests in compare mode. Compares the record fetched
+        from the destination dht with the record from the source dht.
+
+        Params:
+            c = request context (contains a reference to an item in the pool of
+                pending items)
+            dst_value = record value read from destination dht, should
+                correspond to the record referred to by c
+
+    ***************************************************************************/
+
+    private void compareGetDg ( DhtClient.RequestContext c, char[] dst_value )
+    {
+        if ( dst_value != this.put_pool.get(c) )
+        {
+            this.non_compare_count++;
         }
     }
 
@@ -491,7 +528,7 @@ public class DhtCopy : SourceDhtTool
         finished.
 
         Params:
-            info = notification infor struct
+            info = notification info struct
 
     ***************************************************************************/
 
