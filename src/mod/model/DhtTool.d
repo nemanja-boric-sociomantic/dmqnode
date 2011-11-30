@@ -84,6 +84,15 @@ abstract class DhtTool
 
     /***************************************************************************
 
+        Number of client connections to each dht node
+    
+    ***************************************************************************/
+
+    protected uint connections;
+
+
+    /***************************************************************************
+
         Parses and validates command line arguments using the passed Arguments
         object. The list of valid arguments for the base class (see module
         header) is set in the addArgs() method. Derived classes can override the
@@ -225,6 +234,12 @@ abstract class DhtTool
 
     protected bool validArgs ( Arguments args )
     {
+        if ( args.getInt!(uint)("connections") > 0 )
+        {
+            Stderr.formatln("Tool cannot function with 0 connections per dht node");
+            return false;
+        }
+
         return true;
     }
 
@@ -248,6 +263,8 @@ abstract class DhtTool
     }
     body
     {
+        this.connections = args.getInt!(uint)("connections");
+
         this.readArgs_(args);
     }
 
@@ -269,6 +286,7 @@ abstract class DhtTool
     private void addArgs ( Arguments args )
     {
         args("help").aliased('?').aliased('h').help("display this help");
+        args("connections").aliased('x').params(1).defaults("10").help("number of connections to each node in the dht");
 
         this.addArgs_(args);
     }
@@ -310,9 +328,7 @@ abstract class DhtTool
     {
         debug (DhtTool) Stderr.formatln("Initialising dht client connections from {}", xml);
 
-        const num_conn = 10;
-
-        auto dht = new DhtClient(this.epoll, num_conn, request_queue_size);
+        auto dht = new DhtClient(this.epoll, this.connections, request_queue_size);
 
         dht.addNodes(xml);
 
