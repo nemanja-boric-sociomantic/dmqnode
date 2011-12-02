@@ -187,6 +187,9 @@ connect-eu:
 connect-memory-eu:
 	@../ocean/script/tmuxconnectscreen.sh eu_memory eu memory ${EU_NODE_SERVERS}
 
+connect-tracking-eu:
+	@../ocean/script/tmuxconnectscreen.sh eu_tracking eu tracking ${EU_NODE_SERVERS}
+
 upload-node-us:
 	$(foreach srv, $(US_NODE_SERVERS), scp -C ${NODE_OUTPUT} root@rs-$(srv).sociomantic.com:/tmp/dht;)
 
