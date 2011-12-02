@@ -100,13 +100,11 @@ public class StatsThread : IServiceThread
 
     /***************************************************************************
 
-        Strings used for free / used memory formatting.
+        String buffer for formatting.
 
     ***************************************************************************/
 
-    char[] free_str;
-
-    char[] used_str;
+    private char[] records_buf, bytes_buf;
 
 
     /***************************************************************************
@@ -148,10 +146,10 @@ public class StatsThread : IServiceThread
     
     protected void serviceNode ( IDhtNodeInfo node_info, uint seconds_elapsed )
     {
-        auto received = node_info.bytesReceived;
-        auto sent = node_info.bytesSent;
+        auto received = node_info.bytes_received;
+        auto sent = node_info.bytes_sent;
 
-        this.records_per_sec = node_info.recordsHandled;
+        this.records_per_sec = node_info.records_handled;
         auto rec_per_sec = this.records_per_sec.push;
         if ( seconds_elapsed > 1 )
         {
@@ -160,14 +158,12 @@ public class StatsThread : IServiceThread
 
         if ( MainConfig.console_stats_enabled )
         {
-            size_t used, free;
-//            GC.usage(used, free);
+            DigitGrouping.format(node_info.num_records, this.records_buf);
+            BitGrouping.format(node_info.num_bytes, this.bytes_buf, "b");
 
-            BitGrouping.format(free, this.free_str, "b");
-            BitGrouping.format(used, this.used_str, "b");
-
-            StaticTrace.format("  dht (used: {}, free: {}): handling {} connections, {} records/s",
-                    this.used_str, this.free_str, node_info.numOpenConnections, rec_per_sec).flush;
+            StaticTrace.format("  {} dht: handling {} connections, {} records/s, {} records ({})",
+                    node_info.storage_type, node_info.num_open_connections, rec_per_sec,
+                    this.records_buf, this.bytes_buf).flush;
         }
 
         if ( MainConfig.stats_log_enabled )
@@ -181,7 +177,7 @@ public class StatsThread : IServiceThread
                 this.log.write("Node stats: {} sent ({} K/s), {} received ({} K/s), handling {} connections, {} records/s",
                         this.total_sent, cast(float)(this.total_sent / 1024) / cast(float)seconds_elapsed,
                         this.total_received, cast(float)(this.total_received / 1024) / cast(float)seconds_elapsed,
-                        node_info.numOpenConnections, rec_per_sec);
+                        node_info.num_open_connections, rec_per_sec);
 
                 this.elapsed_since_last_log_update = 0;
                 this.total_sent = 0;
