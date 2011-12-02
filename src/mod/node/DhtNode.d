@@ -28,6 +28,8 @@ private import src.mod.node.servicethreads.ServiceThreads,
                src.mod.node.servicethreads.StatsThread,
                src.mod.node.servicethreads.MaintenanceThread;
 
+private import ocean.util.Config;
+
 private import ocean.io.select.model.ISelectClient;
 
 private import swarm.dht.DhtConst;
@@ -46,6 +48,8 @@ private import tango.core.Thread;
 private import tango.util.log.Log, tango.util.log.AppendConsole;
 
 private import ocean.util.log.Trace;
+
+private import ocean.util.OceanException;
 
 
 
@@ -84,21 +88,15 @@ public class DhtNodeServer
     public this ( )
     {
         this.node = new DhtNode(
-                DhtConst.NodeItem(MainConfig.address, MainConfig.port),
+                DhtConst.NodeItem(MainConfig.server.address, MainConfig.server.port),
                 this.newStorageChannels(),
                 this.min_hash, this.max_hash);
 
         this.node.error_callback = &this.dhtError;
 
-        uint stats_log_period = 300;
-        Config().get(stats_log_period, "Log", "stats_log_period");
-
-        uint maintenance_period = 3600;
-        Config().get(maintenance_period, "ServiceThreads", "maintenance_period");
-
         this.service_threads = new ServiceThreads(&this.shutdown);
-        this.service_threads.add(new MaintenanceThread(this.node, maintenance_period));
-        this.service_threads.add(new StatsThread(this.node, stats_log_period));
+        this.service_threads.add(new MaintenanceThread(this.node, MainConfig.server_threads.maintenance_period));
+        this.service_threads.add(new StatsThread(this.node, MainConfig.log.stats_log_period));
     }
 
 
@@ -146,24 +144,22 @@ public class DhtNodeServer
 
     private StorageChannels newStorageChannels ( )
     {
-        ulong size_limit = Config().get!(ulong)("Server", "size_limit");
-        char[] data_dir = Config().get!(char[])("Server", "data_dir");
-
-        switch ( Config().get!(char[])("Server", "storage_engine") )
+        switch ( cast(char[])MainConfig.server.storage_engine )
         {
             case "memory":
                 MemoryStorageChannels.Args args;
-                Config().get(args.bnum, "Options_Memory", "bnum");
+                args.bnum = Config.get("Options_Memory", "bnum", args.bnum);
 
-                return new MemoryStorageChannels(data_dir, size_limit, args);
+                return new MemoryStorageChannels(MainConfig.server.data_dir,
+                        MainConfig.server.size_limit, args);
 
             case "logfiles":
                 LogFilesStorageChannels.Args args;
-                Config().get(args.write_buffer_size, "Options_LogFiles", "write_buffer_size");
+                args.write_buffer_size = Config.get("Options_LogFiles", "write_buffer_size",
+                        args.write_buffer_size);
 
-                size_limit = 0; // logfiles node ignores size limit setting
-
-                return new LogFilesStorageChannels(data_dir, size_limit, args);
+                return new LogFilesStorageChannels(MainConfig.server.data_dir,
+                        0, args); // logfiles node ignores size limit setting
 
             default:
                 throw new Exception("Invalid / unsupported data storage");
@@ -180,11 +176,9 @@ public class DhtNodeServer
 
     private hash_t min_hash ( )
     {
-        auto min = Config().Char["Server", "minval"];
-        
         // TODO: remove this hash range padding, always specify full 32-bit
         // hexadecimal numbers
-        return DhtHash.toHashRangeStart(min);
+        return DhtHash.toHashRangeStart(MainConfig.server.minval);
     }
 
 
@@ -197,11 +191,9 @@ public class DhtNodeServer
 
     private hash_t max_hash ( )
     {
-        auto max = Config().Char["Server", "maxval"];
-
         // TODO: remove this hash range padding, always specify full 32-bit
         // hexadecimal numbers
-        return DhtHash.toHashRangeEnd(max);
+        return DhtHash.toHashRangeEnd(MainConfig.server.maxval);
     }
 
 
