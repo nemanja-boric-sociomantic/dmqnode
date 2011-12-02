@@ -128,9 +128,9 @@ public class StatsThread : IServiceThread
 
         this.log_update_time = log_update_time;
 
-        if ( MainConfig.stats_log_enabled )
+        if ( MainConfig.log.stats_log_enabled )
         {
-            this.log = new MessageLogger(MainConfig.stats_log, "StatsLog");
+            this.log = new MessageLogger(MainConfig.log.stats_log, "StatsLog");
             this.log.enabled = true;
         }
     }
@@ -161,7 +161,7 @@ public class StatsThread : IServiceThread
             for ( int i; i < seconds_elapsed - 1; i++ ) this.records_per_sec.push;
         }
 
-        if ( MainConfig.console_stats_enabled )
+        if ( MainConfig.log.console_stats_enabled )
         {
             DigitGrouping.format(node_info.num_records, this.records_buf);
             BitGrouping.format(node_info.num_bytes, this.bytes_buf, "b");
@@ -171,7 +171,7 @@ public class StatsThread : IServiceThread
                     this.records_buf, this.bytes_buf).flush;
         }
 
-        if ( MainConfig.stats_log_enabled )
+        if ( MainConfig.log.stats_log_enabled )
         {
             this.elapsed_since_last_log_update += seconds_elapsed;
             this.total_sent += sent;

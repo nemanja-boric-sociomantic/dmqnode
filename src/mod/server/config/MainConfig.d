@@ -20,9 +20,11 @@ module src.mod.server.config.MainConfig;
 
 private import ocean.sys.CmdPath;
 
-private import ocean.util.Config,
-               ocean.util.OceanException,
-               ocean.util.TraceLog;
+private import ConfigReader = ocean.util.config.ClassFiller;
+private import ocean.util.Config;
+
+private import ocean.util.OceanException;
+private import ocean.util.TraceLog;
 
 private import tango.util.log.AppendFile;
 
@@ -32,84 +34,106 @@ debug private import tango.util.log.Trace;
 
 /*******************************************************************************
 
-    Main config
+    Server config values
 
 *******************************************************************************/
 
-struct MainConfig
+private class ServerConfig
 {
-public static:
+    ConfigReader.Required!(char[]) address;
 
+    ConfigReader.Required!(ushort) port;
+
+    ulong size_limit = 0; // 0 := no size limit
+
+    ulong channel_size_limit = 0; // 0 := no size limit
+
+    char[] data_dir = "data";
+}
+
+
+/*******************************************************************************
+
+    Logging config values
+
+*******************************************************************************/
+
+private class LogConfig
+{
+    char[] error_log = "log/error.log";
+    bool console_echo_error = false;
+
+    char[] trace_log = "log/trace.log";
+    bool console_echo_trace = false;
+
+    char[] stats_log = "log/stats.log";
+    bool stats_log_enabled = false;
+    bool console_stats_enabled = false;
+
+    uint stats_log_period = 300;
+}
+
+
+/*******************************************************************************
+
+    Config file reader
+
+*******************************************************************************/
+
+public class MainConfig
+{
     /***************************************************************************
 
-        Server
+        Instances of each config class to be read.
 
     ***************************************************************************/
 
-    char[] address;
-
-    ushort port;
-
-    uint size_limit;
-
-    uint channel_size_limit;
-
-    char[] data_dir;
+    static public ServerConfig server;
+    static public LogConfig log;
 
 
     /***************************************************************************
 
-        Log
+        Path object holding absolute path to running executable
 
     ***************************************************************************/
-    
-    char[] error_log;
-    
-    char[] trace_log;
-    
-    char[] stats_log;
-    
-    uint stats_log_period;
 
-    bool stats_log_enabled;
-
-    bool console_stats_enabled;
+    static private CmdPath cmdpath;
 
 
     /***************************************************************************
-    
-        Reads static member variables from the config file in etc/config.ini
-    
+
+        Initializes configuration
+
+        Params
+            exepath = path to running executable as given by command line
+                      argument 0
+            config_file = config file to read, if not specified uses
+                          <exepath>/etc/config.ini.
+
     ***************************************************************************/
-    
-    void init ( char[] exepath )
+
+    static public void init ( char[] exepath, char[] config_file = null )
     {
-        CmdPath cmdpath;
         cmdpath.set(exepath);
 
-        Config.initSingleton(cmdpath.prepend("etc", "config.ini"));
+        if ( config_file )
+        {
+            Config.parse(config_file);
+        }
+        else
+        {
+            Config.parse(cmdpath.prepend(["etc", "config.ini"]));
+        }
 
-        // Server
-        address = Config().Char["Server", "address"];
-        port = Config().Int["Server", "port"];
-        size_limit = Config().Int["Server", "size_limit"];
-        channel_size_limit = Config().Int["Server", "channel_size_limit"];
-        data_dir = Config().Char["Server", "data_dir"];
+        ConfigReader.fill("Server", server);
+        ConfigReader.fill("Log", log);
 
-        // Log
-        error_log = Config().Char["Log", "error"];
-        OceanException.setOutput(new AppendFile(cmdpath.prepend([error_log])));
-        OceanException.console_output = Config().Bool["Log", "console_echo_error"];
+        OceanException.setOutput(new AppendFile(log.error_log));
+        OceanException.console_output = log.console_echo_error;
 
-        trace_log = Config().Char["Log", "trace"];
-        TraceLog.init(cmdpath.prepend([trace_log]));
-        TraceLog.console_enabled = Config().Bool["Log", "console_echo_trace"];
-
-        stats_log = cmdpath.prepend(Config().Char["Log", "stats"]);
-        stats_log_period = Config().Int["Log", "stats_log_period"];
-
-        stats_log_enabled = Config().Bool["Log", "stats_log_enabled"];
-        console_stats_enabled = Config().Bool["Log", "console_stats_enabled"];
+        TraceLog.init(log.trace_log);
+        TraceLog.console_enabled = log.console_echo_trace;
     }
 }
 

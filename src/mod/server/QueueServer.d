@@ -74,16 +74,17 @@ public class QueueServer
 
     public this ( )
     {
-        assertEx!(IllegalArgumentException)(MainConfig.size_limit, "size limit 0 specified in configuration");
+        assertEx!(IllegalArgumentException)(MainConfig.server.size_limit, "size limit 0 specified in configuration");
 
         this.node = new QueueNode(
-                QueueConst.NodeItem(MainConfig.address, MainConfig.port),
-                new RingNode(MainConfig.data_dir, MainConfig.size_limit, MainConfig.channel_size_limit));
+                QueueConst.NodeItem(MainConfig.server.address, MainConfig.server.port),
+                new RingNode(MainConfig.server.data_dir, MainConfig.server.size_limit,
+                        MainConfig.server.channel_size_limit));
 
         this.service_threads = new ServiceThreads;
-        if ( MainConfig.stats_log_enabled || MainConfig.console_stats_enabled )
+        if ( MainConfig.log.stats_log_enabled || MainConfig.log.console_stats_enabled )
         {
-            this.service_threads.add(new StatsThread(this.node.node_info, MainConfig.stats_log_period));
+            this.service_threads.add(new StatsThread(this.node.node_info, MainConfig.log.stats_log_period));
         }
     }
 
