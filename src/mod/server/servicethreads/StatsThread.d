@@ -166,9 +166,9 @@ public class StatsThread : IServiceThread
             DigitGrouping.format(node_info.num_records, this.records_buf);
             BitGrouping.format(node_info.num_bytes, this.bytes_buf, "b");
 
-            StaticTrace.format("  {} queue: handling {} connections, {} records/s, {} records ({})",
+            StaticTrace.format("  {} queue: handling {} connections, {} records/s, {} records ({}){}",
                     node_info.storage_type, node_info.num_open_connections, rec_per_sec,
-                    this.records_buf, this.bytes_buf).flush;
+                    this.records_buf, this.bytes_buf, channels_string).flush;
         }
 
         if ( MainConfig.log.stats_log_enabled )
