@@ -135,27 +135,27 @@ performance-release:
 # ------------------------------------------------------------------------------
 # Server commands -- upload and connect to server
 
-EU_SERVER = 8
+EU_SERVERS = 8
 
-US_SERVER = 1
+US_SERVERS = 1 2
 
 upload-node-eu:
-	scp -C ${NODE_OUTPUT} root@eq6-${EU_SERVER}.sociomantic.com:/tmp/queue
+	$(foreach srv, $(EU_SERVERS), scp -C ${NODE_OUTPUT} root@eq6-$(srv).sociomantic.com:/tmp/queue;)
 
 upload-node-us:
-	scp -C ${NODE_OUTPUT} root@rs-${US_SERVER}.sociomantic.com:/tmp/queue
+	$(foreach srv, $(US_SERVERS), scp -C ${NODE_OUTPUT} root@rs-$(srv).sociomantic.com:/tmp/queue;)
 
 connect-eu:
-	ssh root@eq6-${EU_SERVER}.sociomantic.com
+	@../ocean/script/tmuxconnect.sh eu_queue_servers eu ${EU_SERVERS}
 
 connect-us:
-	ssh root@eq6-${US_SERVER}.sociomantic.com
+	@../ocean/script/tmuxconnect.sh us_queue_servers us ${US_SERVERS}
 
-connect-main-eu:
-	ssh -t root@eq6-${EU_SERVER}.sociomantic.com "screen -rx queue"
+connect-node-eu:
+	@../ocean/script/tmuxconnectscreen.sh eu_queue eu queue ${EU_SERVERS}
 
-connect-main-us:
-	ssh -t root@rs-${US_SERVER}.sociomantic.com "screen -rx queue"
+connect-node-us:
+	@../ocean/script/tmuxconnectscreen.sh us_queue us queue ${US_SERVERS}
 
 
 # ------------------------------------------------------------------------------
