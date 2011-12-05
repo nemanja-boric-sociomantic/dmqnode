@@ -32,6 +32,8 @@ private import src.mod.server.config.MainConfig;
 private import ocean.sys.CmdPath,
                ocean.sys.SignalHandler;
 
+private import ocean.text.Arguments;
+
 private import ocean.util.Main;
 
 private import tango.core.Memory;
@@ -68,14 +70,19 @@ int main ( char[][] cl_args )
 {
 //    GC.disable;
 
-    auto r = Main.processArgs(cl_args, Version, app_description);
+    void initConfig ( char[] app_name, char[] config_file )
+    {
+        MainConfig.init(app_name, config_file);
+    }
+
+    auto args = new Arguments;
+
+    auto r = Main.processArgsConfig(cl_args, args, Version, app_description, &initConfig);
 
     if ( r.exit )
     {
         return r.exit_code;
     }
-
-    MainConfig.init(cl_args[0]);
 
     queue = new QueueServer();
 
