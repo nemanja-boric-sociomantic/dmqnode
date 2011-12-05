@@ -74,8 +74,13 @@ private int main ( char[][] arguments )
 {
     auto args = initArguments();
 
-    auto r = Main.processArgsConfig!(MainConfig)(arguments, args, Version,
-            "dht node server");
+    void initConfig ( char[] app_name, char[] config_file )
+    {
+        MainConfig.init(app_name, config_file);
+    }
+
+    auto r = Main.processArgsConfig(arguments, args, Version,
+            "dht node server", &initConfig);
 
     if ( r.exit )
     {
