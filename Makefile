@@ -139,6 +139,12 @@ EU_SERVERS = 8
 
 US_SERVERS = 1 2
 
+upload-monitor-eu:
+	$(foreach srv, $(EU_SERVERS), scp -C ${MONITOR_OUTPUT} root@eq6-$(srv).sociomantic.com:/tmp/queue;)
+
+upload-monitor-us:
+	$(foreach srv, $(US_SERVERS), scp -C ${MONITOR_OUTPUT} root@rs-$(srv).sociomantic.com:/tmp/queue;)
+
 upload-node-eu:
 	$(foreach srv, $(EU_SERVERS), scp -C ${NODE_OUTPUT} root@eq6-$(srv).sociomantic.com:/tmp/queue;)
 
