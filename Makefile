@@ -25,6 +25,9 @@ PERFORMANCE_OUTPUT = bin/dhtperformance
 HASHRANGE_TARGET = src/main/dhthashrange.d
 HASHRANGE_OUTPUT = bin/dhthashrange
 
+TCM_SPLIT_TARGET = src/main/tcmsplit.d
+TCM_SPLIT_OUTPUT = bin/tcmsplit
+
 
 # ------------------------------------------------------------------------------
 # Xfbuild flags
@@ -72,6 +75,9 @@ CLIENT_FLAGS =\
 #	-debug=SwarmClient
 #	-debug=Raw
 #	-debug=ISelectClient
+
+TCM_SPLIT_FLAGS =\
+    -L-lglib-2.0
 
 
 # ------------------------------------------------------------------------------
@@ -169,6 +175,16 @@ hashrange:
 
 hashrange-release:
 	xfbuild +D=.deps-hashrange +O=.objs-hashrange +o=${HASHRANGE_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${CLIENT_FLAGS} ${HASHRANGE_TARGET}
+
+
+# ------------------------------------------------------------------------------
+# tcm split debug & release builds
+
+tcmsplit:
+	xfbuild +D=.deps-tcmsplit +O=.objs-tcmsplit +o=${TCM_SPLIT_OUTPUT} ${XFBUILD_FLAGS} ${TCM_SPLIT_FLAGS} ${DEBUG_FLAGS} ${TCM_SPLIT_TARGET}
+
+tcmsplit-release:
+	xfbuild +D=.deps-tcmsplit +O=.objs-tcmsplit +o=${TCM_SPLIT_OUTPUT} ${XFBUILD_FLAGS} ${TCM_SPLIT_FLAGS} ${RELEASE_FLAGS} ${TCM_SPLIT_TARGET}
 
 
 # ------------------------------------------------------------------------------
