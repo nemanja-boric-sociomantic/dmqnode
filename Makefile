@@ -180,10 +180,10 @@ hashrange-release:
 # ------------------------------------------------------------------------------
 # tcm split debug & release builds
 
-tcmsplit:
+tcmsplit: revision
 	xfbuild +D=.deps-tcmsplit +O=.objs-tcmsplit +o=${TCM_SPLIT_OUTPUT} ${XFBUILD_FLAGS} ${TCM_SPLIT_FLAGS} ${DEBUG_FLAGS} ${TCM_SPLIT_TARGET}
 
-tcmsplit-release:
+tcmsplit-release: revision
 	xfbuild +D=.deps-tcmsplit +O=.objs-tcmsplit +o=${TCM_SPLIT_OUTPUT} ${XFBUILD_FLAGS} ${TCM_SPLIT_FLAGS} ${RELEASE_FLAGS} ${TCM_SPLIT_TARGET}
 
 
