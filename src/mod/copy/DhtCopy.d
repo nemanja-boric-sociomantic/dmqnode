@@ -255,7 +255,7 @@ public class DhtCopy : SourceDhtTool
 
         if ( this.dst_dht is null )
         {
-            this.dst_dht = super.initDhtClient(this.dst_config, 1_000_000);
+            this.dst_dht = super.initDhtClient(this.dst_config, 20_000);
         }
 
         if ( this.put_pool is null )
