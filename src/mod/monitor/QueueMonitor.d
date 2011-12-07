@@ -29,6 +29,7 @@ private import ocean.io.select.EpollSelectDispatcher;
 private import ocean.text.Arguments;
 
 private import swarm.queue.QueueClient;
+private import swarm.queue.QueueConst;
 
 private import tango.core.Array : contains;
 
@@ -42,65 +43,8 @@ private import tango.io.Stdout;
 
 *******************************************************************************/
 
-class QueueMonitor
+public class QueueMonitor
 {
-    /***************************************************************************
-    
-        Singleton instance of this class, used in static methods.
-    
-    ***************************************************************************/
-
-    private static typeof(this) singleton;
-
-    static private typeof(this) instance ( )
-    {
-        if ( !singleton )
-        {
-            singleton = new typeof(this);
-        }
-
-        return singleton;
-    }
-
-
-    /***************************************************************************
-
-        Parses and validates command line arguments.
-
-        Params:
-            args = arguments object
-            arguments = command line args (excluding the file name)
-
-        Returns:
-            true if the arguments are valid
-
-    ***************************************************************************/
-
-    static public bool parseArgs ( Arguments args, char[][] arguments )
-    {
-        return instance().validateArgs(args, arguments);
-    }
-
-
-    /***************************************************************************
-    
-        Main run method, called by OceanException.run.
-        
-        Params:
-            args = processed arguments
-    
-        Returns:
-            always true
-    
-    ***************************************************************************/
-
-    static public bool run ( Arguments args )
-    {
-        instance().process(args);
-        return true;
-    }
-
-
     /***************************************************************************
 
         Epoll select dispatcher.
@@ -242,36 +186,12 @@ class QueueMonitor
 
 
     /***************************************************************************
-    
-        Validates command line arguments.
-    
-        Params:
-            args = arguments processor
-            arguments = command line args
 
-        Returns:
-            true if arguments are valid
+        List of channel names
 
     ***************************************************************************/
 
-    private bool validateArgs ( Arguments args, char[][] arguments )
-    {
-        args("source").required.params(1).aliased('S').help("config file listing queue nodes to connect to");
-
-        if ( arguments.length && !args.parse(arguments) )
-        {
-            Stderr.formatln("Invalid arguments");
-            return false;
-        }
-
-        if ( !args.exists("source") )
-        {
-            Stderr.formatln("Specify the config file to read node info from using -S");
-            return false;
-        }
-
-        return true;
-    }
+    private char[][] channels;
 
 
     /***************************************************************************
@@ -285,57 +205,114 @@ class QueueMonitor
 
     ***************************************************************************/
 
-    private void process ( Arguments args )
+    public void run ( Arguments args )
     {
         this.epoll = new EpollSelectDispatcher;
         this.queue = new QueueClient(epoll);
         this.queue.addNodes(args.getString("source"));
 
-        char[][] channels;
-
-        void getChannelsDg ( hash_t id, char[] channel )
+        void notifier ( QueueClient.RequestNotification info )
         {
-            if ( channel.length && !channels.contains(channel) )
+            if ( info.type == info.type.Finished && !info.succeeded )
             {
-                channels.appendCopy(channel);
+                Stderr.formatln("Error while performing {} request: {} ({})",
+                        *QueueConst.Command.description(info.command),
+                        info.exception, info.status);
             }
         }
 
-        void getChannelSizeDg ( hash_t id, char[] node_address, ushort node_port, char[] channel, ulong records, ulong bytes )
+        void getChannelsDg ( QueueClient.RequestContext c, char[] channel )
+        {
+            if ( channel.length && !this.channels.contains(channel) )
+            {
+                this.channels.appendCopy(channel);
+            }
+        }
+
+        void getChannelSizeDg ( QueueClient.RequestContext c, char[] node_address, ushort node_port, char[] channel, ulong records, ulong bytes )
         {
             auto node = this.findNode(node_address, node_port, true);
             node.setChannelSize(channel, records, bytes);
         }
 
-        void getSizeLimitDg ( hash_t id, char[] node_address, ushort node_port, ulong bytes )
+        void getSizeLimitDg ( QueueClient.RequestContext c, char[] node_address, ushort node_port, ulong bytes )
         {
             auto node = this.findNode(node_address, node_port, true);
             node.channel_size_limit = bytes;
         }
 
-        void getNumConnectionsDg ( hash_t id, char[] node_address, ushort node_port, size_t conns )
+        void getNumConnectionsDg ( QueueClient.RequestContext c, char[] node_address, ushort node_port, size_t conns )
         {
             auto node = this.findNode(node_address, node_port, true);
             node.connections = conns - 1;
         }
 
-        this.queue.getChannels(&getChannelsDg);
+        this.queue.assign(this.queue.getChannels(&getChannelsDg, &notifier));
         this.epoll.eventLoop;
 
-        channels.sort;
+        this.channels.sort;
 
-        this.queue.getNumConnections(&getNumConnectionsDg);
+        this.queue.assign(this.queue.getNumConnections(&getNumConnectionsDg, &notifier));
         this.epoll.eventLoop;
 
-        this.queue.getSizeLimit(&getSizeLimitDg);
+        this.queue.assign(this.queue.getSizeLimit(&getSizeLimitDg, &notifier));
         this.epoll.eventLoop;
 
-        foreach ( channel; channels )
+        foreach ( channel; this.channels )
         {
-            this.queue.getChannelSize(channel, &getChannelSizeDg);
-            this.epoll.eventLoop;
+            this.queue.assign(this.queue.getChannelSize(channel, &getChannelSizeDg, &notifier));
         }
+        this.epoll.eventLoop;
 
+        if ( args.exists("minimal") )
+        {
+            this.minimalDisplay();
+        }
+        else
+        {
+            this.fullDisplay();
+        }
+    }
+
+
+    /***************************************************************************
+
+        Displays results in a minimal format, just showing the size of each
+        channel per node.
+
+    ***************************************************************************/
+
+    private void minimalDisplay ( )
+    {
+        foreach ( node; this.nodes )
+        {
+            Stdout.format("{}:{}:", node.address, node.port);
+            foreach ( channel; node.channels )
+            {
+                if ( node.channel_size_limit > 0 )
+                {
+                    float percent = (cast(float)channel.bytes / cast(float)node.channel_size_limit) * 100;
+                    Stdout.format(" {}: {}%", channel.name, percent);
+                }
+                else
+                {
+                    Stdout.format(" {}: {}", channel.name, channel.records);
+                }
+            }
+            Stdout.formatln("");
+        }
+    }
+
+
+    /***************************************************************************
+
+        Displays results in a detailed format, showing the connections per node,
+        and the total size of each channel over all nodes.
+
+    ***************************************************************************/
+
+    private void fullDisplay ( )
+    {
         // Nodes table
         Stdout.formatln("Nodes:");
 
@@ -359,7 +336,7 @@ class QueueMonitor
         channels_table.firstRow.setDivider();
         channels_table.nextRow.set(Table.Cell.String("Name"), Table.Cell.String("% full"), Table.Cell.String("Records"), Table.Cell.String("Bytes"), Table.Cell.String("Bytes free"));
         channels_table.nextRow.setDivider();
-        foreach ( channel; channels )
+        foreach ( channel; this.channels )
         {
             ulong records, bytes, size_limit;
             foreach ( node; this.nodes )
@@ -379,7 +356,6 @@ class QueueMonitor
         channels_table.nextRow.setDivider();
         channels_table.display();
     }
-
 
     /***************************************************************************
     

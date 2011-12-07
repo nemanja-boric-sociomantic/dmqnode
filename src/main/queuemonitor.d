@@ -22,37 +22,71 @@ module src.main.queuemonitor;
 
 private import src.mod.monitor.QueueMonitor;
 
-private import ocean.util.OceanException;
+private import src.main.Version;
+
+private import tango.io.Stdout;
 
 private import ocean.text.Arguments;
 
-debug private import tango.util.log.Trace;
+private import ocean.util.Main;
+
+
+
+/*******************************************************************************
+
+    Application description string
+
+*******************************************************************************/
+
+private const char[] app_descr = "Queue monitor. Displays information about the"
+        "amount of data in a queue cluster.";
+
+
+
+/*******************************************************************************
+
+    Initialises command line arguments parser with options available to this
+    application.
+
+    Returns:
+        arguments parser instance
+
+*******************************************************************************/
+
+private Arguments initArguments ( )
+{
+    auto args = new Arguments;
+
+    args("source").aliased('S').required.params(1).help("source folder");
+    args("minimal").aliased('m').help("run the monitor in minimal display mode, to save screen space");
+
+    return args;
+}
 
 
 
 /*******************************************************************************
 
     Main
-    
+
     Params:
-        arguments = command line arguments
+        cl_args = array with raw command line arguments
 
 *******************************************************************************/
 
-void main ( char[][] arguments )
+private int main ( char[][] cl_args )
 {
-    auto app_name = arguments[0];
+    auto args = initArguments();
 
-    // Define valid arguments
-    scope args = new Arguments();
-    if ( QueueMonitor.parseArgs(args, arguments[1..$]) )
+    auto r = Main.processArgsConfig(cl_args, args, Version, app_descr);
+    if ( r.exit )
     {
-        // run app
-        OceanException.run(&QueueMonitor.run, args);
+        return r.exit_code;
     }
-    else
-    {
-        args.displayHelp(app_name);
-    }
+
+    auto monitor = new QueueMonitor;
+    monitor.run(args);
+
+    return 0;
 }
 
