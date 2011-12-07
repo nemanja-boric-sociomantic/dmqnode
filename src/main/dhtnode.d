@@ -36,8 +36,6 @@ private import ocean.text.Arguments;
 
 private import ocean.util.Main;
 
-debug private import ocean.util.log.Trace;
-
 
 
 /*******************************************************************************
@@ -65,7 +63,7 @@ private Arguments initArguments ( )
     Main function. Parses command line arguments and either displays help or
     starts dht node.
 
-    Param:
+    Params:
         arguments = array with raw command line arguments
 
 *******************************************************************************/
@@ -107,7 +105,7 @@ private int main ( char[][] arguments )
 
 private bool shutdown ( int code )
 {
-    debug Trace.formatln('\n' ~ SignalHandler.getId(code));
+    debug Stdout.formatln('\n' ~ SignalHandler.getId(code));
 
     Terminator.terminating = true;
 
