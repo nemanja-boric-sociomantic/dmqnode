@@ -79,7 +79,7 @@ private int main ( char[][] cl_args )
 {
     auto args = initArguments();
 
-    auto r = Main.processArgsConfig(cl_args, args, Version, app_descr);
+    auto r = Main.processArgs(cl_args, args, Version, app_descr);
     if ( r.exit )
     {
         return r.exit_code;
