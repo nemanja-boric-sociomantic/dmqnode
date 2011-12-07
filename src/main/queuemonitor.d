@@ -59,6 +59,7 @@ private Arguments initArguments ( )
 
     args("source").aliased('S').required.params(1).help("source folder");
     args("minimal").aliased('m').help("run the monitor in minimal display mode, to save screen space");
+    args("periodic").aliased('p').params(1).defaults("0").help("run the monitor periodically every X seconds");
 
     return args;
 }

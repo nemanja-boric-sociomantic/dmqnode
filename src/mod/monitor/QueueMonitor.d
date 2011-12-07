@@ -24,6 +24,8 @@ private import src.mod.monitor.Tables;
 
 private import ocean.core.Array : appendCopy;
 
+private import ocean.io.Stdout;
+
 private import ocean.io.select.EpollSelectDispatcher;
 
 private import ocean.text.Arguments;
@@ -33,7 +35,7 @@ private import swarm.queue.QueueConst;
 
 private import tango.core.Array : contains;
 
-private import tango.io.Stdout;
+private import tango.core.Thread;
 
 
 
@@ -247,31 +249,37 @@ public class QueueMonitor
             node.connections = conns - 1;
         }
 
-        this.queue.assign(this.queue.getChannels(&getChannelsDg, &notifier));
-        this.epoll.eventLoop;
-
-        this.channels.sort;
-
-        this.queue.assign(this.queue.getNumConnections(&getNumConnectionsDg, &notifier));
-        this.epoll.eventLoop;
-
-        this.queue.assign(this.queue.getSizeLimit(&getSizeLimitDg, &notifier));
-        this.epoll.eventLoop;
-
-        foreach ( channel; this.channels )
+        do
         {
-            this.queue.assign(this.queue.getChannelSize(channel, &getChannelSizeDg, &notifier));
-        }
-        this.epoll.eventLoop;
+            this.queue.assign(this.queue.getChannels(&getChannelsDg, &notifier));
+            this.epoll.eventLoop;
+    
+            this.channels.sort;
+    
+            this.queue.assign(this.queue.getNumConnections(&getNumConnectionsDg, &notifier));
+            this.epoll.eventLoop;
+    
+            this.queue.assign(this.queue.getSizeLimit(&getSizeLimitDg, &notifier));
+            this.epoll.eventLoop;
+    
+            foreach ( channel; this.channels )
+            {
+                this.queue.assign(this.queue.getChannelSize(channel, &getChannelSizeDg, &notifier));
+            }
+            this.epoll.eventLoop;
+    
+            if ( args.exists("minimal") )
+            {
+                this.minimalDisplay();
+            }
+            else
+            {
+                this.fullDisplay();
+            }
 
-        if ( args.exists("minimal") )
-        {
-            this.minimalDisplay();
+            Thread.sleep(args.getInt!(int)("periodic"));
         }
-        else
-        {
-            this.fullDisplay();
-        }
+        while ( args.exists("periodic") );
     }
 
 
@@ -286,20 +294,44 @@ public class QueueMonitor
     {
         foreach ( node; this.nodes )
         {
-            Stdout.format("{}:{}:", node.address, node.port);
+            Stdout.bold.cyan.format("{}:{}:", node.address, node.port).bold(false).default_colour;
             foreach ( channel; node.channels )
             {
                 if ( node.channel_size_limit > 0 )
                 {
+                    Stdout.format(" {}: ", channel.name);
+
                     float percent = (cast(float)channel.bytes / cast(float)node.channel_size_limit) * 100;
-                    Stdout.format(" {}: {}%", channel.name, percent);
+
+                    bool coloured = channel.bytes > 0;
+                    if ( coloured )
+                    {
+                        Stdout.bold;
+                        if ( percent >= 50.0 )
+                        {
+                            Stdout.red;
+                        }
+                        else
+                        {
+                            Stdout.green;
+                        }
+                    }
+
+                    Stdout.format("{}%", percent);
+
+                    if ( coloured )
+                    {
+                        Stdout.bold(false).default_colour;
+                    }
                 }
                 else
                 {
                     Stdout.format(" {}: {}", channel.name, channel.records);
                 }
             }
-            Stdout.formatln("");
+            Stdout.clearline.cr.flush;
+
+            // TODO: this carriage return logic won't work for multiple nodes
         }
     }
 
