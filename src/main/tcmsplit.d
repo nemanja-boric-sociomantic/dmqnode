@@ -57,10 +57,11 @@ private Arguments initArguments ( )
 {
     auto args = new Arguments;
 
-    args("source").aliased('S').required.params(1, 42).help("source folder (multiple "
-            "source folders may be specified)");
+    args("source").aliased('S').required.params(1, 42).help("source folder "
+            "(multiple source folders may be specified)");
     args("destination").aliased('D').required.params(1).help("destination folder");
-    args("nodes").aliased('n').required.params(1).help("file containing a list of the hash ranges of the destination nodes");
+    args("nodes").aliased('n').required.params(1).help("file containing a list "
+            "of the hash ranges of the destination nodes");
 
     return args;
 }
@@ -80,7 +81,7 @@ private int main ( char[][] cl_args )
 {
     auto args = initArguments();
 
-    auto r = Main.processArgsConfig(cl_args, args, Version, app_descr);
+    auto r = Main.processArgs(cl_args, args, Version, app_descr);
     if ( r.exit )
     {
         return r.exit_code;
