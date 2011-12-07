@@ -73,7 +73,7 @@ private import tango.io.device.File;
 
 private import tango.io.stream.Buffered;
 
-private import tango.io.Stdout;
+private import ocean.io.Stdout;
 
 
 
@@ -599,7 +599,7 @@ public class TcmSplitter
             this.handleRecord(channel, key, value);
         }
 
-        Stdout.formatln("  Extracted {} records                                                  ", i);
+        Stdout.format("  Extracted {} records", i).clearline.newline;
     }
 
 
