@@ -57,7 +57,7 @@ private Arguments initArguments ( )
 {
     auto args = new Arguments;
 
-    args("source").aliased('S').required.params(1).help("source folder (multiple "
+    args("source").aliased('S').required.params(1, 42).help("source folder (multiple "
             "source folders may be specified)");
     args("destination").aliased('D').required.params(1).help("destination folder");
     args("nodes").aliased('n').required.params(1).help("file containing a list of the hash ranges of the destination nodes");

@@ -451,23 +451,9 @@ public class TcmSplitter
         foreach ( src_folder; this.src_folders )
         {
             assertEx(Path.exists(src_folder) && Path.isFolder(src_folder),
-                    "source folder not found");
+                    "source folder '" ~ src_folder ~ "' not found");
 
-            // Iterate over each source file in turn
-            scope src = new FilePath(src_folder);
-            foreach ( child; src )
-            {
-                auto child_path = child.path ~ child.name;
-    
-                if ( child.folder )
-                {
-                    this.splitFolder(child_path);
-                }
-                else
-                {
-                    Stderr.formatln("Ignoring file in source folder: {}", child_path);
-                }
-            }
+            this.splitFolder(src_folder);
         }
 
         foreach ( ref node; this.nodes )
