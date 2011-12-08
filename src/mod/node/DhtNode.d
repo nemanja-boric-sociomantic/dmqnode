@@ -43,6 +43,8 @@ private import swarm.dht.node.storage.LogFilesStorageChannels;
 
 private import swarm.dht.node.model.IDhtNode;
 
+private import tango.core.Exception : OutOfMemoryException;
+
 private import tango.core.Thread;
 
 private import tango.util.log.Log, tango.util.log.AppendConsole;
@@ -92,7 +94,7 @@ public class DhtNodeServer
                 this.newStorageChannels(),
                 this.min_hash, this.max_hash);
 
-        this.node.error_callback = &this.dhtError;
+        this.node.error_callback = &this.nodeError;
 
         this.service_threads = new ServiceThreads(&this.shutdown);
         this.service_threads.add(new MaintenanceThread(this.node, MainConfig.server_threads.maintenance_period));
@@ -199,7 +201,7 @@ public class DhtNodeServer
 
     /***************************************************************************
 
-        Callback for exceptions inside the dht node event loop. Writes errors to
+        Callback for exceptions inside the node's event loop. Writes errors to
         the error.log file, and optionally to the console (if the
         Log/console_echo_errors config parameter is true).
 
@@ -209,10 +211,17 @@ public class DhtNodeServer
 
     ***************************************************************************/
 
-    private void dhtError ( Exception exception, IAdvancedSelectClient.Event event_info )
+    private void nodeError ( Exception exception, IAdvancedSelectClient.Event event_info )
     {
-        OceanException.Warn("Exception caught in eventLoop: '{}' @ {}:{}",
-                exception.msg, exception.file, exception.line);
+        if ( cast(OutOfMemoryException)exception )
+        {
+            OceanException.Warn("OutOfMemoryException caught in eventLoop");
+        }
+        else
+        {
+            OceanException.Warn("Exception caught in eventLoop: '{}' @ {}:{}",
+                    exception.msg, exception.file, exception.line);
+        }
     }
 }
 
