@@ -34,9 +34,13 @@ private import swarm.queue.node.storage.Ring;
 
 private import ocean.core.Exception : assertEx;
 
+private import ocean.io.select.model.ISelectClient;
+
+private import ocean.util.OceanException;
+
 debug private import ocean.util.log.Trace;
 
-private import tango.core.Exception : IllegalArgumentException;
+private import tango.core.Exception : IllegalArgumentException, OutOfMemoryException;
 
 
 
@@ -81,6 +85,8 @@ public class QueueServer
                 new RingNode(MainConfig.server.data_dir, MainConfig.server.size_limit,
                         MainConfig.server.channel_size_limit));
 
+        this.node.error_callback = &this.nodeError;
+
         this.service_threads = new ServiceThreads;
         if ( MainConfig.log.stats_log_enabled || MainConfig.log.console_stats_enabled )
         {
@@ -114,6 +120,32 @@ public class QueueServer
     public void shutdown ( )
     {
         this.node.shutdown();
+    }
+
+
+    /***************************************************************************
+
+        Callback for exceptions inside the node's event loop. Writes errors to
+        the error.log file, and optionally to the console (if the
+        Log/console_echo_errors config parameter is true).
+
+        Params:
+            exception = exception which occurred
+            event_info = info about epoll event during which exception occurred
+
+    ***************************************************************************/
+
+    private void nodeError ( Exception exception, IAdvancedSelectClient.Event event_info )
+    {
+        if ( cast(OutOfMemoryException)exception )
+        {
+            OceanException.Warn("OutOfMemoryException caught in eventLoop");
+        }
+        else
+        {
+            OceanException.Warn("Exception caught in eventLoop: '{}' @ {}:{}",
+                    exception.msg, exception.file, exception.line);
+        }
     }
 }
 
