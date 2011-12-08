@@ -1,0 +1,42 @@
+# DHT redistribution script - example config file for a local split
+
+
+# Path to the tcmsplit tool
+tcmsplit=./tcmsplit
+
+# Local working dir to store temporary files
+local_dir=/srv/dht/redistribute
+local_src=$local_dir/src
+local_dst=$local_dir/dst
+local_ranges_file=$local_dir/ranges.txt
+range_rsync_flags=
+
+# Channels to process (use "*" for all)
+channels="*"
+channel_suffix=.tcm
+
+# List of servers, including username if needed
+# Use "local" to do a special local split only. When this mode is used, no
+# files are copied from or to remote servers (dst_servers option will be
+# ignored in this mode)
+src_servers="local"
+src_nodes_per_server=2
+src_root_dir=/srv/dht
+src_base_dir_name=memory-dht-
+src_data_dir_name=data
+src_rsync_flags=-v
+
+# See src_servers
+dst_servers=$src_servers
+dst_nodes_per_server=3
+dst_root_dir=$src_root_dir
+dst_base_dir_name=mem-dht-
+dst_data_dir_name=$src_data_dir_name
+dst_rsync_flags=$src_rsync_flags
+
+# Relative location of the config file from where the ranges will be taken
+dst_config_file=etc/config.ini
+
+
+# vim: set filetype=sh :
+

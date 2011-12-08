@@ -28,6 +28,10 @@ HASHRANGE_OUTPUT = bin/dhthashrange
 TCM_SPLIT_TARGET = src/main/tcmsplit.d
 TCM_SPLIT_OUTPUT = bin/tcmsplit
 
+REDISTRIBUTE = script/redistribute
+REDISTRIBUTE_CONF = doc/redistributerc.full doc/redistributerc.local
+REDISTRIBUTE_ALL = $(TCM_SPLIT_OUTPUT) $(REDISTRIBUTE) $(REDISTRIBUTE_CONF)
+
 
 # ------------------------------------------------------------------------------
 # Xfbuild flags
@@ -195,8 +199,8 @@ EU_NODE_SERVERS = 1 2 3 4 5 6 7
 
 US_NODE_SERVERS = 1 2 3 4 5 6
 
-upload-tcmsplit-eu:
-	$(foreach srv, $(EU_NODE_SERVERS), scp -C ${TCM_SPLIT_OUTPUT} root@eq6-$(srv).sociomantic.com:/tmp/dht;)
+upload-redistribute-eu:
+	$(foreach srv, $(EU_NODE_SERVERS), scp -C ${REDISTRIBUTE_ALL} root@eq6-$(srv).sociomantic.com:/tmp/dht;)
 
 upload-node-eu:
 	$(foreach srv, $(EU_NODE_SERVERS), scp -C ${NODE_OUTPUT} root@eq6-$(srv).sociomantic.com:/tmp/dht;)

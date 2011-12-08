@@ -1,0 +1,238 @@
+#!/bin/sh
+# DHT redistribution script
+#
+# The the example configuration files for more info.
+
+# Shows an informational message
+info()
+{
+	/bin/echo -e "\n"'\033[32m'"$@"'\033[0m'
+}
+
+# Shows a fatal message and exits
+die()
+{
+	/bin/echo -e "\n"'\033[31m'"$@"'\033[0m' >&2
+	exit 1
+}
+
+# Exit with status 0 if is a local split, != 0 otherwise
+is_local()
+{
+	test "$src_servers" = "local"
+}
+
+# Copy or hard-link files based on if we are in "local" mode or not
+#
+# This command makes some assumptions, so beware!
+#
+# When in local mode, it assumes all the sources are in the same directory to
+# determine the --link-dest option to pass to rsync.
+#
+# It also accepts rsync options through the environment variable rsync_flags
+# and assumes no arguments or flags have spaces in them.
+#
+# Regular arguments should be source file(s) and the destination (directory or
+# file).
+copy()
+{
+	if is_local
+	then
+		paths=
+		for f in "$@"
+		do
+			f=`echo $f | cut -d: -f2-`
+			paths="$paths $f"
+		done
+		src_dir=`echo $paths | cut -d' ' -f1`
+		test -f $src_dir &&
+			src_dir=`dirname $src_dir`
+		extra_flags=--link-dest=$src_dir
+	else
+		paths="$@"
+	fi
+	rsync $rsync_flags $extra_flags $paths ||
+		die "rsync failed"
+}
+
+# Check that mandatory config options are present
+check_config()
+{
+	config_vars="
+		tcmsplit
+
+		local_dir
+		local_src
+		local_dst
+		local_ranges_file
+
+		channels
+		channel_suffix
+
+		src_servers
+		src_nodes_per_server
+		src_root_dir
+		src_base_dir_name
+		src_data_dir_name
+
+		dst_nodes_per_server
+		dst_root_dir
+		dst_base_dir_name
+		dst_data_dir_name
+
+		dst_config_file
+	"
+	is_local ||
+		config_vars="$config_vars dst_servers"
+	error=0
+	for n in $config_vars
+	do
+		test -z "`eval echo \\\$$n`" &&
+			error=1 &&
+			echo "Missing config variable $n" >&2
+	done
+	is_local && test -n "$dst_servers" &&
+			test "$dst_servers" != "$src_servers" &&
+		error=1 &&
+		echo "\$dst_servers should be '$src_servers'" >&2
+	test $error -ne 0 &&
+		exit 1
+}
+
+# Read config.ini files from stdin and output the range values to stdout
+#
+# This assumes that minval is present before maxval in config.ini files,
+# otherwise the ranges will be wrong.
+get_ranges()
+{
+	awk '                         { gsub(/[ \t]*/, "") }
+			/^minval/ { printf "%s ", $2 }
+			/^maxval/ { printf "%s\n", $2 }
+		' FS="="
+}
+
+# Generate a range specification file from DHT config.ini file
+#
+# Get the config.ini files from the destination and generates a file with the
+# hash ranges.
+gen_ranges()
+{
+	if test -e $local_ranges_file
+	then
+		info "Ranges file $local_ranges_file already exist," \
+			"skipping range file generation ..."
+		return 1
+	fi
+
+	info "Generating ranges file from destination nodes ..."
+	for s in $dst_servers
+	do
+		base_src=$s:$dst_root_dir/$dst_base_dir_name
+		for n in `seq $dst_nodes_per_server`
+		do
+			src=$base_src$n/$dst_config_file
+			dst=$local_dir/config.ini
+			mkdir -p `dirname "$dst"` ||
+				die "mkdir failed"
+			rsync_flags="$range_rsync_flags" \
+				copy $src $dst
+			cat $dst | get_ranges | tee -a $local_ranges_file ||
+				die "cat, tee or something else failed (sorry)"
+			rm $dst
+		done
+	done
+}
+
+# Get source DHT data files
+get_sources()
+{
+	info "Getting source tcm files ..."
+	dir_n=0
+	for s in $src_servers
+	do
+		base_src=$s:$src_root_dir/$src_base_dir_name
+		for n in `seq $src_nodes_per_server`
+		do
+			src_dir=$base_src$n/$src_data_dir_name
+			dst_dir=$local_src/$dir_n
+			mkdir -p $dst_dir
+			src=
+			if test "$channels" = "*"
+			then
+				src="$src_dir/*$channel_suffix"
+			else
+				for c in $channels
+				do
+					src="$src $src_dir/$c$channel_suffix"
+				done
+			fi
+			rsync_flags="$src_rsync_flags" \
+				copy $src $dst_dir
+			dir_n=$(($dir_n+1))
+		done
+	done
+}
+
+# Split DHT data files
+split_dht()
+{
+	info "Splitting tcm files ..."
+	t=
+	for n in `ls $local_src`
+	do
+		t="$t -S $local_src/$n"
+	done
+	$tcmsplit $t -D $local_dst -n $local_ranges_file ||
+		die "tcmsplit failed"
+}
+
+# Put results of the split into the new DHT data directories
+put_results()
+{
+	info "Sending the mew tcm files ..."
+	dir_n=0
+	for s in $dst_servers
+	do
+		base_dst=$s:$dst_root_dir/$dst_base_dir_name
+		for n in `seq $dst_nodes_per_server`
+		do
+			src_dir=$local_dst/$dir_n
+			dst_dir=$base_dst$n/$dst_data_dir_name
+			src=
+			if test "$channels" = "*"
+			then
+				src="$src_dir/*$channel_suffix"
+			else
+				for c in $channels
+				do
+					src="$src $src_dir/$c$channel_suffix"
+				done
+			fi
+			rsync_flags="$dst_rsync_flags" \
+				copy $src $dst_dir
+			dir_n=$(($dir_n+1))
+		done
+	done
+}
+
+# Chec command-line arguments
+test $# -lt 1 &&
+	echo "Usage: $0 config-file [config-file ...]" >&2 &&
+	exit 1
+
+# Read config file(s)
+for f in "$@"
+do
+	. `dirname "$f"`/`basename "$f"`
+done
+
+check_config
+
+gen_ranges
+
+get_sources
+
+split_dht
+
+put_results
+
