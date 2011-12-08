@@ -45,10 +45,13 @@ export D_GC := basic
 # ------------------------------------------------------------------------------
 # dmd flags
 
+DEPS_PATH := ..
+DEPS := tango ocean swarm
+
 FLAGS =\
 	-L-lminilzo \
 	-L-ldl \
-	-I../swarm \
+	$(foreach d,$(DEPS),-I$(DEPS_PATH)/$d) \
 	-version=NewTango
 
 UNITTESTFLAGS =\
@@ -91,10 +94,8 @@ default: node info cli
 # ------------------------------------------------------------------------------
 # Revision file build
 
-DEPENDENCIES = ocean swarm tango
-
 revision:
-	@../ocean/script/mkversion.sh $(D_GC) $(DEPENDENCIES)
+	@../ocean/script/mkversion.sh $(D_GC) $(DEPS)
 
 
 # ------------------------------------------------------------------------------
