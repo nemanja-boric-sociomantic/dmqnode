@@ -30,7 +30,7 @@ XFBUILD_FLAGS =\
 # ------------------------------------------------------------------------------
 # GC to use (export is needed!)
 
-export D_GC := basic
+export D_GC := cdgc
 
 
 # ------------------------------------------------------------------------------
@@ -43,6 +43,9 @@ FLAGS =\
 	-L-lminilzo \
 	-L-lglib-2.0 \
 	-L-lebtree
+
+TOOL_FLAGS =\
+	-version=CDGC
 
 RELEASE_FLAGS = ${FLAGS}\
 	-L-s
@@ -75,8 +78,13 @@ revision:
 # ------------------------------------------------------------------------------
 # Node debug & release builds
 
+node: export D_GC := basic
+
 node: revision
 	xfbuild +D=.deps-node +O=.objs-node +o=${NODE_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${NODE_TARGET}
+
+
+node-release: export D_GC := basic
 
 node-release: revision
 	xfbuild +D=.deps-node +O=.objs-node +o=${NODE_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${NODE_TARGET}
@@ -85,51 +93,51 @@ node-release: revision
 # ------------------------------------------------------------------------------
 # Monitor debug & release builds
 
-monitor:
-	xfbuild +D=.deps-monitor +O=.objs-monitor +o=${MONITOR_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${MONITOR_TARGET}
+monitor: revision
+	xfbuild +D=.deps-monitor +O=.objs-monitor +o=${MONITOR_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${TOOL_FLAGS} ${MONITOR_TARGET}
 
-monitor-release:
-	xfbuild +D=.deps-monitor +O=.objs-monitor +o=${MONITOR_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${MONITOR_TARGET}
+monitor-release: revision
+	xfbuild +D=.deps-monitor +O=.objs-monitor +o=${MONITOR_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${TOOL_FLAGS} ${MONITOR_TARGET}
 
 
 # ------------------------------------------------------------------------------
 # Consumer debug & release builds
 
 consumer:
-	xfbuild +D=.deps-consumer +O=.objs-consumer +o=${CONSUMER_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${CONSUMER_TARGET}
+	xfbuild +D=.deps-consumer +O=.objs-consumer +o=${CONSUMER_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${TOOL_FLAGS} ${CONSUMER_TARGET}
 
 consumer-release:
-	xfbuild +D=.deps-consumer +O=.objs-consumer +o=${CONSUMER_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${CONSUMER_TARGET}
+	xfbuild +D=.deps-consumer +O=.objs-consumer +o=${CONSUMER_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${TOOL_FLAGS} ${CONSUMER_TARGET}
 
 
 # ------------------------------------------------------------------------------
-# Consumer debug & release builds
+# Producer debug & release builds
 
 producer:
-	xfbuild +D=.deps-producer +O=.objs-producer +o=${PRODUCER_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${PRODUCER_TARGET}
+	xfbuild +D=.deps-producer +O=.objs-producer +o=${PRODUCER_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${TOOL_FLAGS} ${PRODUCER_TARGET}
 
 producer-release:
-	xfbuild +D=.deps-producer +O=.objs-producer +o=${PRODUCER_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${PRODUCER_TARGET}
+	xfbuild +D=.deps-producer +O=.objs-producer +o=${PRODUCER_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${TOOL_FLAGS} ${PRODUCER_TARGET}
 
 
 # ------------------------------------------------------------------------------
 # Test debug & release builds
 
 test:
-	xfbuild +D=.deps-test +O=.objs-test +o=${TEST_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${TEST_TARGET}
+	xfbuild +D=.deps-test +O=.objs-test +o=${TEST_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${TOOL_FLAGS} ${TEST_TARGET}
 
 test-release:
-	xfbuild +D=.deps-test +O=.objs-test +o=${TEST_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${TEST_TARGET}
+	xfbuild +D=.deps-test +O=.objs-test +o=${TEST_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${TOOL_FLAGS} ${TEST_TARGET}
 
 
 # ------------------------------------------------------------------------------
 # Performance test debug & release builds
 
 performance:
-	xfbuild +D=.deps-performance +O=.objs-performance +o=${PERFORMANCE_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${PERFORMANCE_TARGET}
+	xfbuild +D=.deps-performance +O=.objs-performance +o=${PERFORMANCE_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${TOOL_FLAGS} ${PERFORMANCE_TARGET}
 
 performance-release:
-	xfbuild +D=.deps-performance +O=.objs-performance +o=${PERFORMANCE_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${PERFORMANCE_TARGET}
+	xfbuild +D=.deps-performance +O=.objs-performance +o=${PERFORMANCE_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${TOOL_FLAGS} ${PERFORMANCE_TARGET}
 
 
 # ------------------------------------------------------------------------------
