@@ -60,13 +60,13 @@ private class ServerConfig
 
 private class LogConfig
 {
-    char[] error_log = "log/error.log";
+    char[] error = "log/error.log";
     bool console_echo_error = false;
 
-    char[] trace_log = "log/trace.log";
+    char[] trace = "log/trace.log";
     bool console_echo_trace = false;
 
-    char[] stats_log = "log/stats.log";
+    char[] stats = "log/stats.log";
     bool stats_log_enabled = false;
     bool console_stats_enabled = false;
 
@@ -129,10 +129,10 @@ public class MainConfig
         ConfigReader.fill("Server", server);
         ConfigReader.fill("Log", log);
 
-        OceanException.setOutput(new AppendFile(log.error_log));
+        OceanException.setOutput(new AppendFile(log.error));
         OceanException.console_output = log.console_echo_error;
 
-        TraceLog.init(log.trace_log);
+        TraceLog.init(log.trace);
         TraceLog.console_enabled = log.console_echo_trace;
     }
 }
