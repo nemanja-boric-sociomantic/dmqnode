@@ -130,7 +130,7 @@ public class StatsThread : IServiceThread
 
         if ( MainConfig.log.stats_log_enabled )
         {
-            this.log = new MessageLogger(MainConfig.log.stats_log, "StatsLog");
+            this.log = new MessageLogger(MainConfig.log.stats, "StatsLog");
             this.log.enabled = true;
         }
     }
