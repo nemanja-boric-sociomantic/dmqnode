@@ -574,36 +574,31 @@ public class QueueMonitor
 
                 foreach ( channel; node.channels )
                 {
+                    Stdout.format(" {} ", channel.name);
+
                     if ( node.channel_size_limit > 0 )
                     {
-                        Stdout.format(" {} ", channel.name);
+                        scope text_colour = Stdout.new TextColour;
+                        scope bg_colour = Stdout.new BackgroundColour;
+
+                        if ( channel.records_diff != 0 )
+                        {
+                            channel.records_diff > 0
+                                ? text_colour.yellow(true)
+                                : text_colour.green(true);
+                        }
 
                         float percent = (cast(float)channel.bytes / cast(float)node.channel_size_limit) * 100;
+                        if ( percent > 50.0 )
+                        {
+                            bg_colour.red;
+                        }
 
-                        bool coloured = channel.records_diff != 0 || percent > 50.0;
-                        if ( coloured )
-                        {
-                            Stdout.bold;
-                            if ( percent >= 50.0 )
-                            {
-                                Stdout.red;
-                            }
-                            else
-                            {
-                                channel.records_diff > 0 ? Stdout.yellow : Stdout.green;
-                            }
-                        }
-    
                         Stdout.format("{}%", percent);
-    
-                        if ( coloured )
-                        {
-                            Stdout.bold(false).default_colour;
-                        }
                     }
                     else
                     {
-                        Stdout.format(" {} {}", channel.name, channel.records);
+                        Stdout.format(" {}", channel.records);
                     }
                 }
                 Stdout.newline.flush;
@@ -613,7 +608,7 @@ public class QueueMonitor
         }
     }
 
-
+    
     /***************************************************************************
 
         Displays results in a detailed format, showing the connections per node,
