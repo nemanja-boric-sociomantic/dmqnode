@@ -151,6 +151,15 @@ class QueueProducer
 
     /***************************************************************************
 
+        List of channels to write to.
+
+    ***************************************************************************/
+
+    private char[][] channels;
+
+
+    /***************************************************************************
+
         Strings used for free / used memory formatting.
 
     ***************************************************************************/
@@ -176,9 +185,9 @@ class QueueProducer
     private bool validateArgs ( Arguments args, char[][] arguments )
     {
         args("source").required.params(1).aliased('S').help("config file listing queue nodes to connect to");
-        args("channel").required.params(1).aliased('c').help("channel to consume");
+        args("channel").required.params(1, 42).aliased('c').help("channel to write to");
         args("size").params(1).defaults("8").aliased('s').help("size (in bytes) of records to produce. If >= 8, then the first 8 bytes will contain the record number as a ulong");
-        args("dump").aliased('d').help("dump consumed records to console");
+        args("dump").aliased('d').help("dump produced records to console");
         args("reconnect").aliased('r').help("reconnect on queue error");
 
         if ( arguments.length && !args.parse(arguments) )
@@ -216,12 +225,15 @@ class QueueProducer
 
         this.queue.addNodes(this.args.getString("source"));
 
-        Stdout.formatln("Producing to channel '{}', record size = {} bytes", this.args.getString("channel"), this.buf.length);
+        this.channels = this.args("channel").assigned;
+
+        Stdout.formatln("Producing to channel(s) {}, record size = {} bytes",
+                this.channels, this.buf.length);
 
         this.startProduce;
-        
+
         this.epoll.eventLoop;
-        
+
         Stdout.formatln("...EXIT");
     }
 
@@ -234,10 +246,34 @@ class QueueProducer
 
     private void startProduce ( )
     {
-        auto params = this.queue.produce(args.getString("channel"), 
-          &this.producer, &this.notifier);
+        if ( this.channels.length > 1 )
+        {
+            this.queue.assign(this.queue.pushMulti(this.channels, &this.pushCb,
+                    &this.notifier));
+        }
+        else
+        {
+            this.queue.assign(this.queue.produce(this.channels[0], &this.produceCb,
+                    &this.notifier));
+        }
+    }
 
-        this.queue.assign(params);
+
+    /***************************************************************************
+
+        Push request callback.
+
+        Params:
+            context = request context (not used)
+
+        Returns:
+            record to be pushed
+
+    ***************************************************************************/
+
+    private char[] pushCb ( QueueClient.RequestContext context )
+    {
+        return this.next_value;
     }
 
 
@@ -251,14 +287,28 @@ class QueueProducer
 
     ***************************************************************************/
 
-    private void producer ( QueueClient.RequestContext context, QueueClient.IProducer producer )
+    private void produceCb ( QueueClient.RequestContext context, QueueClient.IProducer producer )
+    {
+        producer(this.next_value);
+    }
+
+
+    /***************************************************************************
+
+        Gets the next value to be pushed to the queue, and updates the console
+        output.
+
+        Returns:
+            next value to write to queue
+
+    ***************************************************************************/
+
+    private char[] next_value ( )
     {
         if ( this.buf.length >= 8 )
         {
             *(cast(ulong*)this.buf.ptr) = this.num++;
         }
-
-        producer(this.buf);
 
         if ( this.args.getBool("dump") )
         {
@@ -273,27 +323,29 @@ class QueueProducer
 
         StaticPeriodicTrace.format("Memory used: {:d10}, free: {:d10}, produced: {}", 
                                    this.used_str, this.free_str, num);
+
+        return this.buf;
     }
 
 
     /***************************************************************************
 
-        Queue notification callback. As the only request invoked is a Produce
-        request, which should never finish, this callback only fires with type
-        Finished in the case of an error.
-    
+        Queue notification callback. If a Produce request has finished, this
+        only occurs in case of an error, in which case the request is restarted
+        (if requested with the -r switch).
+
         Params:
             info = request notification info
-    
+
     ***************************************************************************/
-    
+
     void notifier ( QueueClient.RequestNotification info )
     {        
         if (info.type == info.type.Finished)
         {
         	Stderr.formatln("Queue: status={}, msg={}", info.status, info.message);
 
-            if ( this.args.getBool("reconnect") )
+            if ( info.command == QueueConst.Command.PushMulti || this.args.getBool("reconnect") )
             {
                 this.startProduce;
             }

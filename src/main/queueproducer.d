@@ -12,8 +12,11 @@
 
     Command line args:
         -S = path of queue nodes ini file
-        -c = name of channel to consume
-        -d = (optional) dumps received records to stdout
+        -c = name of channel to write to
+        -d = (optional) dumps produced records to stdout
+        -s = (optional) size (in bytes) of records to produce. If >= 8, then the
+             first 8 bytes will contain the record number as a ulong
+        -r = reconnect on queue error
 
 *******************************************************************************/
 
