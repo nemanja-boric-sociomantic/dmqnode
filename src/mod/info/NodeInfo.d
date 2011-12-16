@@ -188,7 +188,7 @@ public struct NodeInfo
     {
         buf.length = 0;
     
-        size_t layoutSink ( char[] str )
+        uint layoutSink ( char[] str )
         {
             buf.append(str);
             return str.length;

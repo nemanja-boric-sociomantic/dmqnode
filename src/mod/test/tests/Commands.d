@@ -147,18 +147,16 @@ class Commands : Test
         Exception exception = null;
         ubyte[500] data = void;
         
-        size_t pushed = 0;
+        hash_t pushed = 0;
         
         char[] putter ( DhtClient.RequestContext )
         {
-            logger.trace("pushing");
             this.values.add(pushed);
             return cast(char[]) this.getRandom(data, pushed);
         }
                 
         void getter ( DhtClient.RequestContext, char[] key_str, char[] value )
         {            
-            logger.trace("received val");
             auto key = Integer.parse(key_str, 16);
             exception = validateValue(key, value);
             
@@ -234,6 +232,7 @@ class Commands : Test
             if ( key_str.length + value.length == 0 ) return;
                 
             auto key = Integer.parse(key_str, 16);
+
             exception = validateValue(key, value);
             
             if ( exception !is null )
@@ -352,7 +351,7 @@ class Commands : Test
 
     ***************************************************************************/
 
-    Exception validateValue ( uint key, char[] value )
+    Exception validateValue ( hash_t key, char[] value )
     {
         ubyte[500] data = void;
         if ( !this.values.contains(key) )

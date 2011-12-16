@@ -88,9 +88,9 @@ class LogfileCommands : Commands
         this.testRemoveChannel();
         this.testPutDup(false);
         this.testRemoveChannel();
-        this.testListen(&this.dht.putDup!(uint), true);
+        this.testListen(&this.dht.putDup!(hash_t), true);
         this.testRemoveChannel();        
-        this.testListen(&this.dht.putDup!(uint), false);
+        this.testListen(&this.dht.putDup!(hash_t), false);
     }
     
     /***************************************************************************
@@ -136,7 +136,7 @@ class LogfileCommands : Commands
         Exception exception = null;
         ubyte[500] data = void;
         
-        for ( size_t i = 0; i < Iterations; ++i )
+        for ( hash_t i = 0; i < Iterations; ++i )
         {
             char[] putter ( DhtClient.RequestContext )
             {
@@ -162,7 +162,7 @@ class LogfileCommands : Commands
 
     ***************************************************************************/
 
-    void confirmGetRange ( size_t start = 0, size_t end = 0, 
+    void confirmGetRange ( hash_t start = 0, hash_t end = 0, 
                            ubyte[] filter = null )
     {       
         logger.info("\tconfirming using getRange ({} - {}{})", 

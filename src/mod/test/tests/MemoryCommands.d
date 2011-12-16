@@ -90,9 +90,9 @@ class MemoryCommands : Commands
         this.testRemove();
         this.testPut(true);
         this.testRemoveChannel();
-        this.testListen(&this.dht.put!(uint), true);
+        this.testListen(&this.dht.put!(hash_t), true);
         this.testRemoveChannel();           
-        this.testListen(&this.dht.put!(uint), false);
+        this.testListen(&this.dht.put!(hash_t), false);
     }
     
     /***************************************************************************
@@ -130,9 +130,12 @@ class MemoryCommands : Commands
         Exception exception = null;
         ubyte[500] data = 0xCC;
         
-        for ( size_t i = 0; i < Iterations; ++i )
+        version (X86_64) hash_t start = Iterations << 20;
+        else start = 0;
+        
+        for ( hash_t i = start; i < Iterations + start; ++i )
         {   
-            logger.trace("for begin {}", i);
+
             char[] putter ( DhtClient.RequestContext )
             {
                 logger.trace("before getRandom");
@@ -145,10 +148,8 @@ class MemoryCommands : Commands
             with (this.dht) assign(put(channel, i, &putter, &this.requestNotifier)
                                    .compress(compress));        
             
-            logger.trace("running req");
             this.runRequest(exception);
             
-            logger.trace("adding val");
             this.values.add(i);
         }        
         
@@ -169,7 +170,7 @@ class MemoryCommands : Commands
         ubyte[500] data = void;
         auto num = this.values.size;
         
-        for ( size_t i = 0; i < num; ++i )
+        for ( hash_t i = 0; i < num; ++i )
         {
             with(this.dht) assign(remove(channel, i, &this.requestNotifier));        
                     
@@ -202,7 +203,7 @@ class MemoryCommands : Commands
                 if ( exception !is null ) throw exception;
             }
             
-            with(this.dht) assign(get(channel, key, &getter, &this.requestNotifier));
+            with(this.dht) assign(get(channel,cast(hash_t) key, &getter, &this.requestNotifier));
         
             this.runRequest(exception);
         }
@@ -232,7 +233,7 @@ class MemoryCommands : Commands
                 if ( exception !is null ) throw exception;
             }
             
-            with (this.dht) assign(exists(channel, key, &getter, &this.requestNotifier));
+            with (this.dht) assign(exists(channel, cast(hash_t)key, &getter, &this.requestNotifier));
         
             this.runRequest(exception);
         }
