@@ -216,7 +216,17 @@ public class QueueMonitor
 
         /***********************************************************************
 
-            Filepath to the ini file defining the nodes in this queue.
+            Path of the ini file defining the nodes in this queue.
+
+        ***********************************************************************/
+
+        public const char[] ini;
+
+
+        /***********************************************************************
+
+            Filepath to the ini file defining the nodes in this queue. Allows
+            easy extraction of the file name, extension, etc.
 
         ***********************************************************************/
 
@@ -235,9 +245,10 @@ public class QueueMonitor
 
         public this ( EpollSelectDispatcher epoll, char[] ini )
         {
-            this.filepath = new FilePath(ini);
+            this.ini = ini;
+            this.filepath = new FilePath(this.ini);
             this.client = new QueueClient(epoll);
-            this.client.addNodes(ini);
+            this.client.addNodes(this.ini);
         }
 
 
@@ -408,9 +419,10 @@ public class QueueMonitor
         {
             if ( info.type == info.type.Finished && !info.succeeded )
             {
-                Stderr.formatln("Error while performing {} request: {} ({})",
+                Stderr.formatln("Error while performing {} request: {} ({}) on {}:{}:{}",
                         *QueueConst.Command.description(info.command),
-                        info.exception, info.status);
+                        info.exception, info.status,
+                        this.id, info.nodeitem.Address, info.nodeitem.Port);
             }
         }
 
@@ -457,11 +469,11 @@ public class QueueMonitor
 
     /***************************************************************************
 
-        List of queues being monitored, indexed by name of ini file.
+        List of queues being monitored.
 
     ***************************************************************************/
 
-    private Queue[char[]] queues;
+    private Queue[] queues;
 
 
     /***************************************************************************
@@ -499,11 +511,21 @@ public class QueueMonitor
 
         foreach ( ini; args("source").assigned )
         {
-            if ( !(ini in this.queues ) )
+            bool exists;
+            foreach ( queue; this.queues )
+            {
+                if ( queue.ini == ini )
+                {
+                    exists = true;
+                    break;
+                }
+            }
+
+            if ( !exists )
             {
                 auto queue = new Queue(this.epoll, ini);
 
-                this.queues[ini] = queue;
+                this.queues ~= queue;
 
                 if ( queue.id.length > this.longest_queue_id )
                 {
