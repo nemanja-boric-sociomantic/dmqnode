@@ -268,6 +268,7 @@ private class Put : DhtCommand
         super.command_names = [ "put", "p" ];
         super.help_msg = "Associate a channel's key to a value";
         super.req_args = [ help_chan, help_key, help_value ];
+        super.opt_args = [ help_key_more ];
     }
 
     static this()
@@ -275,19 +276,39 @@ private class Put : DhtCommand
         Command.register(new Put);
     }
 
+    public override char[] validate()
+    {
+        char[] error = super.validate();
+        if (error.length)
+        {
+            return error;
+        }
+
+        if ((this.args.length % 2) == 0)
+        {
+            return "key '" ~ this.args[$-1] ~ "' is missing the value";
+        }
+
+        return null;
+    }
+
     protected override void assignTo(DhtClient dht,
             RequestNotification.Callback notifier)
     {
-        // the delegate literal trick doesn't work here because it uses data
-        // from the outer scope but it survives the scope of the function, so
-        // the stack is used by somebody else and bad corruption happens (yei!)
-        dht.assign(dht.put(super.args[0], super.hash(super.args[1]),
-                &this.cb, notifier));
+        auto chan_name = this.args[0];
+        for (auto i = 1; i < this.args.length; i += 2)
+        {
+            // the delegate literal trick doesn't work here because it uses data
+            // from the outer scope but it survives the scope of the function, so
+            // the stack is used by somebody else and bad corruption happens (yei!)
+            dht.assign(dht.put(this.args[0], this.hash(this.args[i]),
+                    &this.cb, notifier).context(i + 1));
+        }
     }
 
     public char[] cb(DhtClient.RequestContext c)
     {
-        return super.args[2];
+        return this.args[c.integer];
     }
 }
 
@@ -302,10 +323,10 @@ private class PutDup : Put
 {
     this()
     {
+        super();
         super.command_names = [ "putdup", "pd" ];
         super.help_msg = "Associate a channel's key to a value (allowing "
                 "multiple values)";
-        super.req_args = [ help_chan, help_key, help_value ];
     }
 
     static this()
@@ -316,8 +337,13 @@ private class PutDup : Put
     protected override void assignTo(DhtClient dht,
             RequestNotification.Callback notifier)
     {
-        // see Put comment, we reuse its callback delegate.
-        dht.assign(dht.putDup(super.args[0], super.hash(super.args[1]), &super.cb, notifier));
+        auto chan_name = this.args[0];
+        for (auto i = 1; i < this.args.length; i += 2)
+        {
+            // see Put comment, we reuse its callback delegate.
+            dht.assign(dht.putDup(this.args[0], this.hash(this.args[i]),
+                    &this.cb, notifier).context(i + 1));
+        }
     }
 }
 
