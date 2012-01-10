@@ -34,6 +34,13 @@ REDISTRIBUTE_ALL = $(TCM_SPLIT_OUTPUT) $(REDISTRIBUTE) $(REDISTRIBUTE_CONF)
 
 
 # ------------------------------------------------------------------------------
+# Dependencies
+
+DEPS_PATH := ..
+DEPS := tango ocean swarm
+
+
+# ------------------------------------------------------------------------------
 # Xfbuild flags
 
 XFBUILD_FLAGS =\
@@ -48,9 +55,6 @@ export D_GC := basic
 
 # ------------------------------------------------------------------------------
 # dmd flags
-
-DEPS_PATH := ..
-DEPS := tango ocean swarm
 
 FLAGS =\
 	-L-lminilzo \
