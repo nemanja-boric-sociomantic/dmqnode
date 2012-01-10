@@ -21,6 +21,13 @@ PERFORMANCE_OUTPUT = bin/queueperformance
 
 
 # ------------------------------------------------------------------------------
+# Dependencies
+
+DEPS_PATH := ..
+DEPS := tango ocean swarm
+
+
+# ------------------------------------------------------------------------------
 # Xfbuild flags
 
 XFBUILD_FLAGS =\
@@ -37,12 +44,11 @@ export D_GC := cdgc
 # dmd flags
 
 FLAGS =\
-	-version=NewTango \
-	-Isrc \
-    -I../swarm \
+	$(foreach d,$(DEPS),-I$(DEPS_PATH)/$d) \
 	-L-lminilzo \
 	-L-lglib-2.0 \
-	-L-lebtree
+	-L-lebtree \
+	-version=NewTango
 
 TOOL_FLAGS =\
 	-version=CDGC
@@ -68,11 +74,8 @@ default: node monitor consumer test
 # ------------------------------------------------------------------------------
 # Revision file build
 
-DEPENDENCIES = ocean swarm tango
-
 revision:
-	@../ocean/script/mkversion.sh $(D_GC) $(DEPENDENCIES)
-
+	@../ocean/script/mkversion.sh $(D_GC) $(DEPS)
 
 
 # ------------------------------------------------------------------------------
