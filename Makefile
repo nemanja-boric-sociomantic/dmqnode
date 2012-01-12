@@ -1,23 +1,28 @@
 # ------------------------------------------------------------------------------
 # Targets
 
+# Architecture to build for (x86_64 or i686)
+ARCH = $(shell uname -m)
+
+ARCHFLAG=$(if $(findstring x86_64,${ARCH}),-m64,-m32)
+
 NODE_TARGET = src/main/queuenode.d
-NODE_OUTPUT = bin/queuenode
+NODE_OUTPUT = bin/queuenode-${ARCH}
 
 MONITOR_TARGET = src/main/queuemonitor.d
-MONITOR_OUTPUT = bin/queuemonitor
+MONITOR_OUTPUT = bin/queuemonitor-${ARCH}
 
 CONSUMER_TARGET = src/main/queueconsumer.d
-CONSUMER_OUTPUT = bin/queueconsumer
+CONSUMER_OUTPUT = bin/queueconsumer-${ARCH}
 
 PRODUCER_TARGET = src/main/queueproducer.d
-PRODUCER_OUTPUT = bin/queueproducer
+PRODUCER_OUTPUT = bin/queueproducer-${ARCH}
 
 TEST_TARGET = src/main/queuetest.d
-TEST_OUTPUT = bin/queuetest
+TEST_OUTPUT = bin/queuetest-${ARCH}
 
 PERFORMANCE_TARGET = src/main/queueperformance.d
-PERFORMANCE_OUTPUT = bin/queueperformance
+PERFORMANCE_OUTPUT = bin/queueperformance-${ARCH}
 
 
 # ------------------------------------------------------------------------------
@@ -31,8 +36,8 @@ DEPS := tango ocean swarm
 # Xfbuild flags
 
 XFBUILD_FLAGS =\
-	+c=dmd
-
+	+c=dmd \
+	+D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH}
 
 # ------------------------------------------------------------------------------
 # GC to use (export is needed!)
@@ -48,7 +53,8 @@ FLAGS =\
 	-L-lminilzo \
 	-L-lglib-2.0 \
 	-L-lebtree \
-	-version=NewTango
+	-version=NewTango \
+	 ${ARCHFLAG}
 
 TOOL_FLAGS =\
 	-version=CDGC
@@ -57,10 +63,11 @@ RELEASE_FLAGS = ${FLAGS}\
 	-L-s
 
 DEBUG_FLAGS = ${FLAGS}\
-	-debug -gc
+	-debug -gc 
+    
+#    -debug=ISelectClient
 #-debug=ConnectionHandler
 #-debug=Raw
-#-debug=ISelectClient
 
 
 # ------------------------------------------------------------------------------
@@ -84,63 +91,63 @@ revision:
 node: export D_GC := basic
 
 node: revision
-	xfbuild +D=.deps-node +O=.objs-node +o=${NODE_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${NODE_TARGET}
+	xfbuild +o=${NODE_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${NODE_TARGET}
 
 
 node-release: export D_GC := basic
 
 node-release: revision
-	xfbuild +D=.deps-node +O=.objs-node +o=${NODE_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${NODE_TARGET}
+	xfbuild +o=${NODE_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${NODE_TARGET}
 
 
 # ------------------------------------------------------------------------------
 # Monitor debug & release builds
 
 monitor: revision
-	xfbuild +D=.deps-monitor +O=.objs-monitor +o=${MONITOR_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${TOOL_FLAGS} ${MONITOR_TARGET}
+	xfbuild +o=${MONITOR_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${TOOL_FLAGS} ${MONITOR_TARGET}
 
 monitor-release: revision
-	xfbuild +D=.deps-monitor +O=.objs-monitor +o=${MONITOR_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${TOOL_FLAGS} ${MONITOR_TARGET}
+	xfbuild +o=${MONITOR_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${TOOL_FLAGS} ${MONITOR_TARGET}
 
 
 # ------------------------------------------------------------------------------
 # Consumer debug & release builds
 
 consumer:
-	xfbuild +D=.deps-consumer +O=.objs-consumer +o=${CONSUMER_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${TOOL_FLAGS} ${CONSUMER_TARGET}
+	xfbuild +o=${CONSUMER_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${TOOL_FLAGS} ${CONSUMER_TARGET}
 
 consumer-release:
-	xfbuild +D=.deps-consumer +O=.objs-consumer +o=${CONSUMER_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${TOOL_FLAGS} ${CONSUMER_TARGET}
+	xfbuild +o=${CONSUMER_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${TOOL_FLAGS} ${CONSUMER_TARGET}
 
 
 # ------------------------------------------------------------------------------
 # Producer debug & release builds
 
 producer:
-	xfbuild +D=.deps-producer +O=.objs-producer +o=${PRODUCER_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${TOOL_FLAGS} ${PRODUCER_TARGET}
+	xfbuild +o=${PRODUCER_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${TOOL_FLAGS} ${PRODUCER_TARGET}
 
 producer-release:
-	xfbuild +D=.deps-producer +O=.objs-producer +o=${PRODUCER_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${TOOL_FLAGS} ${PRODUCER_TARGET}
+	xfbuild +o=${PRODUCER_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${TOOL_FLAGS} ${PRODUCER_TARGET}
 
 
 # ------------------------------------------------------------------------------
 # Test debug & release builds
 
 test:
-	xfbuild +D=.deps-test +O=.objs-test +o=${TEST_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${TOOL_FLAGS} ${TEST_TARGET}
+	xfbuild +o=${TEST_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${TOOL_FLAGS} ${TEST_TARGET}
 
 test-release:
-	xfbuild +D=.deps-test +O=.objs-test +o=${TEST_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${TOOL_FLAGS} ${TEST_TARGET}
+	xfbuild +o=${TEST_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${TOOL_FLAGS} ${TEST_TARGET}
 
 
 # ------------------------------------------------------------------------------
 # Performance test debug & release builds
 
 performance:
-	xfbuild +D=.deps-performance +O=.objs-performance +o=${PERFORMANCE_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${TOOL_FLAGS} ${PERFORMANCE_TARGET}
+	xfbuild +o=${PERFORMANCE_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${TOOL_FLAGS} ${PERFORMANCE_TARGET}
 
 performance-release:
-	xfbuild +D=.deps-performance +O=.objs-performance +o=${PERFORMANCE_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${TOOL_FLAGS} ${PERFORMANCE_TARGET}
+	xfbuild +o=${PERFORMANCE_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${TOOL_FLAGS} ${PERFORMANCE_TARGET}
 
 
 # ------------------------------------------------------------------------------
@@ -184,16 +191,5 @@ clean:
 	xfbuild ${XFBUILD_FLAGS} +clean ${CONSUMER_TARGET}
 	xfbuild ${XFBUILD_FLAGS} +clean ${TEST_TARGET}
 	xfbuild ${XFBUILD_FLAGS} +clean ${PERFORMANCE_TARGET}
-	@-rm .objs-node -rf
-	@-rm .deps-node -rf
-	@-rm .objs-monitor -rf
-	@-rm .deps-monitor -rf
-	@-rm .objs-consumer -rf
-	@-rm .deps-consumer -rf
-	@-rm .objs-producer -rf
-	@-rm .deps-producer -rf
-	@-rm .objs-test -rf
-	@-rm .deps-test -rf
-	@-rm .objs-performance -rf
-	@-rm .deps-performance -rf
+	@-rm .objs-* .deps-* -rf
 
