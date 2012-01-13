@@ -1,10 +1,13 @@
 # ------------------------------------------------------------------------------
-# Targets
-
 # Architecture to build for (x86_64 or i686)
+
 ARCH = $(shell uname -m)
 
 ARCHFLAG=$(if $(findstring x86_64,${ARCH}),-m64,-m32)
+
+
+# ------------------------------------------------------------------------------
+# Targets
 
 NODE_TARGET = src/main/queuenode.d
 NODE_OUTPUT = bin/queuenode-${ARCH}
