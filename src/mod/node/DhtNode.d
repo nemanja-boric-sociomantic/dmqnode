@@ -28,6 +28,9 @@ private import src.mod.node.servicethreads.ServiceThreads,
                src.mod.node.servicethreads.StatsThread,
                src.mod.node.servicethreads.MaintenanceThread;
 
+private import ocean.core.MessageFiber;
+private import ocean.io.select.protocol.generic.ErrnoIOException : IOWarning;
+
 private import ocean.util.Config;
 
 private import ocean.io.select.model.ISelectClient;
@@ -213,7 +216,13 @@ public class DhtNodeServer
 
     private void nodeError ( Exception exception, IAdvancedSelectClient.Event event_info )
     {
-        if ( cast(OutOfMemoryException)exception )
+        if ( cast(MessageFiber.KilledException)exception ||
+             cast(IOWarning)exception )
+        {
+            // Don't log these exception types, which only occur on the normal
+            // disconnection of a client.
+        }
+        else if ( cast(OutOfMemoryException)exception )
         {
             OceanException.Warn("OutOfMemoryException caught in eventLoop");
         }
