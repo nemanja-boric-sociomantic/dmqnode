@@ -421,7 +421,7 @@ public class Table
 
             public void display ( Output output, size_t width, ref char[] content_buf, ref char[] spacing_buf )
             {
-                size_t layoutSink ( char[] s )
+                uint layoutSink ( char[] s )
                 {
                     content_buf ~= s;
                     return s.length;
