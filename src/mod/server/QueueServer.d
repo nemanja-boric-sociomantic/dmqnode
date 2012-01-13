@@ -137,7 +137,13 @@ public class QueueServer
 
     private void nodeError ( Exception exception, IAdvancedSelectClient.Event event_info )
     {
-        if ( cast(OutOfMemoryException)exception )
+        if ( cast(MessageFiber.KilledException)exception ||
+             cast(IOWarning)exception )
+        {
+            // Don't log these exception types, which only occur on the normal
+            // disconnection of a client.
+        }
+        else if ( cast(OutOfMemoryException)exception )
         {
             OceanException.Warn("OutOfMemoryException caught in eventLoop");
         }
