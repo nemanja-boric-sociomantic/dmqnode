@@ -1,32 +1,35 @@
 # ------------------------------------------------------------------------------
 # Targets
 
+# Architecture to build for (x86_64 or i686)
+ARCH = $(shell uname -m)
+
 NODE_TARGET = src/main/dhtnode.d
-NODE_OUTPUT = bin/dhtnode
+NODE_OUTPUT = bin/dhtnode-${ARCH}
 
 COPY_TARGET = src/main/dhtcopy.d
-COPY_OUTPUT = bin/dhtcopy
+COPY_OUTPUT = bin/dhtcopy-${ARCH}
 
 DUMP_TARGET = src/main/dhtdump.d
-DUMP_OUTPUT = bin/dhtdump
+DUMP_OUTPUT = bin/dhtdump-${ARCH}
 
 INFO_TARGET = src/main/dhtinfo.d
-INFO_OUTPUT = bin/dhtinfo
+INFO_OUTPUT = bin/dhtinfo-${ARCH}
 
 CLI_TARGET = src/main/dhtcli.d
-CLI_OUTPUT = bin/dhtcli
+CLI_OUTPUT = bin/dhtcli-${ARCH}
 
 TEST_TARGET = src/main/dhttest.d
-TEST_OUTPUT = bin/dhttest
+TEST_OUTPUT = bin/dhttest-${ARCH}
 
 PERFORMANCE_TARGET = src/main/dhtperformance.d
-PERFORMANCE_OUTPUT = bin/dhtperformance
+PERFORMANCE_OUTPUT = bin/dhtperformance-${ARCH}
 
 HASHRANGE_TARGET = src/main/dhthashrange.d
-HASHRANGE_OUTPUT = bin/dhthashrange
+HASHRANGE_OUTPUT = bin/dhthashrange-${ARCH}
 
 TCM_SPLIT_TARGET = src/main/tcmsplit.d
-TCM_SPLIT_OUTPUT = bin/tcmsplit
+TCM_SPLIT_OUTPUT = bin/tcmsplit-${ARCH}
 
 REDISTRIBUTE = script/redistribute
 REDISTRIBUTE_CONF = doc/redistributerc.full doc/redistributerc.local
@@ -56,11 +59,13 @@ export D_GC := basic
 # ------------------------------------------------------------------------------
 # dmd flags
 
+ARCHFLAG=$(if $(findstring x86_64,${ARCH}),-m64,-m32)
+
 FLAGS =\
 	-L-lminilzo \
 	-L-ldl \
 	$(foreach d,$(DEPS),-I$(DEPS_PATH)/$d) \
-	-version=NewTango
+	-version=NewTango ${ARCHFLAG}
 
 UNITTESTFLAGS =\
 	-unittest \
@@ -97,7 +102,7 @@ TCM_SPLIT_FLAGS =\
 .PHONY: revision node info test cli performance
 
 default: node info cli
-
+all: default
 
 # ------------------------------------------------------------------------------
 # Revision file build
@@ -110,90 +115,89 @@ revision:
 # node debug & release builds
 
 node: revision
-	xfbuild +D=.deps-node +O=.objs-node +o=${NODE_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${NODE_FLAGS} ${NODE_TARGET}
+	xfbuild +D=.deps-$@-${ARCH}.${BUILDMODE} +O=.objs-$@-${ARCH}.${BUILDMODE} +o=${NODE_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${NODE_FLAGS} ${NODE_TARGET}
 
 node-release: revision
-	xfbuild +D=.deps-node +O=.objs-node +o=${NODE_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${NODE_FLAGS} ${NODE_TARGET}
-
+	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${NODE_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${NODE_FLAGS} ${NODE_TARGET}
 
 # ------------------------------------------------------------------------------
 # copy debug & release builds
 
 copy:
-	xfbuild +D=.deps-copy +O=.objs-copy +o=${COPY_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${CLIENT_FLAGS} ${COPY_TARGET}
+	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${COPY_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${CLIENT_FLAGS} ${COPY_TARGET}
 
 copy-release:
-	xfbuild +D=.deps-copy +O=.objs-copy +o=${COPY_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${CLIENT_FLAGS} ${COPY_TARGET}
+	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${COPY_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${CLIENT_FLAGS} ${COPY_TARGET}
 
 
 # ------------------------------------------------------------------------------
 # dump debug & release builds
 
 dump:
-	xfbuild +D=.deps-dump +O=.objs-dump +o=${DUMP_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${CLIENT_FLAGS} ${DUMP_TARGET}
+	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${DUMP_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${CLIENT_FLAGS} ${DUMP_TARGET}
 
 dump-release:
-	xfbuild +D=.deps-dump +O=.objs-dump +o=${DUMP_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${CLIENT_FLAGS} ${DUMP_TARGET}
+	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${DUMP_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${CLIENT_FLAGS} ${DUMP_TARGET}
 
 
 # ------------------------------------------------------------------------------
 # info debug & release builds
 
 info:
-	xfbuild +D=.deps-info +O=.objs-info +o=${INFO_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${CLIENT_FLAGS} ${INFO_TARGET}
+	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${INFO_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${CLIENT_FLAGS} ${INFO_TARGET}
 
 info-release:
-	xfbuild +D=.deps-info +O=.objs-info +o=${INFO_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${CLIENT_FLAGS} ${INFO_TARGET}
+	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${INFO_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${CLIENT_FLAGS} ${INFO_TARGET}
 
 
 # ------------------------------------------------------------------------------
 # command line client debug & release builds
 
 cli:
-	xfbuild +D=.deps-$@ +O=.objs-$@ +o=${CLI_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${CLIENT_FLAGS} ${CLI_TARGET}
+	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${CLI_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${CLIENT_FLAGS} ${CLI_TARGET}
 
 cli-release:
-	xfbuild +D=.deps-$@+O=.objs-$@ +o=${CLI_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${CLIENT_FLAGS} ${CLI_TARGET}
+	xfbuild +D=.deps-$@-${ARCH} +o=${CLI_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${CLIENT_FLAGS} ${CLI_TARGET}
 
 
 # ------------------------------------------------------------------------------
 # test debug & release builds
 
 test:
-	xfbuild +D=.deps-test +O=.objs-test +o=${TEST_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${CLIENT_FLAGS} ${TEST_TARGET}
+	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${TEST_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${CLIENT_FLAGS} ${TEST_TARGET}
 
 test-release:
-	xfbuild +D=.deps-test +O=.objs-test +o=${TEST_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${CLIENT_FLAGS} ${TEST_TARGET}
+	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${TEST_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${CLIENT_FLAGS} ${TEST_TARGET}
 
 
 # ------------------------------------------------------------------------------
 # performance debug & release builds
 
 performance:
-	xfbuild +D=.deps-performance +O=.objs-performance +o=${PERFORMANCE_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${CLIENT_FLAGS} ${PERFORMANCE_TARGET}
+	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${PERFORMANCE_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${CLIENT_FLAGS} ${PERFORMANCE_TARGET}
 
 performance-release:
-	xfbuild +D=.deps-performance +O=.objs-performance +o=${PERFORMANCE_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${CLIENT_FLAGS} ${PERFORMANCE_TARGET}
+	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${PERFORMANCE_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${CLIENT_FLAGS} ${PERFORMANCE_TARGET}
 
 
 # ------------------------------------------------------------------------------
 # hash range debug & release builds
 
 hashrange:
-	xfbuild +D=.deps-hashrange +O=.objs-hashrange +o=${HASHRANGE_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${CLIENT_FLAGS} ${HASHRANGE_TARGET}
+	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${HASHRANGE_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${CLIENT_FLAGS} ${HASHRANGE_TARGET}
 
 hashrange-release:
-	xfbuild +D=.deps-hashrange +O=.objs-hashrange +o=${HASHRANGE_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${CLIENT_FLAGS} ${HASHRANGE_TARGET}
+	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${HASHRANGE_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${CLIENT_FLAGS} ${HASHRANGE_TARGET}
 
 
 # ------------------------------------------------------------------------------
 # tcm split debug & release builds
 
 tcmsplit: revision
-	xfbuild +D=.deps-tcmsplit +O=.objs-tcmsplit +o=${TCM_SPLIT_OUTPUT} ${XFBUILD_FLAGS} ${TCM_SPLIT_FLAGS} ${DEBUG_FLAGS} ${TCM_SPLIT_TARGET}
+	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${TCM_SPLIT_OUTPUT} ${XFBUILD_FLAGS} ${TCM_SPLIT_FLAGS} ${DEBUG_FLAGS} ${TCM_SPLIT_TARGET}
 
 tcmsplit-release: revision
-	xfbuild +D=.deps-tcmsplit +O=.objs-tcmsplit +o=${TCM_SPLIT_OUTPUT} ${XFBUILD_FLAGS} ${TCM_SPLIT_FLAGS} ${RELEASE_FLAGS} ${TCM_SPLIT_TARGET}
+	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${TCM_SPLIT_OUTPUT} ${XFBUILD_FLAGS} ${TCM_SPLIT_FLAGS} ${RELEASE_FLAGS} ${TCM_SPLIT_TARGET}
 
 
 # ------------------------------------------------------------------------------
