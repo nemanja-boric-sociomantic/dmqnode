@@ -1,8 +1,18 @@
 # ------------------------------------------------------------------------------
-# Targets
+# Architecture to build for (x86_64 or i686) -- read from .arch file, if it
+# exists, otherwise read from system information
 
-# Architecture to build for (x86_64 or i686)
-ARCH = $(shell uname -m)
+ifeq ($(wildcard .arch),)
+	ARCH = $(shell uname -m)
+else 
+	ARCH = $(shell cat .arch)
+endif
+
+ARCHFLAG=$(if $(findstring x86_64,${ARCH}),-m64,-m32)
+
+
+# ------------------------------------------------------------------------------
+# Targets
 
 NODE_TARGET = src/main/dhtnode.d
 NODE_OUTPUT = bin/dhtnode-${ARCH}
@@ -59,13 +69,11 @@ export D_GC := basic
 # ------------------------------------------------------------------------------
 # dmd flags
 
-ARCHFLAG=$(if $(findstring x86_64,${ARCH}),-m64,-m32)
-
 FLAGS =\
+	$(foreach d,$(DEPS),-I$(DEPS_PATH)/$d) \
 	-L-lminilzo \
 	-L-ldl \
-	$(foreach d,$(DEPS),-I$(DEPS_PATH)/$d) \
-	-version=NewTango ${ARCHFLAG}
+	${ARCHFLAG}
 
 UNITTESTFLAGS =\
 	-unittest \
@@ -79,18 +87,17 @@ DEBUG_FLAGS = ${FLAGS}\
 
 NODE_FLAGS =\
 	-L-ltokyocabinet
-#	-debug=Raw
-#	-debug=SelectFiber\
+#	-debug=ConnectionHandler\
+#	-debug=Raw\
 #	-debug=ISelectClient\
-#	-debug=ConnectionHandler
-#	-debug=Raw
+#	-debug=SelectFiber\
 
 CLIENT_FLAGS =\
-	-L-lebtree
+	-L-lebtree 
+#	-debug=Raw\
 #	-debug=ISelectClient\
-#	-debug=SwarmClient
-#	-debug=Raw
-#	-debug=ISelectClient
+#	-debug=SwarmClient\
+#	-debug=ISelectClient\
 
 TCM_SPLIT_FLAGS =\
     -L-lglib-2.0
