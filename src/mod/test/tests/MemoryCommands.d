@@ -131,8 +131,8 @@ class MemoryCommands : Commands
         ubyte[500] data = 0xCC;
         
         version (X86_64) hash_t start = Iterations << 20;
-        else start = 0;
-        
+        else hash_t start = 0;
+
         for ( hash_t i = start; i < Iterations + start; ++i )
         {   
 
