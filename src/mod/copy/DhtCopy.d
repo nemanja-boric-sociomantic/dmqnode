@@ -261,7 +261,8 @@ public class DhtCopy : SourceDhtTool
         if ( this.put_pool is null )
         {
             this.put_pool = new SuspendableThrottlerStringPool(
-                    this.src_dht.registry.length * this.per_connection_suspend_point);
+                    this.src_dht.registry.length * this.per_connection_suspend_point,
+                    this.src_dht.registry.length * 20);
         }
     }
 
