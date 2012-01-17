@@ -61,7 +61,6 @@ FLAGS =\
 	-L-lminilzo \
 	-L-lglib-2.0 \
 	-L-lebtree \
-	-version=NewTango \
 	 ${ARCHFLAG}
 
 TOOL_FLAGS =\
