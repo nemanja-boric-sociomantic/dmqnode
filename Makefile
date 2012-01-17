@@ -1,7 +1,12 @@
 # ------------------------------------------------------------------------------
-# Architecture to build for (x86_64 or i686)
+# Architecture to build for (x86_64 or i686) -- read from .arch file, if it
+# exists, otherwise read from system information
 
-ARCH = $(shell uname -m)
+ifeq ($(wildcard .arch),)
+	ARCH = $(shell uname -m)
+else 
+	ARCH = $(shell cat .arch)
+endif
 
 ARCHFLAG=$(if $(findstring x86_64,${ARCH}),-m64,-m32)
 
