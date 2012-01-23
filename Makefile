@@ -70,9 +70,9 @@ RELEASE_FLAGS = ${FLAGS}\
 	-L-s
 
 DEBUG_FLAGS = ${FLAGS}\
-	-debug -gc 
-    
-#    -debug=ISelectClient
+	-debug -gc
+
+#-debug=ISelectClient
 #-debug=ConnectionHandler
 #-debug=Raw
 
@@ -94,8 +94,6 @@ revision:
 
 # ------------------------------------------------------------------------------
 # Node debug & release builds
-
-node: export D_GC := basic
 
 node: revision
 	xfbuild +o=${NODE_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${NODE_TARGET}
@@ -162,19 +160,19 @@ performance-release:
 
 EU_SERVERS = 8
 
-US_SERVERS = 1 2
+US_SERVERS = 10 13
 
 upload-monitor-eu:
 	$(foreach srv, $(EU_SERVERS), scp -C ${MONITOR_OUTPUT} root@eq6-$(srv).sociomantic.com:/tmp/queue;)
 
 upload-monitor-us:
-	$(foreach srv, $(US_SERVERS), scp -C ${MONITOR_OUTPUT} root@rs-$(srv).sociomantic.com:/tmp/queue;)
+	$(foreach srv, $(US_SERVERS), scp -C ${MONITOR_OUTPUT} root@is-$(srv).sociomantic.com:/tmp/queue;)
 
 upload-node-eu:
 	$(foreach srv, $(EU_SERVERS), scp -C ${NODE_OUTPUT} root@eq6-$(srv).sociomantic.com:/tmp/queue;)
 
 upload-node-us:
-	$(foreach srv, $(US_SERVERS), scp -C ${NODE_OUTPUT} root@rs-$(srv).sociomantic.com:/tmp/queue;)
+	$(foreach srv, $(US_SERVERS), scp -C ${NODE_OUTPUT} root@is-$(srv).sociomantic.com:/tmp/queue;)
 
 connect-eu:
 	@../ocean/script/tmuxconnect.sh eu_queue_servers eu ${EU_SERVERS}
