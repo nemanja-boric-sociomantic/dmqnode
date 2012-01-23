@@ -185,7 +185,7 @@ class QueueProducer
     private bool validateArgs ( Arguments args, char[][] arguments )
     {
         args("source").required.params(1).aliased('S').help("config file listing queue nodes to connect to");
-        args("channel").required.params(1, 42).aliased('c').help("channel to write to");
+        args("channel").required.params(1, 42).aliased('c').help("channel(s) to write to");
         args("size").params(1).defaults("8").aliased('s').help("size (in bytes) of records to produce. If >= 8, then the first 8 bytes will contain the record number as a ulong");
         args("dump").aliased('d').help("dump produced records to console");
         args("reconnect").aliased('r').help("reconnect on queue error");
