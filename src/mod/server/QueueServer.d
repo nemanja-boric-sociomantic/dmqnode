@@ -84,7 +84,7 @@ public class QueueServer
         assertEx!(IllegalArgumentException)(MainConfig.server.size_limit, "size limit 0 specified in configuration");
 
         this.node = new QueueNode(
-                QueueConst.NodeItem(MainConfig.server.address, MainConfig.server.port),
+                QueueConst.NodeItem(MainConfig.server.address(), MainConfig.server.port()),
                 new RingNode(MainConfig.server.data_dir, MainConfig.server.size_limit,
                         MainConfig.server.channel_size_limit));
 
