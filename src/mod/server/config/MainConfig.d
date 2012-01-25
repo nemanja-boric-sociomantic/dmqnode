@@ -44,9 +44,9 @@ private class ServerConfig
 
     ConfigReader.Required!(ushort) port;
 
-    ulong size_limit = 0; // 0 := no size limit
+    ulong size_limit = 0; // 0 := no global size limit
 
-    ulong channel_size_limit = 0; // 0 := no size limit
+    ConfigReader.Required!(ConfigReader.Min!(ulong, 1)) channel_size_limit;
 
     char[] data_dir = "data";
 }
