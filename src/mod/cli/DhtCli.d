@@ -22,7 +22,8 @@ module src.mod.cli.DhtCli;
 
 *******************************************************************************/
 
-private import src.mod.cli.Commands : Command, Info;
+private import src.mod.cli.Command : Command;
+private import src.mod.cli.Commands : Info;
 
 private import src.mod.model.DhtTool;
 
@@ -31,6 +32,8 @@ private import swarm.dht.DhtClient;
 private import ocean.io.select.EpollSelectDispatcher;
 
 private import ocean.core.Array : appendCopy;
+
+private import ocean.text.Arguments : Arguments;
 
 private import tango.io.Stdout;
 
