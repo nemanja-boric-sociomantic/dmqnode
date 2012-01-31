@@ -93,7 +93,7 @@ public class DhtNodeServer
     public this ( )
     {
         this.node = new DhtNode(
-                DhtConst.NodeItem(MainConfig.server.address, MainConfig.server.port),
+                DhtConst.NodeItem(MainConfig.server.address(), MainConfig.server.port()),
                 this.newStorageChannels(),
                 this.min_hash, this.max_hash);
 
@@ -183,7 +183,8 @@ public class DhtNodeServer
     {
         // TODO: remove this hash range padding, always specify full 32-bit
         // hexadecimal numbers
-        return DhtHash.toHashRangeStart(MainConfig.server.minval);
+        auto minval = MainConfig.server.minval();
+        return DhtHash.toHashRangeStart(minval);
     }
 
 
@@ -198,7 +199,8 @@ public class DhtNodeServer
     {
         // TODO: remove this hash range padding, always specify full 32-bit
         // hexadecimal numbers
-        return DhtHash.toHashRangeEnd(MainConfig.server.maxval);
+        auto maxval = MainConfig.server.maxval();
+        return DhtHash.toHashRangeEnd(maxval);
     }
 
 
