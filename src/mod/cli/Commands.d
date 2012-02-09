@@ -66,22 +66,37 @@ private
 
 /*******************************************************************************
 
+    Common options for commands
+
+*******************************************************************************/
+
+public struct Options
+{
+    public char[] filter = "";
+    public bool verbose  = false;
+}
+
+
+/*******************************************************************************
+
     DHT-client specific info to pass to commands when executing them.
 
 *******************************************************************************/
 
-private class Info
+public class Info
 {
+    public Options opts;
     public DhtClient dht;
     public RequestNotification.Callback notifier;
     public EpollSelectDispatcher epoll;
 
     this(DhtClient dht, RequestNotification.Callback notifier,
-            EpollSelectDispatcher epoll)
+            EpollSelectDispatcher epoll, Options opts)
     {
         this.dht = dht;
         this.notifier = notifier;
         this.epoll = epoll;
+        this.opts = opts;
     }
 }
 
@@ -104,6 +119,14 @@ private class Info
 
 public abstract class DhtCommand : Command
 {
+    /***************************************************************************
+
+        Command options
+
+    ***************************************************************************/
+
+    public Options opts;
+
 
     /***************************************************************************
 
@@ -119,6 +142,7 @@ public abstract class DhtCommand : Command
         assert (user_data !is null, "user_data can't be null");
         Info info = cast(Info) user_data;
         assert (info !is null, "user_data should have Info type");
+        this.opts = info.opts;
         this.assignTo(info.dht, info.notifier);
         info.epoll.eventLoop();
     }
@@ -498,9 +522,13 @@ private class GetRange : DhtCommand
     protected override void assignTo(DhtClient dht,
             RequestNotification.Callback notifier)
     {
-        dht.assign(dht.getRange(this.args[0], this.hash(this.args[1]),
-                this.hash(this.args[2]), &this.cb,
-            notifier));
+        auto rq = dht.getRange(this.args[0], this.hash(this.args[1]),
+                this.hash(this.args[2]), &this.cb, notifier);
+        if (this.opts.filter != "")
+        {
+            rq.filter(this.opts.filter);
+        }
+        dht.assign(rq);
     }
 
     private void cb ( DhtClient.RequestContext c, char[] key, char[] val )
@@ -533,7 +561,12 @@ private class GetAll : DhtCommand
     protected override void assignTo(DhtClient dht,
             RequestNotification.Callback notifier)
     {
-        dht.assign(dht.getAll(this.args[0], &this.cb, notifier));
+        auto rq = dht.getAll(this.args[0], &this.cb, notifier);
+        if (this.opts.filter != "")
+        {
+            rq.filter(this.opts.filter);
+        }
+        dht.assign(rq);
     }
 
     private void cb ( DhtClient.RequestContext c, char[] key, char[] val )

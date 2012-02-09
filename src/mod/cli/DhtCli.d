@@ -23,7 +23,7 @@ module src.mod.cli.DhtCli;
 *******************************************************************************/
 
 private import src.mod.cli.Command : Command;
-private import src.mod.cli.Commands : Info;
+private import src.mod.cli.Commands : Info, Options;
 
 private import src.mod.model.DhtTool;
 
@@ -57,11 +57,11 @@ public class DhtCli : DhtTool
 
     /***************************************************************************
 
-        Toggle verbose output.
+        Common command line options
 
     ***************************************************************************/
 
-    private bool verbose;
+    private Options opts;
 
 
     /***************************************************************************
@@ -161,7 +161,7 @@ public class DhtCli : DhtTool
             return;
         }
 
-        cmd.execute(new Info(dht, &this.notifier, super.epoll));
+        cmd.execute(new Info(dht, &this.notifier, this.epoll, this.opts));
         super.epoll.eventLoop();
     }
 
@@ -181,6 +181,9 @@ public class DhtCli : DhtTool
             .help("path of dhtnodes.xml file defining nodes to query");
         args("verbose").aliased('v')
             .help("verbose output");
+        args("filter").aliased('f').params(1).smush().defaults("")
+            .help("Use a filter when querying (only used by commands that "
+                    "support it (getall and getrange for now)");
     }
 
 
@@ -227,7 +230,9 @@ public class DhtCli : DhtTool
     {
         super.dht_nodes_config = args.getString("source");
 
-        this.verbose = args.getBool("verbose");
+        this.opts.verbose = args.getBool("verbose");
+
+        this.opts.filter = args.getString("filter");
 
         this.arguments = args(null).assigned;
     }
