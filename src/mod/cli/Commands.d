@@ -32,6 +32,7 @@ private import swarm.dht.DhtClient,
                swarm.dht.client.request.params.RequestParams;
 
 private import ocean.io.select.EpollSelectDispatcher;
+private import ocean.io.digest.Fnv1 : Fnv1a;
 
 private import tango.io.Stdout;
 
@@ -47,11 +48,15 @@ private import Integer = tango.text.convert.Integer;
 
 private
 {
-    auto help_chan       = ArgHelp("chan",  "Name of the channel to use");
+    auto help_chan       = ArgHelp("chan", "Name of the channel to use");
     /// ditto
     auto help_value      = ArgHelp("value", "Value to put");
     /// ditto
-    auto help_key        = ArgHelp("key",   "Name of the key to use");
+    auto help_key        = ArgHelp("key", "Key to use. Keys are converted "
+                    "to integer using toLong by default (for example 10, "
+                    "0x10, 0o10, 0b10). A format specifier can be used also. "
+                    "i:key has the same effect as the default, h:key "
+                    "hashes the key using fnv1 algorithm (for example h:hi)");
     /// ditto
     auto help_key_more   = VarArgHelp("More keys to use");
     /// ditto
@@ -128,19 +133,48 @@ public abstract class DhtCommand : Command
         strings as integers using tango's Integer.toLong function. This allows
         strings such as "23", "0xfff22233", etc to be handled.
 
+        Another kind of interpretations are provided using format specifiers in
+        the form f:k, where f is a character specifying the format and k the key
+        itself.
+
+        These specifiers are supported:
+
+            i = integer value. Same as the default interpretation, uses Tango's
+                Integer.toLong
+            h = hash the key using Fnv1 algorithm
+
+        Examples:
+
+            i:1000 = 1000
+            0xFF   = 255
+            i:0o10 = 8
+            0b10   = 2
+            h:hi   = 1748694682 (32 bits)
+
         Params:
             key = key to hash
 
         Returns:
             hashed string
 
-        TODO: add a command line option to Fnv hash keys, rather than integer
-        converting them
-
     ***************************************************************************/
 
     final protected hash_t hash ( char[] key )
     {
+        if (key.length > 2 && key[1] == ':')
+        {
+            auto k = key[2 .. $];
+            switch (key[0])
+            {
+                case 'i':
+                    return cast(hash_t)Integer.toLong(k);
+                case 'h':
+                    return Fnv1a(k);
+                default:
+                    throw new Exception("Unrecognized format specifier '" ~
+                            key[0] ~ "' for key '" ~ key ~ "'");
+            }
+        }
         return cast(hash_t)Integer.toLong(key);
     }
 
@@ -157,9 +191,24 @@ public abstract class DhtCommand : Command
 
     ***************************************************************************/
 
+    final protected typeof(Stdout) printKey ( hash_t key )
+    {
+        return Stdout.format("0x{:x8}", key);
+    }
+
+
+    /***************************************************************************
+
+        Displays a record key.
+
+        Params:
+            key = key to display
+
+    ***************************************************************************/
+
     final protected typeof(Stdout) printKey ( char[] key )
     {
-        return Stdout.format("0x{:x8}", Integer.toLong(key, 16));
+        return this.printKey(Integer.toLong(key, 16));
     }
 
 
@@ -191,7 +240,7 @@ public abstract class DhtCommand : Command
 
     ***************************************************************************/
 
-    final protected typeof(Stdout) printKeyValue ( char[] key, char[] val )
+    final protected typeof(Stdout) printKeyValue ( T ) ( T key, char[] val )
     {
         this.printKey(key)(": ");
         return printValue(val).newline;
@@ -250,7 +299,7 @@ private class Get : DhtCommand
 
     private void cb ( DhtClient.RequestContext c, char[] val )
     {
-        super.printKeyValue(super.args[c.integer], val);
+        super.printKeyValue(this.hash(super.args[c.integer]), val);
     }
 }
 
@@ -382,7 +431,7 @@ private class Exists : DhtCommand
 
     private void cb ( DhtClient.RequestContext c, bool exists )
     {
-        this.printKeyValue(this.args[c.integer], exists ? "1" : "0");
+        this.printKeyValue(this.hash(this.args[c.integer]), exists ? "1" : "0");
     }
 }
 
