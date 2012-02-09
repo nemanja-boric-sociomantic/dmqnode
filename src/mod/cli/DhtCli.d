@@ -36,6 +36,8 @@ private import ocean.core.Array : appendCopy;
 private import ocean.text.Arguments : Arguments;
 
 private import tango.io.Stdout;
+private import tango.text.convert.Integer : toLong;
+private import ocean.io.digest.Fnv1 : Fnv1a;
 
 
 /*******************************************************************************
@@ -183,7 +185,12 @@ public class DhtCli : DhtTool
             .help("verbose output");
         args("filter").aliased('f').params(1).smush().defaults("")
             .help("Use a filter when querying (only used by commands that "
-                    "support it (getall and getrange for now)");
+                    "support it (getall and getrange for now). Filter support "
+                    "a format specifier, s:filter is the default, and just use "
+                    "the filter string without changes, i:filter interpret the "
+                    "filter as an integer, useful for filtering by an ID, and "
+                    "h:filter, first applies fnv1 algorithm to the filter, and "
+                    "then interprets the result as integer as i:filter does");
     }
 
 
@@ -232,7 +239,34 @@ public class DhtCli : DhtTool
 
         this.opts.verbose = args.getBool("verbose");
 
+
         this.opts.filter = args.getString("filter");
+        if (this.opts.filter.length > 2 && this.opts.filter[1] == ':')
+        {
+            static char[] from_hash(char[] s, hash_t id)
+            {
+                s.length = id.sizeof;
+                s[0 .. id.sizeof] = (cast(char*)&id)[0 .. id.sizeof];
+                return s;
+            }
+            auto f = this.opts.filter[2 .. $];
+            switch (this.opts.filter[0])
+            {
+                case 's':
+                    this.opts.filter = f;
+                    break;
+                case 'i':
+                    this.opts.filter = from_hash(this.opts.filter, toLong(f));
+                    break;
+                case 'h':
+                    this.opts.filter = from_hash(this.opts.filter, Fnv1a(f));
+                    break;
+                default:
+                    Stderr.formatln("warning: unrecognized format specifier "
+                            "'{}' for filter '{}', using filter as is ...",
+                            this.opts.filter[0], this.opts.filter);
+            }
+        }
 
         this.arguments = args(null).assigned;
     }
