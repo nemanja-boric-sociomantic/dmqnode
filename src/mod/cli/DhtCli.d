@@ -177,8 +177,10 @@ public class DhtCli : DhtTool
 
     override protected void addArgs_ ( Arguments args )
     {
-        args("source").params(1).required().aliased('S').help("path of dhtnodes.xml file defining nodes to query");
-        args("verbose").aliased('v').help("verbose output");
+        args("source").aliased('S').params(1).smush().required()
+            .help("path of dhtnodes.xml file defining nodes to query");
+        args("verbose").aliased('v')
+            .help("verbose output");
     }
 
 
