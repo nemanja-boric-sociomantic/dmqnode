@@ -73,6 +73,7 @@ private
 public struct Options
 {
     public char[] filter = "";
+    public char[] key_format = "0x{:x8}";
     public bool verbose  = false;
 }
 
@@ -210,14 +211,11 @@ public abstract class DhtCommand : Command
         Params:
             key = key to display
 
-        TODO: add a command line option to change the key display format, like
-              decimal hexa or plain ASCII.
-
     ***************************************************************************/
 
     final protected typeof(Stdout) printKey ( hash_t key )
     {
-        return Stdout.format("0x{:x8}", key);
+        return Stdout.format(this.opts.key_format, key);
     }
 
 

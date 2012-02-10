@@ -191,6 +191,10 @@ public class DhtCli : DhtTool
                     "filter as an integer, useful for filtering by an ID, and "
                     "h:filter, first applies fnv1 algorithm to the filter, and "
                     "then interprets the result as integer as i:filter does");
+        args("key-format").aliased('K').params(1).smush()
+            .defaults(this.opts.key_format)
+            .help("Format to use to print the key, should be a Tango format "
+                "specifier (default: '" ~ this.opts.key_format ~ "')");
     }
 
 
@@ -267,6 +271,8 @@ public class DhtCli : DhtTool
                             this.opts.filter[0], this.opts.filter);
             }
         }
+
+        this.opts.key_format = args.getString("key-format");
 
         this.arguments = args(null).assigned;
     }
