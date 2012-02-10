@@ -38,6 +38,8 @@ private import tango.io.Stdout;
 
 private import Integer = tango.text.convert.Integer;
 
+private import tango.stdc.ctype : isprint;
+
 
 
 /*******************************************************************************
@@ -74,6 +76,7 @@ public struct Options
 {
     public char[] filter = "";
     public char[] key_format = "0x{:x8}";
+    public char[] value_format = "r";
     public bool verbose  = false;
 }
 
@@ -241,14 +244,47 @@ public abstract class DhtCommand : Command
         Params:
             val = value to display
 
-        TODO: add a command line option to change the value display format, like
-              bytes in hexa, raw or ASCII escaping unprintable characters.
-
     ***************************************************************************/
 
     final protected typeof(Stdout) printValue ( char[] val )
     {
-        return Stdout(val);
+        switch (this.opts.value_format)
+        {
+            // a escapes and prints unprintable chars, A ignore them
+            case "a":
+            case "A":
+                foreach (b; cast(ubyte[])val)
+                {
+                    if (b == '\\')
+                        Stdout(r"\\");
+                    else if (isprint(b))
+                        Stdout(cast(char)b);
+                    else if (this.opts.value_format == "a")
+                        Stdout.format(r"\x{:x2}", b);
+                }
+                return Stdout;
+            case "r":
+                return Stdout(val);
+            case "x":
+                foreach (b; cast(ubyte[])val)
+                {
+                    Stdout.format("{:x2}", b);
+                }
+                return Stdout;
+            case "o":
+                foreach (b; cast(ubyte[])val)
+                {
+                    Stdout.format("{:o4}", b);
+                }
+                return Stdout;
+            case "b":
+                foreach (b; cast(ubyte[])val)
+                {
+                    Stdout.format("{:b8}", b);
+                }
+                return Stdout;
+        }
+        assert (false);
     }
 
 

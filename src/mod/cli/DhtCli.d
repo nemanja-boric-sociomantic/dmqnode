@@ -195,6 +195,14 @@ public class DhtCli : DhtTool
             .defaults(this.opts.key_format)
             .help("Format to use to print the key, should be a Tango format "
                 "specifier (default: '" ~ this.opts.key_format ~ "')");
+        args("value-format").aliased('V').params(1).smush()
+            .defaults(this.opts.value_format)
+            .restrict(["a", "A", "r", "x", "o", "b"])
+            .help("Format to use to print the value: 'a' for ASCII string "
+                "escaping unprintable characters, 'A' for ASCII string "
+                "omitting unprintable characters, 'r' for raw unescaped "
+                "string, 'x' for hexa, 'o' for octal, 'b' for binary "
+                "(default: '" ~ this.opts.value_format ~ "')");
     }
 
 
@@ -273,6 +281,8 @@ public class DhtCli : DhtTool
         }
 
         this.opts.key_format = args.getString("key-format");
+
+        this.opts.value_format = args.getString("value-format");
 
         this.arguments = args(null).assigned;
     }
