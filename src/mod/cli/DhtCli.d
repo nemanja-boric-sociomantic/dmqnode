@@ -183,7 +183,7 @@ public class DhtCli : DhtTool
             .help("path of dhtnodes.xml file defining nodes to query");
         args("verbose").aliased('v')
             .help("verbose output");
-        args("filter").aliased('f').params(1).smush().defaults("")
+        args("filter").aliased('f').params(1).smush().defaults(this.opts.filter)
             .help("Use a filter when querying (only used by commands that "
                     "support it (getall and getrange for now). Filter support "
                     "a format specifier, s:filter is the default, and just use "
