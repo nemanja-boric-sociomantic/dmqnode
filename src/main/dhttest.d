@@ -1,23 +1,25 @@
 /*******************************************************************************
 
-    DHT node copy 
+    DHT node test
 
     copyright:      Copyright (c) 2011 sociomantic labs. All rights reserved
 
-    version:        October 2010: Initial release
-                    February 2011: Re-written using SourceDhtTool base class
+    version:        February 2011: Initial release
 
-    authors:        Gavin Norman & Mathias Baumann
+    authors:        Mathias Baumann
 
-    Copies data from a source dht to the destination dht.
+    Performs a series of tests, using many different dht commands, to test the
+    integrity of a dht.
 
-    Can also be used (with the -X flag) to compare the contents of two dhts.
+    Note: this test currently only works for single-node dhts. (See TODO in
+    Commands.d:171)
 
     Command line parameters:
         -S = dhtnodes.xml source file
-        -D = dhtnodes.xml file for destination dht
-        -h = display help
-
+        -i = How often the test should run (0 for infinite)
+        -v = Verbosity output level
+        -t = Type of the node (memory / logfiles)
+        -h = Display help
 
  ******************************************************************************/
 
