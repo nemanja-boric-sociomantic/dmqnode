@@ -33,6 +33,8 @@ private import ocean.io.select.protocol.generic.ErrnoIOException : IOWarning;
 
 private import ocean.util.Config;
 
+private import ocean.io.select.EpollSelectDispatcher;
+
 private import ocean.io.select.model.ISelectClient;
 
 private import swarm.dht.DhtConst;
@@ -95,13 +97,15 @@ public class DhtNodeServer
         this.node = new DhtNode(
                 DhtConst.NodeItem(MainConfig.server.address(), MainConfig.server.port()),
                 this.newStorageChannels(),
-                this.min_hash, this.max_hash);
+                this.min_hash, this.max_hash, new EpollSelectDispatcher);
 
         this.node.error_callback = &this.nodeError;
 
         this.service_threads = new ServiceThreads(&this.shutdown);
-        this.service_threads.add(new MaintenanceThread(this.node, MainConfig.server_threads.maintenance_period));
-        this.service_threads.add(new StatsThread(this.node, MainConfig.log.stats_log_period));
+        this.service_threads.add(new MaintenanceThread(this.node,
+            MainConfig.server_threads.maintenance_period));
+        this.service_threads.add(new StatsThread(this.node,
+            MainConfig.log.stats_log_period));
     }
 
 
