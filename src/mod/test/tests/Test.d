@@ -65,7 +65,7 @@ class Test
 
     ***************************************************************************/
 
-    protected alias ExtensibleDhtClient!(.DhtClient.Scheduler) DhtClient;
+    protected alias SchedulingDhtClient DhtClient;
 
     protected DhtClient dht;
 
@@ -98,7 +98,7 @@ class Test
     this ( size_t connections, char[] config )
     {
         this.epoll = new EpollSelectDispatcher;
-        this.dht = new DhtClient(epoll, new DhtClient.Scheduler(epoll), connections);
+        this.dht = new DhtClient(epoll, connections);
 
         Exception exception = null;
         

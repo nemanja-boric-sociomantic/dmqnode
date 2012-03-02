@@ -1,14 +1,8 @@
 # ------------------------------------------------------------------------------
-# Architecture to build for (x86_64 or i686) -- read from .arch file, if it
-# exists, otherwise read from system information
+# Architecture to build for (32 or 64)
 
-ifeq ($(wildcard .arch),)
-	ARCH = $(shell uname -m)
-else 
-	ARCH = $(shell cat .arch)
-endif
-
-ARCHFLAG=$(if $(findstring x86_64,${ARCH}),-m64,-m32)
+# default
+ARCH := 32
 
 
 # ------------------------------------------------------------------------------
@@ -62,6 +56,7 @@ XFBUILD_FLAGS =\
 
 # ------------------------------------------------------------------------------
 # GC to use (export is needed!)
+# Using the basic GC to avoid a blocking fork when the concurrent GC works
 
 export D_GC := basic
 
@@ -73,7 +68,7 @@ FLAGS =\
 	$(foreach d,$(DEPS),-I$(DEPS_PATH)/$d) \
 	-L-lminilzo \
 	-L-ldl \
-	${ARCHFLAG}
+	-m${ARCH}
 
 UNITTESTFLAGS =\
 	-unittest \
@@ -86,17 +81,17 @@ DEBUG_FLAGS = ${FLAGS}\
 	-debug -gc ${UNITTESTFLAGS}
 
 NODE_FLAGS =\
-	-L-ltokyocabinet
-#	-debug=ConnectionHandler\
-#	-debug=Raw\
+	-L-ltokyocabinet\
+#    -debug=ConnectionHandler
+#   -debug=Raw
 #	-debug=ISelectClient\
 #	-debug=SelectFiber\
 
 CLIENT_FLAGS =\
-	-L-lebtree 
-#	-debug=Raw\
-#	-debug=ISelectClient\
-#	-debug=SwarmClient\
+	-L-lebtree
+#    -debug=ISelectClient\
+#    -debug=SwarmClient
+#   -debug=Raw\
 #	-debug=ISelectClient\
 
 TCM_SPLIT_FLAGS =\
@@ -108,8 +103,9 @@ TCM_SPLIT_FLAGS =\
 
 .PHONY: revision node info test cli performance
 
-default: node info cli
+default: node test
 all: default
+
 
 # ------------------------------------------------------------------------------
 # Revision file build
@@ -126,6 +122,7 @@ node: revision
 
 node-release: revision
 	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${NODE_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${NODE_FLAGS} ${NODE_TARGET}
+
 
 # ------------------------------------------------------------------------------
 # copy debug & release builds

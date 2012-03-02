@@ -168,6 +168,10 @@ class Commands : Test
                 assign(putFunc(channel, pushed, &putter, &this.requestNotifier));
             }
             else throw new EndException;
+            // TODO: to work with multi-node dhts, this method will need to be
+            // modified. It would need to throw an exception once *per node*.
+            // There may alternatively be a better way of cancelling requests,
+            // dht.closeConnections() perhaps.
         }
 
         with (this.dht)

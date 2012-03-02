@@ -6,7 +6,7 @@
 
     version:        Jun 2009: Initial release
 
-    authors:        Thomas Nicolai & Lars Kirchhoff
+    authors:        Thomas Nicolai, Lars Kirchhoff, Gavin Norman
 
 *******************************************************************************/
 
@@ -85,30 +85,9 @@ private int main ( char[][] arguments )
         return r.exit_code;
     }
 
-    SignalHandler.register(SignalHandler.AppTermination, &shutdown);
-
     auto dht = new DhtNodeServer;
     dht.run;
 
     return 0;
-}
-
-
-/*******************************************************************************
-
-    SIGINT handler. Sets the termination flag.
-
-    Returns:
-        false to prevent the default SIGINT signal handler from being called
-
-*******************************************************************************/
-
-private bool shutdown ( int code )
-{
-    debug Stdout.formatln('\n' ~ SignalHandler.getId(code));
-
-    Terminator.terminating = true;
-
-    return false;
 }
 

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_layout_file>
+	<ActiveTarget name="Debug" />
+	<File name="src/main/Version.d" open="0" top="0" tabpos="0">
+		<Cursor position="564" topLine="0" />
+	</File>
+	<File name="src/main/dhtnode.d" open="1" top="0" tabpos="1">
+		<Cursor position="395" topLine="0" />
+	</File>
+	<File name="src/mod/node/DhtNode.d" open="0" top="0" tabpos="0">
+		<Cursor position="2120" topLine="50" />
+	</File>
+	<File name="src/mod/repair/storagerepair/LogFilesRepair.d" open="0" top="0" tabpos="0">
+		<Cursor position="792" topLine="3" />
+	</File>
+</CodeBlocks_layout_file>
