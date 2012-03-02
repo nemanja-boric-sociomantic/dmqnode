@@ -56,6 +56,7 @@ XFBUILD_FLAGS =\
 
 # ------------------------------------------------------------------------------
 # GC to use (export is needed!)
+# Using the basic GC to avoid a blocking fork when the concurrent GC works
 
 export D_GC := basic
 
@@ -80,17 +81,17 @@ DEBUG_FLAGS = ${FLAGS}\
 	-debug -gc ${UNITTESTFLAGS}
 
 NODE_FLAGS =\
-	-L-ltokyocabinet
-#	-debug=ConnectionHandler\
-#	-debug=Raw\
+	-L-ltokyocabinet\
+#    -debug=ConnectionHandler
+#   -debug=Raw
 #	-debug=ISelectClient\
 #	-debug=SelectFiber\
 
 CLIENT_FLAGS =\
-	-L-lebtree 
-#	-debug=Raw\
-#	-debug=ISelectClient\
-#	-debug=SwarmClient\
+	-L-lebtree
+#    -debug=ISelectClient\
+#    -debug=SwarmClient
+#   -debug=Raw\
 #	-debug=ISelectClient\
 
 TCM_SPLIT_FLAGS =\
@@ -102,8 +103,9 @@ TCM_SPLIT_FLAGS =\
 
 .PHONY: revision node info test cli performance
 
-default: node info cli
+default: node test
 all: default
+
 
 # ------------------------------------------------------------------------------
 # Revision file build
@@ -120,6 +122,7 @@ node: revision
 
 node-release: revision
 	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${NODE_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${NODE_FLAGS} ${NODE_TARGET}
+
 
 # ------------------------------------------------------------------------------
 # copy debug & release builds

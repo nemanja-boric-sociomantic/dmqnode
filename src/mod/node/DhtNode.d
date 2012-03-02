@@ -24,9 +24,11 @@ module src.mod.node.DhtNode;
 
 private import src.mod.node.config.MainConfig;
 
-private import src.mod.node.servicethreads.ServiceThreads,
-               src.mod.node.servicethreads.StatsThread,
-               src.mod.node.servicethreads.MaintenanceThread;
+private import src.mod.node.util.Terminator;
+
+private import src.mod.node.periodic.Periodics;
+private import src.mod.node.periodic.PeriodicMaintenance;
+private import src.mod.node.periodic.PeriodicStats;
 
 private import ocean.core.MessageFiber;
 private import ocean.io.select.protocol.generic.ErrnoIOException : IOWarning;
@@ -37,6 +39,8 @@ private import ocean.io.select.EpollSelectDispatcher;
 
 private import ocean.io.select.model.ISelectClient;
 
+private import ocean.io.select.event.SignalEvent;
+
 private import swarm.dht.DhtConst;
 private import swarm.dht.DhtNode;
 private import swarm.dht.DhtHash;
@@ -46,17 +50,13 @@ private import swarm.dht.node.storage.model.StorageChannels;
 private import swarm.dht.node.storage.MemoryStorageChannels;
 private import swarm.dht.node.storage.LogFilesStorageChannels;
 
-private import swarm.dht.node.model.IDhtNode;
-
 private import tango.core.Exception : OutOfMemoryException;
-
-private import tango.core.Thread;
-
-private import tango.util.log.Log, tango.util.log.AppendConsole;
 
 private import ocean.util.log.Trace;
 
 private import ocean.util.OceanException;
+
+private import tango.stdc.posix.signal: SIGINT;
 
 
 
@@ -70,6 +70,15 @@ public class DhtNodeServer
 {
     /***************************************************************************
     
+        Epoll selector instance
+
+    ***************************************************************************/
+
+    private EpollSelectDispatcher epoll;
+
+
+    /***************************************************************************
+    
         Dht node instance
     
     ***************************************************************************/
@@ -79,11 +88,20 @@ public class DhtNodeServer
 
     /***************************************************************************
     
-        Service threads handler
-    
+        SIGINT handler event
+
     ***************************************************************************/
 
-    private ServiceThreads service_threads;
+    private SignalEvent sigint_event;
+
+
+    /***************************************************************************
+
+        Periodic processes manager
+
+    ***************************************************************************/
+
+    private Periodics periodics;
 
 
     /***************************************************************************
@@ -94,17 +112,22 @@ public class DhtNodeServer
 
     public this ( )
     {
+        this.epoll = new EpollSelectDispatcher;
+
         this.node = new DhtNode(
-                DhtConst.NodeItem(MainConfig.server.address(), MainConfig.server.port()),
+                DhtConst.NodeItem(MainConfig.server.address(),
+                    MainConfig.server.port()),
                 this.newStorageChannels(),
-                this.min_hash, this.max_hash, new EpollSelectDispatcher);
+                this.min_hash, this.max_hash, this.epoll);
 
         this.node.error_callback = &this.nodeError;
 
-        this.service_threads = new ServiceThreads(&this.shutdown);
-        this.service_threads.add(new MaintenanceThread(this.node,
+        this.sigint_event = new SignalEvent(&this.sigintHandler, [SIGINT]);
+
+        this.periodics = new Periodics(this.node);
+        this.periodics.add(new PeriodicMaintenance(
             MainConfig.server_threads.maintenance_period));
-        this.service_threads.add(new StatsThread(this.node,
+        this.periodics.add(new PeriodicStats(
             MainConfig.log.stats_log_period));
     }
 
@@ -117,24 +140,17 @@ public class DhtNodeServer
 
     public int run ( )
     {
-        this.service_threads.start();
+        this.epoll.register(this.sigint_event);
 
-        this.node.eventLoop();
+        this.periodics.register(this.epoll);
+
+        this.node.register(this.epoll);
+
+        Trace.formatln("Starting event loop");
+        this.epoll.eventLoop();
+        Trace.formatln("Event loop exited");
 
         return true;
-    }
-
-
-    /***************************************************************************
-
-        Service threads finished callback (called when all service threads have
-        finished). Shuts down the DHT node.
-
-    ***************************************************************************/
-
-    public void shutdown ( )
-    {
-        this.node.shutdown();
     }
 
 
@@ -220,7 +236,8 @@ public class DhtNodeServer
 
     ***************************************************************************/
 
-    private void nodeError ( Exception exception, IAdvancedSelectClient.Event event_info )
+    private void nodeError ( Exception exception,
+        IAdvancedSelectClient.Event event_info )
     {
         if ( cast(MessageFiber.KilledException)exception ||
              cast(IOWarning)exception )
@@ -237,6 +254,43 @@ public class DhtNodeServer
             OceanException.Warn("Exception caught in eventLoop: '{}' @ {}:{}",
                     exception.msg, exception.file, exception.line);
         }
+    }
+
+
+    /***************************************************************************
+
+        SIGINT handler.
+
+        Firstly unregisters all periodics. (Any periodics which are about to
+        fire in epoll will still fire, but the setting of the 'terminating' flag
+        will stop them from doing anything.)
+
+        Secondly calls the node's shutdown method. This unregisters the select
+        listener (stopping any more requests from being processed), then shuts
+        down the storage channels.
+
+        Finally shuts down epoll. This will result in the run() method, above,
+        returning.
+
+        Params:
+            siginfo = info struct about signal which fired
+
+    ***************************************************************************/
+
+    private void sigintHandler ( SignalEvent.SignalInfo siginfo )
+    {
+        // Due to this delegate being called from epoll, we know that none of
+        // the periodics are currently active. (The dump periodic may have
+        // caused the memory storage channels to fork, however.)
+        // Setting the terminating flag to true prevents any periodics which
+        // fire from now on from doing anything (see IPeriodics).
+        Terminator.terminating = true;
+
+        this.periodics.shutdown(this.epoll);
+
+        this.node.shutdown;
+
+        this.epoll.shutdown;
     }
 }
 

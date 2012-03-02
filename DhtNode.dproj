@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="3.5" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>9.0.21022</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{EACAF7CD-D5EF-468D-8AA8-AEA2637AFD50}</ProjectGuid>
+    <Target>Executable</Target>
+    <IncrementalLinking>true</IncrementalLinking>
+    <UseDefaultCompiler>true</UseDefaultCompiler>
+    <Compiler>DMD</Compiler>
+    <Includes>
+      <Includes>
+        <Path>/home/gavin/workspace/ocean</Path>
+        <Path>/home/gavin/workspace/tango</Path>
+        <Path>/home/gavin/workspace/swarm</Path>
+      </Includes>
+    </Includes>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\Debug</OutputPath>
+    <ObjectsDirectory>obj/Debug</ObjectsDirectory>
+    <OutputName>DhtNode</OutputName>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <OutputPath>bin\Release</OutputPath>
+    <ObjectsDirectory>obj/Release</ObjectsDirectory>
+    <OutputName>DhtNode</OutputName>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Unittest|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\Unittest</OutputPath>
+    <ObjectsDirectory>obj/Unittest</ObjectsDirectory>
+    <ExtraCompilerArguments>-unittest </ExtraCompilerArguments>
+    <OutputName>DhtNode</OutputName>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="doc\etc\config.ini" />
+    <None Include="doc\redistributerc.full" />
+    <None Include="doc\redistributerc.local" />
+    <None Include="script\redistribute" />
+    <None Include="Makefile" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="src\main\dhtcli.d" />
+    <Compile Include="src\main\dhtcopy.d" />
+    <Compile Include="src\main\dhtdump.d" />
+    <Compile Include="src\main\dhthashrange.d" />
+    <Compile Include="src\main\dhtimport.d" />
+    <Compile Include="src\main\dhtinfo.d" />
+    <Compile Include="src\main\dhtnode.d" />
+    <Compile Include="src\main\dhtperformance.d" />
+    <Compile Include="src\main\dhtrepair.d" />
+    <Compile Include="src\main\dhttest.d" />
+    <Compile Include="src\main\tcmsplit.d" />
+    <Compile Include="src\main\Version.d" />
+    <Compile Include="src\mod\cli\Command.d" />
+    <Compile Include="src\mod\cli\Commands.d" />
+    <Compile Include="src\mod\cli\DhtCli.d" />
+    <Compile Include="src\mod\copy\DhtCopy.d" />
+    <Compile Include="src\mod\dump\DhtDump.d" />
+    <Compile Include="src\mod\importer\DhtImport.d" />
+    <Compile Include="src\mod\info\DhtInfo.d" />
+    <Compile Include="src\mod\info\DhtMonitor.d" />
+    <Compile Include="src\mod\info\NodeInfo.d" />
+    <Compile Include="src\mod\info\Tables.d" />
+    <Compile Include="src\mod\model\DhtTool.d" />
+    <Compile Include="src\mod\model\SourceDhtTool.d" />
+    <Compile Include="src\mod\node\config\MainConfig.d" />
+    <Compile Include="src\mod\node\util\Terminator.d" />
+    <Compile Include="src\mod\node\DhtNode.d" />
+    <Compile Include="src\mod\performance\DhtPerformance.d" />
+    <Compile Include="src\mod\repair\storagerepair\model\IStorageRepair.d" />
+    <Compile Include="src\mod\repair\storagerepair\LogFilesRepair.d" />
+    <Compile Include="src\mod\repair\DhtRepair.d" />
+    <Compile Include="src\mod\tcmsplit\TcmSplitter.d" />
+    <Compile Include="src\mod\test\tests\Commands.d" />
+    <Compile Include="src\mod\test\tests\LogfileCommands.d" />
+    <Compile Include="src\mod\test\tests\MemoryCommands.d" />
+    <Compile Include="src\mod\test\tests\Test.d" />
+    <Compile Include="src\mod\test\tests\Unittests.d" />
+    <Compile Include="src\mod\test\DhtTest.d" />
+    <Compile Include="src\mod\node\periodic\model\IPeriodic.d" />
+    <Compile Include="src\mod\node\periodic\PeriodicStats.d" />
+    <Compile Include="src\mod\node\periodic\PeriodicMaintenance.d" />
+    <Compile Include="src\mod\node\periodic\Periodics.d" />
+  </ItemGroup>
+  <ProjectExtensions>
+    <MonoDevelop>
+      <Properties>
+        <MonoDevelop.Autotools.MakefileInfo IntegrationEnabled="true" RelativeMakefileName="Makefile" BuildTargetName="default">
+          <BuildFilesVar />
+          <DeployFilesVar />
+          <ResourcesVar />
+          <OthersVar />
+          <GacRefVar />
+          <AsmRefVar />
+          <ProjectRefVar />
+          <MessageRegex Error="^\s*(?&lt;file&gt;[^\(]*)\((?&lt;line&gt;\d*)\): (?&lt;message&gt;.*)" Warning="(^\s*(?&lt;file&gt;.*)\((?&lt;line&gt;\d*){1}(,(?&lt;column&gt;\d*[\+]*))?\)(:|)\s+)*warning\s*(?&lt;number&gt;.*):\s(?&lt;message&gt;.*)" Name="Custom" />
+        </MonoDevelop.Autotools.MakefileInfo>
+      </Properties>
+    </MonoDevelop>
+  </ProjectExtensions>
+  <ItemGroup>
+    <Folder Include="src\mod\node\periodic\" />
+    <Folder Include="src\mod\node\periodic\model\" />
+    <Folder Include="src\mod\node\servicethreads\model\" />
+  </ItemGroup>
+</Project>
