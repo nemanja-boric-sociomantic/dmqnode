@@ -1,7 +1,0 @@
-src.main.dhtdump src/main/dhtdump.d 0 
-src.main.dhtnode src/main/dhtnode.d 0 
-src.main.dhttest src/main/dhttest.d 0 
-src.main.dhtperformance src/main/dhtperformance.d 0 
-src.main.dhtinfo src/main/dhtinfo.d 0 
-src.main.dhtcli src/main/dhtcli.d 0 
-src.main.dhtcopy src/main/dhtcopy.d 0 
