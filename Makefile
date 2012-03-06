@@ -1,14 +1,8 @@
 # ------------------------------------------------------------------------------
-# Architecture to build for (x86_64 or i686) -- read from .arch file, if it
-# exists, otherwise read from system information
+# Architecture to build for (32 or 64)
 
-ifeq ($(wildcard .arch),)
-	ARCH = $(shell uname -m)
-else 
-	ARCH = $(shell cat .arch)
-endif
-
-ARCHFLAG=$(if $(findstring x86_64,${ARCH}),-m64,-m32)
+# default
+ARCH := 32
 
 
 # ------------------------------------------------------------------------------
@@ -61,7 +55,7 @@ FLAGS =\
 	-L-lminilzo \
 	-L-lglib-2.0 \
 	-L-lebtree \
-	 ${ARCHFLAG}
+	 -m${ARCH}
 
 TOOL_FLAGS =\
 	-version=CDGC
@@ -82,7 +76,8 @@ DEBUG_FLAGS = ${FLAGS}\
 
 .PHONY: revision node monitor consumer test
 
-default: node monitor consumer test
+default: node
+#monitor consumer test
 
 
 # ------------------------------------------------------------------------------

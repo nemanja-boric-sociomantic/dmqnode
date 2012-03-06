@@ -180,8 +180,8 @@ public class StatsThread : IServiceThread
             if ( this.elapsed_since_last_log_update >= this.log_update_time )
             {
                 this.log.write("Node stats: {} sent ({} K/s), {} received ({} K/s), handling {} connections, {} records/s{}",
-                        this.total_sent, cast(float)(this.total_sent / 1024) / cast(float)seconds_elapsed,
-                        this.total_received, cast(float)(this.total_received / 1024) / cast(float)seconds_elapsed,
+                        this.total_sent, cast(float)(this.total_sent / 1024) / cast(float)this.elapsed_since_last_log_update,
+                        this.total_received, cast(float)(this.total_received / 1024) / cast(float)this.elapsed_since_last_log_update,
                         node_info.num_open_connections, rec_per_sec,
                         channels_string);
 
