@@ -1,15 +1,15 @@
 /*******************************************************************************
 
-        Queue Node Server
+    Queue Node Server
 
-        copyright:      Copyright (c) 2011 sociomantic labs. All rights reserved
+    copyright:  Copyright (c) 2011 sociomantic labs. All rights reserved
 
-        version:        October 2010: Initial release
+    version:    October 2010: Initial release
 
-        authors:        David Eckardt, Gavin Norman 
-                        Thomas Nicolai, Lars Kirchhoff
+    authors:    David Eckardt, Gavin Norman
+                    Thomas Nicolai, Lars Kirchhoff
 
- ******************************************************************************/
+*******************************************************************************/
 
 module src.mod.server.QueueServer;
 
@@ -19,14 +19,14 @@ module src.mod.server.QueueServer;
 
     Imports
 
- ******************************************************************************/
+*******************************************************************************/
 
 private import src.mod.server.config.MainConfig;
 
 private import src.mod.server.util.Terminator;
 
-private import src.mod.server.servicethreads.ServiceThreads,
-               src.mod.server.servicethreads.StatsThread;
+private import src.mod.server.periodic.Periodics;
+private import src.mod.server.periodic.PeriodicStats;
 
 private import swarm.queue.QueueNode;
 
@@ -59,7 +59,7 @@ private import tango.stdc.posix.signal: SIGINT;
 
     QueueServer
 
- ******************************************************************************/
+*******************************************************************************/
 
 public class QueueServer
 {
@@ -92,11 +92,11 @@ public class QueueServer
 
     /***************************************************************************
 
-        Service threads handler
+        Periodic processes manager
 
-    **************************************************************************/
+    ***************************************************************************/
 
-    private ServiceThreads service_threads;
+    private Periodics periodics;
 
 
     /***************************************************************************
@@ -120,13 +120,9 @@ public class QueueServer
 
         this.sigint_event = new SignalEvent(&this.sigintHandler, [SIGINT]);
 
-        this.node.error_callback = &this.nodeError;
-
-        this.service_threads = new ServiceThreads;
-        if ( MainConfig.log.stats_log_enabled || MainConfig.log.console_stats_enabled )
-        {
-            this.service_threads.add(new StatsThread(this.node.node_info, MainConfig.log.stats_log_period));
-        }
+        this.periodics = new Periodics(this.node);
+        this.periodics.add(new PeriodicStats(
+            MainConfig.log.stats_log_period));
     }
 
 
@@ -138,11 +134,9 @@ public class QueueServer
 
     public int run ( )
     {
-        this.service_threads.start();
-
         this.epoll.register(this.sigint_event);
 
-//        this.periodics.register(this.epoll);
+        this.periodics.register(this.epoll);
 
         this.node.register(this.epoll);
 
@@ -151,18 +145,6 @@ public class QueueServer
         Trace.formatln("Event loop exited");
 
         return true;
-    }
-
-
-    /***************************************************************************
-
-        Shuts down the queue node
-
-     **************************************************************************/
-
-    public void shutdown ( )
-    {
-        this.node.shutdown();
     }
 
 
@@ -227,7 +209,7 @@ public class QueueServer
         // fire from now on from doing anything (see IPeriodics).
         Terminator.terminating = true;
 
-//        this.periodics.shutdown(this.epoll);
+        this.periodics.shutdown(this.epoll);
 
         this.node.shutdown;
 

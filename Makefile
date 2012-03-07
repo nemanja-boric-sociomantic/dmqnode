@@ -2,7 +2,7 @@
 # Architecture to build for (32 or 64)
 
 # default
-ARCH := 32
+ARCH := 64
 
 
 # ------------------------------------------------------------------------------
@@ -53,7 +53,6 @@ export D_GC := cdgc
 FLAGS =\
 	$(foreach d,$(DEPS),-I$(DEPS_PATH)/$d) \
 	-L-lminilzo \
-	-L-lglib-2.0 \
 	-L-lebtree \
 	 -m${ARCH}
 
