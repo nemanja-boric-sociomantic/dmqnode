@@ -12,11 +12,12 @@
     <Compiler>DMD</Compiler>
     <Includes>
       <Includes>
-        <Path>/home/gavin/workspace/ocean</Path>
         <Path>/home/gavin/workspace/tango</Path>
         <Path>/home/gavin/workspace/swarm</Path>
+        <Path>/home/gavin/workspace/ocean</Path>
       </Includes>
     </Includes>
+    <PreferOneStepBuild>true</PreferOneStepBuild>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>

@@ -61,15 +61,6 @@ public abstract class IPeriodic : TimerEvent
 
     /***************************************************************************
 
-        Number of seconds to wait between runs.
-
-    ***************************************************************************/
-
-    protected const uint period_s;
-
-
-    /***************************************************************************
-
         Constructor.
 
         Params:
@@ -80,8 +71,6 @@ public abstract class IPeriodic : TimerEvent
     public this ( uint period_s )
     {
         super(&this.handle);
-
-        this.period_s = period_s;
 
         this.set(period_s, 0, period_s, 0);
     }
@@ -103,22 +92,6 @@ public abstract class IPeriodic : TimerEvent
     public void setDhtNode ( IDhtNode dht_node )
     {
         this.dht_node = dht_node;
-    }
-
-
-    /***************************************************************************
-
-        Registers this periodic with the provided epoll selector. The periodic
-        will then fire periodically, as specified in the constructor.
-
-        Params:
-            epoll = epoll selector to register with
-
-    ***************************************************************************/
-
-    public void register ( EpollSelectDispatcher epoll )
-    {
-        epoll.register(this);
     }
 
 

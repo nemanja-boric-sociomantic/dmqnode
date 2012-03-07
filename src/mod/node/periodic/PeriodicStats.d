@@ -76,9 +76,11 @@ public class PeriodicStats : IPeriodic
 
     /***************************************************************************
 
-        Log file update period (seconds)
+        Console & log file update period (seconds)
 
     ***************************************************************************/
+
+    private const console_update_time = 1;
 
     private uint log_update_time;
 
@@ -127,18 +129,18 @@ public class PeriodicStats : IPeriodic
         Constructor.
 
         Params:
-            period_s = seconds between updates of the stats log (the console
-                output is udpated every second)
+            log_update_time = seconds between updates of the stats log (the
+                console output is udpated every second)
 
     ***************************************************************************/
 
-    public this ( uint period_s )
+    public this ( uint log_update_time )
     {
-        super(1);
+        super(console_update_time);
 
         this.records_per_sec = new SlidingAverageTime!(ulong)(5, 1_000, 1_000);
 
-        this.log_update_time = period_s;
+        this.log_update_time = log_update_time;
 
         if ( MainConfig.log.stats_log_enabled )
         {
@@ -186,7 +188,7 @@ public class PeriodicStats : IPeriodic
 
         this.records_per_sec = node_info.records_handled;
 
-        for ( int i; i < this.period_s; i++ )
+        for ( int i; i < this.console_update_time; i++ )
         {
             rec_per_sec = this.records_per_sec.push;
         }
@@ -262,7 +264,7 @@ public class PeriodicStats : IPeriodic
             this.total_sent += sent;
             this.total_received += received;
 
-            this.elapsed_since_last_log_update += this.period_s;
+            this.elapsed_since_last_log_update += this.console_update_time;
 
             // Output logline when period has expired
             if ( this.elapsed_since_last_log_update >= this.log_update_time )

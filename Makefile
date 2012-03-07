@@ -2,7 +2,7 @@
 # Architecture to build for (32 or 64)
 
 # default
-ARCH := 32
+ARCH := 64
 
 
 # ------------------------------------------------------------------------------
@@ -56,9 +56,8 @@ XFBUILD_FLAGS =\
 
 # ------------------------------------------------------------------------------
 # GC to use (export is needed!)
-# Using the basic GC to avoid a blocking fork when the concurrent GC works
 
-export D_GC := basic
+export D_GC := cdgc
 
 
 # ------------------------------------------------------------------------------
@@ -78,10 +77,15 @@ RELEASE_FLAGS = ${FLAGS}\
 	-L-s
 
 DEBUG_FLAGS = ${FLAGS}\
-	-debug -gc ${UNITTESTFLAGS}
+	-debug -gc
+#${UNITTESTFLAGS}
+
+# FIXME: unittests disabled due to an unknown compiler bug which manifested in
+# the unittest of ocean.core.ObjectPool
 
 NODE_FLAGS =\
 	-L-ltokyocabinet\
+    -version=CDGC
 #    -debug=ConnectionHandler
 #   -debug=Raw
 #	-debug=ISelectClient\
