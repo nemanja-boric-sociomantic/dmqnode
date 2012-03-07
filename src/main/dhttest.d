@@ -138,7 +138,7 @@ void main ( char[][] arguments )
     else
     {
         args.displayErrors();
-        args.displayHelp(app_name);
+        args.displayHelp();
     }
 }
 
