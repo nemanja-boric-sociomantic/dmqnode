@@ -196,7 +196,7 @@ public class DhtInfo : DhtTool
         // Get node addresses/ports
         size_t longest_node_name;
 
-        foreach ( node; super.dht.nodeRegistry )
+        foreach ( node; super.dht.nodes )
         {
             this.nodes ~= NodeInfo(node.address, node.port,
                     node.hash_range_queried, node.min_hash, node.max_hash);

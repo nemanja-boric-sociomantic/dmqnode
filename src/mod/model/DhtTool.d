@@ -121,7 +121,7 @@ abstract class DhtTool
                 args.displayErrors();
             }
 
-            args.displayHelp(exe_name);
+            args.displayHelp();
 
             return false;
         }
@@ -132,7 +132,7 @@ abstract class DhtTool
         }
         else
         {
-            args.displayHelp(exe_name);
+            args.displayHelp();
 
             return false;
         }
