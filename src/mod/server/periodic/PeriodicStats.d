@@ -224,14 +224,14 @@ public class PeriodicStats : IPeriodic
                 auto mem_allocated = cast(float)(used + free) / Mb;
                 auto mem_free = cast(float)free / Mb;
 
-                StaticTrace.format("  {} dht (Used {}Mb/Free {}Mb): handling {} connections, {} records/s, {} records ({})",
+                StaticTrace.format("  {} queue (Used {}Mb/Free {}Mb): handling {} connections, {} records/s, {} records ({})",
                         node_info.storage_type, mem_allocated, mem_free,
                         node_info.num_open_connections, rec_per_sec,
                         this.records_buf, this.bytes_buf).flush;
             }
             else
             {
-                StaticTrace.format("  {} dht: handling {} connections, {} records/s, {} records ({})",
+                StaticTrace.format("  {} queue: handling {} connections, {} records/s, {} records ({})",
                         node_info.storage_type,
                         node_info.num_open_connections, rec_per_sec,
                         this.records_buf, this.bytes_buf).flush;
