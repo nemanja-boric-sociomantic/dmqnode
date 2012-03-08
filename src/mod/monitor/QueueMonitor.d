@@ -22,7 +22,7 @@ module src.mod.monitor.QueueMonitor;
 
 private import src.mod.monitor.Tables;
 
-private import ocean.core.Array : appendCopy;
+private import ocean.core.Array : appendCopy, copy;
 
 private import ocean.io.Stdout;
 
