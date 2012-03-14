@@ -144,7 +144,7 @@ public class PeriodicStats : IPeriodic
 
         if ( MainConfig.log.stats_log_enabled )
         {
-            this.log = new StatsLog!(DhtStats);
+            this.log = new StatsLog!(DhtStats)(MainConfig.log.stats);
         }
     }
 
