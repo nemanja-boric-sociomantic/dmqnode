@@ -12,9 +12,9 @@
     <Compiler>DMD</Compiler>
     <Includes>
       <Includes>
-        <Path>/home/gavin/workspace/tango</Path>
-        <Path>/home/gavin/workspace/swarm</Path>
-        <Path>/home/gavin/workspace/ocean</Path>
+        <Path>../tango</Path>
+        <Path>../swarm</Path>
+        <Path>../ocean</Path>
       </Includes>
     </Includes>
     <PreferOneStepBuild>true</PreferOneStepBuild>
