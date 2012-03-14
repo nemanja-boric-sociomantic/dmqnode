@@ -56,7 +56,7 @@ private import ocean.util.log.Trace;
 
 private import ocean.util.OceanException;
 
-private import tango.stdc.posix.signal: SIGINT;
+private import tango.stdc.posix.signal: SIGINT, SIGTERM, SIGQUIT;
 
 
 
@@ -88,7 +88,7 @@ public class DhtNodeServer
 
     /***************************************************************************
     
-        SIGINT handler event
+        SIGINT, TERM and QUIT handler event
 
     ***************************************************************************/
 
@@ -122,7 +122,8 @@ public class DhtNodeServer
 
         this.node.error_callback = &this.nodeError;
 
-        this.sigint_event = new SignalEvent(&this.sigintHandler, [SIGINT]);
+        this.sigint_event = new SignalEvent(&this.sigintHandler,
+            [SIGINT, SIGTERM, SIGQUIT]);
 
         this.periodics = new Periodics(this.node);
         this.periodics.add(new PeriodicMaintenance(
@@ -259,7 +260,7 @@ public class DhtNodeServer
 
     /***************************************************************************
 
-        SIGINT handler.
+        SIGINT, TERM and QUIT handler.
 
         Firstly unregisters all periodics. (Any periodics which are about to
         fire in epoll will still fire, but the setting of the 'terminating' flag
