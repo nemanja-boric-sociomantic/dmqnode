@@ -207,7 +207,7 @@ public struct NodeInfo
 
     public size_t rangeLength ( )
     {
-        return 24;
+        return 24; // TODO: phrase in terms of hash_t.sizeof
     }
 
 
