@@ -107,7 +107,7 @@ TCM_SPLIT_FLAGS =\
 
 .PHONY: revision node info test cli performance
 
-default: node test info
+default: node test
 all: default
 
 

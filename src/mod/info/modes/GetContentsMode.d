@@ -95,6 +95,8 @@ class GetContentsMode : IMode
 
         if (reapeat == false)
         {
+            this.channel_names.length = 0;
+            this.longest_channel_name = 0;
             this.wrapper.dht.assign(this.wrapper.dht.getChannels(
                     &this.channelNamesCallback, this.notifier));
 
