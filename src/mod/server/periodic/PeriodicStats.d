@@ -105,7 +105,6 @@ public class PeriodicStats : IPeriodic
     private ulong total_received;
 
 
-
     /***************************************************************************
 
         Average records per second counter
@@ -122,6 +121,25 @@ public class PeriodicStats : IPeriodic
     ***************************************************************************/
 
     private char[] records_buf, bytes_buf;
+
+
+    /***************************************************************************
+
+        Channel sizes string buffer for console output.
+
+    ***************************************************************************/
+
+    private char[] channel_sizes_buf;
+
+
+    /***************************************************************************
+
+        Associative array of channel sizes (in terms of % full) indexed by name,
+        for stats log output.
+
+    ***************************************************************************/
+
+    private float[char[]] channel_sizes;
 
 
     /***************************************************************************
@@ -212,6 +230,8 @@ public class PeriodicStats : IPeriodic
         {
             auto node_info = cast(IQueueNodeInfo)this.node;
 
+            auto channels_string = this.channelSizesString(node_info);
+
             DigitGrouping.format(node_info.num_records, this.records_buf);
             BitGrouping.format(node_info.num_bytes, this.bytes_buf, "b");
 
@@ -224,17 +244,17 @@ public class PeriodicStats : IPeriodic
                 auto mem_allocated = cast(float)(used + free) / Mb;
                 auto mem_free = cast(float)free / Mb;
 
-                StaticTrace.format("  {} queue (Used {}Mb/Free {}Mb): handling {} connections, {} records/s, {} records ({})",
+                StaticTrace.format("  {} queue (Used {}Mb/Free {}Mb): handling {} connections, {} records/s, {} records ({}){}",
                         node_info.storage_type, mem_allocated, mem_free,
                         node_info.num_open_connections, rec_per_sec,
-                        this.records_buf, this.bytes_buf).flush;
+                        this.records_buf, this.bytes_buf, channels_string).flush;
             }
             else
             {
-                StaticTrace.format("  {} queue: handling {} connections, {} records/s, {} records ({})",
+                StaticTrace.format("  {} queue: handling {} connections, {} records/s, {} records ({}){}",
                         node_info.storage_type,
                         node_info.num_open_connections, rec_per_sec,
-                        this.records_buf, this.bytes_buf).flush;
+                        this.records_buf, this.bytes_buf, channels_string).flush;
             }
         }
     }
@@ -283,12 +303,60 @@ public class PeriodicStats : IPeriodic
                 stats.handling_connections = node_info.num_open_connections;
                 stats.records_per_sec = rec_per_sec;
 
-                this.log.write(stats);
+                this.updateChannelSizes(node_info);
+                this.log.writeExtra(stats, this.channel_sizes);
 
                 this.elapsed_since_last_log_update -= this.elapsed_since_last_log_update;
                 this.total_sent = 0;
                 this.total_received = 0;
             }
+        }
+    }
+
+
+    /***************************************************************************
+
+        Formats the current size of each channel (in terms of % full) into the
+        channel_sizes_buf member. Used by the console output.
+
+        Params:
+            node_info = node information interface
+
+    ***************************************************************************/
+
+    private char[] channelSizesString ( IQueueNodeInfo node_info )
+    {
+        this.channel_sizes_buf.length = 0;
+
+        foreach ( channel_info; node_info )
+        {
+            auto percent = (cast(float)channel_info.num_bytes /
+                            cast(float)node_info.channelSizeLimit) * 100.0;
+            Layout!(char).print(this.channel_sizes_buf, ", {}: {}%",
+                channel_info.id, percent);
+        }
+
+        return this.channel_sizes_buf;
+    }
+
+
+    /***************************************************************************
+
+        Updates the channel_sizes associative array with the current size of
+        each channel (in terms of % full). Used by the stats log output.
+
+        Params:
+            node_info = node information interface
+
+    ***************************************************************************/
+
+    private void updateChannelSizes ( IQueueNodeInfo node_info )
+    {
+        foreach ( channel_info; node_info )
+        {
+            auto percent = (cast(float)channel_info.num_bytes /
+                            cast(float)node_info.channelSizeLimit) * 100.0;
+            this.channel_sizes[channel_info.id] = percent;
         }
     }
 }
