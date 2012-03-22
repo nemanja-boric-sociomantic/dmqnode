@@ -67,6 +67,16 @@ public struct NodeInfo
     
     public size_t connections;
     
+	
+	/***************************************************************************
+    
+        The time taken by the node to complete the last query.
+    
+    ***************************************************************************/
+    
+    public ulong query_time;
+    
+	
     
     /***************************************************************************
     
@@ -175,27 +185,27 @@ public struct NodeInfo
     }
     
     
-    /***************************************************************************
-    
-        Formats the provided string with the hash range of this node.
-
-        Params:
-            name = string to receive node name
-
-    ***************************************************************************/
-
-    public void range ( ref char[] buf )
-    {
-        buf.length = 0;
-    
-        uint layoutSink ( char[] str )
-        {
-            buf.append(str);
-            return str.length;
-        }
-        
-        Layout!(char).instance().convert(&layoutSink, "0x{:x8} .. 0x{:x8}", this.min_hash, this.max_hash);
-    }
+//    /***************************************************************************
+//
+//        Formats the provided string with the hash range of this node.
+//
+//        Params:
+//            name = string to receive node name
+//
+//    ***************************************************************************/
+//
+//    public void range ( ref char[] buf )
+//    {
+//        buf.length = 0;
+//    
+//        uint layoutSink ( char[] str )
+//        {
+//            buf.append(str);
+//            return str.length;
+//        }
+//
+//        Layout!(char).instance().convert(&layoutSink, "0x{:x8} .. 0x{:x8}", this.min_hash, this.max_hash);
+//    }
 
     
     /***************************************************************************
@@ -225,6 +235,34 @@ public struct NodeInfo
     static public void formatName ( char[] address, ushort port, ref char[] name )
     {
         name.concat(address, ":", Integer.toString(port));
+    }
+
+
+
+
+    /***************************************************************************
+    
+        To be used with the ".sort" method to sort the NodeInfo list. The method
+        sorts the nodes according to their hash range.
+
+        Params:
+            NodeInfo = the other node being compared.
+
+        Returns:
+            -1 if this node's hash range is less.
+             0 if the hash ranges are equal.
+             1 if this node's hash range is bigger.
+
+    ***************************************************************************/
+
+    public int opCmp(NodeInfo node)
+    {
+        if (this.min_hash < node.min_hash)
+            return -1;
+        else if (this.min_hash > node.min_hash)
+            return 1;
+        else
+            return 0;
     }
 }
 

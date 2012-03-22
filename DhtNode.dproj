@@ -64,7 +64,6 @@
     <Compile Include="src\mod\dump\DhtDump.d" />
     <Compile Include="src\mod\importer\DhtImport.d" />
     <Compile Include="src\mod\info\DhtInfo.d" />
-    <Compile Include="src\mod\info\DhtMonitor.d" />
     <Compile Include="src\mod\info\NodeInfo.d" />
     <Compile Include="src\mod\info\Tables.d" />
     <Compile Include="src\mod\model\DhtTool.d" />
@@ -87,6 +86,13 @@
     <Compile Include="src\mod\node\periodic\PeriodicStats.d" />
     <Compile Include="src\mod\node\periodic\PeriodicMaintenance.d" />
     <Compile Include="src\mod\node\periodic\Periodics.d" />
+    <Compile Include="src\mod\info\modes\model\IMode.d" />
+    <Compile Include="src\mod\info\modes\ApiVersionMode.d" />
+    <Compile Include="src\mod\info\modes\GetContentsMode.d" />
+    <Compile Include="src\mod\info\modes\HashRangesMode.d" />
+    <Compile Include="src\mod\info\modes\MinimalMode.d" />
+    <Compile Include="src\mod\info\modes\MonitorMode.d" />
+    <Compile Include="src\mod\info\modes\NumOfConnectionsMode.d" />
   </ItemGroup>
   <ProjectExtensions>
     <MonoDevelop>
@@ -108,5 +114,7 @@
     <Folder Include="src\mod\node\periodic\" />
     <Folder Include="src\mod\node\periodic\model\" />
     <Folder Include="src\mod\node\servicethreads\model\" />
+    <Folder Include="src\mod\info\modes\" />
+    <Folder Include="src\mod\info\modes\model\" />
   </ItemGroup>
 </Project>

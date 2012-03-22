@@ -13,6 +13,7 @@
 
     Provides the following command line parameters:
         -h = display help
+        -x = the number of connection to use to connect to dht(s)
 
 *******************************************************************************/
 
@@ -30,11 +31,15 @@ private import ocean.io.select.EpollSelectDispatcher;
 
 private import ocean.text.Arguments : Arguments;
 
+private import ocean.core.Exception : assertEx;
+
 private import swarm.dht.DhtClient,
                swarm.dht.DhtHash,
                swarm.dht.DhtConst;
 
 private import tango.io.Stdout;
+
+
 
 
 
@@ -44,30 +49,13 @@ private import tango.io.Stdout;
 
 *******************************************************************************/
 
-abstract class DhtTool
+abstract class IDhtTool
 {
-    /***************************************************************************
-
-        Name of xml file which includes the dht node config
-
-    ***************************************************************************/
-
-    protected char[] dht_nodes_config;
-
-
-    /***************************************************************************
-
-        Flag indicating whether a dht error has occurred
-    
-    ***************************************************************************/
-
-    protected bool dht_error;
-
 
     /***************************************************************************
 
         Epoll selector instance
-    
+
     ***************************************************************************/
 
     protected EpollSelectDispatcher epoll;
@@ -75,20 +63,22 @@ abstract class DhtTool
 
     /***************************************************************************
 
-        Dht client instance
-    
+        Number of client connections to each dht node
+
     ***************************************************************************/
 
-    protected DhtClient dht;
+    protected uint connections;
+
 
 
     /***************************************************************************
 
-        Number of client connections to each dht node
-    
+        Flag indicating whether a dht error has occurred
+
     ***************************************************************************/
 
-    protected uint connections;
+    protected bool dht_error;
+
 
 
     /***************************************************************************
@@ -109,7 +99,8 @@ abstract class DhtTool
 
     ***************************************************************************/
 
-    final public bool parseArgs ( char[] exe_name, Arguments args, char[][] arguments )
+    final public bool parseArgs ( char[] exe_name, Arguments args,
+                                    char[][] arguments )
     {
         this.addArgs(args);
 
@@ -139,81 +130,70 @@ abstract class DhtTool
     }
 
 
+
+
     /***************************************************************************
 
-        Main process method. Runs the tool based on the passed command line
-        arguments. Reads command line args, sets up the dht client, then calls
-        the abstract process_(), which must be implemented by deriving classes.
-        Finally, calls the finished() method.
+        Reads the tool's settings from validated command line arguments. The
+        base class' arguments (see module header) are read by the readArgs()
+        method. Derived classes should override this method to read any
+        additional arguments.
+
+        Params:
+            args = arguments object to read
+
+    ***************************************************************************/
+
+    protected void readArgs ( Arguments args )
+    in
+    {
+        assert(this.validArgs(args),
+            typeof(this).stringof ~ ".readArgs_: invalid arguments");
+    }
+    body
+    {
+        this.connections = args.getInt!(uint)("connections");
+        this.readArgs_(args);
+    }
+
+
+    abstract protected void readArgs_ ( Arguments args );
+
+
+
+    /***************************************************************************
+
+        Sets up the list of handled command line arguments. This method sets up
+        only the base class' arguments (see module header), then calls the
+        addArgs_() method to set up any additional command line arguments
+        required by the derived class.
 
         Params:
             args = arguments object
 
     ***************************************************************************/
-    
-    final public void run ( Arguments args )
-    in
+
+    protected void addArgs ( Arguments args )
     {
-        assert(this.validArgs(args), typeof(this).stringof ~ ".process -- invalid arguments");
+        args("connections").aliased('x').params(1).defaults("10").help("number of connections to each node in the dht");
+        args("help").aliased('?').aliased('h').help("display this help");
+        this.addArgs_(args);
     }
-    body
-    {
-        this.readArgs(args);
 
-        assert(this.dht_nodes_config.length, typeof(this).stringof ~ ".process -- no xml node config file");
-
-        this.epoll = new EpollSelectDispatcher;
-
-        this.dht = this.initDhtClient(this.dht_nodes_config);
-
-        this.init();
-
-        this.process_();
-
-        this.finished();
-    }
 
 
     /***************************************************************************
 
-        Implementation dependent process method.
+        Sets up the list of command line arguments handled by the derived class.
+        The base class' arguments are set up by the addArgs() method. Derived
+        classes should override this method to add any additional arguments.
 
         Params:
-            dht = dht client to use
+            args = arguments object
 
     ***************************************************************************/
 
-    abstract protected void process_ (  );
-
-
-    /***************************************************************************
-
-        Called before processing (in the process() method, above). The base
-        class implementation does nothing, but derived classes may wish to add
-        behaviour at this point.
-    
-        Params:
-            dht = dht client
-    
-    ***************************************************************************/
-    
-    protected void init (  )
-    {
-    }
-
-
-    /***************************************************************************
-
-        Called at the end of processing (in the process() method, above). The
-        base class implementation does nothing, but derived classes may wish to
-        add behaviour at this point.
-
-        Params:
-            dht = dht client
-
-    ***************************************************************************/
-
-    protected void finished (  )
+    protected void addArgs_ ( Arguments args )
     {
     }
 
@@ -236,7 +216,8 @@ abstract class DhtTool
     {
         if ( args.getInt!(uint)("connections") > 0 )
         {
-            Stderr.formatln("Tool cannot function with 0 connections per dht node");
+            Stderr.formatln("Tool cannot function with 0"
+                            " connections per dht node");
             return false;
         }
 
@@ -246,66 +227,96 @@ abstract class DhtTool
 
     /***************************************************************************
 
-        Reads the tool's settings from validated command line arguments. The
-        base class' arguments (see module header) are read by the readArgs()
-        method. Derived classes should override this method to read any
-        additional arguments.
+        Main process method. Runs the tool based on the passed command line
+        arguments. Reads command line args, sets up the dht client, then calls
+        the abstract process_(), which must be implemented by deriving classes.
+        Finally, calls the finished() method.
 
         Params:
-            args = arguments object to read
-    
+            args = arguments object
+
     ***************************************************************************/
-    
-    final protected void readArgs ( Arguments args )
+
+    final public void run ( Arguments args )
     in
     {
-        assert(this.validArgs(args), typeof(this).stringof ~ ".readArgs_: invalid arguments");
+        assert(this.validArgs(args),
+            typeof(this).stringof ~ ".process -- invalid arguments");
     }
     body
     {
-        this.connections = args.getInt!(uint)("connections");
+        this.readArgs(args);
 
-        this.readArgs_(args);
-    }
+        this.epoll = new EpollSelectDispatcher;
 
-    abstract protected void readArgs_ ( Arguments args );
+        this.initDhts();
 
+        this.init();
 
-    /***************************************************************************
+        this.process_();
 
-        Sets up the list of handled command line arguments. This method sets up
-        only the base class' arguments (see module header), then calls the
-        addArgs_() method to set up any additional command line arguments
-        required by the derived class.
-
-        Params:
-            args = arguments object
-    
-    ***************************************************************************/
-
-    private void addArgs ( Arguments args )
-    {
-        args("help").aliased('?').aliased('h').help("display this help");
-        args("connections").aliased('x').params(1).defaults("10").help("number of connections to each node in the dht");
-
-        this.addArgs_(args);
+        this.finished();
     }
 
 
     /***************************************************************************
 
-        Sets up the list of command line arguments handled by the derived class.
-        The base class' arguments are set up by the addArgs() method. Derived
-        classes should override this method to add any additional arguments.
-    
-        Params:
-            args = arguments object
-    
+        While the initDhtClient() method performs the actual DhtNode
+        initialization, however it performs that for just a single DhtNode.
+        This method on the other hand should be overrided to define how many
+        DhtClients are required (i.e. you should override this method and call
+        inside it initDhtClient() as many as how many Dhts you have).
+
     ***************************************************************************/
 
-    protected void addArgs_ ( Arguments args )
+    abstract protected void initDhts ();
+
+
+
+    /***************************************************************************
+
+        Implementation dependent process method.
+
+        Params:
+            dht = dht client to use
+
+    ***************************************************************************/
+
+    abstract protected void process_ (  );
+
+
+    /***************************************************************************
+
+        Called before processing (in the process() method, above). The base
+        class implementation does nothing, but derived classes may wish to add
+        behaviour at this point.
+
+        Params:
+            dht = dht client
+
+    ***************************************************************************/
+
+    protected void init (  )
     {
     }
+
+
+    /***************************************************************************
+
+        Called at the end of processing (in the process() method, above). The
+        base class implementation does nothing, but derived classes may wish to
+        add behaviour at this point.
+
+        Params:
+            dht = dht client
+
+    ***************************************************************************/
+
+    protected void finished (  )
+    {
+    }
+
+
 
 
     /***************************************************************************
@@ -324,11 +335,13 @@ abstract class DhtTool
 
     ***************************************************************************/
 
-    protected DhtClient initDhtClient ( char[] xml, uint request_queue_size = 1000 )
+    protected DhtClient initDhtClient ( char[] xml, uint connections,
+        uint request_queue_size = 1000)
     {
-        debug (DhtTool) Stderr.formatln("Initialising dht client connections from {}", xml);
+        debug (DhtTool) Stderr.formatln(
+            "Initialising dht client connections from {}", xml);
 
-        auto dht = new DhtClient(this.epoll, this.connections, request_queue_size);
+        auto dht = new DhtClient(this.epoll, connections, request_queue_size);
 
         dht.addNodes(xml);
 
@@ -344,26 +357,13 @@ abstract class DhtTool
 
         if ( this.strictHandshake )
         {
-            assert(!this.dht_error, typeof(this).stringof ~ ".initDhtClient - error during dht client initialisation of " ~ xml);
+            assertEx(!this.dht_error, typeof(this).stringof ~ ".initDhtClient - "
+                "error during dht client initialisation of " ~ xml);
         }
 
         debug (DhtTool) Stderr.formatln("Dht client connections initialised");
 
         return dht;
-    }
-
-
-    /***************************************************************************
-
-        Returns:
-            true if the tool should fail if any errors occur during node
-            handshake
-
-    ***************************************************************************/
-
-    protected bool strictHandshake ( )
-    {
-        return true;
     }
 
 
@@ -387,6 +387,20 @@ abstract class DhtTool
     }
 
 
+
+    /***************************************************************************
+
+        Returns:
+            true if the tool should fail if any errors occur during node
+            handshake
+
+    ***************************************************************************/
+
+    protected bool strictHandshake ( )
+    {
+        return true;
+    }
+
     /***************************************************************************
 
         Helper function to tell whether exactly one of the passed list of bools
@@ -394,10 +408,10 @@ abstract class DhtTool
 
         Params:
             bools = variadic list of bools to check
-            
+
         Returns:
             true if exactly one of the passed bools is true
-    
+
     ***************************************************************************/
 
     static protected bool oneTrue ( bool[] bools ... )
@@ -410,5 +424,102 @@ abstract class DhtTool
 
         return true_count == 1;
     }
+
+
+}
+
+
+/***************************************************************************
+
+    The class should be inherited when multiple dhts will be used.
+
+***************************************************************************/
+
+
+
+abstract class MultiDhtTool : IDhtTool
+{
+    /***************************************************************************
+
+        Names of the xml files which include the dht nodes config
+
+    ***************************************************************************/
+
+    protected char[][] dht_nodes_config;
+
+
+    /***************************************************************************
+
+        Dht clients instances
+
+    ***************************************************************************/
+
+    protected DhtClient[] dhts;
+
+
+    override protected void initDhts ()
+    {
+        foreach ( config_file; dht_nodes_config)
+        {
+            this.dhts ~= super.initDhtClient(config_file, connections);
+        }
+    }
+
+
+
+    final override protected void readArgs ( Arguments args )
+    {
+
+        super.readArgs(args);
+        assert(this.dht_nodes_config.length, typeof(this).stringof ~ ".process -- no xml node config file");
+    }
+}
+
+
+//Use SingleDhtTool class instead of the old DhtTool class.
+deprecated alias SingleDhtTool DhtTool;
+
+
+/***************************************************************************
+
+    The class should be inherited when only one dht will be used.
+
+***************************************************************************/
+
+
+abstract class SingleDhtTool : IDhtTool
+{
+    /***************************************************************************
+
+        Name of xml file which includes the dht node config
+
+    ***************************************************************************/
+
+    protected char[] dht_nodes_config;
+
+
+    /***************************************************************************
+
+        Dht client instance
+    
+    ***************************************************************************/
+
+    protected DhtClient dht;
+
+
+    override protected void initDhts ()
+    {
+        this.dht = this.initDhtClient(this.dht_nodes_config, connections);
+    }
+
+
+
+    final override protected void readArgs ( Arguments args )
+    {
+
+        super.readArgs(args);
+        assert(this.dht_nodes_config.length, typeof(this).stringof ~ ".process -- no xml node config file");
+    }
+
 }
 

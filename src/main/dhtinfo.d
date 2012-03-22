@@ -16,14 +16,25 @@
 
     Command line parameters:
         -S = dhtnodes.xml file for dht to query
+        -c = display the number of connections being handled per node
+        -p = run the mode perdiocally every x seconds where x is the value
+            pass to this flag. If not provided, then it designated mode will run
+            only once then quits.
+
+        Modes:
         -d = display the quantity of data stored in each node and each channel
         -v = verbose output, displays info per channel per node, and per node
             per channel
-        -c = display the number of connections being handled per node
         -a = display the api version of the dht nodes
         -r = display the hash ranges of the dht nodes
+        -m = display in Dhts im minimal mode.
+
+        If none of the modes flags is specified, them tje Monitor mode is used.
+        The following flags can be passed to ne ised wotj monitor mode:
         -w = width of monitor display (number of columns)
-        -m = show records and bytes as metric (K, M, G, T) in the monitor display
+        -M = show records and bytes as metric (K, M, G, T) in the monitor
+            display
+
 
 *******************************************************************************/
 
@@ -36,6 +47,7 @@ module src.main.dhtinfo;
     Imports
 
 *******************************************************************************/
+
 
 private import src.mod.info.DhtInfo;
 
@@ -60,7 +72,8 @@ void main ( char[][] arguments )
     
     // parse arguments
     scope args = new Arguments;
-    scope app = new DhtInfo;
+
+    scope app = new DhtInfo();
 
     if ( app.parseArgs(arguments[0], args, arguments[1..$]) )
     {
