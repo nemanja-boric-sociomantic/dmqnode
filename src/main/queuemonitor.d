@@ -57,9 +57,10 @@ private Arguments initArguments ( )
 {
     auto args = new Arguments;
 
-    args("source").aliased('S').required.params(1, 42).help("source folder");
+    args("source").aliased('S').required.params(1, 42).help("source .ini file");
     args("minimal").aliased('m').help("run the monitor in minimal display mode, to save screen space");
     args("periodic").aliased('p').params(1).defaults("0").help("run the monitor periodically every X seconds");
+    args("interval").aliased('i').params(1).defaults("1").help("Interval (secs) after which the app will report delayed non-responding nodes");
 
     return args;
 }

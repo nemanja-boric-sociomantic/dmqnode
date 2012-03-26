@@ -161,7 +161,7 @@ int main ( char[][] arguments )
 	    args.displayErrors();
         displayCommands();
         displayParallelOptions();
-        args.displayHelp(app_name);
+        args.displayHelp();
         return 1;
     }
     
@@ -169,7 +169,7 @@ int main ( char[][] arguments )
     {
         displayCommands();
         displayParallelOptions();
-        args.displayHelp(app_name);
+        args.displayHelp();
         return 0;
     }
     

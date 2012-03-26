@@ -62,7 +62,7 @@ void main ( char[][] arguments )
     }
     else
     {
-        args.displayHelp(app_name);
+        args.displayHelp();
     }
 }
 
