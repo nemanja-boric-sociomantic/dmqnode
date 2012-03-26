@@ -18,18 +18,26 @@
 
 *******************************************************************************/
 
-
-
-
-
 module src.mod.info.modes.MonitorMode;
 
+/*******************************************************************************
 
+    Imports
+
+*******************************************************************************/
+
+private import src.mod.info.modes.model.IMode;
+
+private import src.mod.info.NodeInfo;
+
+private import src.mod.info.Tables;
 
 private import tango.core.Array : contains;
 
 private import Integer = tango.text.convert.Integer;
 
+
+private import swarm.dht.DhtClient;
 
 
 private import ocean.core.Array : appendCopy;
@@ -39,52 +47,43 @@ private import ocean.io.Stdout;
 private import ocean.text.convert.Layout;
 
 
-private import swarm.dht.DhtClient;
-
-
-
-private import src.mod.info.modes.model.IMode;
-
-private import src.mod.info.NodeInfo;
-
-private import src.mod.info.Tables;
-
-
-
-
 class MonitorMode : IMode
 {
    /***************************************************************************
 
-    Signals whether the internnal state of whether we need another iteration.
+        Signals whether the internnal state of whether we need another iteration
 
     ***************************************************************************/
 
     private bool reapeat = false;
 
+
     /***************************************************************************
 
-    Used for print formatting purposes.
+        Used for print formatting purposes.
 
     ***************************************************************************/
 
     private size_t longest_channel_name;
 
+
     /***************************************************************************
 
-    Holds the names of the DHT channel names.
+        Holds the names of the DHT channel names.
 
     ***************************************************************************/
 
     private char[][] channel_names;
 
+
     /***************************************************************************
 
-    Used to draw a table.
+        Used to draw a table.
 
     ***************************************************************************/
 
     private Table table;
+
 
     /***************************************************************************
 
@@ -104,8 +103,7 @@ class MonitorMode : IMode
     private bool metric;
 
 
-
-    public this (DhtWrapper wrapper,
+    public this (DhtClient dht, char[] dht_id,
               DhtClient.RequestNotification.Callback notifier,
               int num_columns, bool metric)
     in
@@ -114,24 +112,27 @@ class MonitorMode : IMode
     }
     body
     {
-            super(wrapper, notifier);
+            super(dht, dht_id, notifier);
 
             this.table = new Table();
             this.num_columns = num_columns;
             this.metric = metric;
-
     }
 
 
     public bool run ()
     {
+        foreach (ref node; this.nodes)
+        {
+            node.responded = false;
+        }
 
         if (reapeat == false)
         {
             channel_names.length = 0;
             longest_channel_name = 0;
-            this.wrapper.dht.assign(this.wrapper.dht.getChannels(
-                    &this.channelNamesCallback, this.notifier));
+            this.dht.assign(this.dht.getChannels( &this.channelNamesCallback,
+                                                &this.local_notifier));
 
             this.reapeat = true;
         }
@@ -142,21 +143,15 @@ class MonitorMode : IMode
             // Get channel size info
             foreach ( channel; this.channel_names )
             {
-                this.wrapper.dht.assign(
-                    this.wrapper.dht.getChannelSize(channel,
-                                                   &this.channelSizeCallback,
-                                                   this.notifier));
+                this.dht.assign( this.dht.getChannelSize(channel,
+                                                    &this.channelSizeCallback,
+                                                    &this.local_notifier));
             }
             this.reapeat = false;
         }
 
-
-
         return this.reapeat;
     }
-
-
-
 
 
     void channelNamesCallback ( DhtClient.RequestContext context,
@@ -173,12 +168,11 @@ class MonitorMode : IMode
     }
 
 
-
     private void channelSizeCallback ( DhtClient.RequestContext context,
                                 char[] address, ushort port, char[] channel,
                                 ulong records, ulong bytes )
     {
-        auto node = this.wrapper.findNode(address, port);
+        auto node = this.findNode(address, port);
         if ( !node )
         {
             Stderr.formatln("Node mismatch");
@@ -194,7 +188,7 @@ class MonitorMode : IMode
     {
         NodeInfo*[][] node_chunks;
 
-        this.wrapper.nodes.sort;
+        this.nodes.sort;
 
         size_t consumed;
         do
@@ -202,14 +196,14 @@ class MonitorMode : IMode
             node_chunks.length = node_chunks.length + 1;
             for ( size_t i; i < num_columns; i++ )
             {
-                if ( consumed + i < this.wrapper.nodes.length )
+                if ( consumed + i < this.nodes.length )
                 {
-                    node_chunks[$-1] ~= &this.wrapper.nodes[consumed + i];
+                    node_chunks[$-1] ~= &this.nodes[consumed + i];
                 }
             }
             consumed += num_columns;
         }
-        while ( consumed < this.wrapper.nodes.length );
+        while ( consumed < this.nodes.length );
 
         foreach ( chunk; node_chunks )
         {

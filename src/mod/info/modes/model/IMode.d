@@ -23,13 +23,15 @@
 
 module src.mod.info.modes.model.IMode;
 
+/*******************************************************************************
+
+    Imports
+
+*******************************************************************************/
 
 private import src.mod.info.NodeInfo;
 
-
-
 private import swarm.dht.DhtClient;
-
 
 
 /*******************************************************************************
@@ -42,33 +44,91 @@ private import swarm.dht.DhtClient;
 
 public abstract class IMode
 {
-
     /***************************************************************************
 
-    Refers to the DHT and it's nodes that the display mode should handle.
-
-    ***************************************************************************/
-
-    protected DhtWrapper wrapper;
-
-
-    /***************************************************************************
-
-    Refers to error back delegate that should recieve all the errors. The value
-    of this variable (i.e. the delegate) is passed to this class's constructor
-    during the class instantiation.
+        Refers to error back delegate that should recieve all the errors. The
+        value of this variable (i.e. the delegate) is passed to this class's
+        constructor during the class instantiation.
 
     ***************************************************************************/
 
     protected DhtClient.RequestNotification.Callback notifier;
 
 
-    public this (DhtWrapper wrapper,
-              DhtClient.RequestNotification.Callback notifier)
+    /***************************************************************************
+
+    The dht client that is being used.
+
+    ***************************************************************************/
+
+    protected DhtClient dht;
+
+    /***************************************************************************
+
+        The dht nodes in the format of a NodeInfo array.
+
+    ***************************************************************************/
+
+
+    protected NodeInfo[] nodes;
+
+    /***************************************************************************
+
+        The id string that should be used to refer to this dht in printing
+        information.
+
+    ***************************************************************************/
+
+    protected char[] dht_id;
+
+
+    /***************************************************************************
+
+        Holds the longes node name's length.
+
+    ***************************************************************************/
+
+    private int longest_node_name;
+
+
+    /***************************************************************************
+
+        The constructor just assigns the parameter to the local class variables
+        and fill up the local NodesInfo with the DhtClient nodes.
+
+        Params:
+            wrapper = The dht wrapper for the dht that the display-mode
+            will handle.
+
+            notifier = The global notifer that the dht.assign delegate
+            notification (which is loca_notifer() delegate in this class) will
+            pass data to after the local_notifier handles it first.
+
+    ***************************************************************************/
+
+    public this (DhtClient dht, char[] dht_id,
+                 DhtClient.RequestNotification.Callback notifier)
     {
-            this.wrapper = wrapper;
-            this.notifier = notifier;
+        this.dht = dht;
+        this.notifier = notifier;
+
+        foreach ( dht_node; dht.nodes )
+        {
+            auto node = NodeInfo(dht_node.address, dht_node.port,
+                    dht_node.hash_range_queried, dht_node.min_hash,
+                    dht_node.max_hash);
+
+            this.nodes ~= node;
+
+            if ( node.nameLength() > this.longest_node_name )
+            {
+                this.longest_node_name = node.nameLength();
+            }
+        }
+
+        this.dht_id = dht_id;
     }
+
 
     /***************************************************************************
 
@@ -87,8 +147,7 @@ public abstract class IMode
         The callbacks will be called when the control return to the event-loop
         but before the display method is called.
 
-        Returns:
-          bool repeat:
+        Returns:s
             The method should return true if it's operations depends on several
             consequent dependent calls, in that case returning true will signal
             to the event loop that this class instance still have more
@@ -114,6 +173,7 @@ public abstract class IMode
 
 	public abstract bool run ();
 
+
     /***************************************************************************
 
         This method is called after the run method and it's callbacks are
@@ -121,56 +181,83 @@ public abstract class IMode
         required format.
 
         Params:
-            longest_node_name:
-                It's the size of the longest node name across
+            longest_node_name = It's the size of the longest node name across
                 all the dhts and not just this dht.
-    ***************************************************************************/
 
+    ***************************************************************************/
 	
 	public abstract void display (size_t longest_node_name);
-}
 
 
+    /***************************************************************************
 
+        The method returns the nodes that hasn't finished yet, if all finished
+        then an empty list is returned.
 
-/***************************************************************************
-
-    The wrapper encapsulates the most common dht-client data that
-    all the IModes child classes use.
-
-***************************************************************************/
-
-public struct DhtWrapper
-{
-   /***************************************************************************
-
-    The dht client that is being used.
+        Return:
+            The nodes that hasn't responded yet.
 
     ***************************************************************************/
 
-   public DhtClient dht;
+ 
+    public NodeInfo[] whoDidntFinish ()
+    {
+        NodeInfo[] suspects;
+        foreach (node; this.nodes)
+        {
+            if (!node.responded)
+            {
+                suspects ~= node;
+                
+            }
+        }
+        return suspects;
+    }
 
-   /***************************************************************************
 
-    The dht nodes in the format of a NodeInfo array.
+    /***************************************************************************
+
+        Returns the id of the DHT that this mode is handling.
+
+        Return:
+            The dht id.
 
     ***************************************************************************/
 
+    public char[] getDhtId()
+    {
+        return this.dht_id;
+    }
 
-   public NodeInfo[] nodes;
 
-   /***************************************************************************
+    /***************************************************************************
 
-    The id string that should be used to refer to this dht in printing
-    information.
+        A DHT.assign callback. It counts the number of nodes that has responded,
+        afterwards it passes the callback struct info to the global notifier
+        that has been passed to this instance on it's creation.
+
+
+        Params:
+            info = The notification struct
 
     ***************************************************************************/
 
-   public char[] dht_id;
+    private void local_notifier( DhtClient.RequestNotification info )
+    {
+        if ( info.type == info.type.Finished )
+        {
+            auto node = this.findNode(info.nodeitem.Address,
+                                                info.nodeitem.Port);
+
+            node.responded = true;;
+        }
+        this.notifier(info);
+
+    }
 
 
-   /***************************************************************************
-    
+    /***************************************************************************
+
         Finds a node matching the provided address and port in the list of
         nodes.
 
@@ -181,7 +268,7 @@ public struct DhtWrapper
         Returns:
             pointer to matched NodeInfo struct in this.nodes, may be null if no
             match found
-    
+
     ***************************************************************************/
 
     public NodeInfo* findNode ( char[] address, ushort port )
@@ -199,10 +286,26 @@ public struct DhtWrapper
 
         return found;
     }
+
+    /***************************************************************************
+
+        Returns the length of longest node name.
+
+        Params:
+            address = address to match
+            port = port to match
+
+        Returns:
+            pointer to matched NodeInfo struct in this.nodes, may be null if no
+            match found
+
+    ***************************************************************************/
+
+    public int getLongestNodeName()
+    {
+        return this.longest_node_name;
+    }
 }
-
-
-
 
 
 

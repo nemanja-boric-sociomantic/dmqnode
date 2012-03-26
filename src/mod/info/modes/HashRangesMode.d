@@ -11,35 +11,42 @@
 
 *******************************************************************************/
 
-
-
-
 module src.mod.info.modes.HashRangesMode;
 
+/*******************************************************************************
 
+    Imports
 
-private import ocean.io.Stdout;
-
-
-private import swarm.dht.DhtClient;
+*******************************************************************************/
 
 
 private import src.mod.info.modes.model.IMode;
 
+private import swarm.dht.DhtClient;
+
+private import ocean.io.Stdout;
 
 
 class HashRangesMode : IMode
 {
 
-    public this (DhtWrapper wrapper,
-              DhtClient.RequestNotification.Callback notifier)
+    public this (DhtClient dht, char[] dht_id,
+                DhtClient.RequestNotification.Callback notifier)
     {
-            super(wrapper, notifier);
+            super(dht, dht_id, notifier);
     }
 
 
     public bool run ()
     {
+        //In contrary to other display-modes classes, We will set here the
+        // nodes.responded to true as we didn't send any requests at the
+        // first place to wait responses for.
+        foreach (ref node; this.nodes)
+        {
+            node.responded = true;
+        }
+
         return false;
     }
 
@@ -55,8 +62,8 @@ class HashRangesMode : IMode
         Stdout.formatln("\nHash ranges:");
         Stdout.formatln("------------------------------------------------------------------------------");
 
-        this.wrapper.nodes.sort;
-        foreach ( i, node; this.wrapper.nodes )
+        this.nodes.sort;
+        foreach ( i, node; this.nodes )
         {
             char[] name_str;
             node.name(name_str);

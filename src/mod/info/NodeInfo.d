@@ -76,7 +76,15 @@ public struct NodeInfo
     
     public ulong query_time;
     
-	
+
+    /***************************************************************************
+
+        Flags whether this node has responded or not.
+
+    ***************************************************************************/
+
+    public ulong responded;
+
     
     /***************************************************************************
     
@@ -142,7 +150,8 @@ public struct NodeInfo
     
     ***************************************************************************/
     
-    public void getChannelSize ( char[] channel, out ulong records, out ulong bytes, out bool node_queried )
+    public void getChannelSize ( char[] channel, out ulong records,
+                            out ulong bytes, out bool node_queried )
     {
         foreach ( ch; this.channels )
         {
@@ -183,31 +192,8 @@ public struct NodeInfo
     {
         return this.address.length + 1 + Integer.toString(port).length;
     }
-    
-    
-//    /***************************************************************************
-//
-//        Formats the provided string with the hash range of this node.
-//
-//        Params:
-//            name = string to receive node name
-//
-//    ***************************************************************************/
-//
-//    public void range ( ref char[] buf )
-//    {
-//        buf.length = 0;
-//    
-//        uint layoutSink ( char[] str )
-//        {
-//            buf.append(str);
-//            return str.length;
-//        }
-//
-//        Layout!(char).instance().convert(&layoutSink, "0x{:x8} .. 0x{:x8}", this.min_hash, this.max_hash);
-//    }
 
-    
+
     /***************************************************************************
     
         Returns:
@@ -238,12 +224,10 @@ public struct NodeInfo
     }
 
 
-
-
     /***************************************************************************
     
         To be used with the ".sort" method to sort the NodeInfo list. The method
-        sorts the nodes according to their hash range.
+        sorts the nodes according to the start value of their hash ranges.
 
         Params:
             NodeInfo = the other node being compared.
@@ -258,11 +242,17 @@ public struct NodeInfo
     public int opCmp(NodeInfo node)
     {
         if (this.min_hash < node.min_hash)
+        {
             return -1;
+        }
         else if (this.min_hash > node.min_hash)
+        {
             return 1;
+        }
         else
+        {
             return 0;
+        }
     }
 }
 

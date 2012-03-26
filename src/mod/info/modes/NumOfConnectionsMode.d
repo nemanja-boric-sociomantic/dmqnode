@@ -12,9 +12,18 @@
 
 *******************************************************************************/
 
-
-
 module src.mod.info.modes.NumOfConnectionsMode;
+
+/*******************************************************************************
+
+    Imports
+
+*******************************************************************************/
+
+private import src.mod.info.modes.model.IMode;
+
+
+private import swarm.dht.DhtClient;
 
 
 private import ocean.io.Stdout;
@@ -22,29 +31,26 @@ private import ocean.io.Stdout;
 private import ocean.text.util.DigitGrouping;
 
 
-private import swarm.dht.DhtClient;
-
-
-private import src.mod.info.modes.model.IMode;
-
-
-
-
 class NumOfConnectionsMode : IMode
 {
 
-    public this (DhtWrapper wrapper,
+    public this (DhtClient dht, char[] dht_id,
               DhtClient.RequestNotification.Callback notifier)
     {
-            super(wrapper, notifier);
+            super(dht, dht_id, notifier);
     }
 
 
     public bool run ()
     {
+        foreach (ref node; this.nodes)
+        {
+            node.responded = false;
+        }
+
         // Query all nodes for their active connections
-        this.wrapper.dht.assign(this.wrapper.dht.getNumConnections(
-                &this.callback, this.notifier));
+        this.dht.assign(this.dht.getNumConnections(
+                &this.callback, &this.local_notifier));
 
         return false;
     }
@@ -53,7 +59,7 @@ class NumOfConnectionsMode : IMode
     void callback ( DhtClient.RequestContext context, char[] node_address,
                                 ushort node_port, size_t num_connections )
     {
-        auto node = this.wrapper.findNode(node_address, node_port);
+        auto node = this.findNode(node_address, node_port);
         if ( !node )
         {
             Stderr.formatln("Node mismatch");
@@ -65,7 +71,6 @@ class NumOfConnectionsMode : IMode
     }
 
 
-
     /***************************************************************************
 
         Display the output.
@@ -74,8 +79,8 @@ class NumOfConnectionsMode : IMode
 
     public void display (size_t longest_node_name )
     {
-        this.wrapper.nodes.sort;
-        foreach ( i, node; this.wrapper.nodes )
+        this.nodes.sort;
+        foreach ( i, node; this.nodes )
         {
             char[] node_name;
             node.name(node_name);

@@ -28,7 +28,7 @@
         -m = display in Dhts im minimal mode.
 
         If none of the modes flags is specified, them tje Monitor mode is used.
-        The following flags can be passed to ne ised wotj monitor mode:
+        The following flags can be passed to be used with the monitor mode:
         -w = width of monitor display (number of columns)
         -M = show records and bytes as metric (K, M, G, T) in the monitor
             display
@@ -39,6 +39,7 @@
 
 *******************************************************************************/
 
+module src.mod.info.DhtInfo;
 
 
 /*******************************************************************************
@@ -46,28 +47,6 @@
     Imports
 
 *******************************************************************************/
-
-
-module src.mod.info.DhtInfo;
-
-
-
-private import tango.core.Thread;
-
-private import tango.io.FilePath;
-
-
-
-private import ocean.core.Array : appendCopy;
-
-private import ocean.text.Arguments;
-
-private import ocean.io.Stdout;
-
-
-
-private import swarm.dht.DhtClient;
-
 
 
 private import src.mod.model.DhtTool : MultiDhtTool;
@@ -90,6 +69,26 @@ private import src.mod.info.modes.GetContentsMode;
 private import src.mod.info.modes.MonitorMode;
 
 
+private import swarm.dht.DhtClient;
+
+
+private import ocean.core.Array : appendCopy;
+
+private import ocean.text.Arguments;
+
+private import ocean.io.Stdout;
+
+private import ocean.io.select.event.TimerEvent;
+
+
+private import tango.core.Thread;
+
+private import tango.io.FilePath;
+
+private import tango.time.StopWatch;
+
+private import Integer = tango.text.convert.Integer;
+
 
 /*******************************************************************************
 
@@ -101,8 +100,6 @@ private import src.mod.info.modes.MonitorMode;
 
 class DhtInfo : MultiDhtTool
 {
-
-
     /***************************************************************************
 
         Toggle monitor display (default if no other options are specified).
@@ -141,7 +138,7 @@ class DhtInfo : MultiDhtTool
 
     /***************************************************************************
     
-    Toggle data output.
+        Toggle data output.
 
     ***************************************************************************/
     
@@ -181,7 +178,6 @@ class DhtInfo : MultiDhtTool
 
     ***************************************************************************/
 
-
     private size_t longest_node_name;
 
 
@@ -190,7 +186,6 @@ class DhtInfo : MultiDhtTool
         Memorizes the longest DHT name for display purposes.
 
     ***************************************************************************/
-
 
     private size_t longest_dht_name;
 
@@ -212,6 +207,7 @@ class DhtInfo : MultiDhtTool
 
     private char[][] dht_errors;
 
+
     /***************************************************************************
 
         Stop watch to count time elapsed since we started querying.
@@ -221,20 +217,59 @@ class DhtInfo : MultiDhtTool
     private uint periodic;
 
 
-     /***************************************************************************
+    /***************************************************************************
 
-        Tracks the nodes that are associated with each Dht.
+        Kepps tracks of all the display modes instances.
 
     ***************************************************************************/
 
-    private DhtWrapper[] dht_wrappers;
-
+    private IMode[] display_modes;
 
 
     /***************************************************************************
 
-        Main process method. Runs the tool based on the passed command line
-        arguments.
+        The thresholds (in seconds) after which the progressChecker will start
+        reporting late nodes.
+
+    ***************************************************************************/
+
+    private uint error_threshold_secs;
+
+
+    /***************************************************************************
+
+        The stopwatch to count how lond did the nodes take to responds.
+
+    ***************************************************************************/
+
+    private StopWatch sw;
+
+
+    /***************************************************************************
+
+        The interval at which the progress_checker handler will be called.
+
+    ***************************************************************************/
+
+    private uint handler_interval_msecs = 100;
+
+    /***************************************************************************
+
+        Used for formatting purposes.
+
+    ***************************************************************************/
+
+    private bool mention_once;
+
+
+    /***************************************************************************
+
+        Main process method. The method creates a DHT wrappers and the
+        appropriate display-modes. The method also contains the main event-loop.
+        The event-loop consists of two phases:
+        - The request phase where all the display-modes fire their asynchronous
+        calls to the DHT.
+        - The The display phase where all the disply-modes prints their results.
 
     ***************************************************************************/
 
@@ -245,79 +280,83 @@ class DhtInfo : MultiDhtTool
 
         foreach (i, dht; super.dhts)
         {
-            DhtWrapper wrapper;
-            wrapper.dht = dht;
+            auto dht_id = FilePath(super.dht_nodes_config[i]).name;
 
-            auto dht_file_path = FilePath(super.dht_nodes_config[i]);
-            wrapper.dht_id = dht_file_path.name;
-            this.dht_wrappers ~= wrapper;
+            if (dht_id.length > longest_dht_name)
+                longest_dht_name = dht_id.length;
 
-
-
-            if (wrapper.dht_id.length > longest_dht_name)
-                longest_dht_name = wrapper.dht_id.length;
-
-            foreach ( dht_node; dht.nodes )
-            {
-                auto node = NodeInfo(dht_node.address, dht_node.port,
-                        dht_node.hash_range_queried, dht_node.min_hash,
-                        dht_node.max_hash);
-
-                this.dht_wrappers[$-1].nodes ~= node;
-
-                auto name_len = node.nameLength(); //Re-check this line
-                if ( name_len > longest_node_name )
-                {
-                    longest_node_name = name_len;
-                }
-            }
-
-        }
-
-
-        IMode[] display_modes;
-
-        foreach (wrapper; this.dht_wrappers)
-        {
             if ( this.connections )
             {
+                auto mode = new NumOfConnectionsMode (dht, dht_id,
+                                                        &this.notifier);
+                this.display_modes ~= mode;
 
-                display_modes ~= new NumOfConnectionsMode (wrapper,
-                                                    &this.notifier);
+                if (mode.getLongestNodeName() > this.longest_node_name)
+                    this.longest_node_name = mode.getLongestNodeName();
             }
             else if (this.data)
             {
-                display_modes ~= new GetContentsMode (wrapper, &this.notifier,
-                                                        this.verbose);
+                auto mode = new GetContentsMode (dht, dht_id, &this.notifier,
+                                                this.verbose);
+                this.display_modes ~= mode;
+
+                if (mode.getLongestNodeName() > this.longest_node_name)
+                    this.longest_node_name = mode.getLongestNodeName();
             }
             else if (this.api_version)
             {
-                display_modes ~= new ApiVersionMode (wrapper, &this.notifier);
+                auto mode = new ApiVersionMode (dht, dht_id, &this.notifier);
+                this.display_modes ~= mode;
+
+                if (mode.getLongestNodeName() > this.longest_node_name)
+                    this.longest_node_name = mode.getLongestNodeName();
             }
             else if (this.hash_ranges)
             {
-                display_modes ~= new HashRangesMode (wrapper, &this.notifier);
+                auto mode = new HashRangesMode (dht, dht_id, &this.notifier);
+                this.display_modes ~= mode;
+
+                if (mode.getLongestNodeName() > this.longest_node_name)
+                    this.longest_node_name = mode.getLongestNodeName();
             }
             else if (this.monitor)
             {
-                display_modes ~= new MonitorMode(wrapper, &this.notifier,
-                    this.monitor_num_columns, this.monitor_metric_display);
+                auto mode = new MonitorMode(dht, dht_id, &this.notifier,
+                                            this.monitor_num_columns,
+                                            this.monitor_metric_display);
+                this.display_modes ~= mode;
+
+                if (mode.getLongestNodeName() > this.longest_node_name)
+                    this.longest_node_name = mode.getLongestNodeName();
             }
             else if (this.minimal)
             {
-                display_modes ~= new MinimalMode(wrapper, &this.notifier);
-                this.longest_node_name = this.longest_dht_name;
+                auto mode = new MinimalMode(dht, dht_id, &this.notifier);
+                this.display_modes ~= mode;
+
+                if (mode.getDhtId().length > this.longest_node_name)
+                    this.longest_node_name = mode.getLongestNodeName();
             }
+
         }
 
-
+        auto progress_checker = new TimerEvent (&this.progressChecker);
+        progress_checker.set(0, this.handler_interval_msecs,
+                             0, this.handler_interval_msecs);
 
         do
         {
             this.dht_errors.length = 0;
+            this.mention_once = false;
+
             bool again;
             do
             {
+
+                super.epoll.register(progress_checker);
+                sw =  StopWatch();
+                sw.start();
+
                 foreach (mode; display_modes)
                 {
                     //Note: again holds the value of just the last run.
@@ -332,8 +371,7 @@ class DhtInfo : MultiDhtTool
 
             foreach (mode; display_modes)
             {
-
-                 mode.display(longest_node_name);
+                 mode.display(this.longest_node_name);
             }
 
             this.displayErrors();
@@ -346,6 +384,99 @@ class DhtInfo : MultiDhtTool
 
     /***************************************************************************
 
+        This method is called as a callback for the Timer. It should check
+        for each DHT which nodes has finished and which hasn't yet.
+        All the nodes that exceeds a certain threshold are reported.
+
+        Return:
+            Because this method is Timer handler, it should return a boolean
+            whether it should run again after the previously set timeout (true)
+            or shouldn't run again (false).
+            The method will keep reporting that it want to run again until
+            all the nodes has replied.
+
+    ***************************************************************************/
+
+    private bool progressChecker()
+    {
+        auto timeTaken = this.sw.microsec();
+        if( timeTaken/(1000*1000) >= this.error_threshold_secs)
+        {
+            stdout.flush();
+
+            bool[] empty;
+            empty.length = this.display_modes.length;
+            foreach (i, mode; this.display_modes)
+            {
+                auto remaining = mode.whoDidntFinish();
+                if (remaining.length)
+                {
+                    if (!mention_once)
+                    {
+                        char[] header = "\aThe following is taking "
+                                        "too long to respond:";
+                        stdout.format(header);
+                        stdout.newline();
+                        mention_once = true;
+                    }
+
+                    auto secs = timeTaken / (1000*1000);
+                    int msecs = (timeTaken/1000) % 1000;
+
+                    //Many stdout.format calls to use various colors.
+                    stdout.red_bg;
+                    Stdout.format("Taking: {}.{:d3} secs",
+                                    secs, msecs);
+
+                    stdout.default_bg;
+                    Stdout.format(" -- ");
+
+                    Stdout.blue_bg;
+                    Stdout.white;
+                    stdout.format(mode.getDhtId());
+                    stdout.default_colour;
+
+                    stdout.default_bg;
+                    Stdout.format(" -- ");
+
+                    char[] line;
+                    foreach (node; remaining)
+                    {
+                        Stdout.default_bg;
+                        stdout.format(" ");
+
+                        Stdout.red_bg;
+                        stdout.format(node.address ~":" ~
+                                Integer.toString(node.port));
+
+                        Stdout.default_bg;
+                        stdout.format("");
+                    }
+
+                    stdout.newline();
+                }
+                else
+                {
+                    empty[i] = true;
+                }
+            }
+
+            foreach (entry; empty)
+            {
+                if (!entry)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        return true;
+    }
+
+    /***************************************************************************
+
         Adds command line arguments specific to this tool.
 
         Params:
@@ -355,17 +486,39 @@ class DhtInfo : MultiDhtTool
 
     override protected void addArgs_ ( Arguments args )
     {
+        //Required parameters
         args("source").params(1, 42).required().aliased('S').help("paths of dhtnodes.xml files defining dhts and their nodes to query");
-        args("data").aliased('d').help("display the quantity of data stored in each node and each channel");
-        args("verbose").aliased('v').help("verbose output, displays info per channel per node, and per node per channel");
-        args("conns").aliased('c').help("displays the number of connections being handled per node");
-        args("api").aliased('a').help("displays the api version of the dht nodes");
-        args("range").aliased('r').help("display the hash ranges of the dht nodes");
-        args("width").params(1).aliased('w').defaults("4").help("width of monitor display (number of columns)");
-        args("metric").aliased('M').help("show records and bytes as metric (K, M, G, T) in the monitor display");
-        args("minimal").aliased('m').help("run the monitor in minimal display mode, to save screen space");
+        //Display-modes
+        args("data").aliased('d').help("display the quantity of data stored in each node and each channel")
+            .conflicts("conns").conflicts("api").conflicts("range").conflicts("minimal").conflicts("width").conflicts("metric");
+
+        args("verbose").aliased('v').help("verbose output, displays info per channel per node, and per node per channel")
+            .requires("data");
+
+        args("conns").aliased('c').help("displays the number of connections being handled per node")
+            .conflicts("data").conflicts("api").conflicts("range").conflicts("minimal").conflicts("width").conflicts("metric");;
+
+        args("api").aliased('a').help("displays the api version of the dht nodes")
+            .conflicts("data").conflicts("conns").conflicts("range").conflicts("minimal").conflicts("width").conflicts("metric");
+
+        args("range").aliased('r').help("display the hash ranges of the dht nodes")
+            .conflicts("data").conflicts("conns").conflicts("api").conflicts("minimal").conflicts("width").conflicts("metric");
+
+        args("minimal").aliased('m').help("run the monitor in minimal display mode, to save screen space")
+            .conflicts("data").conflicts("conns").conflicts("api").conflicts("range").conflicts("width").conflicts("metric");
+
+        //Monitor mode optional parameters
+        args("width").params(1).aliased('w').defaults("4").help("width of monitor display (number of columns)")
+            .conflicts("data").conflicts("conns").conflicts("api").conflicts("range").conflicts("minimal");
+
+        args("metric").aliased('M').help("show records and bytes as metric (K, M, G, T) in the monitor display")
+            .conflicts("data").conflicts("conns").conflicts("api").conflicts("range").conflicts("minimal");
+
+        //Optional Glabal Parameters
         args("periodic").params(1).aliased('p').defaults("0").help("timeout period before repeating a request. "
             "If parameter value is 0 or not passed then monitoring is performed only once");
+        args("interval").params(1).aliased('i').defaults("1").help("The interval (in secs) aferwhich the "
+           "application will report that one of the node didn't answered yet.");
     }
 
 
@@ -390,10 +543,15 @@ class DhtInfo : MultiDhtTool
             return false;
         }
 
-
         if ( args.getInt!(size_t)("periodic") < 0 )
         {
             Stderr.formatln("Cannot have periodic value param < 0");
+            return false;
+        }
+
+        if ( args.getInt!(size_t)("interval") <= 0 )
+        {
+            Stderr.formatln("Cannot have checking intervals <= 0");
             return false;
         }
 
@@ -438,6 +596,8 @@ class DhtInfo : MultiDhtTool
 
         this.periodic = args.getInt!(int)("periodic");
 
+        this.error_threshold_secs = args.getInt!(int)("interval");
+
 
         if ( !this.data && !this.verbose && !this.connections && !
             this.api_version && !this.hash_ranges && !this.minimal )
@@ -469,7 +629,7 @@ class DhtInfo : MultiDhtTool
     /***************************************************************************
 
         Overridden dht error callback. Stores the error message for display
-        after processing.  The error messages are displayed all together at the
+        after processing. The error messages are displayed all together at the
         end of processing so that the normal output is still readable.
         Though it will be displayed after each iteration if periodic is used,
 
@@ -487,7 +647,6 @@ class DhtInfo : MultiDhtTool
             this.dht_errors.appendCopy(info.message);
         }
     }
-
 
 
     /***************************************************************************

@@ -15,15 +15,19 @@
 
 *******************************************************************************/
 
-
 module src.mod.info.modes.GetContentsMode;
 
+/*******************************************************************************
+
+    Imports
+
+*******************************************************************************/
 
 
-private import tango.core.Array : contains;
+private import src.mod.info.modes.model.IMode;
 
-private import Integer = tango.text.convert.Integer;
 
+private import swarm.dht.DhtClient;
 
 
 private import ocean.io.Stdout;
@@ -33,24 +37,16 @@ private import ocean.core.Array : appendCopy;
 private import ocean.text.util.DigitGrouping;
 
 
+private import tango.core.Array : contains;
 
-private import swarm.dht.DhtClient;
-
-
-
-private import src.mod.info.modes.model.IMode;
-
-
-
-
-
+private import Integer = tango.text.convert.Integer;
 
 
 class GetContentsMode : IMode
 {
     /***************************************************************************
 
-    Signals whether the internnal state of whether we need another iteration.
+        Signals whether the internnal state of whether we need another iteration
 
     ***************************************************************************/
 
@@ -58,7 +54,7 @@ class GetContentsMode : IMode
 
     /***************************************************************************
 
-    Used for print formatting purposes.
+        Used for print formatting purposes.
 
     ***************************************************************************/
 
@@ -66,7 +62,7 @@ class GetContentsMode : IMode
 
     /***************************************************************************
 
-    Holds the names of the DHT channel names.
+        Holds the names of the DHT channel names.
 
     ***************************************************************************/
 
@@ -74,31 +70,35 @@ class GetContentsMode : IMode
 
     /***************************************************************************
 
-    Flags whether the verbose mode should be used.
+        Flags whether the verbose mode should be used.
 
     ***************************************************************************/
 
     private bool verbose;
 
 
-    public this (DhtWrapper wrapper,
+    public this (DhtClient dht, char[] dht_id,
               DhtClient.RequestNotification.Callback notifier,
               bool verbose = false)
     {
-            super(wrapper, notifier);
+            super(dht, dht_id, notifier);
             this.verbose = verbose;
     }
 
 
     public bool run ()
     {
+        foreach (ref node; this.nodes)
+        {
+            node.responded = false;
+        }
 
         if (reapeat == false)
         {
             this.channel_names.length = 0;
             this.longest_channel_name = 0;
-            this.wrapper.dht.assign(this.wrapper.dht.getChannels(
-                    &this.channelNamesCallback, this.notifier));
+            this.dht.assign(this.dht.getChannels( &this.channelNamesCallback,
+                                                &this.local_notifier));
 
             this.reapeat = true;
         }
@@ -109,19 +109,15 @@ class GetContentsMode : IMode
             // Get channel size info
             foreach ( channel; this.channel_names )
             {
-                this.wrapper.dht.assign(
-                    this.wrapper.dht.getChannelSize(channel,
-                                                   &this.channelSizeCallback,
-                                                   this.notifier));
+                this.dht.assign( this.dht.getChannelSize(channel,
+                                 &this.channelSizeCallback,
+                                 &this.local_notifier));
             }
             this.reapeat = false;
         }
 
         return this.reapeat;
     }
-
-
-
 
 
     void channelNamesCallback ( DhtClient.RequestContext context,
@@ -138,12 +134,11 @@ class GetContentsMode : IMode
     }
 
 
-
     private void channelSizeCallback ( DhtClient.RequestContext context,
                                 char[] address, ushort port, char[] channel,
                                 ulong records, ulong bytes )
     {
-        auto node = this.wrapper.findNode(address, port);
+        auto node = this.findNode(address, port);
         if ( !node )
         {
             Stderr.formatln("Node mismatch");
@@ -154,6 +149,7 @@ class GetContentsMode : IMode
         }
 
     }
+
 
     /***************************************************************************
 
@@ -167,7 +163,7 @@ class GetContentsMode : IMode
     public void display ( size_t longest_node_name )
     {
 
-        this.wrapper.nodes.sort;
+        this.nodes.sort;
         Stdout.flush();
 
         // Display channels
@@ -181,7 +177,7 @@ class GetContentsMode : IMode
                 Stdout.formatln("Channel {}: {}:", i, channel);
 
                 ulong channel_records, channel_bytes;
-                foreach ( j, node; this.wrapper.nodes )
+                foreach ( j, node; this.nodes )
                 {
                     ulong records, bytes;
                     bool node_queried;
@@ -205,7 +201,7 @@ class GetContentsMode : IMode
             foreach ( i, channel; this.channel_names )
             {
                 ulong records, bytes;
-                foreach ( node; this.wrapper.nodes )
+                foreach ( node; this.nodes )
                 {
                     ulong channel_records, channel_bytes;
                     bool node_queried;
@@ -226,7 +222,7 @@ class GetContentsMode : IMode
 
         if ( this.verbose )
         {
-            foreach ( i, node; this.wrapper.nodes )
+            foreach ( i, node; this.nodes )
             {
                 char[] node_name;
                 node.name(node_name);
@@ -257,7 +253,7 @@ class GetContentsMode : IMode
         }
         else
         {
-            foreach ( i, node; this.wrapper.nodes )
+            foreach ( i, node; this.nodes )
             {
                 ulong records, bytes;
                 auto node_queried = node.channels.length > 0;
@@ -276,8 +272,6 @@ class GetContentsMode : IMode
             }
         }
     }
-
-
 
 
     /***************************************************************************

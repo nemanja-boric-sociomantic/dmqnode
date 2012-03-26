@@ -12,9 +12,13 @@
 
 *******************************************************************************/
 
-
-
 module src.mod.info.modes.ApiVersionMode;
+
+/*******************************************************************************
+
+    Imports
+
+*******************************************************************************/
 
 
 private import tango.core.Array : contains;
@@ -33,41 +37,45 @@ private import swarm.dht.DhtClient;
 private import src.mod.info.modes.model.IMode;
 
 
-
-
 class ApiVersionMode : IMode
 {
     /***************************************************************************
 
-    Acts as a buffer for all the text the will be printed.
+        Acts as a buffer for all the text the will be printed.
 
     ***************************************************************************/
 
     private char[] final_string;
 
+
     /***************************************************************************
 
-    Holds the API version of each node.
+        Holds the API version of each node.
 
     ***************************************************************************/
 
     private char[][] nodes_versions;
 
-    public this (DhtWrapper wrapper,
+
+    public this (DhtClient dht, char[] dht_id,
               DhtClient.RequestNotification.Callback notifier)
     {
-            super(wrapper, notifier);
+            super(dht, dht_id, notifier);
     }
 
 
     public bool run ()
     {
+        foreach (ref node; this.nodes)
+        {
+            node.responded = false;
+        }
+
         // Query all nodes for their active connections
-        this.wrapper.dht.assign(this.wrapper.dht.getVersion(
-                &this.callback, this.notifier));
+        this.dht.assign(this.dht.getVersion(&this.callback,
+                                            &this.local_notifier));
         return false;
     }
-
 
 
     void callback ( DhtClient.RequestContext context, char[] address,
@@ -79,7 +87,9 @@ class ApiVersionMode : IMode
                                             address, port, api_version );
             if (this.nodes_versions.length &&
                 !this.nodes_versions.contains(api_version))
-                    Layout!(char).print(this.final_string, "\t NODE MISMATCH");
+            {
+                Layout!(char).print(this.final_string, "\t NODE MISMATCH");
+            }
             Layout!(char).print(this.final_string, "\n");
 
             this.nodes_versions.appendCopy(api_version);

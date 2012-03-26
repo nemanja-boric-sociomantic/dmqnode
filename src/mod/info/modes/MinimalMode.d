@@ -20,92 +20,98 @@
 
 *******************************************************************************/
 
-
 module src.mod.info.modes.MinimalMode;
 
+/*******************************************************************************
+
+    Imports
+
+*******************************************************************************/
+
+private import src.mod.info.modes.model.IMode;
+
+private import swarm.dht.DhtClient;
+
+private import ocean.io.Stdout;
 
 private import tango.time.StopWatch;
 
 
-private import ocean.io.Stdout;
-
-private import swarm.dht.DhtClient;
-
-
-private import src.mod.info.modes.model.IMode;
-
-
-
-
-
 class MinimalMode : IMode
 {
-
     /***************************************************************************
 
-    The stopwatch is used to monitor how long did a given dht request take
-    to respond back.
+        The stopwatch is used to monitor how long did a given dht request take
+        to respond back.
 
     ***************************************************************************/
 
-    public StopWatch sw;
+    private StopWatch sw;
+
 
     /***************************************************************************
 
-    Used for display formatting purposes.
+        Used for display formatting purposes.
 
     ***************************************************************************/
 
     private char[] padding;
 
+
     /***************************************************************************
 
-    Counts the number of nodes that has responded.
+        Counts the number of nodes that has responded.
 
     ***************************************************************************/
 
     private uint responded;
 
+
     /***************************************************************************
 
-    Holds the total number of connections that all the nodes have.
+        Holds the total number of connections that all the nodes have.
 
     ***************************************************************************/
 
     private uint connections;
 
+
     /***************************************************************************
 
-    Hold the longest time that a node has taken to respond.
+        Holds the longest time that a node has taken to respond.
 
     ***************************************************************************/
 
     private ulong end_time;
 
 
-    public this (DhtWrapper wrapper,
+    public this (DhtClient dht, char[] dht_id,
                 DhtClient.RequestNotification.Callback notifier)
     {
-            super(wrapper, notifier);
-            sw = StopWatch();
+            super(dht, dht_id, notifier);
     }
 
 
     public bool run ()
     {
-        sw.start();
+        foreach (ref node; this.nodes)
+        {
+            node.responded = false;
+        }
+
         this.responded = 0;
         this.connections = 0;
 
-        this.wrapper.dht.assign(this.wrapper.dht.getNumConnections(
-                                &this.getNumConnsCb, this.notifier));
+        sw.start();
+        this.dht.assign(this.dht.getNumConnections( &this.getNumConnsCb,
+                                                    &this.local_notifier));
 
         return false;
     }
 
 
     private void getNumConnsCb ( DhtClient.RequestContext,
-                            char[], ushort, size_t conns )
+                                char[] address, ushort port, size_t conns )
     {
         this.end_time = sw.microsec;
 
@@ -114,18 +120,16 @@ class MinimalMode : IMode
     }
 
 
-
-
     public void display ( size_t longest_dht_name )
     {
         padding.length =
-            longest_dht_name - this.wrapper.dht_id.length;
+            longest_dht_name - this.getDhtId().length;
         padding[] = ' ';
 
         Stdout.magenta.bold;
-        Stdout.format("{}{}: ", padding, this.wrapper.dht_id);
+        Stdout.format("{}{}: ", padding, this.dht_id);
         Stdout.default_colour.bold(false);
-        if ( this.responded == this.wrapper.dht.nodes.length )
+        if ( this.responded == this.nodes.length )
         {
             Stdout.format("{} nodes", this.responded);
         }
@@ -133,7 +137,7 @@ class MinimalMode : IMode
         {
             Stdout.red_bg;
             Stdout.format("{} / {} nodes", this.responded,
-                            this.wrapper.dht.nodes.length);
+                            this.nodes.length);
             Stdout.default_bg;
         }
         Stdout.format(", ");
@@ -151,9 +155,7 @@ class MinimalMode : IMode
         {
             Stdout.format("{}ms", ms);
         }
-
         Stdout.newline.flush;
-
     }
 
 }
