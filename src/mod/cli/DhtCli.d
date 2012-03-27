@@ -46,7 +46,7 @@ private import ocean.io.digest.Fnv1 : Fnv1a;
 
 *******************************************************************************/
 
-public class DhtCli : DhtTool
+public class DhtCli : SingleDhtTool
 {
     /***************************************************************************
 
