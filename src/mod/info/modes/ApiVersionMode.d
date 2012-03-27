@@ -58,9 +58,9 @@ class ApiVersionMode : IMode
 
 
     public this (DhtClient dht, char[] dht_id,
-              DhtClient.RequestNotification.Callback notifier)
+              IMode.ErrorCallback error_callback)
     {
-            super(dht, dht_id, notifier);
+            super(dht, dht_id, error_callback);
     }
 
 

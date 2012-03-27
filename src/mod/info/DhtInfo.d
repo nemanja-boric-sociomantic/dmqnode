@@ -238,7 +238,7 @@ class DhtInfo : MultiDhtTool
 
     /***************************************************************************
 
-        The stopwatch to count how lond did the nodes take to responds.
+        Measures how long did the nodes take to responds.
 
     ***************************************************************************/
 
@@ -252,6 +252,7 @@ class DhtInfo : MultiDhtTool
     ***************************************************************************/
 
     private uint handler_interval_msecs = 100;
+
 
     /***************************************************************************
 
@@ -281,14 +282,15 @@ class DhtInfo : MultiDhtTool
         foreach (i, dht; super.dhts)
         {
             auto dht_id = FilePath(super.dht_nodes_config[i]).name;
+            IMode mode;
 
             if (dht_id.length > longest_dht_name)
                 longest_dht_name = dht_id.length;
 
             if ( this.connections )
             {
-                auto mode = new NumOfConnectionsMode (dht, dht_id,
-                                                        &this.notifier);
+                mode = new NumOfConnectionsMode (dht, dht_id,
+                                                &this.errorCallback);
                 this.display_modes ~= mode;
 
                 if (mode.getLongestNodeName() > this.longest_node_name)
@@ -296,8 +298,8 @@ class DhtInfo : MultiDhtTool
             }
             else if (this.data)
             {
-                auto mode = new GetContentsMode (dht, dht_id, &this.notifier,
-                                                this.verbose);
+                mode = new GetContentsMode (dht, dht_id, &this.errorCallback,
+                                            this.verbose);
                 this.display_modes ~= mode;
 
                 if (mode.getLongestNodeName() > this.longest_node_name)
@@ -305,7 +307,7 @@ class DhtInfo : MultiDhtTool
             }
             else if (this.api_version)
             {
-                auto mode = new ApiVersionMode (dht, dht_id, &this.notifier);
+                mode = new ApiVersionMode (dht, dht_id, &this.errorCallback);
                 this.display_modes ~= mode;
 
                 if (mode.getLongestNodeName() > this.longest_node_name)
@@ -313,7 +315,7 @@ class DhtInfo : MultiDhtTool
             }
             else if (this.hash_ranges)
             {
-                auto mode = new HashRangesMode (dht, dht_id, &this.notifier);
+                mode = new HashRangesMode (dht, dht_id, &this.errorCallback);
                 this.display_modes ~= mode;
 
                 if (mode.getLongestNodeName() > this.longest_node_name)
@@ -321,9 +323,9 @@ class DhtInfo : MultiDhtTool
             }
             else if (this.monitor)
             {
-                auto mode = new MonitorMode(dht, dht_id, &this.notifier,
-                                            this.monitor_num_columns,
-                                            this.monitor_metric_display);
+                mode = new MonitorMode(dht, dht_id, &this.errorCallback,
+                                        this.monitor_num_columns,
+                                        this.monitor_metric_display);
                 this.display_modes ~= mode;
 
                 if (mode.getLongestNodeName() > this.longest_node_name)
@@ -331,7 +333,7 @@ class DhtInfo : MultiDhtTool
             }
             else if (this.minimal)
             {
-                auto mode = new MinimalMode(dht, dht_id, &this.notifier);
+                mode = new MinimalMode(dht, dht_id, &this.errorCallback);
                 this.display_modes ~= mode;
 
                 if (mode.getDhtId().length > this.longest_node_name)
@@ -475,6 +477,7 @@ class DhtInfo : MultiDhtTool
         return true;
     }
 
+    
     /***************************************************************************
 
         Adds command line arguments specific to this tool.
@@ -628,24 +631,20 @@ class DhtInfo : MultiDhtTool
 
     /***************************************************************************
 
-        Overridden dht error callback. Stores the error message for display
-        after processing. The error messages are displayed all together at the
-        end of processing so that the normal output is still readable.
-        Though it will be displayed after each iteration if periodic is used,
-
+        This method is passed as a delegate to the display-modes, whenever
+        one of the display-modes have an error that it want that it wants to
+        announce it to the user, it will call this delegate method and pass
+        the error to it.
 
         Params:
-            e = dht client error info
+            msg = error to report
 
     ***************************************************************************/
 
-    override protected void notifier ( DhtClient.RequestNotification info )
+    private void errorCallback (char[] msg)
     {
-        if ( info.type == info.type.Finished && !info.succeeded )
-        {
-            super.dht_error = true;
-            this.dht_errors.appendCopy(info.message);
-        }
+        super.dht_error = true;
+        this.dht_errors.appendCopy(msg);
     }
 
 

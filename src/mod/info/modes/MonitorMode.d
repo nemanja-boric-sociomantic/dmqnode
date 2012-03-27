@@ -104,15 +104,15 @@ class MonitorMode : IMode
 
 
     public this (DhtClient dht, char[] dht_id,
-              DhtClient.RequestNotification.Callback notifier,
-              int num_columns, bool metric)
+                IMode.ErrorCallback error_callback,
+                int num_columns, bool metric)
     in
     {
         assert(num_columns > 0, "Cannot display 0 columns wide!");
     }
     body
     {
-            super(dht, dht_id, notifier);
+            super(dht, dht_id, error_callback);
 
             this.table = new Table();
             this.num_columns = num_columns;

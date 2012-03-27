@@ -33,6 +33,8 @@ private import src.mod.info.NodeInfo;
 
 private import swarm.dht.DhtClient;
 
+private import ocean.text.convert.Layout;
+
 
 /*******************************************************************************
 
@@ -57,7 +59,7 @@ public abstract class IMode
 
     /***************************************************************************
 
-    The dht client that is being used.
+        The dht client that is being used.
 
     ***************************************************************************/
 
@@ -93,24 +95,32 @@ public abstract class IMode
 
     /***************************************************************************
 
+        A reference to an error callback function.
+
+    ***************************************************************************/
+
+    public alias void delegate (char[]) ErrorCallback;
+    private ErrorCallback error_callback ;
+
+
+    /***************************************************************************
+
         The constructor just assigns the parameter to the local class variables
         and fill up the local NodesInfo with the DhtClient nodes.
 
         Params:
-            wrapper = The dht wrapper for the dht that the display-mode
-            will handle.
+            dht = The dht client that the mode will use.
 
-            notifier = The global notifer that the dht.assign delegate
-            notification (which is loca_notifer() delegate in this class) will
-            pass data to after the local_notifier handles it first.
+            error_calback = The callback that the display-mode will call to
+                pass to it the error messages that it has.
 
     ***************************************************************************/
 
     public this (DhtClient dht, char[] dht_id,
-                 DhtClient.RequestNotification.Callback notifier)
+                 ErrorCallback error_callback)
     {
         this.dht = dht;
-        this.notifier = notifier;
+        this.error_callback = error_callback;
 
         foreach ( dht_node; dht.nodes )
         {
@@ -250,9 +260,16 @@ public abstract class IMode
                                                 info.nodeitem.Port);
 
             node.responded = true;;
-        }
-        this.notifier(info);
 
+            if (!info.succeeded )
+            {
+                char [] preappend = "";
+                Layout!(char).print(preappend, "{}:{}:{} : ", this.dht_id,
+                                    info.nodeitem.Address, info.nodeitem.Port);
+                if (this.error_callback)
+                    error_callback(preappend ~ info.message());
+            }
+        }
     }
 
 
@@ -287,17 +304,13 @@ public abstract class IMode
         return found;
     }
 
+
     /***************************************************************************
 
         Returns the length of longest node name.
 
-        Params:
-            address = address to match
-            port = port to match
-
         Returns:
-            pointer to matched NodeInfo struct in this.nodes, may be null if no
-            match found
+            Length of longest id.
 
     ***************************************************************************/
 
