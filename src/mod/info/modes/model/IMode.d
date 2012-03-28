@@ -6,18 +6,9 @@
 
     authors:        Hatem Oraby, Gavin Norman
 
-
-    The module contains two classes:
-
-    IMode abstract class:
-        The class is expected to be inherited by all mode display. The class
-        contains the public functions that the src.mode.info.DhtInfo class
-        calls in its event-loop.
-
-    DhtWrapper struct:
-        The struct is used by the IMode class. The struct encapsulates the
-        attributes and functions that are commonly required by all the mode
-        displays to refer to a single dht.
+    The module contains the IMode abstract class. The class is expected to be
+    inherited by all mode display. The class contains the public functions that
+    the src.mode.info.DhtInfo class calls in its event-loop.
 
 *******************************************************************************/
 
@@ -43,7 +34,6 @@ private import ocean.text.convert.Layout;
 
 *******************************************************************************/
 
-
 public abstract class IMode
 {
     /***************************************************************************
@@ -65,12 +55,12 @@ public abstract class IMode
 
     protected DhtClient dht;
 
+
     /***************************************************************************
 
         The dht nodes in the format of a NodeInfo array.
 
     ***************************************************************************/
-
 
     protected NodeInfo[] nodes;
 
@@ -242,39 +232,6 @@ public abstract class IMode
 
     /***************************************************************************
 
-        A DHT.assign callback. It counts the number of nodes that has responded,
-        afterwards it passes the callback struct info to the global notifier
-        that has been passed to this instance on it's creation.
-
-
-        Params:
-            info = The notification struct
-
-    ***************************************************************************/
-
-    private void local_notifier( DhtClient.RequestNotification info )
-    {
-        if ( info.type == info.type.Finished )
-        {
-            auto node = this.findNode(info.nodeitem.Address,
-                                                info.nodeitem.Port);
-
-            node.responded = true;;
-
-            if (!info.succeeded )
-            {
-                char [] preappend = "";
-                Layout!(char).print(preappend, "{}:{}:{} : ", this.dht_id,
-                                    info.nodeitem.Address, info.nodeitem.Port);
-                if (this.error_callback)
-                    error_callback(preappend ~ info.message());
-            }
-        }
-    }
-
-
-    /***************************************************************************
-
         Finds a node matching the provided address and port in the list of
         nodes.
 
@@ -318,7 +275,38 @@ public abstract class IMode
     {
         return this.longest_node_name;
     }
+
+
+    /***************************************************************************
+
+        A DHT.assign callback. It counts the number of nodes that has responded,
+        afterwards it passes the callback struct info to the global notifier
+        that has been passed to this instance on it's creation.
+
+
+        Params:
+            info = The notification struct
+
+    ***************************************************************************/
+
+    private void local_notifier( DhtClient.RequestNotification info )
+    {
+        if ( info.type == info.type.Finished )
+        {
+            auto node = this.findNode(info.nodeitem.Address,
+                                                info.nodeitem.Port);
+
+            node.responded = true;;
+
+            if (!info.succeeded )
+            {
+                char [] preappend = "";
+                Layout!(char).print(preappend, "{}:{}:{} : ", this.dht_id,
+                                    info.nodeitem.Address, info.nodeitem.Port);
+                if (this.error_callback)
+                    error_callback(preappend ~ info.message());
+            }
+        }
+    }
 }
-
-
 

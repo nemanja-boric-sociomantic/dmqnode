@@ -48,7 +48,6 @@ module src.mod.info.DhtInfo;
 
 *******************************************************************************/
 
-
 private import src.mod.model.DhtTool : MultiDhtTool;
 
 private import src.mod.info.NodeInfo;
@@ -153,6 +152,9 @@ class DhtInfo : MultiDhtTool
 
     private bool verbose;
 
+
+    // TODO: as the modes are mutually exclusive, suggest changing these
+    // individual mode flags to an enum, which would be easier to handle (switch)
 
     /***************************************************************************
     
@@ -601,7 +603,6 @@ class DhtInfo : MultiDhtTool
 
         this.error_threshold_secs = args.getInt!(int)("interval");
 
-
         if ( !this.data && !this.verbose && !this.connections && !
             this.api_version && !this.hash_ranges && !this.minimal )
         {
@@ -610,8 +611,6 @@ class DhtInfo : MultiDhtTool
             this.monitor_num_columns = args.getInt!(size_t)("width");
             this.monitor_metric_display = args.getBool("metric");
         }
-
-
     }
 
 

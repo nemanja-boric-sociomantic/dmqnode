@@ -31,8 +31,13 @@ private import ocean.io.Stdout;
 private import ocean.text.util.DigitGrouping;
 
 
-class NumOfConnectionsMode : IMode
+public class NumOfConnectionsMode : IMode
 {
+    /***************************************************************************
+
+        TODO: comment
+
+    ***************************************************************************/
 
     public this (DhtClient dht, char[] dht_id,
                 IMode.ErrorCallback error_callback)
@@ -40,6 +45,12 @@ class NumOfConnectionsMode : IMode
             super(dht, dht_id, error_callback);
     }
 
+
+    /***************************************************************************
+
+        TODO: comment
+
+    ***************************************************************************/
 
     public bool run ()
     {
@@ -55,6 +66,14 @@ class NumOfConnectionsMode : IMode
         return false;
     }
 
+
+    /***************************************************************************
+
+        TODO: comment
+
+    ***************************************************************************/
+
+    // TODO: public / private / protected?
 
     void callback ( DhtClient.RequestContext context, char[] node_address,
                                 ushort node_port, size_t num_connections )

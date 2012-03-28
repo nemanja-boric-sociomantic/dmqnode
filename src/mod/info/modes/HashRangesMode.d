@@ -30,12 +30,24 @@ private import ocean.io.Stdout;
 class HashRangesMode : IMode
 {
 
+    /***************************************************************************
+
+        TODO: comment
+
+    ***************************************************************************/
+
     public this (DhtClient dht, char[] dht_id,
                 IMode.ErrorCallback error_callback)
     {
             super(dht, dht_id, error_callback);
     }
 
+
+    /***************************************************************************
+
+        TODO: comment
+
+    ***************************************************************************/
 
     public bool run ()
     {
@@ -106,6 +118,5 @@ class HashRangesMode : IMode
                                                     num, name, pad);
         }
     }
-
 }
 

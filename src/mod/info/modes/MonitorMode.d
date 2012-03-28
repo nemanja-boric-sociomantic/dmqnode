@@ -103,6 +103,12 @@ class MonitorMode : IMode
     private bool metric;
 
 
+    /***************************************************************************
+
+        TODO: comment
+
+    ***************************************************************************/
+
     public this (DhtClient dht, char[] dht_id,
                 IMode.ErrorCallback error_callback,
                 int num_columns, bool metric)
@@ -119,6 +125,12 @@ class MonitorMode : IMode
             this.metric = metric;
     }
 
+
+    /***************************************************************************
+
+        TODO: comment
+
+    ***************************************************************************/
 
     public bool run ()
     {
@@ -154,6 +166,14 @@ class MonitorMode : IMode
     }
 
 
+    /***************************************************************************
+
+        TODO: comment
+
+    ***************************************************************************/
+
+    // TODO: public / private / protected?
+
     void channelNamesCallback ( DhtClient.RequestContext context,
                     char[] address, ushort port, char[] channel )
     {
@@ -168,21 +188,11 @@ class MonitorMode : IMode
     }
 
 
-    private void channelSizeCallback ( DhtClient.RequestContext context,
-                                char[] address, ushort port, char[] channel,
-                                ulong records, ulong bytes )
-    {
-        auto node = this.findNode(address, port);
-        if ( !node )
-        {
-            Stderr.formatln("Node mismatch");
-        }
-        else
-        {
-            node.setChannelSize(channel, records, bytes);
-        }
+    /***************************************************************************
 
-    }
+        TODO: comment
+
+    ***************************************************************************/
 
     public void display ( size_t longest_node_name )
     {
@@ -211,6 +221,35 @@ class MonitorMode : IMode
         }
     }
 
+
+    /***************************************************************************
+
+        TODO: comment
+
+    ***************************************************************************/
+
+    private void channelSizeCallback ( DhtClient.RequestContext context,
+                                char[] address, ushort port, char[] channel,
+                                ulong records, ulong bytes )
+    {
+        auto node = this.findNode(address, port);
+        if ( !node )
+        {
+            Stderr.formatln("Node mismatch");
+        }
+        else
+        {
+            node.setChannelSize(channel, records, bytes);
+        }
+
+    }
+
+
+    /***************************************************************************
+
+        TODO: comment
+
+    ***************************************************************************/
 
     private void displayNodeChunk ( NodeInfo*[] nodes )
     {
@@ -340,6 +379,12 @@ class MonitorMode : IMode
         Stdout.formatln("");
     }
 
+
+    /***************************************************************************
+
+        TODO: comment
+
+    ***************************************************************************/
 
     private void addRow ( NodeInfo*[] nodes, Table table, Table.Cell first_cell,
             void delegate ( NodeInfo* node, ref Table.Cell c1,

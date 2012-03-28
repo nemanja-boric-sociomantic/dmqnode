@@ -77,6 +77,12 @@ class GetContentsMode : IMode
     private bool verbose;
 
 
+    /***************************************************************************
+
+        TODO: comment
+
+    ***************************************************************************/
+
     public this (DhtClient dht, char[] dht_id,
               IMode.ErrorCallback error_callback,
               bool verbose = false)
@@ -85,6 +91,12 @@ class GetContentsMode : IMode
             this.verbose = verbose;
     }
 
+
+    /***************************************************************************
+
+        TODO: comment
+
+    ***************************************************************************/
 
     public bool run ()
     {
@@ -120,6 +132,12 @@ class GetContentsMode : IMode
     }
 
 
+    /***************************************************************************
+
+        TODO: comment
+
+    ***************************************************************************/
+
     void channelNamesCallback ( DhtClient.RequestContext context,
                     char[] address, ushort port, char[] channel )
     {
@@ -133,6 +151,12 @@ class GetContentsMode : IMode
         }
     }
 
+
+    /***************************************************************************
+
+        TODO: comment
+
+    ***************************************************************************/
 
     private void channelSizeCallback ( DhtClient.RequestContext context,
                                 char[] address, ushort port, char[] channel,

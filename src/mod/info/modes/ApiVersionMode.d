@@ -57,12 +57,24 @@ class ApiVersionMode : IMode
     private char[][] nodes_versions;
 
 
+    /***************************************************************************
+
+        TODO: comment
+
+    ***************************************************************************/
+
     public this (DhtClient dht, char[] dht_id,
               IMode.ErrorCallback error_callback)
     {
             super(dht, dht_id, error_callback);
     }
 
+
+    /***************************************************************************
+
+        TODO: comment
+
+    ***************************************************************************/
 
     public bool run ()
     {
@@ -78,6 +90,13 @@ class ApiVersionMode : IMode
     }
 
 
+    /***************************************************************************
+
+        TODO: comment
+
+    ***************************************************************************/
+
+    // TODO: public / private / protected?
     void callback ( DhtClient.RequestContext context, char[] address,
                     ushort port, char[] api_version )
     {
@@ -97,6 +116,7 @@ class ApiVersionMode : IMode
 
     }
 
+    
     /***************************************************************************
 
         Display the output.

@@ -85,12 +85,24 @@ class MinimalMode : IMode
     private ulong end_time;
 
 
+    /***************************************************************************
+
+        TODO: comment
+
+    ***************************************************************************/
+
     public this (DhtClient dht, char[] dht_id,
                 IMode.ErrorCallback error_callback)
     {
             super(dht, dht_id, error_callback);
     }
 
+
+    /***************************************************************************
+
+        TODO: comment
+
+    ***************************************************************************/
 
     public bool run ()
     {
@@ -110,15 +122,11 @@ class MinimalMode : IMode
     }
 
 
-    private void getNumConnsCb ( DhtClient.RequestContext,
-                                char[] address, ushort port, size_t conns )
-    {
-        this.end_time = sw.microsec;
+    /***************************************************************************
 
-        this.responded++;
-        this.connections += conns;
-    }
+        TODO: comment
 
+    ***************************************************************************/
 
     public void display ( size_t longest_dht_name )
     {
@@ -172,6 +180,21 @@ class MinimalMode : IMode
     {
         return super.dht_id.length;
     }
-}
 
+
+    /***************************************************************************
+
+        TODO: comment
+
+    ***************************************************************************/
+
+    private void getNumConnsCb ( DhtClient.RequestContext,
+                                char[] address, ushort port, size_t conns )
+    {
+        this.end_time = sw.microsec;
+
+        this.responded++;
+        this.connections += conns;
+    }
+}
 
