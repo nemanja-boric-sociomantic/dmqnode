@@ -356,15 +356,16 @@ public class TcmSplitter
 
         assertEx(Path.exists(this.nodes_file), "nodes file not found");
 
+        // Instantiate iterator objects, one over lines, one over words in lines
+        // (hashes in the config file)
+        scope lines = new ChrSplitIterator('\n');
+        scope hashes = new ChrSplitIterator(' ');
+
         // Read file content
         scope file = cast(char[])File.get(this.nodes_file);
-        scope lines = new ChrSplitIterator;
-        lines.delim = '\n';
-        lines.reset(file);
 
         // Split file into lines
-        scope hashes = new ChrSplitIterator;
-        hashes.delim = ' ';
+        lines.reset(file);
 
         foreach ( line; lines )
         {
