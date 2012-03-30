@@ -199,6 +199,15 @@ public class DhtPerformance
 
     /***************************************************************************
 
+        Buffer for dht client message formatting.
+
+    ***************************************************************************/
+
+    private char[] message_buffer;
+
+
+    /***************************************************************************
+
         Parses and validates command line arguments. If the arguments are
         invalid, a help text is output.
 
@@ -335,7 +344,8 @@ public class DhtPerformance
             {
                 if ( !info.succeeded )
                 {
-                    Stderr.formatln("Error in dht handshake request: {}", info.message);
+                    Stderr.formatln("Error in dht handshake request: {}",
+                        info.message(this.message_buffer));
                 }
             }
         }
@@ -531,7 +541,8 @@ public class DhtPerformance
             }
             else
             {
-                Stderr.formatln("Error in dht request: {}", info.message);
+                Stderr.formatln("Error in dht request: {}",
+                    info.message(this.message_buffer));
             }
         }
     }

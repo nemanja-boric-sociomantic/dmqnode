@@ -64,6 +64,7 @@ public abstract class IMode
 
     protected NodeInfo[] nodes;
 
+
     /***************************************************************************
 
         The id string that should be used to refer to this dht in printing
@@ -91,6 +92,15 @@ public abstract class IMode
 
     public alias void delegate (char[]) ErrorCallback;
     private ErrorCallback error_callback ;
+
+
+    /***************************************************************************
+
+        Buffer for dht client message formatting.
+
+    ***************************************************************************/
+
+    private char[] message_buffer;
 
 
     /***************************************************************************
@@ -294,7 +304,7 @@ public abstract class IMode
         if ( info.type == info.type.Finished )
         {
             auto node = this.findNode(info.nodeitem.Address,
-                                                info.nodeitem.Port);
+                                      info.nodeitem.Port);
 
             node.responded = true;;
 
@@ -304,7 +314,9 @@ public abstract class IMode
                 Layout!(char).print(preappend, "{}:{}:{} : ", this.dht_id,
                                     info.nodeitem.Address, info.nodeitem.Port);
                 if (this.error_callback)
-                    error_callback(preappend ~ info.message());
+                {
+                    error_callback(preappend ~ info.message(this.message_buffer));
+                }
             }
         }
     }
