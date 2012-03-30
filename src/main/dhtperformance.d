@@ -35,20 +35,18 @@ private import ocean.text.Arguments;
 
 *******************************************************************************/
 
-void main ( char[][] arguments )
+void main ( char[][] cl_args )
 {
-    auto app_name = arguments[0];
-
-    scope args = new Arguments;
+    scope args = new Arguments(cl_args[0]);
     scope performance = new DhtPerformance;
 
-    if ( performance.parseArgs(args, arguments[1..$]) )
+    if ( performance.parseArgs(args, cl_args[1..$]) )
     {
         performance.run(args);
     }
     else
     {
-        args.displayHelp(app_name);
+        args.displayHelp();
     }
 }
 

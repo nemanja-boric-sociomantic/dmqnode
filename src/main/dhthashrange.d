@@ -39,7 +39,7 @@ private import tango.io.Stdout;
 
 void main ( char[][] cl_args )
 {
-    auto args = new Arguments;
+    auto args = new Arguments(cl_args[0]);
     args("nodes").aliased('n').params(1).required.help("the number of dht nodes to calculate the hash ranges for");
     args("bits").aliased('b').params(1).restrict(["32", "64"]).defaults("32").help("the number of bits for the hashes (defaults to 32)");
 
@@ -72,7 +72,7 @@ void main ( char[][] cl_args )
     else
     {
         args.displayErrors();
-        args.displayHelp(cl_args[0]);
+        args.displayHelp();
     }
 }
 
