@@ -78,7 +78,7 @@ do
 		sed -e "s/{ADDR}/$addr/; s/{PORT}/$port/;" \
 			-e "s/{MIN}/$min/; s/{MAX}/$max/" $configtpl \
 				> $nodedir/$configname
-		cat <<EOT > $xml
+		cat <<EOT >> $xml
     <node>
        <address>$addr</address>
        <port>$port</port>
@@ -87,7 +87,7 @@ EOT
 	done
 done
 
-echo '</dhtnodes>' > $xml
+echo '</dhtnodes>' >> $xml
 
 for s in `seq $baseserv $(($baseserv + $nserv - 1))`
 do
