@@ -76,6 +76,15 @@ public abstract class IMode
 
     /***************************************************************************
 
+        A buffer to hold error mssages from the identifier.
+
+    ***************************************************************************/
+
+    private char[] error_msg_buffer;
+
+
+    /***************************************************************************
+
         Holds the longes node name's length.
 
     ***************************************************************************/
@@ -100,6 +109,9 @@ public abstract class IMode
 
         Params:
             dht = The dht client that the mode will use.
+
+            dht_id = The name of the DHT that this class is handling. The name
+                is used in printin information.
 
             error_calback = The callback that the display-mode will call to
                 pass to it the error messages that it has.
@@ -147,7 +159,7 @@ public abstract class IMode
         The callbacks will be called when the control return to the event-loop
         but before the display method is called.
 
-        Returns:s
+        Returns:
             The method should return true if it's operations depends on several
             consequent dependent calls, in that case returning true will signal
             to the event loop that this class instance still have more
@@ -283,7 +295,6 @@ public abstract class IMode
         afterwards it passes the callback struct info to the global notifier
         that has been passed to this instance on it's creation.
 
-
         Params:
             info = The notification struct
 
@@ -304,7 +315,11 @@ public abstract class IMode
                 Layout!(char).print(preappend, "{}:{}:{} : ", this.dht_id,
                                     info.nodeitem.Address, info.nodeitem.Port);
                 if (this.error_callback)
-                    error_callback(preappend ~ info.message());
+                {
+                    this.error_msg_buffer.length = 0;
+                    info.message(this.error_msg_buffer);
+                    error_callback(preappend ~ this.error_msg_buffer);
+                }
             }
         }
     }

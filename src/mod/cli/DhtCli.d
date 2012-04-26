@@ -128,7 +128,8 @@ public class DhtCli : SingleDhtTool
         if ( info.type == info.type.Finished && !info.succeeded )
         {
             super.dht_error = true;
-            this.dht_errors.appendCopy(info.message);
+            this.dht_errors.appendCopy("");
+            info.message(this.dht_errors[this.dht_errors.length-1]);
         }
     }
 

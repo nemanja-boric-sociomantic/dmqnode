@@ -27,12 +27,20 @@ private import swarm.dht.DhtClient;
 private import ocean.io.Stdout;
 
 
-class HashRangesMode : IMode
+public class HashRangesMode : IMode
 {
-
     /***************************************************************************
 
-        TODO: comment
+        The construcor just calls its super.
+
+        Params:
+            dht = The dht client that the mode will use.
+
+            dht_id = The name of the DHT that this class is handling. The name
+                is used in printin information.
+
+            error_calback = The callback that the display-mode will call to
+                pass to it the error messages that it has.
 
     ***************************************************************************/
 
@@ -45,7 +53,13 @@ class HashRangesMode : IMode
 
     /***************************************************************************
 
-        TODO: comment
+        The method called for each DHT.
+
+        The method just assigns the callbacks that will be run when the event
+        loop is later (externally) called.
+
+        Returns:
+            The method always returns false in this class's case.
 
     ***************************************************************************/
 
@@ -66,6 +80,9 @@ class HashRangesMode : IMode
     /***************************************************************************
 
         Display the output.
+
+        Params:
+           longest_node_name = The size of the longest node name in all DHTs.
 
     ***************************************************************************/
 

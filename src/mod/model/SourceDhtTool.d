@@ -62,7 +62,7 @@ private import tango.io.Stdout;
 
 *******************************************************************************/
 
-abstract class SourceDhtTool : DhtTool
+abstract class SourceDhtTool : SingleDhtTool
 {
     /***************************************************************************
 
