@@ -158,9 +158,7 @@ class Test
             }
             else
             {
-                char[] error_msg;
-                info.message(error_msg);
-                this.exception = new Exception(error_msg);
+                this.exception = new Exception(info.message());
             }
         }
     }      

@@ -76,15 +76,6 @@ public abstract class IMode
 
     /***************************************************************************
 
-        A buffer to hold error mssages from the identifier.
-
-    ***************************************************************************/
-
-    private char[] error_msg_buffer;
-
-
-    /***************************************************************************
-
         Holds the longes node name's length.
 
     ***************************************************************************/
@@ -316,9 +307,7 @@ public abstract class IMode
                                     info.nodeitem.Address, info.nodeitem.Port);
                 if (this.error_callback)
                 {
-                    this.error_msg_buffer.length = 0;
-                    info.message(this.error_msg_buffer);
-                    error_callback(preappend ~ this.error_msg_buffer);
+                    error_callback(preappend ~ info.message());
                 }
             }
         }

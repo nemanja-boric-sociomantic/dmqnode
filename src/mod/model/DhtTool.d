@@ -82,14 +82,6 @@ abstract class IDhtTool
 
     /***************************************************************************
 
-        Holds the errors message from the notifier
-
-    ***************************************************************************/
-
-    protected char[] error_msg_buffer;
-
-    /***************************************************************************
-
         Parses and validates command line arguments using the passed Arguments
         object. The list of valid arguments for the base class (see module
         header) is set in the addArgs() method. Derived classes can override the
@@ -388,9 +380,7 @@ abstract class IDhtTool
     {
         if ( info.type == info.type.Finished && !info.succeeded )
         {
-            this.error_msg_buffer.length = 0;
-            info.message(this.error_msg_buffer);
-            Stderr.format("DHT client error: {}\n", this.error_msg_buffer);
+            Stderr.format("DHT client error: {}\n", info.message());
             this.dht_error = true;
         }
     }
