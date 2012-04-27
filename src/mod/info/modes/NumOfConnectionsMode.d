@@ -35,7 +35,16 @@ public class NumOfConnectionsMode : IMode
 {
     /***************************************************************************
 
-        TODO: comment
+        The construcor just calls its super.
+
+        Params:
+            dht = The dht client that the mode will use.
+
+            dht_id = The name of the DHT that this class is handling. The name
+                is used in printin information.
+
+            error_calback = The callback that the display-mode will call to
+                pass to it the error messages that it has.
 
     ***************************************************************************/
 
@@ -48,7 +57,13 @@ public class NumOfConnectionsMode : IMode
 
     /***************************************************************************
 
-        TODO: comment
+        The method called for each DHT.
+
+        The method just assigns the callbacks that will be run when the event
+        loop is later (externally) called.
+
+        Returns:
+            The method always returns false in this class's case.
 
     ***************************************************************************/
 
@@ -69,14 +84,18 @@ public class NumOfConnectionsMode : IMode
 
     /***************************************************************************
 
-        TODO: comment
+        The callback stores the number of connection per each node .
+
+        Params:
+            context         = Call context (ignored).
+            address         = The address of the replying node.
+            port            = The port of the replying node.
+            num_connections = Number of connections established to the node.
 
     ***************************************************************************/
 
-    // TODO: public / private / protected?
-
-    void callback ( DhtClient.RequestContext context, char[] node_address,
-                                ushort node_port, size_t num_connections )
+    private void callback ( DhtClient.RequestContext context,
+        char[] node_address, ushort node_port, size_t num_connections )
     {
         auto node = this.findNode(node_address, node_port);
         if ( !node )
@@ -93,6 +112,9 @@ public class NumOfConnectionsMode : IMode
     /***************************************************************************
 
         Display the output.
+
+        Params:
+           longest_node_name = The size of the longest node name in all DHTs.
 
     ***************************************************************************/
 

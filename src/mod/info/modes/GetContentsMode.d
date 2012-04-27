@@ -42,7 +42,7 @@ private import tango.core.Array : contains;
 private import Integer = tango.text.convert.Integer;
 
 
-class GetContentsMode : IMode
+public class GetContentsMode : IMode
 {
     /***************************************************************************
 
@@ -79,7 +79,16 @@ class GetContentsMode : IMode
 
     /***************************************************************************
 
-        TODO: comment
+        The construcor just calls its super.
+
+        Params:
+            dht = The dht client that the mode will use.
+
+            dht_id = The name of the DHT that this class is handling. The name
+                is used in printin information.
+
+            error_calback = The callback that the display-mode will call to
+                pass to it the error messages that it has.
 
     ***************************************************************************/
 
@@ -94,7 +103,17 @@ class GetContentsMode : IMode
 
     /***************************************************************************
 
-        TODO: comment
+        The method called for each DHT.
+
+        The method just assigns the callbacks that will be run when the event
+        loop is later (externally) called.
+
+        Returns:
+            Returns true if the method has still more dht assign to be assigned
+            but which needs to be assigned on multiple event-loop calls. This
+            is done as to perform the second dht assign tasks, the results of
+            the first dht assigns are needed.
+            Returns false if all the dht tasks had been already carried out.
 
     ***************************************************************************/
 
@@ -134,11 +153,18 @@ class GetContentsMode : IMode
 
     /***************************************************************************
 
-        TODO: comment
+        The callback stores the retrieved channel name in a list and "remembers"
+        the length of the longest channel.
+
+        Params:
+            context = Call context (ignored).
+            address = The address of the replying node.
+            port    = The port of the replying node.
+            channel = The channel nam.
 
     ***************************************************************************/
 
-    void channelNamesCallback ( DhtClient.RequestContext context,
+    private void channelNamesCallback ( DhtClient.RequestContext context,
                     char[] address, ushort port, char[] channel )
     {
         if ( channel.length && !this.channel_names.contains(channel) )
@@ -154,7 +180,15 @@ class GetContentsMode : IMode
 
     /***************************************************************************
 
-        TODO: comment
+        The callback stores the channel size for each retrieved channel.
+
+        Params:
+            context = Call context (ignored).
+            address = The address of the replying node.
+            port    = The port of the replying node.
+            channel = The channel name for which the size is reported.
+            records = Numbe of records in that channel.
+            byte    = Numbe of bytes stored in that channel in this node.
 
     ***************************************************************************/
 

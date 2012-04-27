@@ -47,7 +47,7 @@ private import ocean.io.Stdout;
 private import ocean.text.convert.Layout;
 
 
-class MonitorMode : IMode
+public class MonitorMode : IMode
 {
    /***************************************************************************
 
@@ -105,7 +105,22 @@ class MonitorMode : IMode
 
     /***************************************************************************
 
-        TODO: comment
+        The construcor calls its super and sets up the values that are specific
+        to this mode.
+
+        Params:
+            dht = The dht client that the mode will use.
+
+            dht_id = The name of the DHT that this class is handling. The name
+                is used in printin information.
+
+            error_calback = The callback that the display-mode will call to
+                pass to it the error messages that it has.
+
+            num_columns = The number of columns that the table will have.
+
+            metric = For large numbers, a short metric unit is written beside
+                the number.
 
     ***************************************************************************/
 
@@ -128,7 +143,17 @@ class MonitorMode : IMode
 
     /***************************************************************************
 
-        TODO: comment
+        The method called for each DHT.
+
+        The method just assigns the callbacks that will be run when the event
+        loop is later (externally) called.
+
+        Returns:
+            Returns true if the method has still more dht assign to be assigned
+            but which needs to be assigned on multiple event-loop calls. This
+            is done as to perform the second dht assign tasks, the results of
+            the first dht assigns are needed.
+            Returns false if all the dht tasks had been already carried out.
 
     ***************************************************************************/
 
@@ -168,13 +193,18 @@ class MonitorMode : IMode
 
     /***************************************************************************
 
-        TODO: comment
+        The callback stores the retrieved channel name in a list and "remembers"
+        the length of the longest channel.
+
+        Params:
+            context = Call context (ignored).
+            address = The address of the replying node.
+            port    = The port of the replying node.
+            channel = The channel nam.
 
     ***************************************************************************/
 
-    // TODO: public / private / protected?
-
-    void channelNamesCallback ( DhtClient.RequestContext context,
+    private void channelNamesCallback ( DhtClient.RequestContext context,
                     char[] address, ushort port, char[] channel )
     {
         if ( channel.length && !this.channel_names.contains(channel) )
@@ -190,7 +220,41 @@ class MonitorMode : IMode
 
     /***************************************************************************
 
-        TODO: comment
+        The callback stores the channel size for each retrieved channel.
+
+        Params:
+            context = Call context (ignored).
+            address = The address of the replying node.
+            port    = The port of the replying node.
+            channel = The channel name for which the size is reported.
+            records = Numbe of records in that channel.
+            byte    = Numbe of bytes stored in that channel in this node.
+
+    ***************************************************************************/
+
+    private void channelSizeCallback ( DhtClient.RequestContext context,
+                                char[] address, ushort port, char[] channel,
+                                ulong records, ulong bytes )
+    {
+        auto node = this.findNode(address, port);
+        if ( !node )
+        {
+            Stderr.formatln("Node mismatch");
+        }
+        else
+        {
+            node.setChannelSize(channel, records, bytes);
+        }
+
+    }
+
+
+    /***************************************************************************
+
+        Display the output.
+
+        Params:
+           longest_node_name = The size of the longest node name in all DHTs.
 
     ***************************************************************************/
 
@@ -224,30 +288,10 @@ class MonitorMode : IMode
 
     /***************************************************************************
 
-        TODO: comment
+        Prints a subset of the final table output.
 
-    ***************************************************************************/
-
-    private void channelSizeCallback ( DhtClient.RequestContext context,
-                                char[] address, ushort port, char[] channel,
-                                ulong records, ulong bytes )
-    {
-        auto node = this.findNode(address, port);
-        if ( !node )
-        {
-            Stderr.formatln("Node mismatch");
-        }
-        else
-        {
-            node.setChannelSize(channel, records, bytes);
-        }
-
-    }
-
-
-    /***************************************************************************
-
-        TODO: comment
+        Params:
+            nodes = The subset of nodes to print information for.
 
     ***************************************************************************/
 
@@ -382,7 +426,13 @@ class MonitorMode : IMode
 
     /***************************************************************************
 
-        TODO: comment
+        Add a row to the table.
+
+        Params:
+            nodes       = The nodes to be added to the row
+            table       = The table that the row will be added to
+            first_cell  = The info to go into the first cell.
+            node_dg     = The delegate to call for each node.
 
     ***************************************************************************/
 

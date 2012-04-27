@@ -37,7 +37,7 @@ private import ocean.io.Stdout;
 private import tango.time.StopWatch;
 
 
-class MinimalMode : IMode
+public class MinimalMode : IMode
 {
     /***************************************************************************
 
@@ -87,7 +87,16 @@ class MinimalMode : IMode
 
     /***************************************************************************
 
-        TODO: comment
+        The construcor just calls its super.
+
+        Params:
+            dht = The dht client that the mode will use.
+
+            dht_id = The name of the DHT that this class is handling. The name
+                is used in printin information.
+
+            error_calback = The callback that the display-mode will call to
+                pass to it the error messages that it has.
 
     ***************************************************************************/
 
@@ -100,7 +109,13 @@ class MinimalMode : IMode
 
     /***************************************************************************
 
-        TODO: comment
+        The method called for each DHT.
+
+        The method just assigns the callbacks that will be run when the event
+        loop is later (externally) called.
+
+        Returns:
+            The method always returns false in this class's case.
 
     ***************************************************************************/
 
@@ -124,7 +139,15 @@ class MinimalMode : IMode
 
     /***************************************************************************
 
-        TODO: comment
+        The method prints the final output. The final output is the state
+        of this DHT and the number of connections established to that DHT.
+
+        In case of any abnormal behavior (e.g DHT took so long to reply) then
+        the output is highlighted in different color.
+
+        Params:
+            longest_dht_name = The length of the longest DHT name (for printing
+                formatting purposes).
 
     ***************************************************************************/
 
@@ -184,7 +207,15 @@ class MinimalMode : IMode
 
     /***************************************************************************
 
-        TODO: comment
+        The callback accumlates data that will be used in the display phase
+        to print the DHT status.
+
+        Params:
+            (DhtClient.RequestContext)  = Call context (ignored).
+            address = The address of the replying node.
+            port    = The port of the replying node.
+            conns   = The number of connections that are currently established
+                to the replying node.
 
     ***************************************************************************/
 

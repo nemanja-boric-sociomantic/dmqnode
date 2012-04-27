@@ -40,9 +40,6 @@ private import swarm.dht.DhtClient,
 private import tango.io.Stdout;
 
 
-
-
-
 /*******************************************************************************
 
     Dht tool abstract class
@@ -291,9 +288,6 @@ abstract class IDhtTool
         class implementation does nothing, but derived classes may wish to add
         behaviour at this point.
 
-        Params:
-            dht = dht client
-
     ***************************************************************************/
 
     protected void init (  )
@@ -306,9 +300,6 @@ abstract class IDhtTool
         Called at the end of processing (in the process() method, above). The
         base class implementation does nothing, but derived classes may wish to
         add behaviour at this point.
-
-        Params:
-            dht = dht client
 
     ***************************************************************************/
 
@@ -453,7 +444,9 @@ abstract class MultiDhtTool : IDhtTool
 
     /***************************************************************************
 
-        TODO: comment
+        While the initDhtClient() method performs the actual DhtNode
+        initialization, however it performs that for just a single DhtNode.
+        This method on the other defines how many DhtClients are required.
 
     ***************************************************************************/
 
@@ -468,7 +461,12 @@ abstract class MultiDhtTool : IDhtTool
 
     /***************************************************************************
 
-        TODO: comment
+        Reads the tool's settings from validated command line arguments. The
+        method calls the super readArgs and then parses the additional arguments
+        that are not handled by the base class.
+
+        Params:
+            args = arguments object to read
 
     ***************************************************************************/
 
@@ -476,7 +474,8 @@ abstract class MultiDhtTool : IDhtTool
     {
 
         super.readArgs(args);
-        assert(this.dht_nodes_config.length, typeof(this).stringof ~ ".process -- no xml node config file");
+        assert(this.dht_nodes_config.length, typeof(this).stringof
+                ~ ".process -- no xml node config file");
     }
 }
 
@@ -513,7 +512,10 @@ abstract class SingleDhtTool : IDhtTool
 
     /***************************************************************************
 
-        TODO: comment
+        While the initDhtClient() method performs the actual DhtNode
+        initialization, however it performs that for just a single DhtNode.
+        This method on the other defines how many DhtClients are required (which
+        is just a single DHT in this class case).
 
     ***************************************************************************/
 
@@ -525,7 +527,12 @@ abstract class SingleDhtTool : IDhtTool
 
     /***************************************************************************
 
-        TODO: comment
+        Reads the tool's settings from validated command line arguments. The
+        method calls the super readArgs and then parses the additional arguments
+        that are not handled by the base class.
+
+        Params:
+            args = arguments object to read
 
     ***************************************************************************/
 
