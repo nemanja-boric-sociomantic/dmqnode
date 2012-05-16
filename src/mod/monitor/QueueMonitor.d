@@ -22,11 +22,6 @@ module src.mod.monitor.QueueMonitor;
 
 private import src.mod.monitor.Tables;
 
-<<<<<<< .mine
-=======
-private import ocean.core.Array : appendCopy, copy;
->>>>>>> .r9541
-
 private import ocean.core.Array : appendCopy, copy;
 
 private import ocean.io.Stdout;
