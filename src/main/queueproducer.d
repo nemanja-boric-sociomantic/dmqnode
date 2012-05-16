@@ -18,6 +18,8 @@
              first 8 bytes will contain the record number as a ulong
         -r = reconnect on queue error
 
+    TODO: update to use ocean.util.app
+
 *******************************************************************************/
 
 module src.main.queueproducer;

@@ -54,15 +54,15 @@ public class PeriodicStats : IPeriodic
 
     ***************************************************************************/
 
-    private struct DhtStats
+    private struct LogStats
     {
         ulong bytes_sent;
-        float Kb_sent_per_sec;
         ulong bytes_received;
-        float Kb_received_per_sec;
         size_t handling_connections;
-        real records_per_sec;
+        ulong records_handled;
     }
+
+    private LogStats log_stats;
 
 
     /***************************************************************************
@@ -71,7 +71,7 @@ public class PeriodicStats : IPeriodic
 
     ***************************************************************************/
 
-    private StatsLog!(DhtStats) log;
+    private StatsLog!(LogStats) log;
 
 
     /***************************************************************************
@@ -82,7 +82,7 @@ public class PeriodicStats : IPeriodic
 
     private const console_update_time = 1;
 
-    private uint log_update_time;
+    private const uint log_update_time;
 
 
     /***************************************************************************
@@ -92,17 +92,6 @@ public class PeriodicStats : IPeriodic
     ***************************************************************************/
 
     private uint elapsed_since_last_log_update;
-
-
-    /***************************************************************************
-
-        Count of bytes sent & received since the log file was last updated
-
-    ***************************************************************************/
-
-    private ulong total_sent;
-
-    private ulong total_received;
 
 
     /***************************************************************************
@@ -125,25 +114,6 @@ public class PeriodicStats : IPeriodic
 
     /***************************************************************************
 
-        Channel sizes string buffer for console output.
-
-    ***************************************************************************/
-
-    private char[] channel_sizes_buf;
-
-
-    /***************************************************************************
-
-        Associative array of channel sizes (in terms of % full) indexed by name,
-        for stats log output.
-
-    ***************************************************************************/
-
-    private float[char[]] channel_sizes;
-
-
-    /***************************************************************************
-
         Constructor.
 
         Params:
@@ -154,7 +124,7 @@ public class PeriodicStats : IPeriodic
 
     public this ( uint log_update_time )
     {
-        super(this.console_update_time);
+        super(console_update_time);
 
         this.records_per_sec = new SlidingAverageTime!(ulong)(5, 1_000, 1_000);
 
@@ -162,7 +132,7 @@ public class PeriodicStats : IPeriodic
 
         if ( MainConfig.log.stats_log_enabled )
         {
-            this.log = new StatsLog!(DhtStats);
+            this.log = new StatsLog!(LogStats)(MainConfig.log.stats);
         }
     }
 
@@ -179,12 +149,52 @@ public class PeriodicStats : IPeriodic
     {
         auto node_info = cast(IQueueNodeInfo)this.node;
 
-        auto rec_per_sec = this.recordsPerSecond();
-
-        this.consoleOutput(rec_per_sec);
-        this.logOutput(rec_per_sec);
+        this.consoleOutput();
+        this.logOutput();
 
         node_info.resetCounters();
+    }
+
+
+    /***************************************************************************
+
+        Updates the console output line.
+
+    ***************************************************************************/
+
+    private void consoleOutput ( )
+    {
+        if ( MainConfig.log.console_stats_enabled )
+        {
+            auto node_info = cast(IQueueNodeInfo)this.node;
+
+            auto rec_per_sec = this.recordsPerSecond();
+
+            DigitGrouping.format(node_info.num_records, this.records_buf);
+            BitGrouping.format(node_info.num_bytes, this.bytes_buf, "b");
+
+            version ( CDGC )
+            {
+                const float Mb = 1024 * 1024;
+                size_t used, free;
+                GC.usage(used, free);
+
+                auto mem_allocated = cast(float)(used + free) / Mb;
+                auto mem_free = cast(float)free / Mb;
+
+                StaticTrace.format("  {} queue (Used {}Mb/Free {}Mb): handling {} connections, {} records/s, {} records ({})",
+                        node_info.storage_type, mem_allocated, mem_free,
+                        node_info.num_open_connections, rec_per_sec,
+                        this.records_buf, this.bytes_buf).flush;
+            }
+            else
+            {
+                StaticTrace.format("  {} queue: handling {} connections, {} records/s, {} records ({})",
+                        node_info.storage_type,
+                        node_info.num_open_connections, rec_per_sec,
+                        this.records_buf, this.bytes_buf).flush;
+            }
+        }
     }
 
 
@@ -217,146 +227,35 @@ public class PeriodicStats : IPeriodic
 
     /***************************************************************************
 
-        Updates the console output line.
-
-        Params:
-            rec_per_sec = average records per second
+        Gethers stats to write to the log file, and writes a line to the stats
+        log is the output period (passed to the constructor) has expired.
 
     ***************************************************************************/
 
-    private void consoleOutput ( real rec_per_sec )
-    {
-        if ( MainConfig.log.console_stats_enabled )
-        {
-            auto node_info = cast(IQueueNodeInfo)this.node;
-
-            auto channels_string = this.channelSizesString(node_info);
-
-            DigitGrouping.format(node_info.num_records, this.records_buf);
-            BitGrouping.format(node_info.num_bytes, this.bytes_buf, "b");
-
-            version ( CDGC )
-            {
-                const float Mb = 1024 * 1024;
-                size_t used, free;
-                GC.usage(used, free);
-
-                auto mem_allocated = cast(float)(used + free) / Mb;
-                auto mem_free = cast(float)free / Mb;
-
-                StaticTrace.format("  {} queue (Used {}Mb/Free {}Mb): handling {} connections, {} records/s, {} records ({}){}",
-                        node_info.storage_type, mem_allocated, mem_free,
-                        node_info.num_open_connections, rec_per_sec,
-                        this.records_buf, this.bytes_buf, channels_string).flush;
-            }
-            else
-            {
-                StaticTrace.format("  {} queue: handling {} connections, {} records/s, {} records ({}){}",
-                        node_info.storage_type,
-                        node_info.num_open_connections, rec_per_sec,
-                        this.records_buf, this.bytes_buf, channels_string).flush;
-            }
-        }
-    }
-
-
-    /***************************************************************************
-
-        Writes a line to the stats log is the output period (passed to the
-        constructor) has expired.
-
-        Params:
-            rec_per_sec = average records per second
-
-    ***************************************************************************/
-
-    private void logOutput ( real rec_per_sec )
+    private void logOutput ( )
     {
         if ( MainConfig.log.stats_log_enabled )
         {
             auto node_info = cast(IQueueNodeInfo)this.node;
 
-            // Bytes sent & received since last call
-            auto received = node_info.bytes_received;
-            auto sent = node_info.bytes_sent;
-
-            // Update counts
-            this.total_sent += sent;
-            this.total_received += received;
+            // Update counters with bytes sent & received and records handled
+            // since last call to this method
+            this.log_stats.bytes_received += node_info.bytes_sent;
+            this.log_stats.bytes_received += node_info.bytes_received;
+            this.log_stats.records_handled += node_info.records_handled;
 
             this.elapsed_since_last_log_update += this.console_update_time;
 
-            // Output logline when period has expired
+            // Output logline and reset counters when period has expired
             if ( this.elapsed_since_last_log_update >= this.log_update_time )
             {
-                DhtStats stats;
-                stats.bytes_sent = sent;
-                stats.Kb_sent_per_sec =
-                    cast(float)(this.total_sent / 1024)
-                    / cast(float)this.elapsed_since_last_log_update;
+                this.log_stats.handling_connections = node_info.num_open_connections;
 
-                stats.bytes_received = received;
-                stats.Kb_received_per_sec =
-                    cast(float)(this.total_received / 1024)
-                    / cast(float)this.elapsed_since_last_log_update;
-
-                stats.handling_connections = node_info.num_open_connections;
-                stats.records_per_sec = rec_per_sec;
-
-                this.updateChannelSizes(node_info);
-                this.log.writeExtra(stats, this.channel_sizes);
+                this.log.write(this.log_stats);
 
                 this.elapsed_since_last_log_update -= this.elapsed_since_last_log_update;
-                this.total_sent = 0;
-                this.total_received = 0;
+                this.log_stats = LogStats.init;
             }
-        }
-    }
-
-
-    /***************************************************************************
-
-        Formats the current size of each channel (in terms of % full) into the
-        channel_sizes_buf member. Used by the console output.
-
-        Params:
-            node_info = node information interface
-
-    ***************************************************************************/
-
-    private char[] channelSizesString ( IQueueNodeInfo node_info )
-    {
-        this.channel_sizes_buf.length = 0;
-
-        foreach ( channel_info; node_info )
-        {
-            auto percent = (cast(float)channel_info.num_bytes /
-                            cast(float)node_info.channelSizeLimit) * 100.0;
-            Layout!(char).print(this.channel_sizes_buf, ", {}: {}%",
-                channel_info.id, percent);
-        }
-
-        return this.channel_sizes_buf;
-    }
-
-
-    /***************************************************************************
-
-        Updates the channel_sizes associative array with the current size of
-        each channel (in terms of % full). Used by the stats log output.
-
-        Params:
-            node_info = node information interface
-
-    ***************************************************************************/
-
-    private void updateChannelSizes ( IQueueNodeInfo node_info )
-    {
-        foreach ( channel_info; node_info )
-        {
-            auto percent = (cast(float)channel_info.num_bytes /
-                            cast(float)node_info.channelSizeLimit) * 100.0;
-            this.channel_sizes[channel_info.id] = percent;
         }
     }
 }

@@ -7,7 +7,10 @@
     version:    October 2010: Initial release
 
     authors:    David Eckardt, Gavin Norman
-                    Thomas Nicolai, Lars Kirchhoff
+                Thomas Nicolai, Lars Kirchhoff
+
+    TODO: this module is extremely similar to the equivalent in the DhtNode
+    project. Find a central place to combine them.
 
 *******************************************************************************/
 
@@ -120,7 +123,7 @@ public class QueueServer
 
         this.sigint_event = new SignalEvent(&this.sigintHandler, [SIGINT]);
 
-        this.periodics = new Periodics(this.node);
+        this.periodics = new Periodics(this.node, this.epoll);
         this.periodics.add(new PeriodicStats(
             MainConfig.log.stats_log_period));
     }
@@ -136,7 +139,7 @@ public class QueueServer
     {
         this.epoll.register(this.sigint_event);
 
-        this.periodics.register(this.epoll);
+        this.periodics.register();
 
         this.node.register(this.epoll);
 
@@ -209,7 +212,7 @@ public class QueueServer
         // fire from now on from doing anything (see IPeriodics).
         Terminator.terminating = true;
 
-        this.periodics.shutdown(this.epoll);
+        this.periodics.shutdown();
 
         this.node.shutdown;
 

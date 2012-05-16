@@ -164,9 +164,11 @@ class QueueProducer
 
     ***************************************************************************/
 
-    char[] free_str;
+    private char[] free_str;
 
-    char[] used_str;
+    private char[] used_str;
+
+    private char[] message_buf;
 
 
     /***************************************************************************
@@ -339,11 +341,12 @@ class QueueProducer
 
     ***************************************************************************/
 
-    void notifier ( QueueClient.RequestNotification info )
+    private void notifier ( QueueClient.RequestNotification info )
     {        
         if (info.type == info.type.Finished)
         {
-        	Stderr.formatln("Queue: status={}, msg={}", info.status, info.message);
+        	Stderr.formatln("Queue: status={}, msg={}", info.status,
+                info.message(this.message_buf));
 
             if ( info.command == QueueConst.Command.PushMulti || this.args.getBool("reconnect") )
             {
