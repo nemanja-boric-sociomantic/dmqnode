@@ -6,7 +6,11 @@
 
     authors:        Gavin Norman
 
-    TODO: description of module
+    Class which manages a set of periodically firing maintenance tasks over the
+    dht node.
+
+    TODO: this is a replica of the same module in the QueueNode project. These
+    should be placed somewhere central so they can be shared.
 
 *******************************************************************************/
 
@@ -29,16 +33,67 @@ private import swarm.dht.node.model.IDhtNodeInfo;
 
 
 
+/*******************************************************************************
+
+    Periodics manager. Handles the registration and shutdown of a set of
+    periodically firing maintenance tasks over the dht node.
+
+*******************************************************************************/
+
 public class Periodics
 {
+    /***************************************************************************
+
+        Set of active periodics.
+
+    ***************************************************************************/
+
     private IPeriodic[] periodics;
+
+
+    /***************************************************************************
+
+        Interface to dht node.
+
+    ***************************************************************************/
 
     private const IDhtNode dht_node;
 
-    public this ( IDhtNode dht_node )
+
+    /***************************************************************************
+
+        Epoll select dispatcher used by periodcs' timer events.
+
+    ***************************************************************************/
+
+    private const EpollSelectDispatcher epoll;
+
+
+    /***************************************************************************
+
+        Constructor.
+
+        Params:
+            dht_node = interface to dht node
+            epoll = epoll select dispatcher to register periodics with
+
+    ***************************************************************************/
+
+    public this ( IDhtNode dht_node, EpollSelectDispatcher epoll )
     {
         this.dht_node = dht_node;
+        this.epoll = epoll;
     }
+
+
+    /***************************************************************************
+
+        Adds a periodic to the set.
+
+        Params:
+            periodic = new periodic to add
+
+    ***************************************************************************/
 
     public void add ( IPeriodic periodic )
     {
@@ -46,19 +101,33 @@ public class Periodics
         this.periodics ~= periodic;
     }
 
-    public void shutdown ( EpollSelectDispatcher epoll )
+
+    /***************************************************************************
+
+        Registers all periodics with epoll.
+
+    ***************************************************************************/
+
+    public void register ( )
     {
         foreach ( periodic; this.periodics )
         {
-            epoll.unregister(periodic);
+            this.epoll.register(periodic);
         }
     }
 
-    public void register ( EpollSelectDispatcher epoll )
+
+    /***************************************************************************
+
+        Shuts down all periodics, unregistering them from epoll.
+
+    ***************************************************************************/
+
+    public void shutdown ( )
     {
         foreach ( periodic; this.periodics )
         {
-            epoll.register(periodic);
+            this.epoll.unregister(periodic);
         }
     }
 }

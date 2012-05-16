@@ -113,7 +113,6 @@
   <ItemGroup>
     <Folder Include="src\mod\node\periodic\" />
     <Folder Include="src\mod\node\periodic\model\" />
-    <Folder Include="src\mod\node\servicethreads\model\" />
     <Folder Include="src\mod\info\modes\" />
     <Folder Include="src\mod\info\modes\model\" />
   </ItemGroup>

@@ -10,6 +10,9 @@
     authors:        David Eckardt, Gavin Norman 
                     Thomas Nicolai, Lars Kirchhoff
 
+    TODO: this module is extremely similar to the equivalent in the QueueNode
+    project. Find a central place to combine them.
+
 *******************************************************************************/
 
 module src.mod.node.DhtNode;
@@ -125,7 +128,7 @@ public class DhtNodeServer
         this.sigint_event = new SignalEvent(&this.sigintHandler,
             [SIGINT, SIGTERM, SIGQUIT]);
 
-        this.periodics = new Periodics(this.node);
+        this.periodics = new Periodics(this.node, this.epoll);
         this.periodics.add(new PeriodicMaintenance(
             MainConfig.server_threads.maintenance_period));
         this.periodics.add(new PeriodicStats(
@@ -143,7 +146,7 @@ public class DhtNodeServer
     {
         this.epoll.register(this.sigint_event);
 
-        this.periodics.register(this.epoll);
+        this.periodics.register();
 
         this.node.register(this.epoll);
 
@@ -287,7 +290,7 @@ public class DhtNodeServer
         // fire from now on from doing anything (see IPeriodics).
         Terminator.terminating = true;
 
-        this.periodics.shutdown(this.epoll);
+        this.periodics.shutdown();
 
         this.node.shutdown;
 
