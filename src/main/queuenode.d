@@ -22,11 +22,11 @@ module src.main.dhtnode;
 
 private import src.main.Version;
 
-private import src.mod.server.QueueServer;
+private import src.mod.node.QueueNode;
 
-private import src.mod.server.config.MainConfig;
+private import src.mod.node.config.MainConfig;
 
-private import src.mod.server.util.Terminator;
+private import src.mod.node.util.Terminator;
 
 private import ocean.sys.SignalHandler;
 
@@ -83,7 +83,7 @@ private int main ( char[][] arguments )
         return r.exit_code;
     }
 
-    auto queue = new QueueServer;
+    auto queue = new QueueNodeServer;
     queue.run;
 
     return 0;

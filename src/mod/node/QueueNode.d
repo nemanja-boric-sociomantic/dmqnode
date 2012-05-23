@@ -14,7 +14,7 @@
 
 *******************************************************************************/
 
-module src.mod.server.QueueServer;
+module src.mod.node.QueueNode;
 
 
 
@@ -24,12 +24,12 @@ module src.mod.server.QueueServer;
 
 *******************************************************************************/
 
-private import src.mod.server.config.MainConfig;
+private import src.mod.node.config.MainConfig;
 
-private import src.mod.server.util.Terminator;
+private import src.mod.node.util.Terminator;
 
-private import src.mod.server.periodic.Periodics;
-private import src.mod.server.periodic.PeriodicStats;
+private import src.mod.node.periodic.Periodics;
+private import src.mod.node.periodic.PeriodicStats;
 
 private import swarm.queue.QueueNode;
 
@@ -64,7 +64,7 @@ private import tango.stdc.posix.signal: SIGINT;
 
 *******************************************************************************/
 
-public class QueueServer
+public class QueueNodeServer
 {
     /***************************************************************************
     

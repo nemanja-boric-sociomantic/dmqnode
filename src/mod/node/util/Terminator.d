@@ -11,7 +11,7 @@
 
 *******************************************************************************/
 
-module src.mod.server.util.Terminator;
+module src.mod.node.util.Terminator;
 
 
 

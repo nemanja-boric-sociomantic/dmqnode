@@ -11,7 +11,7 @@
 
 *******************************************************************************/
 
-module src.mod.server.periodic.model.IPeriodic;
+module src.mod.node.periodic.model.IPeriodic;
 
 
 
@@ -25,7 +25,7 @@ private import ocean.io.select.event.TimerEvent;
 
 private import ocean.io.select.EpollSelectDispatcher;
 
-private import src.mod.server.util.Terminator;
+private import src.mod.node.util.Terminator;
 
 private import swarm.core.node.model.INode;
 private import swarm.queue.node.model.IQueueNodeInfo;
