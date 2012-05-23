@@ -71,7 +71,8 @@ public class PeriodicStats : IPeriodic
 
     ***************************************************************************/
 
-    private StatsLog!(LogStats) log;
+    private alias StatsLog!(LogStats) Log;
+    private Log log;
 
 
     /***************************************************************************
@@ -82,7 +83,7 @@ public class PeriodicStats : IPeriodic
 
     private const console_update_time = 1;
 
-    private const uint log_update_time;
+    private const uint log_update_time = Log.default_period;
 
 
     /***************************************************************************
@@ -116,24 +117,15 @@ public class PeriodicStats : IPeriodic
 
         Constructor.
 
-        Params:
-            log_update_time = seconds between updates of the stats log (the
-                console output is udpated every second)
-
     ***************************************************************************/
 
-    public this ( uint log_update_time )
+    public this ( )
     {
         super(console_update_time);
 
         this.records_per_sec = new SlidingAverageTime!(ulong)(5, 1_000, 1_000);
 
-        this.log_update_time = log_update_time;
-
-        if ( MainConfig.log.stats_log_enabled )
-        {
-            this.log = new StatsLog!(LogStats)(MainConfig.log.stats);
-        }
+        this.log = new Log(MainConfig.stats.logfile);
     }
 
 
@@ -164,7 +156,7 @@ public class PeriodicStats : IPeriodic
 
     private void consoleOutput ( )
     {
-        if ( MainConfig.log.console_stats_enabled )
+        if ( MainConfig.stats.console_stats_enabled )
         {
             auto node_info = cast(IQueueNodeInfo)this.node;
 
@@ -227,35 +219,32 @@ public class PeriodicStats : IPeriodic
 
     /***************************************************************************
 
-        Gethers stats to write to the log file, and writes a line to the stats
-        log is the output period (passed to the constructor) has expired.
+        Gathers stats to write to the log file, and writes a line to the stats
+        log if the standard output period has expired.
 
     ***************************************************************************/
 
     private void logOutput ( )
     {
-        if ( MainConfig.log.stats_log_enabled )
+        auto node_info = cast(IQueueNodeInfo)this.node;
+
+        // Update counters with bytes sent & received and records handled
+        // since last call to this method
+        this.log_stats.bytes_received += node_info.bytes_sent;
+        this.log_stats.bytes_received += node_info.bytes_received;
+        this.log_stats.records_handled += node_info.records_handled;
+
+        this.elapsed_since_last_log_update += this.console_update_time;
+
+        // Output logline and reset counters when period has expired
+        if ( this.elapsed_since_last_log_update >= this.log_update_time )
         {
-            auto node_info = cast(IQueueNodeInfo)this.node;
+            this.log_stats.handling_connections = node_info.num_open_connections;
 
-            // Update counters with bytes sent & received and records handled
-            // since last call to this method
-            this.log_stats.bytes_received += node_info.bytes_sent;
-            this.log_stats.bytes_received += node_info.bytes_received;
-            this.log_stats.records_handled += node_info.records_handled;
+            this.log.write(this.log_stats);
 
-            this.elapsed_since_last_log_update += this.console_update_time;
-
-            // Output logline and reset counters when period has expired
-            if ( this.elapsed_since_last_log_update >= this.log_update_time )
-            {
-                this.log_stats.handling_connections = node_info.num_open_connections;
-
-                this.log.write(this.log_stats);
-
-                this.elapsed_since_last_log_update -= this.elapsed_since_last_log_update;
-                this.log_stats = LogStats.init;
-            }
+            this.elapsed_since_last_log_update -= this.elapsed_since_last_log_update;
+            this.log_stats = LogStats.init;
         }
     }
 }

@@ -6,11 +6,11 @@
 
     version:        Jun 2009: Initial release
 
-    authors:        Thomas Nicolai, Lars Kirchhoff, Gavin Norman
+    authors:        Gavin Norman
 
 *******************************************************************************/
 
-module src.main.dhtnode;
+module src.main.queuenode;
 
 
 
@@ -20,40 +20,8 @@ module src.main.dhtnode;
 
 *******************************************************************************/
 
-private import src.main.Version;
-
 private import src.mod.node.QueueNode;
 
-private import src.mod.node.config.MainConfig;
-
-private import src.mod.node.util.Terminator;
-
-private import ocean.sys.SignalHandler;
-
-private import tango.io.Stdout;
-
-private import ocean.text.Arguments;
-
-private import ocean.util.Main;
-
-
-
-/*******************************************************************************
-
-    Initialises command line arguments parser with options available to this
-    application.
-
-    Returns:
-        arguments parser instance
-
-*******************************************************************************/
-
-private Arguments initArguments ( )
-{
-    auto args = new Arguments;
-
-    return args;
-}
 
 
 /*******************************************************************************
@@ -62,30 +30,13 @@ private Arguments initArguments ( )
     starts queue node.
 
     Params:
-        arguments = array with raw command line arguments
+        cl_args = array with raw command line arguments
 
 *******************************************************************************/
 
-private int main ( char[][] arguments )
+private int main ( char[][] cl_args )
 {
-    auto args = initArguments();
-
-    void initConfig ( char[] app_name, char[] config_file )
-    {
-        MainConfig.init(app_name, config_file);
-    }
-
-    auto r = Main.processArgsConfig(arguments, args, Version,
-            "queue node server", &initConfig);
-
-    if ( r.exit )
-    {
-        return r.exit_code;
-    }
-
-    auto queue = new QueueNodeServer;
-    queue.run;
-
-    return 0;
+    auto app = new QueueNodeServer;
+    return app.main(cl_args);
 }
 

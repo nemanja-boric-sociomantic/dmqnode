@@ -18,17 +18,8 @@ module src.mod.node.config.MainConfig;
 
 *******************************************************************************/
 
-private import ocean.sys.CmdPath;
-
+private import ocean.util.config.ConfigParser;
 private import ConfigReader = ocean.util.config.ClassFiller;
-private import ocean.util.Config;
-
-private import ocean.util.OceanException;
-private import ocean.util.TraceLog;
-
-private import tango.util.log.AppendFile;
-
-debug private import tango.util.log.Trace;
 
 
 
@@ -54,23 +45,14 @@ private class ServerConfig
 
 /*******************************************************************************
 
-    Logging config values
+    Stats logging config values
 
 *******************************************************************************/
 
-private class LogConfig
+private class StatsConfig
 {
-    char[] error = "log/error.log";
-    bool console_echo_error = false;
-
-    char[] trace = "log/trace.log";
-    bool console_echo_trace = false;
-
-    char[] stats = "log/stats.log";
-    bool stats_log_enabled = false;
+    char[] logfile = "log/stats.log";
     bool console_stats_enabled = false;
-
-    uint stats_log_period = 300;
 }
 
 
@@ -82,58 +64,31 @@ private class LogConfig
 
 public class MainConfig
 {
+static:
+
     /***************************************************************************
 
         Instances of each config class to be read.
 
     ***************************************************************************/
 
-    static public ServerConfig server;
-    static public LogConfig log;
+    public ServerConfig server;
+    public StatsConfig stats;
 
 
-    /***************************************************************************
+    /**************************************************************************
 
-        Path object holding absolute path to running executable
+        Initializes configuration.
 
-    ***************************************************************************/
+        Params:
+            config = config parser instance
 
-    static private CmdPath cmdpath;
+     **************************************************************************/
 
-
-    /***************************************************************************
-
-        Initializes configuration
-
-        Params
-            exepath = path to running executable as given by command line
-                      argument 0
-            config_file = config file to read, if not specified uses
-                          <exepath>/etc/config.ini.
-
-    ***************************************************************************/
-
-    static public void init ( char[] exepath, char[] config_file = null )
+    public void init ( ConfigParser config )
     {
-        cmdpath.set(exepath);
-
-        if ( config_file )
-        {
-            Config.parse(config_file);
-        }
-        else
-        {
-            Config.parse(cmdpath.prepend(["etc", "config.ini"]));
-        }
-
         ConfigReader.fill("Server", server);
-        ConfigReader.fill("Log", log);
-
-        OceanException.setOutput(new AppendFile(log.error));
-        OceanException.console_output = log.console_echo_error;
-
-        TraceLog.init(log.trace);
-        TraceLog.console_enabled = log.console_echo_trace;
+        ConfigReader.fill("Stats", stats);
     }
 }
 

@@ -24,6 +24,8 @@ module src.mod.node.QueueNode;
 
 *******************************************************************************/
 
+private import src.main.Version;
+
 private import src.mod.node.config.MainConfig;
 
 private import src.mod.node.util.Terminator;
@@ -32,23 +34,21 @@ private import src.mod.node.periodic.Periodics;
 private import src.mod.node.periodic.PeriodicStats;
 
 private import swarm.queue.QueueNode;
-
 private import swarm.queue.QueueConst;
-
 private import swarm.queue.node.storage.Ring;
 
+private import ocean.core.Exception : assertEx;
 private import ocean.core.MessageFiber;
-private import ocean.io.select.protocol.generic.ErrnoIOException : IOWarning;
 
 private import ocean.io.select.EpollSelectDispatcher;
-
+private import ocean.io.select.protocol.generic.ErrnoIOException : IOWarning;
 private import ocean.io.select.event.SignalEvent;
-
-private import ocean.core.Exception : assertEx;
-
 private import ocean.io.select.model.ISelectClient;
 
-private import ocean.util.OceanException;
+private import ocean.util.app.LoggedCliApp;
+private import ocean.util.app.ext.VersionArgsExt;
+
+private import ocean.util.OceanException; // TODO: remove
 
 debug private import ocean.util.log.Trace;
 
@@ -64,8 +64,17 @@ private import tango.stdc.posix.signal: SIGINT;
 
 *******************************************************************************/
 
-public class QueueNodeServer
+public class QueueNodeServer : LoggedCliApp
 {
+    /***************************************************************************
+
+        Version information extension.
+
+    ***************************************************************************/
+
+    public VersionArgsExt ver_ext;
+
+
     /***************************************************************************
     
         Epoll selector instance
@@ -110,7 +119,35 @@ public class QueueNodeServer
 
     public this ( )
     {
+        const app_name = "queuenode";
+        const app_desc = "queuenode: distributed queue server node.";
+        const usage = null;
+        const help = null;
+        const use_insert_appender = false;
+        const loose_config_parsing = false;
+        const char[][] default_configs = [ "etc/config.ini" ];
+
+        super(app_name, app_desc, usage, help, use_insert_appender,
+                loose_config_parsing, default_configs, config);
+
+        this.ver_ext = new VersionArgsExt(Version);
+        this.args_ext.registerExtension(this.ver_ext);
+        this.log_ext.registerExtension(this.ver_ext);
+        this.registerExtension(this.ver_ext);
+
         this.epoll = new EpollSelectDispatcher;
+    }
+
+
+    /***************************************************************************
+
+        Get values from the configuration file.
+
+    ***************************************************************************/
+
+    public override void processConfig ( Application app, ConfigParser config )
+    {
+        MainConfig.init(config);
 
         this.node = new QueueNode(
                 QueueConst.NodeItem(MainConfig.server.address(),
@@ -124,18 +161,24 @@ public class QueueNodeServer
         this.sigint_event = new SignalEvent(&this.sigintHandler, [SIGINT]);
 
         this.periodics = new Periodics(this.node, this.epoll);
-        this.periodics.add(new PeriodicStats(
-            MainConfig.log.stats_log_period));
+        this.periodics.add(new PeriodicStats());
     }
 
 
     /***************************************************************************
 
-        Runs the queue node
+        Do the actual application work. Called by the super class.
 
-     **************************************************************************/
+        Params:
+            args = command line arguments
+            config = parser instance with the parsed configuration
 
-    public int run ( )
+        Returns:
+            status code to return to the OS
+
+    ***************************************************************************/
+
+    protected int run ( Arguments args, ConfigParser config )
     {
         this.epoll.register(this.sigint_event);
 
