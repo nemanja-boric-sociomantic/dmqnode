@@ -22,6 +22,12 @@ module src.mod.monitor.QueueMonitor;
 
 private import src.mod.monitor.Tables;
 
+
+private import swarm.queue.QueueClient;
+
+private import swarm.queue.QueueConst;
+
+
 private import ocean.core.Array : appendCopy, copy;
 
 private import ocean.io.Stdout;
@@ -31,11 +37,6 @@ private import ocean.io.select.EpollSelectDispatcher;
 private import ocean.text.Arguments;
 
 private import ocean.io.select.event.TimerEvent;
-
-
-private import swarm.queue.QueueClient;
-
-private import swarm.queue.QueueConst;
 
 
 private import tango.core.Array : contains;
@@ -444,12 +445,18 @@ public class QueueMonitor
 
                 if (!info.succeeded )
                 {
-                    Stderr.formatln("Error while performing {} request: {} ({}) on {}:{}:{}",
+                    Stderr.format("Error while performing {} request: {} ({}) on ",
                             *QueueConst.Command.description(info.command),
-                            info.exception, info.status,
-                            this.id, info.nodeitem.Address, info.nodeitem.Port);
+                            info.exception, info.status);
+
+                    stdout.red;
+                    Stderr.formatln(" {}:{}:{}", this.id, info.nodeitem.Address,
+                                    info.nodeitem.Port);
+                    stdout.default_colour;
                 }
             }
+
+
         }
 
 
@@ -824,6 +831,7 @@ public class QueueMonitor
 
         Params:
             queue = The queue node to reset its nodes' responded value.
+
     ***************************************************************************/
 
     private void resetResponded(Queue queue)
