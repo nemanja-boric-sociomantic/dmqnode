@@ -27,7 +27,7 @@ private import ocean.io.select.EpollSelectDispatcher;
 
 private import src.mod.node.util.Terminator;
 
-private import swarm.dht.node.model.IDhtNode;
+private import swarm.core.node.model.INode;
 private import swarm.dht.node.model.IDhtNodeInfo;
 
 
@@ -46,7 +46,7 @@ public abstract class IPeriodic : TimerEvent
 
     ***************************************************************************/
 
-    protected alias .IDhtNode IDhtNode;
+    protected alias .INode INode;
     protected alias .IDhtNodeInfo IDhtNodeInfo;
 
 
@@ -56,7 +56,7 @@ public abstract class IPeriodic : TimerEvent
 
     ***************************************************************************/
 
-    protected IDhtNode dht_node;
+    protected INode dht_node;
 
 
     /***************************************************************************
@@ -89,7 +89,7 @@ public abstract class IPeriodic : TimerEvent
 
     ***************************************************************************/
 
-    public void setDhtNode ( IDhtNode dht_node )
+    public void setDhtNode ( INode dht_node )
     {
         this.dht_node = dht_node;
     }

@@ -18,7 +18,7 @@
 
 *******************************************************************************/
 
-module src.mod.node.DhtNode;
+module src.mod.node.DhtNodeServer;
 
 
 

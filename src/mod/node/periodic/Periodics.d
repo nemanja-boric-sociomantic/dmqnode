@@ -28,9 +28,6 @@ private import src.mod.node.periodic.model.IPeriodic;
 
 private import ocean.io.select.EpollSelectDispatcher;
 
-private import swarm.dht.node.model.IDhtNode;
-private import swarm.dht.node.model.IDhtNodeInfo;
-
 
 
 /*******************************************************************************
@@ -57,7 +54,7 @@ public class Periodics
 
     ***************************************************************************/
 
-    private const IDhtNode dht_node;
+    private const IPeriodic.INode dht_node;
 
 
     /***************************************************************************
@@ -79,7 +76,7 @@ public class Periodics
 
     ***************************************************************************/
 
-    public this ( IDhtNode dht_node, EpollSelectDispatcher epoll )
+    public this ( IPeriodic.INode dht_node, EpollSelectDispatcher epoll )
     {
         this.dht_node = dht_node;
         this.epoll = epoll;
