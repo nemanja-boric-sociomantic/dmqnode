@@ -69,7 +69,6 @@
     <Compile Include="src\mod\model\DhtTool.d" />
     <Compile Include="src\mod\model\SourceDhtTool.d" />
     <Compile Include="src\mod\node\util\Terminator.d" />
-    <Compile Include="src\mod\node\DhtNode.d" />
     <Compile Include="src\mod\performance\DhtPerformance.d" />
     <Compile Include="src\mod\repair\storagerepair\model\IStorageRepair.d" />
     <Compile Include="src\mod\repair\storagerepair\LogFilesRepair.d" />
@@ -98,6 +97,7 @@
     <Compile Include="src\mod\node\config\StatsConfig.d" />
     <Compile Include="src\mod\node\memory\MemoryPeriodicStats.d" />
     <Compile Include="src\mod\node\memory\ChannelDumpThread.d" />
+    <Compile Include="src\mod\node\DhtNodeServer.d" />
   </ItemGroup>
   <ProjectExtensions>
     <MonoDevelop>
