@@ -23,7 +23,7 @@ module src.mod.node.periodic.PeriodicStats;
 
 private import src.mod.node.periodic.model.IPeriodic;
 
-private import src.mod.node.config.MainConfig;
+private import src.mod.node.config.StatsConfig;
 
 private import ocean.math.SlidingAverage;
 
@@ -50,6 +50,15 @@ public class PeriodicStats : IPeriodic
 {
     /***************************************************************************
 
+        Stats config object, passed into constructor.
+
+    ***************************************************************************/
+
+    private const StatsConfig stats_config;
+
+
+    /***************************************************************************
+
         Struct containing the values to be written to the stats log file
 
     ***************************************************************************/
@@ -71,7 +80,8 @@ public class PeriodicStats : IPeriodic
 
     ***************************************************************************/
 
-    private StatsLog!(LogStats) log;
+    private alias StatsLog!(LogStats) Log;
+    private Log log;
 
 
     /***************************************************************************
@@ -82,7 +92,7 @@ public class PeriodicStats : IPeriodic
 
     private const console_update_time = 1;
 
-    private const uint log_update_time;
+    private const uint log_update_time = Log.default_period;
 
 
     /***************************************************************************
@@ -109,31 +119,24 @@ public class PeriodicStats : IPeriodic
 
     ***************************************************************************/
 
-    private char[] records_buf, bytes_buf;
+    private char[] records_buf, bytes_buf, memory_buf;
 
 
     /***************************************************************************
 
         Constructor.
 
-        Params:
-            log_update_time = seconds between updates of the stats log (the
-                console output is udpated every second)
-
     ***************************************************************************/
 
-    public this ( uint log_update_time )
+    public this ( StatsConfig stats_config )
     {
+        this.stats_config = stats_config;
+
         super(console_update_time);
 
         this.records_per_sec = new SlidingAverageTime!(ulong)(5, 1_000, 1_000);
 
-        this.log_update_time = log_update_time;
-
-        if ( MainConfig.log.stats_log_enabled )
-        {
-            this.log = new StatsLog!(LogStats)(MainConfig.log.stats);
-        }
+        this.log = new StatsLog!(LogStats)(this.stats_config.logfile);
     }
 
 
@@ -158,13 +161,15 @@ public class PeriodicStats : IPeriodic
 
     /***************************************************************************
 
-        Updates the console output line.
+        Updates the console output line. Sub-classes can append additional
+        information to the console output by overriding the consoleOutput_()
+        method, below.
 
     ***************************************************************************/
 
     private void consoleOutput ( )
     {
-        if ( MainConfig.log.console_stats_enabled )
+        if ( this.stats_config.console_stats_enabled )
         {
             auto node_info = cast(IDhtNodeInfo)this.dht_node;
 
@@ -172,6 +177,8 @@ public class PeriodicStats : IPeriodic
 
             DigitGrouping.format(node_info.num_records, this.records_buf);
             BitGrouping.format(node_info.num_bytes, this.bytes_buf, "b");
+
+            this.memory_buf.length = 0;
 
             version ( CDGC )
             {
@@ -182,19 +189,32 @@ public class PeriodicStats : IPeriodic
                 auto mem_allocated = cast(float)(used + free) / Mb;
                 auto mem_free = cast(float)free / Mb;
 
-                StaticTrace.format("  {} dht (Used {}Mb/Free {}Mb): handling {} connections, {} records/s, {} records ({})",
-                        node_info.storage_type, mem_allocated, mem_free,
-                        node_info.num_open_connections, rec_per_sec,
-                        this.records_buf, this.bytes_buf).flush;
+                Layout!(char).print(this.memory_buf, " (Used {}Mb/Free {}Mb)",
+                    mem_allocated, mem_free);
             }
-            else
-            {
-                StaticTrace.format("  {} dht: handling {} connections, {} records/s, {} records ({})",
-                        node_info.storage_type,
-                        node_info.num_open_connections, rec_per_sec,
-                        this.records_buf, this.bytes_buf).flush;
-            }
+
+            StaticTrace.format("  {} dht 0x{:X}..0x{:X}{}: {} conns, {} rec/s, {} recs ({}){}",
+                node_info.storage_type, node_info.min_hash, node_info.max_hash,
+                this.memory_buf, node_info.num_open_connections, rec_per_sec,
+                this.records_buf, this.bytes_buf,
+                this.consoleOutput_()).flush;
         }
+    }
+
+    /***************************************************************************
+
+        Provides additional text to be displayed on the console stats line. The
+        default implementation does nothing, but deriving classes can override
+        in order to display additional information.
+
+        Returns:
+            text to append to console stats line
+
+    ***************************************************************************/
+
+    protected char[] consoleOutput_ ( )
+    {
+        return "";
     }
 
 
@@ -234,28 +254,25 @@ public class PeriodicStats : IPeriodic
 
     private void logOutput ( )
     {
-        if ( MainConfig.log.stats_log_enabled )
+        auto node_info = cast(IDhtNodeInfo)this.dht_node;
+
+        // Update counters with bytes sent & received and records handled
+        // since last call to this method
+        this.log_stats.bytes_received += node_info.bytes_sent;
+        this.log_stats.bytes_received += node_info.bytes_received;
+        this.log_stats.records_handled += node_info.records_handled;
+
+        this.elapsed_since_last_log_update += this.console_update_time;
+
+        // Output logline and reset counters when period has expired
+        if ( this.elapsed_since_last_log_update >= this.log_update_time )
         {
-            auto node_info = cast(IDhtNodeInfo)this.dht_node;
+            this.log_stats.handling_connections = node_info.num_open_connections;
 
-            // Update counters with bytes sent & received and records handled
-            // since last call to this method
-            this.log_stats.bytes_received += node_info.bytes_sent;
-            this.log_stats.bytes_received += node_info.bytes_received;
-            this.log_stats.records_handled += node_info.records_handled;
+            this.log.write(this.log_stats);
 
-            this.elapsed_since_last_log_update += this.console_update_time;
-
-            // Output logline and reset counters when period has expired
-            if ( this.elapsed_since_last_log_update >= this.log_update_time )
-            {
-                this.log_stats.handling_connections = node_info.num_open_connections;
-
-                this.log.write(this.log_stats);
-
-                this.elapsed_since_last_log_update -= this.elapsed_since_last_log_update;
-                this.log_stats = LogStats.init;
-            }
+            this.elapsed_since_last_log_update -= this.elapsed_since_last_log_update;
+            this.log_stats = LogStats.init;
         }
     }
 }

@@ -1,12 +1,12 @@
 /*******************************************************************************
 
-    DHT Node Server Daemon
+    Dht Node Server
 
     copyright:      Copyright (c) 2009 sociomantic labs. All rights reserved
 
     version:        Jun 2009: Initial release
 
-    authors:        Thomas Nicolai, Lars Kirchhoff, Gavin Norman
+    authors:        Gavin Norman
 
 *******************************************************************************/
 
@@ -20,42 +20,8 @@ module src.main.dhtnode;
 
 *******************************************************************************/
 
-private import src.main.Version;
-
 private import src.mod.node.DhtNode;
 
-private import src.mod.node.config.MainConfig;
-
-private import src.mod.node.util.Terminator;
-
-private import ocean.sys.SignalHandler;
-
-private import tango.io.Stdout;
-
-private import ocean.text.Arguments;
-
-private import ocean.util.Main;
-
-
-
-/*******************************************************************************
-
-    Initialises command line arguments parser with options available to this
-    application.
-
-    Returns:
-        arguments parser instance
-
-*******************************************************************************/
-
-private Arguments initArguments ( )
-{
-    auto args = new Arguments;
-
-    args("daemonize").aliased('d').help("start daemonized dht node server [DEPRECATED]");
-
-    return args;
-}
 
 
 /*******************************************************************************
@@ -64,30 +30,13 @@ private Arguments initArguments ( )
     starts dht node.
 
     Params:
-        arguments = array with raw command line arguments
+        cl_args = array with raw command line arguments
 
 *******************************************************************************/
 
-private int main ( char[][] arguments )
+private int main ( char[][] cl_args )
 {
-    auto args = initArguments();
-
-    void initConfig ( char[] app_name, char[] config_file )
-    {
-        MainConfig.init(app_name, config_file);
-    }
-
-    auto r = Main.processArgsConfig(arguments, args, Version,
-            "dht node server", &initConfig);
-
-    if ( r.exit )
-    {
-        return r.exit_code;
-    }
-
-    auto dht = new DhtNodeServer;
-    dht.run;
-
-    return 0;
+    auto app = new DhtNodeServer;
+    return app.main(cl_args);
 }
 

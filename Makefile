@@ -115,7 +115,8 @@ all: default
 # Revision file build
 
 revision:
-	@../ocean/script/mkversion.sh $(D_GC) $(DEPS)
+	@../ocean/script/mkversion.sh -t \
+	$(DEPS_PATH)/ocean/script/appVersion.d.tpl $(D_GC) $(DEPS)
 
 
 # ------------------------------------------------------------------------------

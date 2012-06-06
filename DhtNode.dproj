@@ -10,14 +10,14 @@
     <IncrementalLinking>true</IncrementalLinking>
     <UseDefaultCompiler>true</UseDefaultCompiler>
     <Compiler>DMD</Compiler>
+    <PreferOneStepBuild>true</PreferOneStepBuild>
     <Includes>
       <Includes>
         <Path>../tango</Path>
-        <Path>../swarm</Path>
         <Path>../ocean</Path>
+        <Path>../swarm</Path>
       </Includes>
     </Includes>
-    <PreferOneStepBuild>true</PreferOneStepBuild>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -68,7 +68,6 @@
     <Compile Include="src\mod\info\Tables.d" />
     <Compile Include="src\mod\model\DhtTool.d" />
     <Compile Include="src\mod\model\SourceDhtTool.d" />
-    <Compile Include="src\mod\node\config\MainConfig.d" />
     <Compile Include="src\mod\node\util\Terminator.d" />
     <Compile Include="src\mod\node\DhtNode.d" />
     <Compile Include="src\mod\performance\DhtPerformance.d" />
@@ -84,7 +83,6 @@
     <Compile Include="src\mod\test\DhtTest.d" />
     <Compile Include="src\mod\node\periodic\model\IPeriodic.d" />
     <Compile Include="src\mod\node\periodic\PeriodicStats.d" />
-    <Compile Include="src\mod\node\periodic\PeriodicMaintenance.d" />
     <Compile Include="src\mod\node\periodic\Periodics.d" />
     <Compile Include="src\mod\info\modes\model\IMode.d" />
     <Compile Include="src\mod\info\modes\ApiVersionMode.d" />
@@ -93,11 +91,18 @@
     <Compile Include="src\mod\info\modes\MinimalMode.d" />
     <Compile Include="src\mod\info\modes\MonitorMode.d" />
     <Compile Include="src\mod\info\modes\NumOfConnectionsMode.d" />
+    <Compile Include="src\mod\node\model\IDhtNode.d" />
+    <Compile Include="src\mod\node\memory\MemoryDhtNode.d" />
+    <Compile Include="src\mod\node\logfiles\LogfilesDhtNode.d" />
+    <Compile Include="src\mod\node\config\ServerConfig.d" />
+    <Compile Include="src\mod\node\config\StatsConfig.d" />
+    <Compile Include="src\mod\node\memory\MemoryPeriodicStats.d" />
+    <Compile Include="src\mod\node\memory\ChannelDumpThread.d" />
   </ItemGroup>
   <ProjectExtensions>
     <MonoDevelop>
       <Properties>
-        <MonoDevelop.Autotools.MakefileInfo IntegrationEnabled="true" RelativeMakefileName="Makefile" BuildTargetName="default">
+        <MonoDevelop.Autotools.MakefileInfo IntegrationEnabled="true" RelativeMakefileName="Makefile" BuildTargetName="node">
           <BuildFilesVar />
           <DeployFilesVar />
           <ResourcesVar />
@@ -115,5 +120,8 @@
     <Folder Include="src\mod\node\periodic\model\" />
     <Folder Include="src\mod\info\modes\" />
     <Folder Include="src\mod\info\modes\model\" />
+    <Folder Include="src\mod\node\model\" />
+    <Folder Include="src\mod\node\memory\" />
+    <Folder Include="src\mod\node\logfiles\" />
   </ItemGroup>
 </Project>
