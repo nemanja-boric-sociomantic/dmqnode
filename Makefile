@@ -66,7 +66,6 @@ export D_GC := cdgc
 FLAGS =\
 	$(foreach d,$(DEPS),-I$(DEPS_PATH)/$d) \
 	-L-lminilzo \
-	-L-ldl \
 	-m${ARCH}
 
 UNITTESTFLAGS =\
