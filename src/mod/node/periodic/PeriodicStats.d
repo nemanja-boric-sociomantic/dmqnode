@@ -258,7 +258,7 @@ public class PeriodicStats : IPeriodic
 
         // Update counters with bytes sent & received and records handled
         // since last call to this method
-        this.log_stats.bytes_received += node_info.bytes_sent;
+        this.log_stats.bytes_sent += node_info.bytes_sent;
         this.log_stats.bytes_received += node_info.bytes_received;
         this.log_stats.records_handled += node_info.records_handled;
 
