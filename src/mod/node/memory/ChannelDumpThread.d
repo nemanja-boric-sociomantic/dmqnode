@@ -34,6 +34,8 @@ private import tango.time.StopWatch;
 
 private import tango.util.log.Log;
 
+private import tango.math.random.Random;
+
 
 
 /*******************************************************************************
@@ -199,12 +201,19 @@ public class ChannelDumpThread : Thread, IChannelDumpInfo
         // Mask signals which must be handled by the main thread.
         maskSignals([SIGABRT, SIGINT, SIGTERM]);
 
-        debug log.trace("ChannelDumpThread started");
-        debug scope ( exit ) log.trace("ChannelDumpThread exiting");
+        log.trace("ChannelDumpThread started");
+        scope ( exit ) log.trace("ChannelDumpThread exiting");
+
+        // Set initial wait time randomly (up to dump_period), to ensure that
+        // all nodes are not dumping simultaneously.
+        scope rand = new Random;
+        uint random_wait_time;
+        rand(random_wait_time);
+        this.wait_time = random_wait_time % this.dump_period;
+
+        log.info("Performing initial dump in {}s (randomized)", this.wait_time);
 
         const sleep_time = 0.25;
-
-        this.wait_time = this.dump_period;
 
         do
         {
