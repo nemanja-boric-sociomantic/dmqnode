@@ -64,6 +64,7 @@ public abstract class IMode
 
     protected NodeInfo[] nodes;
 
+
     /***************************************************************************
 
         The id string that should be used to refer to this dht in printing
@@ -95,14 +96,20 @@ public abstract class IMode
 
     /***************************************************************************
 
+        Buffer for dht client message formatting.
+
+    ***************************************************************************/
+
+    private char[] message_buffer;
+
+
+    /***************************************************************************
+
         The constructor just assigns the parameter to the local class variables
         and fill up the local NodesInfo with the DhtClient nodes.
 
         Params:
             dht = The dht client that the mode will use.
-
-            dht_id = The name of the DHT that this class is handling. The name
-                is used in printin information.
 
             error_calback = The callback that the display-mode will call to
                 pass to it the error messages that it has.
@@ -150,7 +157,7 @@ public abstract class IMode
         The callbacks will be called when the control return to the event-loop
         but before the display method is called.
 
-        Returns:
+        Returns:s
             The method should return true if it's operations depends on several
             consequent dependent calls, in that case returning true will signal
             to the event loop that this class instance still have more
@@ -286,6 +293,7 @@ public abstract class IMode
         afterwards it passes the callback struct info to the global notifier
         that has been passed to this instance on it's creation.
 
+
         Params:
             info = The notification struct
 
@@ -296,7 +304,7 @@ public abstract class IMode
         if ( info.type == info.type.Finished )
         {
             auto node = this.findNode(info.nodeitem.Address,
-                                                info.nodeitem.Port);
+                                      info.nodeitem.Port);
 
             node.responded = true;;
 
@@ -307,7 +315,7 @@ public abstract class IMode
                                     info.nodeitem.Address, info.nodeitem.Port);
                 if (this.error_callback)
                 {
-                    error_callback(preappend ~ info.message());
+                    error_callback(preappend ~ info.message(this.message_buffer));
                 }
             }
         }

@@ -40,9 +40,6 @@ private import swarm.dht.DhtClient,
 private import tango.io.Stdout;
 
 
-
-
-
 /*******************************************************************************
 
     Dht tool abstract class
@@ -51,7 +48,6 @@ private import tango.io.Stdout;
 
 abstract class IDhtTool
 {
-
     /***************************************************************************
 
         Epoll selector instance
@@ -70,7 +66,6 @@ abstract class IDhtTool
     protected uint connections;
 
 
-
     /***************************************************************************
 
         Flag indicating whether a dht error has occurred
@@ -78,6 +73,15 @@ abstract class IDhtTool
     ***************************************************************************/
 
     protected bool dht_error;
+
+
+    /***************************************************************************
+
+        Buffer for dht client message formatting.
+
+    ***************************************************************************/
+
+    private char[] message_buffer;
 
 
     /***************************************************************************
@@ -129,8 +133,6 @@ abstract class IDhtTool
     }
 
 
-
-
     /***************************************************************************
 
         Reads the tool's settings from validated command line arguments. The
@@ -155,9 +157,7 @@ abstract class IDhtTool
         this.readArgs_(args);
     }
 
-
     abstract protected void readArgs_ ( Arguments args );
-
 
 
     /***************************************************************************
@@ -178,7 +178,6 @@ abstract class IDhtTool
         args("help").aliased('?').aliased('h').help("display this help");
         this.addArgs_(args);
     }
-
 
 
     /***************************************************************************
@@ -271,7 +270,6 @@ abstract class IDhtTool
     abstract protected void initDhts ();
 
 
-
     /***************************************************************************
 
         Implementation dependent process method.
@@ -290,9 +288,6 @@ abstract class IDhtTool
         class implementation does nothing, but derived classes may wish to add
         behaviour at this point.
 
-        Params:
-            dht = dht client
-
     ***************************************************************************/
 
     protected void init (  )
@@ -306,16 +301,11 @@ abstract class IDhtTool
         base class implementation does nothing, but derived classes may wish to
         add behaviour at this point.
 
-        Params:
-            dht = dht client
-
     ***************************************************************************/
 
     protected void finished (  )
     {
     }
-
-
 
 
     /***************************************************************************
@@ -335,7 +325,7 @@ abstract class IDhtTool
     ***************************************************************************/
 
     protected DhtClient initDhtClient ( char[] xml, uint connections,
-        uint request_queue_size = 1000)
+        uint request_queue_size = 1000 )
     {
         debug (DhtTool) Stderr.formatln(
             "Initialising dht client connections from {}", xml);
@@ -380,11 +370,10 @@ abstract class IDhtTool
     {
         if ( info.type == info.type.Finished && !info.succeeded )
         {
-            Stderr.format("DHT client error: {}\n", info.message());
+            Stderr.format("DHT client error: {}\n", info.message(this.message_buffer));
             this.dht_error = true;
         }
     }
-
 
 
     /***************************************************************************
@@ -399,6 +388,7 @@ abstract class IDhtTool
     {
         return true;
     }
+
 
     /***************************************************************************
 
@@ -423,8 +413,6 @@ abstract class IDhtTool
 
         return true_count == 1;
     }
-
-
 }
 
 
@@ -433,8 +421,6 @@ abstract class IDhtTool
     The class should be inherited when multiple dhts will be used.
 
 ***************************************************************************/
-
-
 
 abstract class MultiDhtTool : IDhtTool
 {
@@ -456,6 +442,14 @@ abstract class MultiDhtTool : IDhtTool
     protected DhtClient[] dhts;
 
 
+    /***************************************************************************
+
+        While the initDhtClient() method performs the actual DhtNode
+        initialization, however it performs that for just a single DhtNode.
+        This method on the other defines how many DhtClients are required.
+
+    ***************************************************************************/
+
     override protected void initDhts ()
     {
         foreach ( config_file; dht_nodes_config)
@@ -465,12 +459,23 @@ abstract class MultiDhtTool : IDhtTool
     }
 
 
+    /***************************************************************************
+
+        Reads the tool's settings from validated command line arguments. The
+        method calls the super readArgs and then parses the additional arguments
+        that are not handled by the base class.
+
+        Params:
+            args = arguments object to read
+
+    ***************************************************************************/
 
     final override protected void readArgs ( Arguments args )
     {
 
         super.readArgs(args);
-        assert(this.dht_nodes_config.length, typeof(this).stringof ~ ".process -- no xml node config file");
+        assert(this.dht_nodes_config.length, typeof(this).stringof
+                ~ ".process -- no xml node config file");
     }
 }
 
@@ -484,7 +489,6 @@ deprecated alias SingleDhtTool DhtTool;
     The class should be inherited when only one dht will be used.
 
 ***************************************************************************/
-
 
 abstract class SingleDhtTool : IDhtTool
 {
@@ -506,12 +510,31 @@ abstract class SingleDhtTool : IDhtTool
     protected DhtClient dht;
 
 
+    /***************************************************************************
+
+        While the initDhtClient() method performs the actual DhtNode
+        initialization, however it performs that for just a single DhtNode.
+        This method on the other defines how many DhtClients are required (which
+        is just a single DHT in this class case).
+
+    ***************************************************************************/
+
     override protected void initDhts ()
     {
         this.dht = this.initDhtClient(this.dht_nodes_config, connections);
     }
 
 
+    /***************************************************************************
+
+        Reads the tool's settings from validated command line arguments. The
+        method calls the super readArgs and then parses the additional arguments
+        that are not handled by the base class.
+
+        Params:
+            args = arguments object to read
+
+    ***************************************************************************/
 
     final override protected void readArgs ( Arguments args )
     {

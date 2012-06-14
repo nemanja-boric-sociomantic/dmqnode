@@ -87,6 +87,14 @@ class Test
 
     /***************************************************************************
 
+        Buffer for dht client message formatting.
+
+    ***************************************************************************/
+
+    private char[] message_buffer;
+
+    /***************************************************************************
+
         Constructor
         
         Params:
@@ -122,9 +130,7 @@ class Test
 
     ***************************************************************************/
 
-    abstract void run ( );
-    
-    protected:
+    public abstract void run ( );
 
     /***************************************************************************
 
@@ -132,7 +138,7 @@ class Test
 
     ***************************************************************************/
 
-    void runRequest ( ref Exception exception ) 
+    protected void runRequest ( ref Exception exception )
     {        
         this.epoll.eventLoop;
         
@@ -147,7 +153,7 @@ class Test
 
     ***************************************************************************/
 
-    void requestNotifier ( DhtClient.RequestNotification info )
+    protected void requestNotifier ( DhtClient.RequestNotification info )
     {
         logger.trace("Notify: command={}, type={}, succeeded={}", info.command, info.type, info.succeeded);
         if ( info.type == info.type.Finished && !info.succeeded )
@@ -158,7 +164,7 @@ class Test
             }
             else
             {
-                this.exception = new Exception(info.message());
+                this.exception = new Exception(info.message(this.message_buffer));
             }
         }
     }      

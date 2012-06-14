@@ -66,7 +66,6 @@ export D_GC := cdgc
 FLAGS =\
 	$(foreach d,$(DEPS),-I$(DEPS_PATH)/$d) \
 	-L-lminilzo \
-	-L-ldl \
 	-m${ARCH}
 
 UNITTESTFLAGS =\
@@ -107,7 +106,7 @@ TCM_SPLIT_FLAGS =\
 
 .PHONY: revision node info test cli performance
 
-default: node test
+default: node test performance cli info copy hashrange
 all: default
 
 
@@ -115,7 +114,8 @@ all: default
 # Revision file build
 
 revision:
-	@../ocean/script/mkversion.sh $(D_GC) $(DEPS)
+	@../ocean/script/mkversion.sh -t \
+	$(DEPS_PATH)/ocean/script/appVersion.d.tpl $(D_GC) $(DEPS)
 
 
 # ------------------------------------------------------------------------------

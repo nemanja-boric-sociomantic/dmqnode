@@ -36,18 +36,19 @@
 
 loc=eu
 domain=sociomantic.com
-nserv=7
-nnodes=4
-baseport=30024
+nserv=10
+nnodes=1
+baseport=36411
 baseserv=42
 outdir=output
-nodesxml=dhtmemory.xml
+nodesxml=dhtlogfiles.xml
 configtpl=config.tpl.ini
 ranges=ranges.txt
-nodepref=mem-dht-
+nodepref=log-dht-
 configdir=etc
 configname=config.ini
-remotedir=/srv/dht
+remotedir=/srv/64bit/dht
+remoteuser=root
 copycmd="scp"
 
 
@@ -97,7 +98,7 @@ do
 	do
 		cfg=$servdir/$nodepref$n/$configdir/$configname
 		nodedir=$nodepref$n/$configdir
-		echo $copycmd $cfg $xml $addr:$remotedir/$nodedir
+		echo $copycmd $cfg $xml $remoteuser@$addr:$remotedir/$nodedir
 	done
 done
 
