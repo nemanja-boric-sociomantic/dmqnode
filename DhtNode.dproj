@@ -38,11 +38,11 @@
     <OutputName>DhtNode</OutputName>
   </PropertyGroup>
   <ItemGroup>
-    <None Include="doc\etc\config.ini" />
-    <None Include="doc\redistributerc.full" />
-    <None Include="doc\redistributerc.local" />
     <None Include="script\redistribute" />
     <None Include="Makefile" />
+    <None Include="script\gen-config.sh" />
+    <None Include="doc\etc\memory.config.ini" />
+    <None Include="doc\etc\logfiles.config.ini" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="src\main\dhtnode.d" />
@@ -77,15 +77,10 @@
   </ProjectExtensions>
   <ItemGroup>
     <Folder Include="src\core\" />
-    <Folder Include="src\mod\node\" />
     <Folder Include="src\core\model\" />
-    <Folder Include="src\mod\model\" />
     <Folder Include="src\core\config\" />
-    <Folder Include="src\mod\config\" />
     <Folder Include="src\core\util\" />
-    <Folder Include="src\mod\util\" />
     <Folder Include="src\core\periodic\" />
     <Folder Include="src\core\periodic\model\" />
-    <Folder Include="src\mod\periodic\model\" />
   </ItemGroup>
 </Project>
