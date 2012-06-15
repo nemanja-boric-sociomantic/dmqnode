@@ -43,6 +43,11 @@
     <None Include="script\gen-config.sh" />
     <None Include="doc\etc\memory.config.ini" />
     <None Include="doc\etc\logfiles.config.ini" />
+    <None Include="doc\examples\gen-config\config.tpl.ini" />
+    <None Include="doc\examples\gen-config\ranges.txt" />
+    <None Include="doc\examples\dht-tcm-backup.logrotate.conf" />
+    <None Include="doc\examples\redistributerc.full" />
+    <None Include="doc\examples\redistributerc.local" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="src\main\dhtnode.d" />
