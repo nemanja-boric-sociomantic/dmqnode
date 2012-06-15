@@ -88,7 +88,7 @@ public class LogfilesDhtNode : IDhtNode
 
     ***************************************************************************/
 
-    protected StorageChannels newStorageChannels_ ( )
+    protected DhtStorageChannels newStorageChannels_ ( )
     {
         LogFilesStorageChannels.Args args;
         args.write_buffer_size = this.logfiles_config.write_buffer_size;

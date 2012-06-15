@@ -46,7 +46,7 @@ private import swarm.dht.DhtConst;
 private import swarm.dht.DhtNode;
 private import swarm.dht.DhtHash;
 
-private import swarm.dht.node.storage.model.StorageChannels;
+private import swarm.dht.node.storage.model.DhtStorageChannels;
 
 private import tango.core.Exception : IOException, OutOfMemoryException;
 
@@ -86,7 +86,7 @@ abstract public class IDhtNode
 
     protected alias .ConfigParser ConfigParser;
     protected alias .ServerConfig ServerConfig;
-    protected alias .StorageChannels StorageChannels;
+    protected alias .DhtStorageChannels DhtStorageChannels;
 
 
     /***************************************************************************
@@ -142,7 +142,7 @@ abstract public class IDhtNode
 
     ***************************************************************************/
 
-    protected StorageChannels storage_channels;
+    protected DhtStorageChannels storage_channels;
 
 
     /***************************************************************************
@@ -209,13 +209,13 @@ abstract public class IDhtNode
 
     ***************************************************************************/
 
-    final protected StorageChannels newStorageChannels ( )
+    final protected DhtStorageChannels newStorageChannels ( )
     {
         this.storage_channels = this.newStorageChannels_();
         return this.storage_channels;
     }
 
-    abstract protected StorageChannels newStorageChannels_ ( );
+    abstract protected DhtStorageChannels newStorageChannels_ ( );
 
 
     /***************************************************************************

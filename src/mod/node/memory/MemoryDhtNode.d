@@ -127,7 +127,7 @@ public class MemoryDhtNode : IDhtNode
 
     ***************************************************************************/
 
-    protected StorageChannels newStorageChannels_ ( )
+    protected DhtStorageChannels newStorageChannels_ ( )
     {
         MemoryStorageChannels.Args args;
         args.bnum = this.memory_config.bnum;
