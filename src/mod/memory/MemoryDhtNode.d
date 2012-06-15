@@ -63,7 +63,7 @@ private class MemoryConfig
 {
     ulong size_limit = 0; // 0 := no size limit
     uint dump_period = 3600; // default = 1 hour
-    uint bnum = 0; // TODO: what's the default?
+    uint bnum = 0; // 0 := use tokyocabinet's default number of buckets
 }
 
 
