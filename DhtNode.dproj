@@ -45,59 +45,19 @@
     <None Include="Makefile" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="src\main\dhtcli.d" />
-    <Compile Include="src\main\dhtcopy.d" />
-    <Compile Include="src\main\dhtdump.d" />
-    <Compile Include="src\main\dhthashrange.d" />
-    <Compile Include="src\main\dhtimport.d" />
-    <Compile Include="src\main\dhtinfo.d" />
     <Compile Include="src\main\dhtnode.d" />
-    <Compile Include="src\main\dhtperformance.d" />
-    <Compile Include="src\main\dhtrepair.d" />
-    <Compile Include="src\main\dhttest.d" />
-    <Compile Include="src\main\tcmsplit.d" />
-    <Compile Include="src\main\Version.d" />
-    <Compile Include="src\mod\cli\Command.d" />
-    <Compile Include="src\mod\cli\Commands.d" />
-    <Compile Include="src\mod\cli\DhtCli.d" />
-    <Compile Include="src\mod\copy\DhtCopy.d" />
-    <Compile Include="src\mod\dump\DhtDump.d" />
-    <Compile Include="src\mod\importer\DhtImport.d" />
-    <Compile Include="src\mod\info\DhtInfo.d" />
-    <Compile Include="src\mod\info\NodeInfo.d" />
-    <Compile Include="src\mod\info\Tables.d" />
-    <Compile Include="src\mod\model\DhtTool.d" />
-    <Compile Include="src\mod\model\SourceDhtTool.d" />
-    <Compile Include="src\mod\node\util\Terminator.d" />
-    <Compile Include="src\mod\performance\DhtPerformance.d" />
-    <Compile Include="src\mod\repair\storagerepair\model\IStorageRepair.d" />
-    <Compile Include="src\mod\repair\storagerepair\LogFilesRepair.d" />
-    <Compile Include="src\mod\repair\DhtRepair.d" />
-    <Compile Include="src\mod\tcmsplit\TcmSplitter.d" />
-    <Compile Include="src\mod\test\tests\Commands.d" />
-    <Compile Include="src\mod\test\tests\LogfileCommands.d" />
-    <Compile Include="src\mod\test\tests\MemoryCommands.d" />
-    <Compile Include="src\mod\test\tests\Test.d" />
-    <Compile Include="src\mod\test\tests\Unittests.d" />
-    <Compile Include="src\mod\test\DhtTest.d" />
-    <Compile Include="src\mod\node\periodic\model\IPeriodic.d" />
-    <Compile Include="src\mod\node\periodic\PeriodicStats.d" />
-    <Compile Include="src\mod\node\periodic\Periodics.d" />
-    <Compile Include="src\mod\info\modes\model\IMode.d" />
-    <Compile Include="src\mod\info\modes\ApiVersionMode.d" />
-    <Compile Include="src\mod\info\modes\GetContentsMode.d" />
-    <Compile Include="src\mod\info\modes\HashRangesMode.d" />
-    <Compile Include="src\mod\info\modes\MinimalMode.d" />
-    <Compile Include="src\mod\info\modes\MonitorMode.d" />
-    <Compile Include="src\mod\info\modes\NumOfConnectionsMode.d" />
-    <Compile Include="src\mod\node\model\IDhtNode.d" />
-    <Compile Include="src\mod\node\memory\MemoryDhtNode.d" />
-    <Compile Include="src\mod\node\logfiles\LogfilesDhtNode.d" />
-    <Compile Include="src\mod\node\config\ServerConfig.d" />
-    <Compile Include="src\mod\node\config\StatsConfig.d" />
-    <Compile Include="src\mod\node\memory\MemoryPeriodicStats.d" />
-    <Compile Include="src\mod\node\memory\ChannelDumpThread.d" />
-    <Compile Include="src\mod\node\DhtNodeServer.d" />
+    <Compile Include="src\mod\logfiles\LogfilesDhtNode.d" />
+    <Compile Include="src\mod\memory\ChannelDumpThread.d" />
+    <Compile Include="src\mod\memory\MemoryDhtNode.d" />
+    <Compile Include="src\mod\memory\MemoryPeriodicStats.d" />
+    <Compile Include="src\mod\DhtNodeServer.d" />
+    <Compile Include="src\core\model\IDhtNode.d" />
+    <Compile Include="src\core\config\ServerConfig.d" />
+    <Compile Include="src\core\config\StatsConfig.d" />
+    <Compile Include="src\core\util\Terminator.d" />
+    <Compile Include="src\core\periodic\model\IPeriodic.d" />
+    <Compile Include="src\core\periodic\Periodics.d" />
+    <Compile Include="src\core\periodic\PeriodicStats.d" />
   </ItemGroup>
   <ProjectExtensions>
     <MonoDevelop>
@@ -116,12 +76,16 @@
     </MonoDevelop>
   </ProjectExtensions>
   <ItemGroup>
-    <Folder Include="src\mod\node\periodic\" />
-    <Folder Include="src\mod\node\periodic\model\" />
-    <Folder Include="src\mod\info\modes\" />
-    <Folder Include="src\mod\info\modes\model\" />
-    <Folder Include="src\mod\node\model\" />
-    <Folder Include="src\mod\node\memory\" />
-    <Folder Include="src\mod\node\logfiles\" />
+    <Folder Include="src\core\" />
+    <Folder Include="src\mod\node\" />
+    <Folder Include="src\core\model\" />
+    <Folder Include="src\mod\model\" />
+    <Folder Include="src\core\config\" />
+    <Folder Include="src\mod\config\" />
+    <Folder Include="src\core\util\" />
+    <Folder Include="src\mod\util\" />
+    <Folder Include="src\core\periodic\" />
+    <Folder Include="src\core\periodic\model\" />
+    <Folder Include="src\mod\periodic\model\" />
   </ItemGroup>
 </Project>

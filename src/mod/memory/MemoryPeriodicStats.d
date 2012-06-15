@@ -11,7 +11,7 @@
 
 *******************************************************************************/
 
-module src.mod.node.memory.MemoryPeriodicStats;
+module src.mod.memory.MemoryPeriodicStats;
 
 
 
@@ -21,11 +21,11 @@ module src.mod.node.memory.MemoryPeriodicStats;
 
 *******************************************************************************/
 
-private import src.mod.node.periodic.PeriodicStats;
+private import src.core.periodic.PeriodicStats;
 
-private import src.mod.node.memory.ChannelDumpThread;
+private import src.mod.memory.ChannelDumpThread;
 
-private import src.mod.node.config.StatsConfig;
+private import src.core.config.StatsConfig;
 
 private import ocean.text.convert.Layout;
 

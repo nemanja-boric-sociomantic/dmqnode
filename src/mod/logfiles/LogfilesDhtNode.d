@@ -10,7 +10,7 @@
 
 *******************************************************************************/
 
-module src.mod.node.logfiles.LogfilesDhtNode;
+module src.mod.logfiles.LogfilesDhtNode;
 
 
 
@@ -20,9 +20,9 @@ module src.mod.node.logfiles.LogfilesDhtNode;
 
 *******************************************************************************/
 
-private import src.mod.node.model.IDhtNode;
+private import src.core.model.IDhtNode;
 
-private import src.mod.node.periodic.PeriodicStats;
+private import src.core.periodic.PeriodicStats;
 
 private import swarm.dht.node.storage.LogFilesStorageChannels;
 

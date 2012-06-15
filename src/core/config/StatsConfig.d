@@ -10,7 +10,7 @@
 
 *******************************************************************************/
 
-module src.mod.node.config.StatsConfig;
+module src.core.config.StatsConfig;
 
 
 

@@ -11,7 +11,7 @@
 
 *******************************************************************************/
 
-module src.mod.node.memory.ChannelDumpThread;
+module src.mod.memory.ChannelDumpThread;
 
 
 
@@ -23,7 +23,7 @@ module src.mod.node.memory.ChannelDumpThread;
 
 private import swarm.dht.node.storage.MemoryStorageChannels;
 
-private import src.mod.node.util.Terminator;
+private import src.core.util.Terminator;
 
 private import tango.core.Thread;
 

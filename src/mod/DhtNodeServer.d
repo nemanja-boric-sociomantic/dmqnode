@@ -18,7 +18,7 @@
 
 *******************************************************************************/
 
-module src.mod.node.DhtNodeServer;
+module src.mod.DhtNodeServer;
 
 
 
@@ -30,13 +30,13 @@ module src.mod.node.DhtNodeServer;
 
 private import src.main.Version;
 
-private import src.mod.node.config.ServerConfig;
+private import src.core.config.ServerConfig;
 
-private import src.mod.node.model.IDhtNode;
+private import src.core.model.IDhtNode;
 
-private import src.mod.node.memory.MemoryDhtNode;
+private import src.mod.memory.MemoryDhtNode;
 
-private import src.mod.node.logfiles.LogfilesDhtNode;
+private import src.mod.logfiles.LogfilesDhtNode;
 
 private import ocean.util.app.LoggedCliApp;
 private import ocean.util.app.ext.VersionArgsExt;

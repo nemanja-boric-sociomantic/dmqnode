@@ -20,7 +20,7 @@ module src.main.dhtnode;
 
 *******************************************************************************/
 
-private import src.mod.node.DhtNodeServer;
+private import src.mod.DhtNodeServer;
 
 
 

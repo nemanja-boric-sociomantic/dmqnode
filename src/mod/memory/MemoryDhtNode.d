@@ -10,7 +10,7 @@
 
 *******************************************************************************/
 
-module src.mod.node.memory.MemoryDhtNode;
+module src.mod.memory.MemoryDhtNode;
 
 
 
@@ -20,13 +20,13 @@ module src.mod.node.memory.MemoryDhtNode;
 
 *******************************************************************************/
 
-private import src.mod.node.model.IDhtNode;
+private import src.core.model.IDhtNode;
 
-private import src.mod.node.util.Terminator;
+private import src.core.util.Terminator;
 
-private import src.mod.node.memory.MemoryPeriodicStats;
+private import src.mod.memory.MemoryPeriodicStats;
 
-private import src.mod.node.memory.ChannelDumpThread;
+private import src.mod.memory.ChannelDumpThread;
 
 private import swarm.dht.node.storage.MemoryStorageChannels;
 

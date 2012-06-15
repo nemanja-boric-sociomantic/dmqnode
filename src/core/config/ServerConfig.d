@@ -10,7 +10,7 @@
 
 *******************************************************************************/
 
-module src.mod.node.config.ServerConfig;
+module src.core.config.ServerConfig;
 
 
 

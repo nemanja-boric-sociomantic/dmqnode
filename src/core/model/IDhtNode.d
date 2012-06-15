@@ -11,7 +11,7 @@
 
 *******************************************************************************/
 
-module src.mod.node.model.IDhtNode;
+module src.core.model.IDhtNode;
 
 
 
@@ -21,12 +21,12 @@ module src.mod.node.model.IDhtNode;
 
 *******************************************************************************/
 
-private import src.mod.node.config.ServerConfig;
-private import src.mod.node.config.StatsConfig;
+private import src.core.config.ServerConfig;
+private import src.core.config.StatsConfig;
 
-private import src.mod.node.util.Terminator;
+private import src.core.util.Terminator;
 
-private import src.mod.node.periodic.Periodics;
+private import src.core.periodic.Periodics;
 
 private import ocean.core.MessageFiber;
 private import ocean.io.select.protocol.generic.ErrnoIOException : IOWarning;

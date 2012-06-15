@@ -14,7 +14,7 @@
 
 *******************************************************************************/
 
-module src.mod.node.periodic.Periodics;
+module src.core.periodic.Periodics;
 
 
 
@@ -24,7 +24,7 @@ module src.mod.node.periodic.Periodics;
 
 *******************************************************************************/
 
-private import src.mod.node.periodic.model.IPeriodic;
+private import src.core.periodic.model.IPeriodic;
 
 private import ocean.io.select.EpollSelectDispatcher;
 

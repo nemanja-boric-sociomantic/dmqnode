@@ -11,34 +11,6 @@ ARCH := 64
 NODE_TARGET = src/main/dhtnode.d
 NODE_OUTPUT = bin/dhtnode-${ARCH}
 
-COPY_TARGET = src/main/dhtcopy.d
-COPY_OUTPUT = bin/dhtcopy-${ARCH}
-
-DUMP_TARGET = src/main/dhtdump.d
-DUMP_OUTPUT = bin/dhtdump-${ARCH}
-
-INFO_TARGET = src/main/dhtinfo.d
-INFO_OUTPUT = bin/dhtinfo-${ARCH}
-
-CLI_TARGET = src/main/dhtcli.d
-CLI_OUTPUT = bin/dhtcli-${ARCH}
-
-TEST_TARGET = src/main/dhttest.d
-TEST_OUTPUT = bin/dhttest-${ARCH}
-
-PERFORMANCE_TARGET = src/main/dhtperformance.d
-PERFORMANCE_OUTPUT = bin/dhtperformance-${ARCH}
-
-HASHRANGE_TARGET = src/main/dhthashrange.d
-HASHRANGE_OUTPUT = bin/dhthashrange-${ARCH}
-
-TCM_SPLIT_TARGET = src/main/tcmsplit.d
-TCM_SPLIT_OUTPUT = bin/tcmsplit-${ARCH}
-
-REDISTRIBUTE = script/redistribute
-REDISTRIBUTE_CONF = doc/redistributerc.full doc/redistributerc.local
-REDISTRIBUTE_ALL = $(TCM_SPLIT_OUTPUT) $(REDISTRIBUTE) $(REDISTRIBUTE_CONF)
-
 
 # ------------------------------------------------------------------------------
 # Dependencies
@@ -82,6 +54,7 @@ DEBUG_FLAGS = ${FLAGS}\
 # FIXME: unittests disabled due to an unknown compiler bug which manifested in
 # the unittest of ocean.core.ObjectPool
 
+# TODO: tokyocabinet should only be linked with the memory node
 NODE_FLAGS =\
 	-L-ltokyocabinet\
     -version=CDGC
@@ -90,23 +63,13 @@ NODE_FLAGS =\
 #	-debug=ISelectClient\
 #	-debug=SelectFiber\
 
-CLIENT_FLAGS =\
-	-L-lebtree
-#    -debug=ISelectClient\
-#    -debug=SwarmClient
-#   -debug=Raw\
-#	-debug=ISelectClient\
-
-TCM_SPLIT_FLAGS =\
-    -L-lglib-2.0
-
 
 # ------------------------------------------------------------------------------
 # Debug build of all targets (default)
 
-.PHONY: revision node info test cli performance
+.PHONY: revision node
 
-default: node test performance cli info copy hashrange
+default: node
 all: default
 
 
@@ -129,87 +92,7 @@ node-release: revision
 
 
 # ------------------------------------------------------------------------------
-# copy debug & release builds
-
-copy:
-	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${COPY_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${CLIENT_FLAGS} ${COPY_TARGET}
-
-copy-release:
-	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${COPY_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${CLIENT_FLAGS} ${COPY_TARGET}
-
-
-# ------------------------------------------------------------------------------
-# dump debug & release builds
-
-dump:
-	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${DUMP_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${CLIENT_FLAGS} ${DUMP_TARGET}
-
-dump-release:
-	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${DUMP_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${CLIENT_FLAGS} ${DUMP_TARGET}
-
-
-# ------------------------------------------------------------------------------
-# info debug & release builds
-
-info:
-	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${INFO_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${CLIENT_FLAGS} ${INFO_TARGET}
-
-info-release:
-	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${INFO_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${CLIENT_FLAGS} ${INFO_TARGET}
-
-
-# ------------------------------------------------------------------------------
-# command line client debug & release builds
-
-cli:
-	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${CLI_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${CLIENT_FLAGS} ${CLI_TARGET}
-
-cli-release:
-	xfbuild +D=.deps-$@-${ARCH} +o=${CLI_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${CLIENT_FLAGS} ${CLI_TARGET}
-
-
-# ------------------------------------------------------------------------------
-# test debug & release builds
-
-test:
-	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${TEST_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${CLIENT_FLAGS} ${TEST_TARGET}
-
-test-release:
-	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${TEST_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${CLIENT_FLAGS} ${TEST_TARGET}
-
-
-# ------------------------------------------------------------------------------
-# performance debug & release builds
-
-performance:
-	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${PERFORMANCE_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${CLIENT_FLAGS} ${PERFORMANCE_TARGET}
-
-performance-release:
-	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${PERFORMANCE_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${CLIENT_FLAGS} ${PERFORMANCE_TARGET}
-
-
-# ------------------------------------------------------------------------------
-# hash range debug & release builds
-
-hashrange:
-	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${HASHRANGE_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${CLIENT_FLAGS} ${HASHRANGE_TARGET}
-
-hashrange-release:
-	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${HASHRANGE_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${CLIENT_FLAGS} ${HASHRANGE_TARGET}
-
-
-# ------------------------------------------------------------------------------
-# tcm split debug & release builds
-
-tcmsplit: revision
-	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${TCM_SPLIT_OUTPUT} ${XFBUILD_FLAGS} ${TCM_SPLIT_FLAGS} ${DEBUG_FLAGS} ${TCM_SPLIT_TARGET}
-
-tcmsplit-release: revision
-	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${TCM_SPLIT_OUTPUT} ${XFBUILD_FLAGS} ${TCM_SPLIT_FLAGS} ${RELEASE_FLAGS} ${TCM_SPLIT_TARGET}
-
-
-# ------------------------------------------------------------------------------
-# Upload node
+# Upload node - TODO: this is totally out-dated
 
 EU_NODE_SERVERS = 1 2 3 4 5 6 7
 
@@ -241,24 +124,9 @@ connect-dht-us:
 
 
 # ------------------------------------------------------------------------------
-# Upload Command line client
-
-EU_CLI_SERVERS = 10
-
-upload-cli-eu:
-	$(foreach srv, $(EU_CLI_SERVERS), scp -C ${CLI_OUTPUT} root@eq6-$(srv).sociomantic.com:/tmp/dht;)
-
-
-# ------------------------------------------------------------------------------
 # Cleanup
 
 clean:
 	xfbuild ${XFBUILD_FLAGS} +clean ${NODE_TARGET}
-	xfbuild ${XFBUILD_FLAGS} +clean ${COPY_TARGET}
-	xfbuild ${XFBUILD_FLAGS} +clean ${DUMP_TARGET}
-	xfbuild ${XFBUILD_FLAGS} +clean ${INFO_TARGET}
-	xfbuild ${XFBUILD_FLAGS} +clean ${CLI_TARGET}
-	xfbuild ${XFBUILD_FLAGS} +clean ${TEST_TARGET}
-	xfbuild ${XFBUILD_FLAGS} +clean ${PERFORMANCE_TARGET}
 	@-rm .objs-* -rf
 	@-rm .deps-* -rf
