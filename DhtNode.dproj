@@ -75,7 +75,7 @@
           <GacRefVar />
           <AsmRefVar />
           <ProjectRefVar />
-          <MessageRegex Error="^\s*(?&lt;file&gt;[^\(]*)\((?&lt;line&gt;\d*)\): (?&lt;message&gt;.*)" Warning="(^\s*(?&lt;file&gt;.*)\((?&lt;line&gt;\d*){1}(,(?&lt;column&gt;\d*[\+]*))?\)(:|)\s+)*warning\s*(?&lt;number&gt;.*):\s(?&lt;message&gt;.*)" Name="Custom" />
+          <MessageRegex Error="^\s*(?&lt;file&gt;[^\(]*)\((?&lt;line&gt;\d*)\): (?&lt;message&gt;.*)" Warning="^\s*(?&lt;file&gt;[^\(]*)\((?&lt;line&gt;\d*)\): (?&lt;message&gt;.*)" Name="Custom" />
         </MonoDevelop.Autotools.MakefileInfo>
       </Properties>
     </MonoDevelop>
