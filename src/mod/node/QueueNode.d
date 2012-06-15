@@ -48,13 +48,27 @@ private import ocean.io.select.model.ISelectClient;
 private import ocean.util.app.LoggedCliApp;
 private import ocean.util.app.ext.VersionArgsExt;
 
-private import ocean.util.OceanException; // TODO: remove
-
 debug private import ocean.util.log.Trace;
 
 private import tango.core.Exception : IllegalArgumentException, OutOfMemoryException;
 
-private import tango.stdc.posix.signal: SIGINT;
+private import tango.stdc.posix.signal: SIGINT, SIGTERM, SIGQUIT;
+
+private import tango.util.log.Log;
+
+
+
+/*******************************************************************************
+
+    Setup the logger for this module
+
+*******************************************************************************/
+
+static Logger log;
+static this ( )
+{
+    log = Log.lookup("src.mod.node.QueueNode");
+}
 
 
 
@@ -158,7 +172,8 @@ public class QueueNodeServer : LoggedCliApp
 
         this.node.error_callback = &this.nodeError;
 
-        this.sigint_event = new SignalEvent(&this.sigintHandler, [SIGINT]);
+        this.sigint_event = new SignalEvent(&this.sigintHandler,
+            [SIGINT, SIGTERM, SIGQUIT]);
 
         this.periodics = new Periodics(this.node, this.epoll);
         this.periodics.add(new PeriodicStats());
@@ -216,11 +231,11 @@ public class QueueNodeServer : LoggedCliApp
         }
         else if ( cast(OutOfMemoryException)exception )
         {
-            OceanException.Warn("OutOfMemoryException caught in eventLoop");
+            log.error("OutOfMemoryException caught in eventLoop");
         }
         else
         {
-            OceanException.Warn("Exception caught in eventLoop: '{}' @ {}:{}",
+            log.error("Exception caught in eventLoop: '{}' @ {}:{}",
                     exception.msg, exception.file, exception.line);
         }
     }
