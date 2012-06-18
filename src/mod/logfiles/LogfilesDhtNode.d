@@ -73,11 +73,11 @@ public class LogfilesDhtNode : IDhtNode
 
     public this ( ServerConfig server_config, ConfigParser config )
     {
+        ConfigReader.fill("Options_LogFiles", this.logfiles_config, config);
+
         super(server_config, config);
 
         this.periodics.add(new PeriodicStats(this.stats_config));
-
-        ConfigReader.fill("Options_LogFiles", this.logfiles_config, config);
     }
 
 
