@@ -11,21 +11,6 @@ ARCH := 64
 NODE_TARGET = src/main/queuenode.d
 NODE_OUTPUT = bin/queuenode-${ARCH}
 
-MONITOR_TARGET = src/main/queuemonitor.d
-MONITOR_OUTPUT = bin/queuemonitor-${ARCH}
-
-CONSUMER_TARGET = src/main/queueconsumer.d
-CONSUMER_OUTPUT = bin/queueconsumer-${ARCH}
-
-PRODUCER_TARGET = src/main/queueproducer.d
-PRODUCER_OUTPUT = bin/queueproducer-${ARCH}
-
-TEST_TARGET = src/main/queuetest.d
-TEST_OUTPUT = bin/queuetest-${ARCH}
-
-PERFORMANCE_TARGET = src/main/queueperformance.d
-PERFORMANCE_OUTPUT = bin/queueperformance-${ARCH}
-
 
 # ------------------------------------------------------------------------------
 # Dependencies
@@ -54,9 +39,7 @@ FLAGS =\
 	$(foreach d,$(DEPS),-I$(DEPS_PATH)/$d) \
 	-L-lminilzo \
 	-L-lebtree \
-	 -m${ARCH}
-
-TOOL_FLAGS =\
+	-m${ARCH} \
 	-version=CDGC
 
 RELEASE_FLAGS = ${FLAGS}\
@@ -73,10 +56,10 @@ DEBUG_FLAGS = ${FLAGS}\
 # ------------------------------------------------------------------------------
 # Debug build of node & monitor (default)
 
-.PHONY: revision node monitor consumer test
+.PHONY: revision node
 
 default: node
-#monitor consumer test
+all: default
 
 
 # ------------------------------------------------------------------------------
@@ -93,65 +76,13 @@ revision:
 node: revision
 	xfbuild +o=${NODE_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${NODE_TARGET}
 
-
-node-release: export D_GC := basic
-
 node-release: revision
 	xfbuild +o=${NODE_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${NODE_TARGET}
 
 
 # ------------------------------------------------------------------------------
-# Monitor debug & release builds
-
-monitor: revision
-	xfbuild +o=${MONITOR_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${TOOL_FLAGS} ${MONITOR_TARGET}
-
-monitor-release: revision
-	xfbuild +o=${MONITOR_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${TOOL_FLAGS} ${MONITOR_TARGET}
-
-
-# ------------------------------------------------------------------------------
-# Consumer debug & release builds
-
-consumer:
-	xfbuild +o=${CONSUMER_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${TOOL_FLAGS} ${CONSUMER_TARGET}
-
-consumer-release:
-	xfbuild +o=${CONSUMER_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${TOOL_FLAGS} ${CONSUMER_TARGET}
-
-
-# ------------------------------------------------------------------------------
-# Producer debug & release builds
-
-producer:
-	xfbuild +o=${PRODUCER_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${TOOL_FLAGS} ${PRODUCER_TARGET}
-
-producer-release:
-	xfbuild +o=${PRODUCER_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${TOOL_FLAGS} ${PRODUCER_TARGET}
-
-
-# ------------------------------------------------------------------------------
-# Test debug & release builds
-
-test:
-	xfbuild +o=${TEST_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${TOOL_FLAGS} ${TEST_TARGET}
-
-test-release:
-	xfbuild +o=${TEST_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${TOOL_FLAGS} ${TEST_TARGET}
-
-
-# ------------------------------------------------------------------------------
-# Performance test debug & release builds
-
-performance:
-	xfbuild +o=${PERFORMANCE_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${TOOL_FLAGS} ${PERFORMANCE_TARGET}
-
-performance-release:
-	xfbuild +o=${PERFORMANCE_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${TOOL_FLAGS} ${PERFORMANCE_TARGET}
-
-
-# ------------------------------------------------------------------------------
 # Server commands -- upload and connect to server
+# TODO: this is out of date
 
 EU_SERVERS = 8
 
@@ -187,9 +118,5 @@ connect-node-us:
 
 clean:
 	xfbuild ${XFBUILD_FLAGS} +clean ${NODE_TARGET}
-	xfbuild ${XFBUILD_FLAGS} +clean ${MONITOR_TARGET}
-	xfbuild ${XFBUILD_FLAGS} +clean ${CONSUMER_TARGET}
-	xfbuild ${XFBUILD_FLAGS} +clean ${TEST_TARGET}
-	xfbuild ${XFBUILD_FLAGS} +clean ${PERFORMANCE_TARGET}
 	@-rm .objs-* .deps-* -rf
 
