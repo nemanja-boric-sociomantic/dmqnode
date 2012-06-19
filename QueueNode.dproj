@@ -71,11 +71,9 @@
   <ItemGroup>
     <Folder Include="src\core\" />
     <Folder Include="src\core\config\" />
-    <Folder Include="src\mod\node\config\" />
     <Folder Include="src\core\periodic\" />
     <Folder Include="src\core\periodic\model\" />
     <Folder Include="src\core\util\" />
-    <Folder Include="src\mod\node\util\" />
-    <Folder Include="src\mod\node\periodic\model\" />
+    <Folder Include="src\mod\" />
   </ItemGroup>
 </Project>
