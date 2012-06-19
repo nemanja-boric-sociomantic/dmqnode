@@ -45,12 +45,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="src\main\queuenode.d" />
-    <Compile Include="src\mod\node\config\MainConfig.d" />
-    <Compile Include="src\mod\node\periodic\model\IPeriodic.d" />
-    <Compile Include="src\mod\node\periodic\Periodics.d" />
-    <Compile Include="src\mod\node\periodic\PeriodicStats.d" />
-    <Compile Include="src\mod\node\util\Terminator.d" />
-    <Compile Include="src\mod\node\QueueNode.d" />
+    <Compile Include="src\core\config\MainConfig.d" />
+    <Compile Include="src\core\util\Terminator.d" />
+    <Compile Include="src\core\periodic\model\IPeriodic.d" />
+    <Compile Include="src\core\periodic\Periodics.d" />
+    <Compile Include="src\core\periodic\PeriodicStats.d" />
+    <Compile Include="src\mod\QueueNodeServer.d" />
   </ItemGroup>
   <ProjectExtensions>
     <MonoDevelop>
@@ -68,4 +68,14 @@
       </Properties>
     </MonoDevelop>
   </ProjectExtensions>
+  <ItemGroup>
+    <Folder Include="src\core\" />
+    <Folder Include="src\core\config\" />
+    <Folder Include="src\mod\node\config\" />
+    <Folder Include="src\core\periodic\" />
+    <Folder Include="src\core\periodic\model\" />
+    <Folder Include="src\core\util\" />
+    <Folder Include="src\mod\node\util\" />
+    <Folder Include="src\mod\node\periodic\model\" />
+  </ItemGroup>
 </Project>

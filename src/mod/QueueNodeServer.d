@@ -14,7 +14,7 @@
 
 *******************************************************************************/
 
-module src.mod.node.QueueNode;
+module src.mod.QueueNodeServer;
 
 
 
@@ -26,12 +26,12 @@ module src.mod.node.QueueNode;
 
 private import src.main.Version;
 
-private import src.mod.node.config.MainConfig;
+private import src.core.config.MainConfig;
 
-private import src.mod.node.util.Terminator;
+private import src.core.util.Terminator;
 
-private import src.mod.node.periodic.Periodics;
-private import src.mod.node.periodic.PeriodicStats;
+private import src.core.periodic.Periodics;
+private import src.core.periodic.PeriodicStats;
 
 private import swarm.queue.QueueNode;
 private import swarm.queue.QueueConst;

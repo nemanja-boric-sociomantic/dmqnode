@@ -20,7 +20,7 @@ module src.main.queuenode;
 
 *******************************************************************************/
 
-private import src.mod.node.QueueNode;
+private import src.mod.QueueNodeServer;
 
 
 

@@ -11,7 +11,7 @@
 
 *******************************************************************************/
 
-module src.mod.node.periodic.PeriodicStats;
+module src.core.periodic.PeriodicStats;
 
 
 
@@ -21,9 +21,9 @@ module src.mod.node.periodic.PeriodicStats;
 
 *******************************************************************************/
 
-private import src.mod.node.periodic.model.IPeriodic;
+private import src.core.periodic.model.IPeriodic;
 
-private import src.mod.node.config.MainConfig;
+private import src.core.config.MainConfig;
 
 private import ocean.math.SlidingAverage;
 

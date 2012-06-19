@@ -6,12 +6,12 @@
     
     authors:        Gavin Norman
 
-    Static bool indicating that application termination has been requested. Used
-    to synchronize termination of the queue node and the service threads.
+    Namespace struct containing a global boolean which is set to true when the
+    application is terminating (after receiving SIGINT - see QueueNodeServer).
 
 *******************************************************************************/
 
-module src.mod.node.util.Terminator;
+module src.core.util.Terminator;
 
 
 
