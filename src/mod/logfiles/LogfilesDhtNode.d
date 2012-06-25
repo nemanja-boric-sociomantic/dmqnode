@@ -44,6 +44,7 @@ private class LogfilesConfig
 }
 
 
+
 /*******************************************************************************
 
     Logfiles node class
