@@ -18,5 +18,8 @@ module src.core.util.Terminator;
 struct Terminator
 {
     static bool terminating;
+
+    // FIXME: see FIXME in src.core.model.IDhtNode, nodeError()
+    static bool shutdown;
 }
 

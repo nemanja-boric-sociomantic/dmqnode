@@ -241,7 +241,7 @@ abstract public class IDhtNode
 
     private hash_t min_hash ( )
     {
-        // TODO: remove this hash range padding, always specify full 32-bit
+        // TODO: remove this hash range padding, always specify full 64-bit
         // hexadecimal numbers
         auto minval = this.server_config.minval();
         return DhtHash.toHashRangeStart(minval);
@@ -257,7 +257,7 @@ abstract public class IDhtNode
 
     private hash_t max_hash ( )
     {
-        // TODO: remove this hash range padding, always specify full 32-bit
+        // TODO: remove this hash range padding, always specify full 64-bit
         // hexadecimal numbers
         auto maxval = this.server_config.maxval();
         return DhtHash.toHashRangeEnd(maxval);
@@ -279,6 +279,19 @@ abstract public class IDhtNode
     private void nodeError ( Exception exception,
         IAdvancedSelectClient.Event event_info )
     {
+        // FIXME: any errors which occur after the sigintHandler() has exited
+        // are just printed to the console. This is a hack to work around an
+        // unknown compiler bug which causes segfaults inside the tango logger
+        // (apparently something to do with variadic args) due to the ptr and
+        // length of an array being swapped in the arguments list of a function.
+        // We need to investigate this properly and try to work out what the bug
+        // is.
+        if ( Terminator.shutdown )
+        {
+            Stdout.formatln("Node error: " ~ exception.msg);
+            return;
+        }
+
         if ( cast(MessageFiber.KilledException)exception ||
              cast(IOWarning)exception ||
              cast(IOException)exception )
@@ -353,6 +366,8 @@ abstract public class IDhtNode
         log.trace("SIGINT handler: shutting down epoll finished");
 
         log.trace("Finished SIGINT handler");
+
+        Terminator.shutdown = true;
     }
 
 
