@@ -28,7 +28,7 @@ private import swarm.dht.node.storage.LogFilesStorageChannels;
 
 private import ConfigReader = ocean.util.config.ClassFiller;
 
-private import swarm.dht.node.storage.filesystem.LogRecordPut;
+private import swarm.dht.node.storage.logfiles.LogRecordPut;
 
 
 
