@@ -193,7 +193,7 @@ public class PeriodicStats : IPeriodic
                     mem_allocated, mem_free);
             }
 
-            StaticTrace.format("  {} dht 0x{:X}..0x{:X}{}: {} conns, {} rec/s, {} recs ({}){}",
+            StaticTrace.format("  {} dht 0x{:X16}..0x{:X16}{}: {} conns, {} rec/s, {} recs ({}){}",
                 node_info.storage_type, node_info.min_hash, node_info.max_hash,
                 this.memory_buf, node_info.num_open_connections, rec_per_sec,
                 this.records_buf, this.bytes_buf,
