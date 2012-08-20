@@ -117,7 +117,7 @@ public class DhtNodeServer : LoggedCliApp
 
     ***************************************************************************/
 
-    public override void processConfig ( Application app, ConfigParser config )
+    public override void processConfig ( IApplication app, ConfigParser config )
     {
         ServerConfig server_config;
         ConfigReader.fill("Server", server_config, config);
