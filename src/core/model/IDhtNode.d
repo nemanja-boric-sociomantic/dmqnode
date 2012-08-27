@@ -166,6 +166,7 @@ abstract public class IDhtNode
             this.min_hash, this.max_hash, this.epoll);
 
         this.node.error_callback = &this.nodeError;
+        this.node.connection_limit = server_config.connection_limit;
 
         this.periodics = new Periodics(this.node, this.epoll);
     }
