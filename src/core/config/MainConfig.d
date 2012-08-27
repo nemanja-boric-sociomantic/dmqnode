@@ -40,6 +40,8 @@ private class ServerConfig
     ConfigReader.Required!(ConfigReader.Min!(ulong, 1)) channel_size_limit;
 
     char[] data_dir = "data";
+
+    uint connection_limit = 5000;
 }
 
 

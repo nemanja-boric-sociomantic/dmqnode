@@ -159,7 +159,7 @@ public class QueueNodeServer : LoggedCliApp
 
     ***************************************************************************/
 
-    public override void processConfig ( Application app, ConfigParser config )
+    public override void processConfig ( IApplication app, ConfigParser config )
     {
         MainConfig.init(config);
 
@@ -171,6 +171,7 @@ public class QueueNodeServer : LoggedCliApp
                 this.epoll);
 
         this.node.error_callback = &this.nodeError;
+        this.node.connection_limit = MainConfig.server.connection_limit;
 
         this.sigint_event = new SignalEvent(&this.sigintHandler,
             [SIGINT, SIGTERM, SIGQUIT]);
