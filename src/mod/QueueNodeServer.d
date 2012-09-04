@@ -26,7 +26,9 @@ module src.mod.QueueNodeServer;
 
 private import src.main.Version;
 
-private import src.core.config.MainConfig;
+private import src.core.config.ServerConfig;
+private import src.core.config.PerformanceConfig;
+private import src.core.config.StatsConfig;
 
 private import src.core.util.Terminator;
 
@@ -47,6 +49,8 @@ private import ocean.io.select.model.ISelectClient;
 
 private import ocean.util.app.LoggedCliApp;
 private import ocean.util.app.ext.VersionArgsExt;
+
+private import ConfigReader = ocean.util.config.ClassFiller;
 
 debug private import ocean.util.log.Trace;
 
@@ -127,6 +131,17 @@ public class QueueNodeServer : LoggedCliApp
 
     /***************************************************************************
 
+        Instances of each config class to be read.
+
+    ***************************************************************************/
+
+    private ServerConfig server_config;
+    private PerformanceConfig performance_config;
+    private StatsConfig stats_config;
+
+
+    /***************************************************************************
+
          Constructor
 
      **************************************************************************/
@@ -161,23 +176,26 @@ public class QueueNodeServer : LoggedCliApp
 
     public override void processConfig ( IApplication app, ConfigParser config )
     {
-        MainConfig.init(config);
+        ConfigReader.fill("Stats", this.stats_config, config);
+        ConfigReader.fill("Server", this.server_config, config);
+        ConfigReader.fill("Performance", this.performance_config, config);
 
         this.node = new QueueNode(
-                QueueConst.NodeItem(MainConfig.server.address(),
-                    MainConfig.server.port()),
-                new RingNode(MainConfig.server.data_dir, MainConfig.server.size_limit,
-                        MainConfig.server.channel_size_limit()),
+                QueueConst.NodeItem(this.server_config.address(),
+                    this.server_config.port()),
+                new RingNode(this.server_config.data_dir,
+                    this.server_config.size_limit,
+                    this.server_config.channel_size_limit()),
                 this.epoll);
 
         this.node.error_callback = &this.nodeError;
-        this.node.connection_limit = MainConfig.server.connection_limit;
+        this.node.connection_limit = this.server_config.connection_limit;
 
         this.sigint_event = new SignalEvent(&this.sigintHandler,
             [SIGINT, SIGTERM, SIGQUIT]);
 
         this.periodics = new Periodics(this.node, this.epoll);
-        this.periodics.add(new PeriodicStats());
+        this.periodics.add(new PeriodicStats(this.stats_config));
     }
 
 

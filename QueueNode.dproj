@@ -45,12 +45,15 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="src\main\queuenode.d" />
-    <Compile Include="src\core\config\MainConfig.d" />
     <Compile Include="src\core\util\Terminator.d" />
     <Compile Include="src\core\periodic\model\IPeriodic.d" />
     <Compile Include="src\core\periodic\Periodics.d" />
     <Compile Include="src\core\periodic\PeriodicStats.d" />
     <Compile Include="src\mod\QueueNodeServer.d" />
+    <Compile Include="src\core\periodic\PeriodicWriterFlush.d" />
+    <Compile Include="src\core\config\PerformanceConfig.d" />
+    <Compile Include="src\core\config\ServerConfig.d" />
+    <Compile Include="src\core\config\StatsConfig.d" />
   </ItemGroup>
   <ProjectExtensions>
     <MonoDevelop>

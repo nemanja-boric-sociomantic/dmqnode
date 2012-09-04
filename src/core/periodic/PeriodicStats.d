@@ -23,7 +23,7 @@ module src.core.periodic.PeriodicStats;
 
 private import src.core.periodic.model.IPeriodic;
 
-private import src.core.config.MainConfig;
+private import src.core.config.StatsConfig;
 
 private import ocean.math.SlidingAverage;
 
@@ -48,6 +48,15 @@ private import tango.core.Memory;
 
 public class PeriodicStats : IPeriodic
 {
+    /***************************************************************************
+
+        Stats config object, passed into constructor.
+
+    ***************************************************************************/
+
+    private const StatsConfig stats_config;
+
+
     /***************************************************************************
 
         Struct containing the values to be written to the stats log file
@@ -77,18 +86,18 @@ public class PeriodicStats : IPeriodic
 
     /***************************************************************************
 
-        Console & log file update period (seconds)
+        Console & log file update period (milliseconds)
 
     ***************************************************************************/
 
-    private const console_update_time = 1;
+    private const console_update_time = 1_000;
 
-    private const uint log_update_time = Log.default_period;
+    private const uint log_update_time = Log.default_period * 1_000;
 
 
     /***************************************************************************
     
-        Number of seconds elapsed since the log file was last updated
+        Number of milliseconds elapsed since the log file was last updated
 
     ***************************************************************************/
 
@@ -119,13 +128,15 @@ public class PeriodicStats : IPeriodic
 
     ***************************************************************************/
 
-    public this ( )
+    public this ( StatsConfig stats_config )
     {
+        this.stats_config = stats_config;
+
         super(console_update_time);
 
         this.records_per_sec = new SlidingAverageTime!(ulong)(5, 1_000, 1_000);
 
-        this.log = new Log(MainConfig.stats.logfile);
+        this.log = new Log(this.stats_config.logfile);
     }
 
 
@@ -156,7 +167,7 @@ public class PeriodicStats : IPeriodic
 
     private void consoleOutput ( )
     {
-        if ( MainConfig.stats.console_stats_enabled )
+        if ( this.stats_config.console_stats_enabled )
         {
             auto node_info = cast(IQueueNodeInfo)this.node;
 
@@ -208,7 +219,7 @@ public class PeriodicStats : IPeriodic
 
         this.records_per_sec = node_info.records_handled;
 
-        for ( int i; i < this.console_update_time; i++ )
+        for ( int i; i < this.console_update_time / 1_000; i++ )
         {
             rec_per_sec = this.records_per_sec.push;
         }
@@ -234,7 +245,7 @@ public class PeriodicStats : IPeriodic
         this.log_stats.bytes_received += node_info.bytes_received;
         this.log_stats.records_handled += node_info.records_handled;
 
-        this.elapsed_since_last_log_update += this.console_update_time;
+        this.elapsed_since_last_log_update += this.console_update_time / 1_000;
 
         // Output logline and reset counters when period has expired
         if ( this.elapsed_since_last_log_update >= this.log_update_time )
@@ -243,7 +254,7 @@ public class PeriodicStats : IPeriodic
 
             this.log.write(this.log_stats);
 
-            this.elapsed_since_last_log_update -= this.elapsed_since_last_log_update;
+            this.elapsed_since_last_log_update -= this.log_update_time;
             this.log_stats = LogStats.init;
         }
     }
