@@ -64,15 +64,17 @@ public abstract class IPeriodic : TimerEvent
         Constructor.
 
         Params:
-            period_s = seconds between calls to handle()
+            period_ms = milliseconds between calls to handle()
 
     ***************************************************************************/
 
-    public this ( uint period_s )
+    public this ( uint period_ms )
     {
         super(&this.handle);
 
-        this.set(period_s, 0, period_s, 0);
+        auto s = period_ms / 1000;
+        auto ms = (period_ms) % 1000;
+        this.set(s, ms, s, ms);
     }
 
 

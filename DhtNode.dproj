@@ -60,6 +60,8 @@
     <Compile Include="src\core\periodic\model\IPeriodic.d" />
     <Compile Include="src\core\periodic\Periodics.d" />
     <Compile Include="src\core\periodic\PeriodicStats.d" />
+    <Compile Include="src\core\periodic\PeriodicWriterFlush.d" />
+    <Compile Include="src\core\config\PerformanceConfig.d" />
   </ItemGroup>
   <ProjectExtensions>
     <MonoDevelop>

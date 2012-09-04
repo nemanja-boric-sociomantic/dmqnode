@@ -22,11 +22,13 @@ module src.core.model.IDhtNode;
 *******************************************************************************/
 
 private import src.core.config.ServerConfig;
+private import src.core.config.PerformanceConfig;
 private import src.core.config.StatsConfig;
 
 private import src.core.util.Terminator;
 
 private import src.core.periodic.Periodics;
+private import src.core.periodic.PeriodicWriterFlush;
 
 private import ocean.core.MessageFiber;
 private import ocean.io.select.protocol.generic.ErrnoIOException : IOWarning;
@@ -91,11 +93,13 @@ abstract public class IDhtNode
 
     /***************************************************************************
 
-        Config classes for server and stats
+        Config classes for server, performance and stats
 
     ***************************************************************************/
 
     protected ServerConfig server_config;
+
+    protected PerformanceConfig performance_config;
 
     protected StatsConfig stats_config;
 
@@ -158,6 +162,7 @@ abstract public class IDhtNode
         this.epoll = new EpollSelectDispatcher;
 
         ConfigReader.fill("Stats", this.stats_config, config);
+        ConfigReader.fill("Performance", this.performance_config, config);
 
         this.sigint_event = new SignalEvent(&this.sigintHandler,
             [SIGINT, SIGTERM, SIGQUIT]);
@@ -169,6 +174,8 @@ abstract public class IDhtNode
         this.node.connection_limit = server_config.connection_limit;
 
         this.periodics = new Periodics(this.node, this.epoll);
+        this.periodics.add(
+            new PeriodicWriterFlush(this.performance_config.write_flush_ms));
     }
 
 

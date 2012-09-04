@@ -86,18 +86,18 @@ public class PeriodicStats : IPeriodic
 
     /***************************************************************************
 
-        Console & log file update period (seconds)
+        Console & log file update period (milliseconds)
 
     ***************************************************************************/
 
-    private const console_update_time = 1;
+    private const console_update_time = 1_000;
 
-    private const uint log_update_time = Log.default_period;
+    private const uint log_update_time = Log.default_period * 1_000;
 
 
     /***************************************************************************
-    
-        Number of seconds elapsed since the log file was last updated
+
+        Number of milliseconds elapsed since the log file was last updated
 
     ***************************************************************************/
 
@@ -125,6 +125,9 @@ public class PeriodicStats : IPeriodic
     /***************************************************************************
 
         Constructor.
+
+        Params:
+            stats_config = class containing configuration settings for stats
 
     ***************************************************************************/
 
@@ -201,6 +204,7 @@ public class PeriodicStats : IPeriodic
         }
     }
 
+
     /***************************************************************************
 
         Provides additional text to be displayed on the console stats line. The
@@ -236,7 +240,7 @@ public class PeriodicStats : IPeriodic
 
         this.records_per_sec = node_info.records_handled;
 
-        for ( int i; i < this.console_update_time; i++ )
+        for ( int i; i < this.console_update_time / 1_000; i++ )
         {
             rec_per_sec = this.records_per_sec.push;
         }
@@ -271,7 +275,7 @@ public class PeriodicStats : IPeriodic
 
             this.log.write(this.log_stats);
 
-            this.elapsed_since_last_log_update -= this.elapsed_since_last_log_update;
+            this.elapsed_since_last_log_update -= this.log_update_time;
             this.log_stats = LogStats.init;
         }
     }
