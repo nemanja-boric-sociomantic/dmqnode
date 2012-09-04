@@ -53,7 +53,7 @@ public class PeriodicWriterFlush : IPeriodic
 
     protected void handle_ ( )
     {
-        this.dht_node.flush();
+        this.node.flush();
     }
 }
 

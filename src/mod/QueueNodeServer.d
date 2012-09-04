@@ -34,6 +34,7 @@ private import src.core.util.Terminator;
 
 private import src.core.periodic.Periodics;
 private import src.core.periodic.PeriodicStats;
+private import src.core.periodic.PeriodicWriterFlush;
 
 private import swarm.queue.QueueNode;
 private import swarm.queue.QueueConst;
@@ -196,6 +197,8 @@ public class QueueNodeServer : LoggedCliApp
 
         this.periodics = new Periodics(this.node, this.epoll);
         this.periodics.add(new PeriodicStats(this.stats_config));
+        this.periodics.add(
+            new PeriodicWriterFlush(this.performance_config.write_flush_ms));
     }
 
 
