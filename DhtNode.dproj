@@ -11,13 +11,13 @@
     <UseDefaultCompiler>true</UseDefaultCompiler>
     <Compiler>DMD</Compiler>
     <PreferOneStepBuild>true</PreferOneStepBuild>
-    <Includes>
-      <Includes>
-        <Path>../tango</Path>
-        <Path>../ocean</Path>
-        <Path>../swarm</Path>
-      </Includes>
-    </Includes>
+    <DependentProjectIds>
+      <DependentProjectIds>
+        <String>{B370A7EC-9FA1-4662-8ED2-AF024FDCD7A6}</String>
+        <String>{EE50F3C8-5DD4-482D-8C06-7D65F3E80183}</String>
+        <String>{5F8B6543-96C2-400B-A27A-78FCF602919D}</String>
+      </DependentProjectIds>
+    </DependentProjectIds>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -66,6 +66,11 @@
   <ProjectExtensions>
     <MonoDevelop>
       <Properties>
+        <Policies>
+          <VersionControlPolicy inheritsSet="Mono">
+            <CommitMessageStyle FirstFilePrefix="" FileSeparator=", " LastFilePostfix=":&#xA;" LineAlign="0" />
+          </VersionControlPolicy>
+        </Policies>
         <MonoDevelop.Autotools.MakefileInfo IntegrationEnabled="true" RelativeMakefileName="Makefile" BuildTargetName="node">
           <BuildFilesVar />
           <DeployFilesVar />

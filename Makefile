@@ -36,9 +36,12 @@ export D_GC := cdgc
 # dmd flags
 
 FLAGS =\
-	$(foreach d,$(DEPS),-I$(DEPS_PATH)/$d) \
-	-L-lminilzo \
-	-m${ARCH}
+    $(foreach d,$(DEPS),-I$(DEPS_PATH)/$d) \
+    -L-lminilzo \
+    -L-ltokyocabinet \
+    -m${ARCH} \
+    -version=CDGC
+# TODO: tokyocabinet should only be linked with the memory node
 
 UNITTESTFLAGS =\
 	-unittest \
@@ -47,21 +50,15 @@ UNITTESTFLAGS =\
 RELEASE_FLAGS = ${FLAGS}\
 	-L-s
 
-DEBUG_FLAGS = ${FLAGS}\
-	-debug -gc
+DEBUG_FLAGS = ${FLAGS} ${UNITTESTFLAGS}\
+	-debug -gc 
+
+#-debug=Raw
+#-debug=ISelectClient
 #${UNITTESTFLAGS}
 
 # FIXME: unittests disabled due to an unknown compiler bug which manifested in
 # the unittest of ocean.core.ObjectPool
-
-# TODO: tokyocabinet should only be linked with the memory node
-NODE_FLAGS =\
-	-L-ltokyocabinet\
-    -version=CDGC
-#    -debug=ConnectionHandler
-#   -debug=Raw
-#	-debug=ISelectClient\
-#	-debug=SelectFiber\
 
 
 # ------------------------------------------------------------------------------
@@ -85,10 +82,10 @@ revision:
 # node debug & release builds
 
 node: revision
-	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${NODE_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${NODE_FLAGS} ${NODE_TARGET}
+	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${NODE_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${NODE_TARGET}
 
 node-release: revision
-	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${NODE_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${NODE_FLAGS} ${NODE_TARGET}
+	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${NODE_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${NODE_TARGET}
 
 
 # ------------------------------------------------------------------------------
