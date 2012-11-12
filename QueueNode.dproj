@@ -10,13 +10,13 @@
     <IncrementalLinking>true</IncrementalLinking>
     <PreferOneStepBuild>true</PreferOneStepBuild>
     <Compiler>DMD</Compiler>
-    <Includes>
-      <Includes>
-        <Path>../ocean</Path>
-        <Path>../swarm</Path>
-        <Path>../tango</Path>
-      </Includes>
-    </Includes>
+    <DependentProjectIds>
+      <DependentProjectIds>
+        <String>{B370A7EC-9FA1-4662-8ED2-AF024FDCD7A6}</String>
+        <String>{EE50F3C8-5DD4-482D-8C06-7D65F3E80183}</String>
+        <String>{5F8B6543-96C2-400B-A27A-78FCF602919D}</String>
+      </DependentProjectIds>
+    </DependentProjectIds>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -62,6 +62,8 @@
           <VersionControlPolicy inheritsSet="Mono">
             <CommitMessageStyle FirstFilePrefix="" FileSeparator=", " LastFilePostfix=":&#xA;" LineAlign="0" />
           </VersionControlPolicy>
+          <TextStylePolicy inheritsSet="null" scope="text/x-d" />
+          <DFormattingPolicy CommentOutStandardHeaders="False" InsertStarAtCommentNewLine="False" inheritsSet="Mono" inheritsScope="text/x-d" scope="text/x-d" />
         </Policies>
         <MonoDevelop.Autotools.MakefileInfo IntegrationEnabled="true" RelativeMakefileName="Makefile">
           <BuildFilesVar />
