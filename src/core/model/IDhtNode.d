@@ -360,7 +360,7 @@ abstract public class IDhtNode
         log.trace("SIGINT handler: shutting down periodics finished");
 
         log.trace("SIGINT handler: stopping node listener");
-        this.node.stopListener();
+        this.node.stopListener(this.epoll);
         log.trace("SIGINT handler: stopping node listener finished");
 
         this.shutdown();
