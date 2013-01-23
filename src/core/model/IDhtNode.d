@@ -168,7 +168,7 @@ abstract public class IDhtNode
             [SIGINT, SIGTERM, SIGQUIT]);
 
         this.node = new DhtNode(this.node_item, this.newStorageChannels(),
-            this.min_hash, this.max_hash, this.epoll);
+            this.min_hash, this.max_hash, this.epoll, server_config.backlog);
 
         this.node.error_callback = &this.nodeError;
         this.node.connection_limit = server_config.connection_limit;
