@@ -187,7 +187,7 @@ public class QueueNodeServer : LoggedCliApp
                 new RingNode(this.server_config.data_dir,
                     this.server_config.size_limit,
                     this.server_config.channel_size_limit()),
-                this.epoll);
+                this.epoll, this.server_config.backlog);
 
         this.node.error_callback = &this.nodeError;
         this.node.connection_limit = this.server_config.connection_limit;

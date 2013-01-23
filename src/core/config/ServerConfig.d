@@ -43,4 +43,6 @@ public class ServerConfig
     char[] data_dir = "data";
 
     uint connection_limit = 5000;
+
+    uint backlog = 2048;
 }
