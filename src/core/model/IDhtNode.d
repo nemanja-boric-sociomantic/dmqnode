@@ -296,7 +296,7 @@ abstract public class IDhtNode
         // is.
         if ( Terminator.shutdown )
         {
-            Stdout.formatln("Node error: " ~ exception.msg);
+            Stderr.formatln("Node error: " ~ exception.msg);
             return;
         }
 
