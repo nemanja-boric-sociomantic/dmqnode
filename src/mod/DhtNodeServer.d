@@ -157,7 +157,7 @@ public class DhtNodeServer : LoggedCliApp
     {
         this.node.run();
 
-        return true;
+        return 0;
     }
 }
 
