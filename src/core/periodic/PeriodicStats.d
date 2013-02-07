@@ -25,6 +25,10 @@ private import src.core.periodic.model.IPeriodic;
 
 private import src.core.config.StatsConfig;
 
+private import swarm.core.node.storage.model.IStorageEngineInfo;
+
+private import ocean.core.Array : copy, concat;
+
 private import ocean.math.SlidingAverage;
 
 private import ocean.text.util.DigitGrouping;
@@ -96,7 +100,7 @@ public class PeriodicStats : IPeriodic
 
 
     /***************************************************************************
-    
+
         Number of milliseconds elapsed since the log file was last updated
 
     ***************************************************************************/
@@ -124,7 +128,31 @@ public class PeriodicStats : IPeriodic
 
     /***************************************************************************
 
+        Per-channel stats written to log file.
+
+    ***************************************************************************/
+
+    private ulong[char[]] channel_stats;
+
+
+    /***************************************************************************
+
+        Titles of per-channel stats written to the log file. (These must be
+        maintained separately as they are composed from the channel's name plus
+        the string "_bytes" or "_records".)
+
+    ***************************************************************************/
+
+    private char[][char[]] channel_bytes_title;
+    private char[][char[]] channel_records_title;
+
+
+    /***************************************************************************
+
         Constructor.
+
+        Params:
+            stats_config = class containing configuration settings for stats
 
     ***************************************************************************/
 
@@ -250,12 +278,72 @@ public class PeriodicStats : IPeriodic
         // Output logline and reset counters when period has expired
         if ( this.elapsed_since_last_log_update >= this.log_update_time )
         {
+            this.updateChannelStats(node_info);
+
             this.log_stats.handling_connections = node_info.num_open_connections;
 
-            this.log.write(this.log_stats);
+            this.log.writeExtra(this.log_stats, this.channel_stats);
 
             this.elapsed_since_last_log_update -= this.log_update_time;
             this.log_stats = LogStats.init;
+        }
+    }
+
+
+    /***************************************************************************
+
+        Updates the channel stats associative arrays. Removes any channels from
+        the stats log which no longer exist in the dht.
+
+        Params:
+            node_info = dht node info to check for channel info
+
+    ***************************************************************************/
+
+    private void updateChannelStats ( IQueueNodeInfo node_info )
+    {
+        // Update existing channel stats
+        foreach ( channel; node_info )
+        {
+            if ( !(channel.id in this.channel_bytes_title) )
+            {
+                this.channel_bytes_title[channel.id] = channel.id ~ "_bytes";
+            }
+            this.channel_stats[this.channel_bytes_title[channel.id]]
+                = channel.num_bytes;
+
+            if ( !(channel.id in this.channel_records_title) )
+            {
+                this.channel_records_title[channel.id] = channel.id ~ "_records";
+            }
+            this.channel_stats[this.channel_records_title[channel.id]]
+                = channel.num_records;
+        }
+
+        // Check for dead channels in stats
+        char[][] to_remove;
+        foreach ( id, title; this.channel_bytes_title )
+        {
+            // Sanity check that the two lists of titles are the same
+            assert(id in this.channel_records_title, "Records/bytes title mismatch");
+
+            if ( !(id in node_info) )
+            {
+                to_remove ~= id;
+            }
+        }
+
+        // Remove dead channels from stats
+        foreach ( id; to_remove )
+        {
+            this.channel_bytes_title.remove(id);
+            this.channel_records_title.remove(id);
+
+            this.records_buf.concat(id, "_bytes");
+            this.channel_stats.remove(this.records_buf);
+
+            this.records_buf.concat(id, "_records");
+            this.channel_stats.remove(this.records_buf);
         }
     }
 }
