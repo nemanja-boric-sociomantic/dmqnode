@@ -245,7 +245,7 @@ public class PeriodicStats : IPeriodic
         this.log_stats.bytes_received += node_info.bytes_received;
         this.log_stats.records_handled += node_info.records_handled;
 
-        this.elapsed_since_last_log_update += this.console_update_time / 1_000;
+        this.elapsed_since_last_log_update += this.console_update_time;
 
         // Output logline and reset counters when period has expired
         if ( this.elapsed_since_last_log_update >= this.log_update_time )
