@@ -41,6 +41,7 @@ private import ocean.util.log.StaticTrace;
 
 private import tango.core.Memory;
 
+private import tango.util.MinMax;
 
 
 /*******************************************************************************
@@ -195,9 +196,12 @@ public class PeriodicStats : IPeriodic
 
     private void consoleOutput ( )
     {
+        auto node_info = cast(IQueueNodeInfo)this.node;
+
+        this.updateChannelStats(node_info);
+
         if ( this.stats_config.console_stats_enabled )
         {
-            auto node_info = cast(IQueueNodeInfo)this.node;
 
             auto rec_per_sec = this.recordsPerSecond();
 
@@ -286,6 +290,16 @@ public class PeriodicStats : IPeriodic
 
             this.elapsed_since_last_log_update -= this.log_update_time;
             this.log_stats = LogStats.init;
+
+            this.resetChannelStats();
+        }
+    }
+
+    private void resetChannelStats()
+    {
+        foreach ( ref num; this.channel_stats )
+        {
+            num = 0;
         }
     }
 
@@ -310,14 +324,16 @@ public class PeriodicStats : IPeriodic
                 this.channel_bytes_title[channel.id] = channel.id ~ "_bytes";
             }
             this.channel_stats[this.channel_bytes_title[channel.id]]
-                = channel.num_bytes;
+                = max(this.channel_stats[this.channel_bytes_title[channel.id]],
+                      channel.num_bytes);
 
             if ( !(channel.id in this.channel_records_title) )
             {
                 this.channel_records_title[channel.id] = channel.id ~ "_records";
             }
             this.channel_stats[this.channel_records_title[channel.id]]
-                = channel.num_records;
+                = max(this.channel_stats[this.channel_records_title[channel.id]],
+                      channel.num_records);
         }
 
         // Check for dead channels in stats
