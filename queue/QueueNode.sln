@@ -1,0 +1,47 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{3947E667-4C90-4C3A-BEB9-7148D6FE0D7C}") = "QueueNode", "QueueNode.dproj", "{4B2890FC-5580-4945-B8EF-0B34A886EF17}"
+EndProject
+Project("{3947E667-4C90-4C3A-BEB9-7148D6FE0D7C}") = "ocean", "..\ocean\ocean.dproj", "{B370A7EC-9FA1-4662-8ED2-AF024FDCD7A6}"
+EndProject
+Project("{3947E667-4C90-4C3A-BEB9-7148D6FE0D7C}") = "swarm", "..\swarm\swarm.dproj", "{EE50F3C8-5DD4-482D-8C06-7D65F3E80183}"
+EndProject
+Project("{3947E667-4C90-4C3A-BEB9-7148D6FE0D7C}") = "tango", "..\tango\tango.dproj", "{5F8B6543-96C2-400B-A27A-78FCF602919D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+		Unittest|Any CPU = Unittest|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4B2890FC-5580-4945-B8EF-0B34A886EF17}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4B2890FC-5580-4945-B8EF-0B34A886EF17}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4B2890FC-5580-4945-B8EF-0B34A886EF17}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4B2890FC-5580-4945-B8EF-0B34A886EF17}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4B2890FC-5580-4945-B8EF-0B34A886EF17}.Unittest|Any CPU.ActiveCfg = Unittest|Any CPU
+		{4B2890FC-5580-4945-B8EF-0B34A886EF17}.Unittest|Any CPU.Build.0 = Unittest|Any CPU
+		{5F8B6543-96C2-400B-A27A-78FCF602919D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5F8B6543-96C2-400B-A27A-78FCF602919D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5F8B6543-96C2-400B-A27A-78FCF602919D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5F8B6543-96C2-400B-A27A-78FCF602919D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5F8B6543-96C2-400B-A27A-78FCF602919D}.Unittest|Any CPU.ActiveCfg = Unittest|Any CPU
+		{5F8B6543-96C2-400B-A27A-78FCF602919D}.Unittest|Any CPU.Build.0 = Unittest|Any CPU
+		{B370A7EC-9FA1-4662-8ED2-AF024FDCD7A6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B370A7EC-9FA1-4662-8ED2-AF024FDCD7A6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B370A7EC-9FA1-4662-8ED2-AF024FDCD7A6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B370A7EC-9FA1-4662-8ED2-AF024FDCD7A6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B370A7EC-9FA1-4662-8ED2-AF024FDCD7A6}.Unittest|Any CPU.ActiveCfg = Unittest|Any CPU
+		{B370A7EC-9FA1-4662-8ED2-AF024FDCD7A6}.Unittest|Any CPU.Build.0 = Unittest|Any CPU
+		{EE50F3C8-5DD4-482D-8C06-7D65F3E80183}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EE50F3C8-5DD4-482D-8C06-7D65F3E80183}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EE50F3C8-5DD4-482D-8C06-7D65F3E80183}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EE50F3C8-5DD4-482D-8C06-7D65F3E80183}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EE50F3C8-5DD4-482D-8C06-7D65F3E80183}.Unittest|Any CPU.ActiveCfg = Unittest|Any CPU
+		{EE50F3C8-5DD4-482D-8C06-7D65F3E80183}.Unittest|Any CPU.Build.0 = Unittest|Any CPU
+	EndGlobalSection
+	GlobalSection(MonoDevelopProperties) = preSolution
+		StartupItem = QueueNode.dproj
+	EndGlobalSection
+EndGlobal
