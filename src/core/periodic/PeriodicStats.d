@@ -343,7 +343,8 @@ public class PeriodicStats : IPeriodic
         }
 
         // Check for dead channels in stats
-        char[][] to_remove;
+        char[][] to_remove; // Note: this will allocate in the case where a
+            // channel has been removed. This is very rare.
         foreach ( id, title; this.channel_bytes_title )
         {
             // Sanity check that the two lists of titles are the same
