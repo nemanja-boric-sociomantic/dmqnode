@@ -15,7 +15,7 @@ NODE_OUTPUT = bin/dhtnode-${ARCH}
 # ------------------------------------------------------------------------------
 # Dependencies
 
-DEPS_PATH := ..
+DEPS_PATH := ../..
 DEPS := tango ocean swarm
 
 
@@ -51,7 +51,7 @@ RELEASE_FLAGS = ${FLAGS}\
 	-L-s
 
 DEBUG_FLAGS = ${FLAGS} ${UNITTESTFLAGS}\
-	-debug -gc 
+	-debug -gc
 
 #-debug=Raw
 #-debug=ISelectClient
@@ -74,8 +74,8 @@ all: default
 # Revision file build
 
 revision:
-	@../ocean/script/mkversion.sh -t \
-	$(DEPS_PATH)/ocean/script/appVersion.d.tpl $(D_GC) $(DEPS)
+	@$(DEPS_PATH)/ocean/script/mkversion.sh -t \
+	$(DEPS_PATH)/ocean/script/appVersion.d.tpl -L ../.. $(D_GC) $(DEPS)
 
 
 # ------------------------------------------------------------------------------

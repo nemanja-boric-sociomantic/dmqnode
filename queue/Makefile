@@ -15,7 +15,7 @@ NODE_OUTPUT = bin/queuenode-${ARCH}
 # ------------------------------------------------------------------------------
 # Dependencies
 
-DEPS_PATH := ..
+DEPS_PATH := ../..
 DEPS := tango ocean swarm
 
 
@@ -66,9 +66,8 @@ all: default
 # Revision file build
 
 revision:
-	@../ocean/script/mkversion.sh -t \
-	$(DEPS_PATH)/ocean/script/appVersion.d.tpl $(D_GC) $(DEPS)
-
+	@${DEPS_PATH}/ocean/script/mkversion.sh -t \
+	$(DEPS_PATH)/ocean/script/appVersion.d.tpl -L ../.. $(D_GC) $(DEPS)
 
 # ------------------------------------------------------------------------------
 # Node debug & release builds
