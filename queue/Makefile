@@ -66,8 +66,8 @@ all: default
 # Revision file build
 
 revision:
-	@${DEPS_PATH}/ocean/script/mkversion.sh -t \
-	$(DEPS_PATH)/ocean/script/appVersion.d.tpl -L ../.. $(D_GC) $(DEPS)
+	@${DEPS_PATH}/ocean/script/mkversion.sh -L $(DEPS_PATH) \
+		-t $(DEPS_PATH)/ocean/script/appVersion.d.tpl $(D_GC) $(DEPS)
 
 # ------------------------------------------------------------------------------
 # Node debug & release builds
@@ -100,16 +100,16 @@ upload-node-us:
 	$(foreach srv, $(US_SERVERS), scp -C ${NODE_OUTPUT} root@is-$(srv).sociomantic.com:/tmp/queue;)
 
 connect-eu:
-	@../ocean/script/tmuxconnect.sh eu_queue_servers eu ${EU_SERVERS}
+	@$(DEPS_PATH)/ocean/script/tmuxconnect.sh eu_queue_servers eu ${EU_SERVERS}
 
 connect-us:
-	@../ocean/script/tmuxconnect.sh us_queue_servers us ${US_SERVERS}
+	@$(DEPS_PATH)/ocean/script/tmuxconnect.sh us_queue_servers us ${US_SERVERS}
 
 connect-node-eu:
-	@../ocean/script/tmuxconnectscreen.sh eu_queue eu queue ${EU_SERVERS}
+	@$(DEPS_PATH)/ocean/script/tmuxconnectscreen.sh eu_queue eu queue ${EU_SERVERS}
 
 connect-node-us:
-	@../ocean/script/tmuxconnectscreen.sh us_queue us queue ${US_SERVERS}
+	@$(DEPS_PATH)/ocean/script/tmuxconnectscreen.sh us_queue us queue ${US_SERVERS}
 
 
 # ------------------------------------------------------------------------------

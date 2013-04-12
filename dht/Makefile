@@ -74,8 +74,8 @@ all: default
 # Revision file build
 
 revision:
-	@$(DEPS_PATH)/ocean/script/mkversion.sh -t \
-	$(DEPS_PATH)/ocean/script/appVersion.d.tpl -L ../.. $(D_GC) $(DEPS)
+	@$(DEPS_PATH)/ocean/script/mkversion.sh -L $(DEPS_PATH) \
+		-t $(DEPS_PATH)/ocean/script/appVersion.d.tpl $(D_GC) $(DEPS)
 
 
 # ------------------------------------------------------------------------------
@@ -102,22 +102,22 @@ upload-node-eu:
 	$(foreach srv, $(EU_NODE_SERVERS), scp -C ${NODE_OUTPUT} root@eq6-$(srv).sociomantic.com:/tmp/dht;)
 
 connect-eu:
-	@../ocean/script/tmuxconnect.sh eu_dht_servers eu ${EU_NODE_SERVERS}
+	@$(DEPS_PATH)/ocean/script/tmuxconnect.sh eu_dht_servers eu ${EU_NODE_SERVERS}
 
 connect-memory-eu:
-	@../ocean/script/tmuxconnectscreen.sh eu_memory eu memory ${EU_NODE_SERVERS}
+	@$(DEPS_PATH)/ocean/script/tmuxconnectscreen.sh eu_memory eu memory ${EU_NODE_SERVERS}
 
 connect-tracking-eu:
-	@../ocean/script/tmuxconnectscreen.sh eu_tracking eu tracking ${EU_NODE_SERVERS}
+	@$(DEPS_PATH)/ocean/script/tmuxconnectscreen.sh eu_tracking eu tracking ${EU_NODE_SERVERS}
 
 upload-node-us:
 	$(foreach srv, $(US_NODE_SERVERS), scp -C ${NODE_OUTPUT} root@rs-$(srv).sociomantic.com:/tmp/dht;)
 
 connect-us:
-	@../ocean/script/tmuxconnect.sh us_dht_servers us ${US_NODE_SERVERS}
+	@$(DEPS_PATH)/ocean/script/tmuxconnect.sh us_dht_servers us ${US_NODE_SERVERS}
 
 connect-dht-us:
-	@../ocean/script/tmuxconnectscreen.sh us_memory us dht ${US_NODE_SERVERS}
+	@$(DEPS_PATH)/ocean/script/tmuxconnectscreen.sh us_memory us dht ${US_NODE_SERVERS}
 
 
 # ------------------------------------------------------------------------------
