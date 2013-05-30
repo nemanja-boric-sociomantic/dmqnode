@@ -10,9 +10,9 @@
     application is terminating (after receiving SIGINT - see IDhtNode).
 
 *******************************************************************************/
- 
+
 module src.core.util.Terminator;
- 
+
 
 
 struct Terminator

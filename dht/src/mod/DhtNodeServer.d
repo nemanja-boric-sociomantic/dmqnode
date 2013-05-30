@@ -1,13 +1,13 @@
 /*******************************************************************************
 
     DHT Node Server Daemon
-    
+
     copyright:      Copyright (c) 2011 sociomantic labs. All rights reserved
-    
+
     version:        June 2009:    Initial release
                     January 2011: Asynchronous dht node
-    
-    authors:        David Eckardt, Gavin Norman 
+
+    authors:        David Eckardt, Gavin Norman
                     Thomas Nicolai, Lars Kirchhoff
 
     TODO: this module is extremely similar to the equivalent in the QueueNode
@@ -77,9 +77,9 @@ public class DhtNodeServer : LoggedCliApp
 
 
     /***************************************************************************
-    
+
         Dht node instance
-    
+
     ***************************************************************************/
 
     private IDhtNode node;
