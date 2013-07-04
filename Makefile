@@ -8,11 +8,11 @@ ARCH := 64
 # ------------------------------------------------------------------------------
 # Targets
 
-DHT_TARGET = src/main/dhtnode.d
-DHT_OUTPUT = bin/dhtnode-${ARCH}
+DHT_SOURCE = src/main/dhtnode.d
+DHT_TARGET = bin/dhtnode-${ARCH}
 
-QUEUE_TARGET = src/main/queuenode.d
-QUEUE_OUTPUT = bin/queuenode-${ARCH}
+QUEUE_SOURCE = src/main/queuenode.d
+QUEUE_TARGET = bin/queuenode-${ARCH}
 
 # ------------------------------------------------------------------------------
 # Dependencies
@@ -84,19 +84,19 @@ revision:
 # node debug & release builds
 
 dht: revision
-	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${DHT_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${DHT_TARGET}
+	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${DHT_TARGET} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${DHT_SOURCE}
 
 dht-release: revision
-	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${DHT_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${DHT_TARGET}
+	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${DHT_TARGET} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${DHT_SOURCE}
 
 queue: revision
-	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${QUEUE_OUTPUT} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${QUEUE_TARGET}
+	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${QUEUE_TARGET} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${QUEUE_SOURCE}
 
 queue-release: revision
-	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${QUEUE_OUTPUT} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${QUEUE_TARGET}
+	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${QUEUE_TARGET} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${QUEUE_SOURCE}
 
 # ------------------------------------------------------------------------------
 # Cleanup
 
 clean:
-	$(RM) -r .objs-* .deps-* $(DHT_OUTPUT) $(QUEUE_OUTPUT)
+	$(RM) -r .objs-* .deps-* $(DHT_TARGET) $(QUEUE_TARGET)
