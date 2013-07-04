@@ -1,0 +1,4 @@
+src/main/Version.d
+bin/
+.deps-*
+.objs-*/
