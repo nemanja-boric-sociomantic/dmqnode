@@ -99,6 +99,4 @@ queue-release: revision
 # Cleanup
 
 clean:
-	xfbuild ${XFBUILD_FLAGS} +clean ${DHT_TARGET}
-	xfbuild ${XFBUILD_FLAGS} +clean ${QUEUE_TARGET}
-	$(RM) -r .objs-* .deps-*
+	$(RM) -r .objs-* .deps-* $(DHT_OUTPUT) $(QUEUE_OUTPUT)
