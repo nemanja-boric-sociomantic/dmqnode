@@ -66,7 +66,7 @@ DEBUG_FLAGS = ${FLAGS} ${UNITTESTFLAGS}\
 # ------------------------------------------------------------------------------
 # Debug build of all targets (default)
 
-.PHONY: revision node
+.PHONY: default all clean revision dht dht-release queue-release queue
 
 default: dht queue
 all: default
