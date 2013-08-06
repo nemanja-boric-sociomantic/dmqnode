@@ -1,0 +1,9 @@
+[submodule "swarm"]
+	path = swarm
+	url = git@github.com:sociomantic/swarm.git
+[submodule "ocean"]
+	path = ocean
+	url = git@github.com:sociomantic/ocean.git
+[submodule "tango"]
+	path = tango
+	url = git@github.com:sociomantic/tango.git

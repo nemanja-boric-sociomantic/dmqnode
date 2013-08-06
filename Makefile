@@ -17,7 +17,7 @@ QUEUE_TARGET = bin/queuenode-${ARCH}
 # ------------------------------------------------------------------------------
 # Dependencies
 
-DEPS_PATH := ..
+DEPS_PATH := .
 DEPS := tango ocean swarm
 
 
