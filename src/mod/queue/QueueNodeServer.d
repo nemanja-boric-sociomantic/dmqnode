@@ -36,9 +36,10 @@ private import src.core.periodic.Periodics;
 private import src.mod.queue.periodic.PeriodicQueueStats;
 private import src.core.periodic.PeriodicWriterFlush;
 
-private import swarm.queue.QueueNode;
+private import src.mod.queue.storage.Ring;
+private import src.mod.queue.QueueNode;
+
 private import swarm.queue.QueueConst;
-private import swarm.queue.node.storage.Ring;
 
 private import ocean.core.MessageFiber;
 

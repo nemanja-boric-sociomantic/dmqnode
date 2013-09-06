@@ -25,11 +25,11 @@ private import src.mod.dht.core.model.IDhtNode;
 
 private import src.mod.dht.core.periodic.PeriodicDhtStats;
 
-private import swarm.dht.node.storage.LogFilesStorageChannels;
+private import src.mod.dht.storage.LogFilesStorageChannels;
+
+private import src.mod.dht.storage.logfiles.LogRecordPut;
 
 private import ConfigReader = ocean.util.config.ClassFiller;
-
-private import swarm.dht.node.storage.logfiles.LogRecordPut;
 
 
 

@@ -29,7 +29,7 @@ private import src.mod.dht.memory.MemoryPeriodicStats;
 
 private import src.mod.dht.memory.ChannelDumpThread;
 
-private import swarm.dht.node.storage.MemoryStorageChannels;
+private import src.mod.dht.storage.MemoryStorageChannels;
 
 private import ConfigReader = ocean.util.config.ClassFiller;
 

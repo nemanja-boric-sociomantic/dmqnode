@@ -23,6 +23,10 @@ private import src.core.periodic.model.IPeriodic;
 
 private import src.core.config.StatsConfig;
 
+private import src.mod.queue.model.IQueueNodeInfo;
+
+private import src.mod.dht.model.IDhtNodeInfo;
+
 private import swarm.core.node.storage.model.IStorageEngineInfo;
 
 private import ocean.core.Array : copy, concat;
@@ -38,10 +42,6 @@ private import ocean.util.log.Stats;
 private import ocean.util.log.StaticTrace;
 
 private import tango.core.Memory;
-
-private import swarm.queue.node.model.IQueueNodeInfo;
-
-private import swarm.dht.node.model.IDhtNodeInfo;
 
 private import swarm.core.node.model.IChannelsNodeInfo;
 

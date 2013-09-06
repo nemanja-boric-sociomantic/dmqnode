@@ -26,9 +26,9 @@ private import src.core.periodic.PeriodicStats;
 
 private import src.core.config.StatsConfig;
 
-private import swarm.core.node.storage.model.IStorageEngineInfo;
+private import src.mod.dht.model.IDhtNodeInfo;
 
-private import swarm.dht.node.model.IDhtNodeInfo;
+private import swarm.core.node.storage.model.IStorageEngineInfo;
 
 private import ocean.core.Array : copy, concat;
 

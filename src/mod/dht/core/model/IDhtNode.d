@@ -31,6 +31,9 @@ private import src.core.util.Terminator;
 private import src.core.periodic.Periodics;
 private import src.core.periodic.PeriodicWriterFlush;
 
+private import src.mod.dht.DhtNode;
+private import src.mod.dht.storage.model.DhtStorageChannels;
+
 private import ocean.core.MessageFiber;
 private import ocean.io.select.protocol.generic.ErrnoIOException : IOWarning;
 
@@ -46,10 +49,7 @@ private import ocean.io.select.event.SignalEvent;
 private import ocean.io.Stdout;
 
 private import swarm.dht.DhtConst;
-private import swarm.dht.DhtNode;
 private import swarm.dht.DhtHash;
-
-private import swarm.dht.node.storage.model.DhtStorageChannels;
 
 private import tango.core.Exception : IOException, OutOfMemoryException;
 
