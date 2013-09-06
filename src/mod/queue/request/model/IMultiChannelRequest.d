@@ -47,9 +47,9 @@ public scope class IMultiChannelRequest : IRequest
 
 
     /***************************************************************************
-    
+
         Constructor
-    
+
         Params:
             reader = FiberSelectReader instance to use for read requests
             writer = FiberSelectWriter instance to use for write requests
@@ -67,7 +67,7 @@ public scope class IMultiChannelRequest : IRequest
     /***************************************************************************
 
         Reads any data from the client which is required for the request. If the
-        request is invalid in some way (the channel name is invalid, or the 
+        request is invalid in some way (the channel name is invalid, or the
         command is not supported) then the command can be simply not executed,
         and all client data has been read, leaving the read buffer in a clean
         state ready for the next request.

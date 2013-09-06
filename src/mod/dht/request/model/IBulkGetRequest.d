@@ -32,7 +32,7 @@ module src.mod.dht.request.model.IBulkGetRequest;
 private import swarm.core.common.request.helper.LoopCeder;
 
 private import swarm.dht.common.RecordBatcher;
- 
+
 private import src.mod.dht.request.model.IChannelRequest;
 
 private import src.mod.dht.storage.model.IStepIterator;
@@ -101,7 +101,7 @@ public abstract scope class IBulkGetRequest ( bool ChunkedBatcher ) : IChannelRe
     /***************************************************************************
 
         Constructor
-    
+
         Params:
             reader = FiberSelectReader instance to use for read requests
             writer = FiberSelectWriter instance to use for write requests
@@ -117,7 +117,7 @@ public abstract scope class IBulkGetRequest ( bool ChunkedBatcher ) : IChannelRe
 
 
     /***************************************************************************
-    
+
         Performs this request. (Fiber method, after command and channel validity
         have been confirmed.)
 

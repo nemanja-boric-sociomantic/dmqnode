@@ -3,11 +3,11 @@
     Ring queue Storage engine
 
     copyright:      Copyright (c) 2010 sociomantic labs. All rights reserved
-    
+
     version:        October 2010: Initial release
-    
+
     authors:        David Eckardt, Gavin Norman
-    
+
 *******************************************************************************/
 
 module src.mod.queue.storage.Ring;
@@ -89,16 +89,16 @@ public class RingNode : QueueStorageChannels
         /***********************************************************************
 
             RingQueue instance
-        
+
         ***********************************************************************/
 
         private FlexibleByteRingQueue queue;
-        
+
 
         /***********************************************************************
 
             Filename
-        
+
         ***********************************************************************/
 
         private char[] filename;
@@ -146,9 +146,9 @@ public class RingNode : QueueStorageChannels
 
 
         /***********************************************************************
-    
+
             Looks for and loads a saved dump of the channel's contents.
-    
+
         ***********************************************************************/
 
         private void loadDumpedChannel ( )
@@ -224,7 +224,7 @@ public class RingNode : QueueStorageChannels
         public typeof(this) pop ( ref char[] value )
         {
             void[] item = this.queue.pop();
-            
+
             if (item)
             {
                 value.length = item.length;
@@ -255,14 +255,14 @@ public class RingNode : QueueStorageChannels
             return this;
         }
 
-    
+
         /***********************************************************************
-        
+
             Closes the queue.
-            
+
             Returns:
                 this instance
-        
+
         ***********************************************************************/
 
         public typeof(this) close ( )
@@ -296,25 +296,25 @@ public class RingNode : QueueStorageChannels
 
 
         /***********************************************************************
-    
+
             Returns:
                 number of records stored
-    
+
         ***********************************************************************/
-    
+
         public ulong num_records ( )
         {
             return this.queue.length;
         }
-    
-    
+
+
         /***********************************************************************
-    
+
             Returns:
                 number of records stored
-    
+
         ***********************************************************************/
-    
+
         public ulong num_bytes ( )
         {
             return this.queue.used_space;
@@ -429,17 +429,17 @@ public class RingNode : QueueStorageChannels
 
 
     /***************************************************************************
-    
-        Generates a absolute, normalized path string from path.  
-        
+
+        Generates a absolute, normalized path string from path.
+
         Params:
             path = file path
-            
+
         Returns:
             absolute, normalized path string
-        
+
      **************************************************************************/
-    
+
     private char[] getFullPathString ( FilePath path )
     {
         return path.set(normalize(path.folder)).toString;
@@ -464,7 +464,7 @@ public class RingNode : QueueStorageChannels
         if ( dir )
         {
             path.set(dir);
-    
+
             if ( !path.isAbsolute() )
             {
                 path.prepend(Environment.cwd());

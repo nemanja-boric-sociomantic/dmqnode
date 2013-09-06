@@ -37,7 +37,7 @@ public scope class RemoveRequest : IChannelRequest
     /***************************************************************************
 
         Constructor
-    
+
         Params:
             reader = FiberSelectReader instance to use for read requests
             writer = FiberSelectWriter instance to use for write requests
@@ -50,18 +50,18 @@ public scope class RemoveRequest : IChannelRequest
     {
         super(DhtConst.Command.E.Remove, reader, writer, resources);
     }
-    
-    
+
+
     /***************************************************************************
-    
+
         Reads any data from the client which is required for the request. If the
-        request is invalid in some way (the channel name is invalid, or the 
+        request is invalid in some way (the channel name is invalid, or the
         command is not supported) then the command can be simply not executed,
         and all client data has been read, leaving the read buffer in a clean
         state ready for the next request.
-    
+
     ***************************************************************************/
-    
+
     protected void readRequestData_ ( )
     {
         this.reader.readArray(*this.resources.key_buffer);
@@ -69,12 +69,12 @@ public scope class RemoveRequest : IChannelRequest
 
 
     /***************************************************************************
-    
+
         Performs this request. (Fiber method, after command and channel validity
         have been confirmed.)
-    
+
     ***************************************************************************/
-    
+
     protected void handle___ ( )
     {
         this.writer.write(DhtConst.Status.E.Ok);

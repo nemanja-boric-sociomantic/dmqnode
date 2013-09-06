@@ -3,35 +3,35 @@ OVERVIEW OF DEPENDENCIES FOR CONNECTION HANDLER, SHARED RESOURCES AND REQUESTS
 == src.mod.queue.connection.SharedResources ==
 
 Uses:
-swarm.core.common.connection.ISharedResources : SharedResources_T 
+swarm.core.common.connection.ISharedResources : SharedResources_T
 
-Defines: 
+Defines:
 struct QueueConnectionResources
 class SharedResources (created by mixin SharedResources_T)
 
 
 == src.mod.queue.request.model.IQueueRequestResources ==
 
-Uses: 
+Uses:
 swarm.core.common.request.model.IRequestResources :
     IRequestResources_T,
     RequestResources_T
 src.mod.queue.connection.SharedResources : SharedResources
 
 Defines:
-interface IRequestResources 
+interface IRequestResources
           (created by mixin IRequestResources_T(SharedResources))
 interface IQueueRequestResources : IRequestResources
-scope class RequestResources : IRequestResources 
+scope class RequestResources : IRequestResources
             (created by mixin RequestResources_T(SharedResources))
 
 
-== src.mod.queue.QueueConnectionHandler ==   
+== src.mod.queue.QueueConnectionHandler ==
 
 Uses:
 src.mod.queue.request.model.IQueueRequestResources :
     RequestResources,
-    IQueueRequestResources 
+    IQueueRequestResources
 src.mod.queue.connection.SharedResources : SharedResources
 
 Defines:

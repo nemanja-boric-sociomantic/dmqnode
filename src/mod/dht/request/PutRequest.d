@@ -37,7 +37,7 @@ public scope class PutRequest : IPutSingleRequest
     /***************************************************************************
 
         Constructor
-    
+
         Params:
             reader = FiberSelectReader instance to use for read requests
             writer = FiberSelectWriter instance to use for write requests
