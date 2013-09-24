@@ -169,7 +169,8 @@ public abstract class PeriodicStats : IPeriodic
 
         this.records_per_sec = new SlidingAverageTime!(ulong)(5, 1_000, 1_000);
 
-        this.log = new StatsLog!(LogStats)(this.stats_config.logfile);
+        this.log = new Log(this.stats_config.file_count,
+            this.stats_config.max_file_size, this.stats_config.logfile);
     }
 
 
