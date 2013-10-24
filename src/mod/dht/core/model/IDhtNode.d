@@ -48,6 +48,8 @@ private import ocean.io.select.event.SignalEvent;
 
 private import ocean.io.Stdout;
 
+private import Hash = ocean.text.convert.Hash;
+
 private import swarm.dht.DhtConst;
 private import swarm.dht.DhtHash;
 
@@ -246,14 +248,19 @@ abstract public class IDhtNode
         Returns:
             minimum hash value handled by this node, as defined in config file
 
+        Throws:
+            if the minimum hash specified in the config file is not a valid hex
+            number
+
     ***************************************************************************/
 
     private hash_t min_hash ( )
     {
-        // TODO: remove this hash range padding, always specify full 64-bit
-        // hexadecimal numbers
-        auto minval = this.server_config.minval();
-        return DhtHash.toHashRangeStart(minval);
+        hash_t hash;
+        assertEx(Hash.hashDigestToHashT(this.server_config.minval(), hash, true),
+            "Minimum hash specified in config file is invalid -- "
+            "a full-length hash is expected");
+        return hash;
     }
 
 
@@ -262,14 +269,19 @@ abstract public class IDhtNode
         Returns:
             maximum hash value handled by this node, as defined in config file
 
+        Throws:
+            if the maximum hash specified in the config file is not a valid hex
+            number
+
     ***************************************************************************/
 
     private hash_t max_hash ( )
     {
-        // TODO: remove this hash range padding, always specify full 64-bit
-        // hexadecimal numbers
-        auto maxval = this.server_config.maxval();
-        return DhtHash.toHashRangeEnd(maxval);
+        hash_t hash;
+        assertEx(Hash.hashDigestToHashT(this.server_config.maxval(), hash, true),
+            "Maximum hash specified in config file is invalid -- "
+            "a full-length hash is expected");
+        return hash;
     }
 
 
