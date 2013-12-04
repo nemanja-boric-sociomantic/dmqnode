@@ -122,22 +122,6 @@ abstract public class DhtStorageChannels :
 
     /***************************************************************************
 
-        Calculates the total size in bytes required by the storage engine to
-        store a record concatenating the given values.
-
-        Params:
-            values = values to calculate concatenated size of
-
-        Returns:
-            size of concatenated record containing the given values
-
-    ***************************************************************************/
-
-    abstract public size_t catSize ( char[][] values );
-
-
-    /***************************************************************************
-
         Initialises storage channels (usually scanning this.dir).
 
     ***************************************************************************/

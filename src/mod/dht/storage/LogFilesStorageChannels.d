@@ -832,25 +832,6 @@ public class LogFilesStorageChannels : DhtStorageChannels
 
     /***************************************************************************
 
-        Calculates the total size in bytes required by the storage engine to
-        store a record concatenating the given values.
-
-        Params:
-            values = values to calculate concatenated size of
-
-        Returns:
-            0 -- this storage engine does not support value concatenation
-
-    ***************************************************************************/
-
-    public size_t catSize ( char[][] values )
-    {
-        return 0;
-    }
-
-
-    /***************************************************************************
-
         Returns:
              string identifying the type of the storage engine
 

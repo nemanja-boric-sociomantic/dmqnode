@@ -224,34 +224,6 @@ public class MemoryStorageChannels : DhtStorageChannels
 
     /***************************************************************************
 
-        Calculates the total size in bytes required by the storage engine to
-        store a record concatenating the given values.
-
-        Params:
-            values = values to calculate concatenated size of
-
-        Returns:
-            size of concatenated record containing the given values
-
-    ***************************************************************************/
-
-    public size_t catSize ( char[][] values )
-    {
-        size_t len;
-        foreach ( value; values )
-        {
-            if ( value.length )
-            {
-                len += value.length + 1; // +1 for the delimiter
-            }
-        }
-
-        return len;
-    }
-
-
-    /***************************************************************************
-
         Returns:
              string identifying the type of the storage engine
 
