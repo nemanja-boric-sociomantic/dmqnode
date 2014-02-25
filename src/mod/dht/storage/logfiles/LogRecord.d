@@ -174,6 +174,66 @@ public class LogRecord
         size_t len;
     }
 
+    /***************************************************************************
+
+        Interface to the file system with methods for finding slot folders and
+        bucket files within specified ranges.
+
+    ***************************************************************************/
+
+    private interface IFileSystem
+    {
+        /***********************************************************************
+
+            Scans the given base directory for the lowest matching slot folder
+            within the specified range. If a suitable match is found, its value
+            is returned via the ref min_slot argument.
+
+            Params:
+                base_dir = base directory containing slot folders
+                found_slot = receives value of matching slot on success
+                    (hash_t.min otherwise) *
+                min_slot = value of minimum slot allowed *
+                max_slot = value of maximum slot allowed *
+
+            * The slot values are specified as hashes where the lowest
+              SplitBits.slot_bits contain the slot value.
+
+            Returns:
+                true if no slot folder exists in the base dir within the
+                specified range
+
+        ***********************************************************************/
+
+        bool findFirstSlotDirectory ( char[] base_dir, out hash_t found_slot,
+            hash_t min_slot, hash_t max_slot );
+
+        /***********************************************************************
+
+            Scans the given slot directory (inside the base directory) for
+            bucket files starting at the specified minimum value.
+
+            Params:
+                base_dir = base directory containing slot folders
+                slot_dir = slot folder to scan
+                found_bucket = receives value of matching bucket on success
+                    (hash_t.min otherwise) *
+                min_bucket = value of minimum bucket allowed *
+                max_bucket = value of maximum bucket allowed *
+
+            * The bucket values are specified as hashes where the lowest
+              SplitBits.bucket_bits contain the bucket value.
+
+            Returns:
+                true if no bucket file exists in the slot folder within the
+                specified range
+
+        ***********************************************************************/
+
+        bool findFirstBucketFile ( char[] base_dir, char[] slot_dir,
+            out hash_t found_bucket, hash_t min_bucket, hash_t max_bucket );
+    }
+
     /**************************************************************************
 
         Gets the filename of the first bucket file in the given base directory.
@@ -227,7 +287,8 @@ public class LogRecord
         hash_t max_bucket_slot = max_hash >> SplitBits.key_bits;
 
         hash_t next_bucket_slot;
-        auto empty = getFirstBucket_(base_dir, path, next_bucket_slot,
+        scope fs = new FileSystem;
+        auto empty = getFirstBucket_(fs, base_dir, path, next_bucket_slot,
             min_bucket_slot, max_bucket_slot);
         if ( !empty )
         {
@@ -283,7 +344,8 @@ public class LogRecord
         // Otherwise look for the next existing bucket file.
         min_bucket_slot++;
         hash_t next_bucket_slot;
-        auto no_bucket = getFirstBucket_(base_dir, path, next_bucket_slot,
+        scope fs = new FileSystem;
+        auto no_bucket = getFirstBucket_(fs, base_dir, path, next_bucket_slot,
             min_bucket_slot, max_bucket_slot);
 
         if ( !no_bucket )
@@ -447,6 +509,8 @@ public class LogRecord
         range.
 
         Params:
+            filesystem = interface to the filesystem, for checking the existence
+                of slot folders / bucket files
             base_dir = base directory containing slot folders
             path = string into which the filename of the first bucket file found
                 will be written (unchanged if none found)
@@ -465,7 +529,7 @@ public class LogRecord
 
     ***************************************************************************/
 
-    private bool getFirstBucket_ ( char[] base_dir,
+    private bool getFirstBucket_ ( IFileSystem filesystem, char[] base_dir,
         ref char[] path, out hash_t found_bucket_slot,
         hash_t min_bucket_slot, hash_t max_bucket_slot )
     {
@@ -480,7 +544,7 @@ public class LogRecord
         {
             // Find first slot directory within range
             hash_t found_slot;
-            auto no_slot = findFirstSlotDirectory(base_dir, found_slot,
+            auto no_slot = filesystem.findFirstSlotDirectory(base_dir, found_slot,
                 slot, max_slot.val);
             if ( no_slot )
             {
@@ -512,7 +576,7 @@ public class LogRecord
             auto slot_name = DhtHash.intToHex(slot, slot_name_buf);
 
             hash_t found_bucket;
-            no_bucket = findFirstBucketFile(base_dir, slot_name, found_bucket,
+            no_bucket = filesystem.findFirstBucketFile(base_dir, slot_name, found_bucket,
                 min_bucket, max_bucket);
             if ( !no_bucket )
             {
@@ -540,176 +604,187 @@ public class LogRecord
 
     /***************************************************************************
 
-        Scans the given base directory for the lowest matching slot folder
-        within the specified range. If a suitable match is found, its value is
-        returned via the ref min_slot argument.
-
-        Params:
-            base_dir = base directory containing slot folders
-            found_slot = receives value of matching slot on success
-                (hash_t.min otherwise) *
-            min_slot = value of minimum slot allowed *
-            max_slot = value of maximum slot allowed *
-
-        * The slot values are specified as hashes where the lowest
-          SplitBits.slot_bits contain the slot value.
-
-        Returns:
-            true if no slot folder exists in the base dir within the specified
-            range
+        Filesystem scope class with methods for finding slot folders and bucket
+        files within specified ranges.
 
     ***************************************************************************/
 
-    private bool findFirstSlotDirectory ( char[] base_dir, out hash_t found_slot,
-        hash_t min_slot, hash_t max_slot )
+    private static scope class FileSystem : IFileSystem
     {
-        scope scan_path = new FilePath();
-        scan_path.folder = base_dir;
-        scan_path.file = "";
+        /***********************************************************************
 
-        hash_t first_slot;
-        auto no_slot = findLowestSubPath(scan_path, true, first_slot, min_slot);
-        if ( no_slot )
+            Scans the given base directory for the lowest matching slot folder
+            within the specified range. If a suitable match is found, its value
+            is returned via the ref min_slot argument.
+
+            Params:
+                base_dir = base directory containing slot folders
+                found_slot = receives value of matching slot on success
+                    (hash_t.min otherwise) *
+                min_slot = value of minimum slot allowed *
+                max_slot = value of maximum slot allowed *
+
+            * The slot values are specified as hashes where the lowest
+              SplitBits.slot_bits contain the slot value.
+
+            Returns:
+                true if no slot folder exists in the base dir within the
+                specified range
+
+        ***********************************************************************/
+
+        public bool findFirstSlotDirectory ( char[] base_dir, out hash_t found_slot,
+            hash_t min_slot, hash_t max_slot )
         {
+            scope scan_path = new FilePath();
+            scan_path.folder = base_dir;
+            scan_path.file = "";
+
+            hash_t first_slot;
+            auto no_slot = this.findLowestSubPath(scan_path, true, first_slot, min_slot);
+            if ( no_slot )
+            {
+                return true;
+            }
+
+            found_slot = first_slot;
+            return false;
+        }
+
+        /***********************************************************************
+
+            Scans the given slot directory (inside the base directory) for
+            bucket files starting at the specified minimum value. The existence
+            of every possible bucket file is checked until either one is
+            discovered or all have been checked and none has been found.
+
+            Note: this scanning algorithm is used, instead of an algorithm which
+            iterates over all extant files in the slot folder, in order to avoid
+            having to scan all (unordered) files every time the method is
+            called. As it is, usually bucket files with all values will exist
+            (in most slot folders), so it is much more efficient to simply check
+            for the existence of the next file.
+
+            Params:
+                base_dir = base directory containing slot folders
+                slot_dir = slot folder to scan
+                found_bucket = receives value of matching bucket on success
+                    (hash_t.min otherwise) *
+                min_bucket = value of minimum bucket allowed *
+                max_bucket = value of maximum bucket allowed *
+
+            * The bucket values are specified as hashes where the lowest
+              SplitBits.bucket_bits contain the bucket value.
+
+            Returns:
+                true if no bucket file exists in the slot folder within the
+                specified range
+
+        ***********************************************************************/
+
+        public bool findFirstBucketFile ( char[] base_dir, char[] slot_dir,
+            out hash_t found_bucket, hash_t min_bucket, hash_t max_bucket )
+        {
+            scope scan_path = new FilePath;
+            scan_path.folder = slot_dir;
+            scan_path.prepend(base_dir);
+
+            while ( min_bucket <= max_bucket )
+            {
+                char[SplitBits.bucket_digits] bucket_name_buf;
+
+                scan_path.file = DhtHash.intToHex(min_bucket, bucket_name_buf);
+
+                // Check whether bucket file exists
+                if ( scan_path.exists )
+                {
+                    found_bucket = min_bucket;
+                    return false;
+                }
+
+                // Otherwise try the next bucket file.
+                min_bucket++;
+            }
+
             return true;
         }
 
-        found_slot = first_slot;
-        return false;
-    }
+        /***********************************************************************
 
-    /***************************************************************************
+            Iterates over all children (either child folders or child files) of
+            the given path in order to find the child with the lowest
+            hexadecimal filename value (i.e. the child's filename simply
+            converted to an integer - filenames containing non-hex characters
+            are ignored). Optionally a minimum integer value can be specified,
+            in order to filter out children whose filename is < the specified
+            minimum.
 
-        Scans the given slot directory (inside the base directory) for bucket
-        files starting at the specified minimum value. The existence of every
-        possible bucket file is checked until either one is discovered or all
-        have been checked and none has been found.
+            Params:
+                path = file path to search within
+                folders = flag indicating whether child folders (true) or child
+                    files (false) should be scanned
+                lowest = receives the value of the lowest matching file / folder
+                    (or hash_t.max if no match is found)
+                min = optional minimum value to scan for
 
-        Note: this scanning algorithm is used, instead of an algorithm which
-        iterates over all extant files in the slot folder, in order to avoid
-        having to scan all (unordered) files every time the method is called.
-        As it is, usually bucket files with all values will exist (in most
-        slot folders), so it is much more efficient to simply check for the
-        existence of the next file.
+            Returns:
+                true if no matching folder/file exists
 
-        Params:
-            base_dir = base directory containing slot folders
-            slot_dir = slot folder to scan
-            found_bucket = receives value of matching bucket on success
-                (hash_t.min otherwise) *
-            min_bucket = value of minimum bucket allowed *
-            max_bucket = value of maximum bucket allowed *
+        ***********************************************************************/
 
-        * The bucket values are specified as hashes where the lowest
-          SplitBits.bucket_bits contain the bucket value.
-
-        Returns:
-            true if no bucket file exists in the slot folder within the
-            specified range
-
-    ***************************************************************************/
-
-    private bool findFirstBucketFile ( char[] base_dir, char[] slot_dir,
-        out hash_t found_bucket, hash_t min_bucket, hash_t max_bucket )
-    {
-        scope scan_path = new FilePath;
-        scan_path.folder = slot_dir;
-        scan_path.prepend(base_dir);
-
-        while ( min_bucket <= max_bucket )
+        private bool findLowestSubPath ( FilePath path, bool folders,
+            out hash_t lowest, hash_t min = hash_t.min )
         {
-            char[SplitBits.bucket_digits] bucket_name_buf;
+            bool found;
+            lowest = hash_t.max;
 
-            scan_path.file = DhtHash.intToHex(min_bucket, bucket_name_buf);
-
-            // Check whether bucket file exists
-            if ( scan_path.exists )
+            // Find file in directory with 'lowest' name
+            foreach ( child; path )
             {
-                found_bucket = min_bucket;
-                return false;
-            }
-
-            // Otherwise try the next bucket file.
-            min_bucket++;
-        }
-
-        return true;
-    }
-
-    /***************************************************************************
-
-        Iterates over all children (either child folders or child files) of the
-        given path in order to find the child with the lowest hexadecimal
-        filename value (i.e. the child's filename simply converted to an integer
-        - filenames containing non-hex characters are ignored). Optionally a
-        minimum integer value can be specified, in order to filter out children
-        whose filename is < the specified minimum.
-
-        Params:
-            path = file path to search within
-            folders = flag indicating whether child folders (true) or child
-                files (false) should be scanned
-            lowest = receives the value of the lowest matching file / folder
-                (or hash_t.max if no match is found)
-            min = optional minimum value to scan for
-
-        Returns:
-            true if no matching folder/file exists
-
-    ***************************************************************************/
-
-    private bool findLowestSubPath ( FilePath path, bool folders,
-        out hash_t lowest, hash_t min = hash_t.min )
-    {
-        bool found;
-        lowest = hash_t.max;
-
-        // Find file in directory with 'lowest' name
-        foreach ( child; path )
-        {
-            // Check that child is of the expected type.
-            if ( child.folder != folders )
-            {
-                // Don't log a warning in the case of the sizeinfo file, which
-                // is expected in a channel's base directory.
-                if ( !(folders && child.name == SizeInfoFile.FileName) )
+                // Check that child is of the expected type.
+                if ( child.folder != folders )
                 {
-                    log.warn("{} '{}' found when expecting only {}",
-                        folders ? "File" : "Folder", child.name,
-                        folders ? "folders" : "files");
+                    // Don't log a warning in the case of the sizeinfo file, which
+                    // is expected in a channel's base directory.
+                    if ( !(folders && child.name == SizeInfoFile.FileName) )
+                    {
+                        log.warn("{} '{}' found when expecting only {}",
+                            folders ? "File" : "Folder", child.name,
+                            folders ? "folders" : "files");
+                    }
+
+                    continue;
                 }
 
-                continue;
+                // Get integer value of child's name (handling errors)
+                hash_t value;
+                try
+                {
+                    value = Integer.toUlong(child.name, 16);
+                }
+                catch ( Exception e )
+                {
+                    log.warn("{} found with invalid name: {} ('{}')",
+                        folders ? "Folder" : "File", child.name, e.msg);
+                    continue;
+                }
+
+                // Ignore child if value is less than the specified minimum.
+                if ( value < min )
+                {
+                    continue;
+                }
+
+                // Update lowest value counter, if child's value is lower.
+                if ( !found || value < lowest )
+                {
+                    found =  true;
+                    lowest = value;
+                }
             }
 
-            // Get integer value of child's name (handling errors)
-            hash_t value;
-            try
-            {
-                value = Integer.toUlong(child.name, 16);
-            }
-            catch ( Exception e )
-            {
-                log.warn("{} found with invalid name: {} ('{}')",
-                    folders ? "Folder" : "File", child.name, e.msg);
-                continue;
-            }
-
-            // Ignore child if value is less than the specified minimum.
-            if ( value < min )
-            {
-                continue;
-            }
-
-            // Update lowest value counter, if child's value is lower.
-            if ( !found || value < lowest )
-            {
-                found =  true;
-                lowest = value;
-            }
+            return !found;
         }
-
-        return !found;
     }
 }
 
