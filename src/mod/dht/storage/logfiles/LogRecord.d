@@ -35,31 +35,30 @@
     The bucket which contains a record and the slot which contains that bucket
     are determined from the record key as follows.
 
-    The key type is an unsigned integer type, usually 32 bits in length,
-    corresponding to a binary number of 32 digits which is identical to an 8
+    The key type is a 64-bit unsigned integer type which is identical to a 16
     digit hexadecimal number.
 
     A range of keys where only the last 3 hexadecimal digits vary is associated
     to a single bucket. That means that a bucket corresponds to a sequence of
     4096 keys.
 
-    Of the remaining 5 hexadecimal digits the rounded down first half, which
-    consists of the first 2 hexadecimal digits, denotes the slot.
-    The remaining 3 hexadecimal digits of the key denote the bucket in the slot.
+    Of the remaining 13 hexadecimal digits, the lowest 3 denote the bucket file.
+    The remaining 10 hexadecimal digits denote the slot folder.
 
     Examples:
-    1. Key 0x12345678 is located in bucket 345 in slot 12.
-    2. The keys in the range from 0x12345000 to 0x12345FFF are located in bucket
-       345 in slot 12.
-    3. The keys in the range from 0x12340000 to 0x12348FFF are located in
-       buckets 340, 341, 342..., 348 in slot 12.
-    4. The keys in the range from 0x10000000 to 0x12348FFF are located in
-        - buckets 000 to FFF in slot 10 and 11,
-        - buckets 000 to 348 in slot 12.
+    1. Key 0x12345678abcdef00 is located in bucket cde in slot 12345678ab.
+    2. The keys in the range from 0x12345678abcde000 to 0x12345678abcdefff are
+       located in bucket cde in slot 12345678ab.
+    3. The keys in the range from 0x12345678abcd0000 to 0x12345678abcd8FFF are
+       located in buckets cd0, cd1, cd2..., cd8 in slot 12345678ab.
+    4. The keys in the range from 0x1234567810000000 to 0x1234567812348FFF are
+       located in
+        - buckets 000 to FFF in slot 1234567810 and 1234567811,
+        - buckets 000 to 348 in slot 1234567812.
 
-    As a result of the slot/bucket association method for a key width of 32 bits
-    the base directory contains up to 255 slot directories and each slot
-    directory contains up to 4096 bucket files.
+    As a result of the slot/bucket association method for a key width of 64 bits
+    the base directory contains up to 2^40 (10 hex digits) slot directories and
+    each slot directory contains up to 4096 (3 hex digits) bucket files.
 
     Each slot directory and bucket file is created on the first write request
     with a record key associated to them.
