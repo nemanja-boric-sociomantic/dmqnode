@@ -121,19 +121,13 @@ public class LogRecord
 {
     /**************************************************************************
 
-        Private constructor to prevent instantiation.
+        Private constructor to prevent instantiation. The public interface of
+        this class is in its static methods.
 
      **************************************************************************/
 
     private this ( ) { }
 
-    /**************************************************************************
-
-        Everything else is static.
-
-     **************************************************************************/
-
-    static:
 
     /**************************************************************************
 
@@ -251,7 +245,7 @@ public class LogRecord
 
      **************************************************************************/
 
-    public bool getFirstBucket ( char[] base_dir, ref char[] path,
+    static public bool getFirstBucket ( char[] base_dir, ref char[] path,
         out hash_t bucket_start )
     {
         return getFirstBucketInRange(base_dir, path, bucket_start, hash_t.min,
@@ -278,7 +272,7 @@ public class LogRecord
 
      **************************************************************************/
 
-    public bool getFirstBucketInRange ( char[] base_dir, ref char[] path,
+    static public bool getFirstBucketInRange ( char[] base_dir, ref char[] path,
         out hash_t bucket_start, hash_t min_hash, hash_t max_hash )
     {
         // Remove key number from min & max hashes (so just the slot/bucket
@@ -328,7 +322,7 @@ public class LogRecord
 
      **************************************************************************/
 
-    public bool getNextBucket ( char[] base_dir,
+    static public bool getNextBucket ( char[] base_dir,
         ref char[] path, out hash_t bucket_start,
         hash_t last_hash, hash_t max_hash = hash_t.max )
     {
@@ -372,7 +366,7 @@ public class LogRecord
 
     ***************************************************************************/
 
-    public bool nextRecord ( File file, ref RecordHeader header )
+    static public bool nextRecord ( File file, ref RecordHeader header )
     {
         auto file_length = file.length;
         auto file_pos = file.position;
@@ -414,7 +408,8 @@ public class LogRecord
 
     ***************************************************************************/
 
-    public void readRecordValue ( File file, RecordHeader header, ref char[] value )
+    static public void readRecordValue ( File file, RecordHeader header,
+        ref char[] value )
     {
         // Read value from file
         value.length = header.len;
@@ -435,7 +430,7 @@ public class LogRecord
 
     ***************************************************************************/
 
-    public void skipRecordValue ( File file, RecordHeader header )
+    static public void skipRecordValue ( File file, RecordHeader header )
     {
         file.seek(header.len, File.Anchor.Current);
     }
@@ -450,7 +445,7 @@ public class LogRecord
 
      **************************************************************************/
 
-    public void removeFiles ( char[] base_dir )
+    static public void removeFiles ( char[] base_dir )
     {
         scope dir_path  = new FilePath(base_dir);
         scope slot_path = new FilePath;
@@ -529,7 +524,7 @@ public class LogRecord
 
     ***************************************************************************/
 
-    private bool getFirstBucket_ ( IFileSystem filesystem, char[] base_dir,
+    static private bool getFirstBucket_ ( IFileSystem filesystem, char[] base_dir,
         ref char[] path, out hash_t found_bucket_slot,
         hash_t min_bucket_slot, hash_t max_bucket_slot )
     {
