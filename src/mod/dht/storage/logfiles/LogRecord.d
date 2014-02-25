@@ -417,6 +417,26 @@ public class LogRecord
 
     /***************************************************************************
 
+        Helper class used by getFirstBucket_() to work around the fact that:
+        ---
+            void f ( int a ) { const b = a + 12; }
+        ---
+        causes a compile error in D1.
+
+    ***************************************************************************/
+
+    private static scope class Const ( T )
+    {
+        public const T val;
+
+        public this ( T val )
+        {
+            this.val = val;
+        }
+    }
+
+    /***************************************************************************
+
         Gets the filename of the first bucket file in the given base directory
         and within the given bucket number. First the slot folders in the base
         directory are scanned for the lowest matching slot (within the specified
@@ -449,9 +469,11 @@ public class LogRecord
         ref char[] path, out hash_t found_bucket_slot,
         hash_t min_bucket_slot, hash_t max_bucket_slot )
     {
-        hash_t min_slot = min_bucket_slot >> SplitBits.bucket_bits;
-        hash_t max_slot = max_bucket_slot >> SplitBits.bucket_bits;
-        hash_t orig_min_slot = min_slot;
+        scope min_slot = new Const!(hash_t)
+            (min_bucket_slot >> SplitBits.bucket_bits);
+        scope max_slot = new Const!(hash_t)
+            (max_bucket_slot >> SplitBits.bucket_bits);
+        hash_t slot = min_slot.val;
 
         bool no_bucket;
         do
@@ -459,12 +481,12 @@ public class LogRecord
             // Find first slot directory within range
             hash_t found_slot;
             auto no_slot = findFirstSlotDirectory(base_dir, found_slot,
-                min_slot, max_slot);
+                slot, max_slot.val);
             if ( no_slot )
             {
                 return true;
             }
-            min_slot = found_slot;
+            slot = found_slot;
 
             // Work out which buckets within the slot directory count as a
             // match. Generally, all buckets in a slot are valid...
@@ -474,20 +496,20 @@ public class LogRecord
 
             // ...but if this is the first slot in the range, respect the min
             // bucket specified...
-            if ( min_slot == orig_min_slot )
+            if ( slot == min_slot.val )
             {
                 min_bucket = min_bucket_slot & bucket_mask;
             }
             // ...or if this is the last slot in the range, respect the max
             // bucket specified.
-            else if ( min_slot == max_slot )
+            else if ( slot == max_slot.val )
             {
                 max_bucket = max_bucket_slot & bucket_mask;
             }
 
             // Find first bucket file in slot directory within range
             char[SplitBits.slot_digits] slot_name_buf;
-            auto slot_name = DhtHash.intToHex(min_slot, slot_name_buf);
+            auto slot_name = DhtHash.intToHex(slot, slot_name_buf);
 
             hash_t found_bucket;
             no_bucket = findFirstBucketFile(base_dir, slot_name, found_bucket,
@@ -502,16 +524,16 @@ public class LogRecord
                 Layout!(char).print(path, "{}/{}/{}", base_dir, slot_name,
                     bucket_name);
 
-                found_bucket_slot = (min_slot << SplitBits.bucket_bits) +
+                found_bucket_slot = (slot << SplitBits.bucket_bits) +
                     found_bucket;
 
                 return false;
             }
 
             // Try again starting at the next slot
-            min_slot++;
+            slot++;
         }
-        while ( min_slot < max_slot );
+        while ( slot < max_slot.val );
 
         return true;
     }
