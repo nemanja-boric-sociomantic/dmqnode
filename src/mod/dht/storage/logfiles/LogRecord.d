@@ -558,9 +558,9 @@ public class LogRecord
             {
                 min_bucket = min_bucket_slot & bucket_mask;
             }
-            // ...or if this is the last slot in the range, respect the max
+            // ...and if this is the last slot in the range, respect the max
             // bucket specified.
-            else if ( slot == max_slot.val )
+            if ( slot == max_slot.val )
             {
                 max_bucket = max_bucket_slot & bucket_mask;
             }
