@@ -591,7 +591,7 @@ public class LogRecord
             // Try again starting at the next slot
             slot++;
         }
-        while ( slot < max_slot.val );
+        while ( slot <= max_slot.val );
 
         return true;
     }
