@@ -794,3 +794,334 @@ public class LogRecord
     }
 }
 
+
+version ( UnitTest )
+{
+    /***************************************************************************
+
+        Dummy file system class. Implements the interface required by the
+        logfiles storage engine, but instead of checking for the presence of
+        files and directories in a real file system, they are mimicked by an
+        internal map of slot folder numbers -> list of bucket file numbers.
+
+    ***************************************************************************/
+
+    scope class DummyFileSystem : LogRecord.IFileSystem
+    {
+        /***********************************************************************
+
+            Aliases for a set of buckets in a slot and a map of slots, indexed
+            by numerical identifier.
+
+        ***********************************************************************/
+
+        alias ushort[] SlotBuckets;
+
+        alias SlotBuckets[hash_t] Slots;
+
+        /***********************************************************************
+
+            Id -> slot map.
+
+        ***********************************************************************/
+
+        private Slots slots;
+
+        /***********************************************************************
+
+            Adds a slot to the internal map.
+
+            Params:
+                slot_num = numerical identifier of slot (asserted to be within
+                    the range of possible slot numbers defined by
+                    LogRecord.SplitBits)
+                buckets = list of buckets within the slot (asserted to be within
+                    the range of possible bucket numbers defined by
+                    LogRecord.SplitBits)
+
+        ***********************************************************************/
+
+        public void addSlot ( hash_t slot_num, SlotBuckets buckets )
+        {
+            const max_slot = (1 << LogRecord.SplitBits.slot_digits) -1;
+            const max_bucket = (1 << LogRecord.SplitBits.bucket_digits) -1;
+
+            assert(slot_num <= max_slot);
+
+            foreach ( bucket; buckets )
+            {
+                assert(bucket <= max_bucket);
+            }
+
+            this.slots[slot_num] = buckets;
+        }
+
+        /***********************************************************************
+
+            Scans the given base directory for the lowest matching slot folder
+            within the specified range. If a suitable match is found, its value
+            is returned via the ref min_slot argument.
+
+            Params:
+                base_dir = base directory containing slot folders
+                found_slot = receives value of matching slot on success
+                    (hash_t.min otherwise) *
+                min_slot = value of minimum slot allowed *
+                max_slot = value of maximum slot allowed *
+
+            * The slot values are specified as hashes where the lowest
+              SplitBits.slot_bits contain the slot value.
+
+            Returns:
+                true if no slot folder exists in the base dir within the
+                specified range
+
+        ***********************************************************************/
+
+        public bool findFirstSlotDirectory ( char[] base_dir, out hash_t found_slot,
+            hash_t min_slot, hash_t max_slot )
+        {
+            auto slot_numbers = this.slots.keys.dup.sort;
+            foreach ( slot; slot_numbers )
+            {
+                if ( slot >= min_slot && slot <= max_slot )
+                {
+                    found_slot = slot;
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /***********************************************************************
+
+            Scans the given slot directory (inside the base directory) for
+            bucket files starting at the specified minimum value.
+
+            Params:
+                base_dir = base directory containing slot folders
+                slot_dir = slot folder to scan
+                found_bucket = receives value of matching bucket on success
+                    (hash_t.min otherwise) *
+                min_bucket = value of minimum bucket allowed *
+                max_bucket = value of maximum bucket allowed *
+
+            * The bucket values are specified as hashes where the lowest
+              SplitBits.bucket_bits contain the bucket value.
+
+            Returns:
+                true if no bucket file exists in the slot folder within the
+                specified range
+
+        ***********************************************************************/
+
+        public bool findFirstBucketFile ( char[] base_dir, char[] slot_dir,
+            out hash_t found_bucket, hash_t min_bucket, hash_t max_bucket )
+        {
+            hash_t slot_num = Integer.toUlong(slot_dir);
+            auto slot = slot_num in this.slots;
+            if ( !slot ) return true;
+
+            foreach ( bucket; *slot )
+            {
+                if ( bucket >= min_bucket && bucket <= max_bucket )
+                {
+                    found_bucket = bucket;
+                    return false;
+                }
+            }
+
+            return true;
+        }
+    }
+}
+
+
+unittest
+{
+    /***************************************************************************
+
+        Calls LogRecord.getFirstBucket_() with the specified parameters and
+        asserts that the results are as expected.
+
+        Params:
+            desc = identifier string for test, used for assert messages
+            fs = dummy file system instance to run tests on
+            start = start hash of search range
+            end = end hash of search range
+            expected_found = is the test expected to find a bucket?
+            expected_bucket_slot = the value of the slot/bucket which is
+                expected to be found (only checked if expected_found is true)
+
+    ***************************************************************************/
+
+    void test ( char[] desc, DummyFileSystem fs, hash_t start, hash_t end,
+        bool expected_found, hash_t expected_bucket_slot = 0 )
+    in
+    {
+        assert(fs !is null);
+        assert(start <= end);
+    }
+    body
+    {
+        const char[] base_dir = "base";
+        char[] path;
+        hash_t found_bucket_slot;
+
+        auto empty = LogRecord.getFirstBucket_(fs, base_dir, path, found_bucket_slot,
+            start, end);
+        debug ( LogRecord ) Trace.formatln("found={}, path={}, bucket/slot={:x13}",
+            !empty, path, found_bucket_slot);
+        assert(empty != expected_found, desc ~ ": found mismatch");
+
+        if ( !empty ) with ( LogRecord.SplitBits )
+        {
+            assert(path[0..base_dir.length] == base_dir, desc ~ ": base path wrong");
+            assert(path[base_dir.length] == '/', desc ~ ": first slash missing");
+
+            auto slot_start = base_dir.length + 1;
+            auto path_slot = Integer.toUlong(
+                path[slot_start..slot_start + slot_digits]);
+            assert(path_slot == found_bucket_slot >> bucket_bits, desc ~ ": path slot wrong");
+
+            assert(path[slot_start + slot_digits] == '/', desc ~ ": second slash missing");
+
+            const hash_t bucket_mask = (1 << bucket_bits) - 1;
+            auto bucket_start = slot_start + slot_digits + 1;
+            auto path_bucket = Integer.toUlong(
+                path[bucket_start..bucket_start + bucket_digits]);
+
+            assert(path_bucket == (found_bucket_slot & bucket_mask), desc ~ ": path bucket wrong");
+
+            assert(found_bucket_slot == expected_bucket_slot, desc ~ ": found bucket/slot mismatch");
+        }
+    }
+
+
+    // -------------------------------------------------------------------------
+    // Single slot tests
+
+    // Single bucket, exact range
+    {
+        scope fs = new DummyFileSystem();
+        fs.addSlot(0x0000000001, [0x001]);
+
+        test("test 1", fs, 0x0000000001001, 0x0000000001001, true, 0x0000000001001);
+    }
+
+    // Single bucket, range start
+    {
+        scope fs = new DummyFileSystem();
+        fs.addSlot(0x0000000001, [0x001]);
+
+        test("test 2", fs, 0x0000000001001, 0x0000000001002, true, 0x0000000001001);
+    }
+
+    // Single bucket, range end
+    {
+        scope fs = new DummyFileSystem();
+        fs.addSlot(0x0000000001, [0x001]);
+
+        test("test 3", fs, 0x0000000001000, 0x0000000001001, true, 0x0000000001001);
+    }
+
+    // Single bucket, before range
+    {
+        scope fs = new DummyFileSystem();
+        fs.addSlot(0x0000000001, [0x001]);
+
+        test("test 4", fs, 0x0000000001002, 0x0000000001003, false);
+    }
+
+    // Single bucket, after range
+    // (This tests the issue reported in https://github.com/sociomantic/swarmnodes/issues/54)
+    {
+        scope fs = new DummyFileSystem();
+        fs.addSlot(0x0000000001, [0x002]);
+
+        test("test 5", fs, 0x0000000001000, 0x0000000001001, false);
+    }
+
+    // Multiple buckets, exact range
+    {
+        scope fs = new DummyFileSystem();
+        fs.addSlot(0x0000000001, [0x001, 0x002, 0x003]);
+
+        test("test 6", fs, 0x0000000001001, 0x0000000001003, true, 0x0000000001001);
+    }
+
+    // Multiple buckets, range start
+    {
+        scope fs = new DummyFileSystem();
+        fs.addSlot(0x0000000001, [0x001, 0x002, 0x003]);
+
+        test("test 7", fs, 0x0000000001001, 0x0000000001006, true, 0x0000000001001);
+    }
+
+    // Multiple buckets, range end
+    {
+        scope fs = new DummyFileSystem();
+        fs.addSlot(0x0000000001, [0x001, 0x002, 0x003]);
+
+        test("test 8", fs, 0x0000000001003, 0x0000000001006, true, 0x0000000001003);
+    }
+
+    // Multiple buckets, before range
+    {
+        scope fs = new DummyFileSystem();
+        fs.addSlot(0x0000000001, [0x001, 0x002, 0x003]);
+
+        test("test 9", fs, 0x0000000001004, 0x0000000001004, false);
+    }
+
+    // Multiple buckets, after range
+    {
+        scope fs = new DummyFileSystem();
+        fs.addSlot(0x0000000001, [0x001, 0x002, 0x003]);
+
+        test("test 10", fs, 0x0000000001000, 0x0000000001000, false);
+    }
+
+
+    // -------------------------------------------------------------------------
+    // Multiple slot tests
+
+    // Range spans both slots, found in first slot
+    {
+        scope fs = new DummyFileSystem();
+        fs.addSlot(0x0000000001, [0x001]);
+        fs.addSlot(0x0000000002, [0x001]);
+
+        test("test 11", fs, 0x0000000001000, 0x0000000002fff, true, 0x0000000001001);
+    }
+
+    // Range starts after buckets in first slot, found in second slot
+    // (This tests the issue reported in https://github.com/sociomantic/swarmnodes/issues/51)
+    {
+        scope fs = new DummyFileSystem();
+        fs.addSlot(0x0000000001, [0x001]);
+        fs.addSlot(0x0000000002, [0x001]);
+
+        test("test 12", fs, 0x0000000001002, 0x0000000002fff, true, 0x0000000002001);
+    }
+
+    // Range ends before buckets of first slot
+    {
+        scope fs = new DummyFileSystem();
+        fs.addSlot(0x0000000001, [0x001]);
+        fs.addSlot(0x0000000002, [0x001]);
+
+        test("test 13", fs, 0x0000000001000, 0x0000000001000, false);
+    }
+
+    // Range ends after buckets of second slot
+    {
+        scope fs = new DummyFileSystem();
+        fs.addSlot(0x0000000001, [0x001]);
+        fs.addSlot(0x0000000002, [0x001]);
+
+        test("test 14", fs, 0x0000000002002, 0x0000000002fff, false);
+    }
+}
+
