@@ -47,6 +47,7 @@ FLAGS =\
 
 UNITTESTFLAGS =\
 	-unittest \
+	-version=UnitTest \
 	-debug=OceanUnitTest
 
 RELEASE_FLAGS = ${FLAGS}\
