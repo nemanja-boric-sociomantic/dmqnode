@@ -18,7 +18,7 @@ QUEUE_TARGET = bin/queuenode
 
 FLAGS =\
 	$(DEFAULT_FLAGS)\
-    -L-lminilzo\
+    -L-llzo2\
     -version=CDGC
 
 DHT_FLAGS =\
