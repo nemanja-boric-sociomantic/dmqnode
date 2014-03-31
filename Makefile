@@ -6,6 +6,9 @@ include submodules/ocean/script/common.mk
 DHT_SOURCE = src/main/dhtnode.d
 DHT_TARGET = bin/dhtnode
 
+LOG_SOURCE = src/main/dhtnode.d
+LOG_TARGET = bin/logfilesnode
+
 QUEUE_SOURCE = src/main/queuenode.d
 QUEUE_TARGET = bin/queuenode
 
@@ -22,6 +25,10 @@ DHT_FLAGS =\
 	$(FLAGS)\
     -L-ltokyocabinet
 
+LOG_FLAGS =\
+	$(FLAGS)\
+    -L-ltokyocabinet
+
 QUEUE_FLAGS =\
 	$(FLAGS)
 
@@ -35,9 +42,9 @@ DEBUG_FLAGS =\
 # ------------------------------------------------------------------------------
 # Debug build of all targets (default)
 
-.PHONY: default all clean revision dht dht-release queue-release queue
+.PHONY: default all clean revision dht dht-release log log-release queue-release queue
 
-default: dht queue
+default: dht log queue
 all: default
 
 
@@ -50,6 +57,12 @@ dht: revision
 dht-release: revision
 	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${DHT_TARGET} ${XFBUILD_DEFAULT_FLAGS} ${DHT_FLAGS} ${RELEASE_FLAGS} ${DHT_SOURCE}
 
+log: revision
+	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${LOG_TARGET} ${XFBUILD_DEFAULT_FLAGS} ${LOG_FLAGS} ${DEBUG_FLAGS} ${LOG_SOURCE}
+
+log-release: revision
+	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${LOG_TARGET} ${XFBUILD_DEFAULT_FLAGS} ${LOG_FLAGS} ${RELEASE_FLAGS} ${LOG_SOURCE}
+
 queue: revision
 	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${QUEUE_TARGET} ${XFBUILD_DEFAULT_FLAGS} ${QUEUE_FLAGS} ${DEBUG_FLAGS} ${QUEUE_SOURCE}
 
@@ -60,4 +73,4 @@ queue-release: revision
 # Cleanup
 
 clean:
-	$(RM) -r .objs-* .deps-* $(DHT_TARGET) $(QUEUE_TARGET)
+	$(RM) -r .objs-* .deps-* $(DHT_TARGET) $(LOG_TRAGET) $(QUEUE_TARGET)
