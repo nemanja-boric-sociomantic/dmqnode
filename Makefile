@@ -1,67 +1,35 @@
-# ------------------------------------------------------------------------------
-# Architecture to build for (32 or 64)
-
-# default
-ARCH := 64
-
+include submodules/ocean/script/common.mk
 
 # ------------------------------------------------------------------------------
 # Targets
 
 DHT_SOURCE = src/main/dhtnode.d
-DHT_TARGET = bin/dhtnode-${ARCH}
+DHT_TARGET = bin/dhtnode
 
 QUEUE_SOURCE = src/main/queuenode.d
-QUEUE_TARGET = bin/queuenode-${ARCH}
-
-# ------------------------------------------------------------------------------
-# Dependencies
-
-DEPS_PATH := .
-DEPS := tango ocean swarm
-
-
-# ------------------------------------------------------------------------------
-# Xfbuild flags
-
-XFBUILD_FLAGS =\
-	+c=dmd
-
-
-# ------------------------------------------------------------------------------
-# GC to use (export is needed!)
-
-export D_GC := cdgc
+QUEUE_TARGET = bin/queuenode
 
 
 # ------------------------------------------------------------------------------
 # dmd flags
 
 FLAGS =\
-    $(foreach d,$(DEPS),-I$(DEPS_PATH)/$d) \
-    -L-lminilzo \
-    -L-ltokyocabinet \
-    -m${ARCH} \
+	$(DEFAULT_FLAGS)\
+    -L-lminilzo\
     -version=CDGC
-# TODO: tokyocabinet should only be linked with the memory node
 
-UNITTESTFLAGS =\
-	-unittest \
-	-version=UnitTest \
-	-debug=OceanUnitTest
+DHT_FLAGS =\
+	$(FLAGS)\
+    -L-ltokyocabinet
 
-RELEASE_FLAGS = ${FLAGS}\
+QUEUE_FLAGS =\
+	$(FLAGS)
+
+RELEASE_FLAGS =\
 	-L-s
 
-DEBUG_FLAGS = ${FLAGS} ${UNITTESTFLAGS}\
+DEBUG_FLAGS =\
 	-debug -gc
-
-#-debug=Raw
-#-debug=ISelectClient
-#${UNITTESTFLAGS}
-
-# FIXME: unittests disabled due to an unknown compiler bug which manifested in
-# the unittest of ocean.core.ObjectPool
 
 
 # ------------------------------------------------------------------------------
@@ -74,27 +42,19 @@ all: default
 
 
 # ------------------------------------------------------------------------------
-# Revision file build
-
-revision:
-	@$(DEPS_PATH)/ocean/script/mkversion.sh -L $(DEPS_PATH) \
-		-t $(DEPS_PATH)/ocean/script/appVersion.d.tpl $(D_GC) $(DEPS)
-
-
-# ------------------------------------------------------------------------------
 # node debug & release builds
 
 dht: revision
-	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${DHT_TARGET} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${DHT_SOURCE}
+	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${DHT_TARGET} ${XFBUILD_DEFAULT_FLAGS} ${DHT_FLAGS} ${DEBUG_FLAGS} ${DHT_SOURCE}
 
 dht-release: revision
-	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${DHT_TARGET} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${DHT_SOURCE}
+	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${DHT_TARGET} ${XFBUILD_DEFAULT_FLAGS} ${DHT_FLAGS} ${RELEASE_FLAGS} ${DHT_SOURCE}
 
 queue: revision
-	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${QUEUE_TARGET} ${XFBUILD_FLAGS} ${DEBUG_FLAGS} ${QUEUE_SOURCE}
+	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${QUEUE_TARGET} ${XFBUILD_DEFAULT_FLAGS} ${QUEUE_FLAGS} ${DEBUG_FLAGS} ${QUEUE_SOURCE}
 
 queue-release: revision
-	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${QUEUE_TARGET} ${XFBUILD_FLAGS} ${RELEASE_FLAGS} ${QUEUE_SOURCE}
+	xfbuild +D=.deps-$@-${ARCH} +O=.objs-$@-${ARCH} +o=${QUEUE_TARGET} ${XFBUILD_DEFAULT_FLAGS} ${QUEUE_FLAGS} ${RELEASE_FLAGS} ${QUEUE_SOURCE}
 
 # ------------------------------------------------------------------------------
 # Cleanup

@@ -89,8 +89,7 @@ public abstract class PeriodicStats : IPeriodic
 
     ***************************************************************************/
 
-    private alias StatsLog!(LogStats) Log;
-    protected Log log;
+    protected StatsLog log;
 
 
     /***************************************************************************
@@ -101,7 +100,7 @@ public abstract class PeriodicStats : IPeriodic
 
     private const console_update_time = 1_000;
 
-    private const uint log_update_time = Log.default_period * 1_000;
+    private const uint log_update_time = StatsLog.default_period * 1_000;
 
 
     /***************************************************************************
@@ -169,7 +168,7 @@ public abstract class PeriodicStats : IPeriodic
 
         this.records_per_sec = new SlidingAverageTime!(ulong)(5, 1_000, 1_000);
 
-        this.log = new Log(this.stats_config.file_count,
+        this.log = new StatsLog(this.stats_config.file_count,
             this.stats_config.max_file_size, this.stats_config.logfile);
     }
 
@@ -272,7 +271,8 @@ public abstract class PeriodicStats : IPeriodic
 
         this.log_stats.handling_connections = node_info.num_open_connections;
 
-        this.log.writeExtra(this.log_stats, this.channel_stats);
+        this.log.add(this.log_stats);
+        this.log.add(this.channel_stats);
 
         this.elapsed_since_last_log_update -= this.log_update_time;
         this.log_stats = LogStats.init;

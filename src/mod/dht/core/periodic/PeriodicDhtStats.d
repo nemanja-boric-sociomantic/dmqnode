@@ -152,7 +152,8 @@ public class PeriodicDhtStats : PeriodicStats
             this.log_stats.total_records = node_info.num_records;
             this.log_stats.handling_connections = node_info.num_open_connections;
 
-            this.log.writeExtra(this.log_stats, this.channel_stats);
+            this.log.add(this.log_stats);
+            this.log.add(this.channel_stats);
 
             this.elapsed_since_last_log_update -= this.log_update_time;
             this.log_stats = LogStats.init;
