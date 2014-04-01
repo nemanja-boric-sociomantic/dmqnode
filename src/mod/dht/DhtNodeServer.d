@@ -24,7 +24,7 @@ module src.mod.dht.DhtNodeServer;
 
 *******************************************************************************/
 
-private import src.Version;
+private import Version;
 
 private import src.mod.dht.core.config.ServerConfig;
 

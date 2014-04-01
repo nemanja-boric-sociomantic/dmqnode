@@ -24,7 +24,7 @@ module src.mod.queue.QueueNodeServer;
 
 *******************************************************************************/
 
-private import src.Version;
+private import Version;
 
 private import src.mod.queue.config.ServerConfig;
 private import src.core.config.PerformanceConfig;
