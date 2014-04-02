@@ -44,8 +44,8 @@ DEBUG_FLAGS =\
 
 .PHONY: default all clean revision dht dht-release log log-release queue-release queue
 
-default: dht log queue
-all: default
+debug: dht log queue
+production: dht-release log-release queue-release
 
 
 # ------------------------------------------------------------------------------
