@@ -52,22 +52,22 @@ production: dht-release log-release queue-release
 # node debug & release builds
 
 dht: revision
-	xfbuild +D=.deps-$@ +O=.objs-$@-${ARCH} +o=${DHT_TARGET} ${XFBUILD_DEFAULT_FLAGS} ${DHT_FLAGS} ${DEBUG_FLAGS} ${DHT_SOURCE}
+	xfbuild +D=.deps-$@ +O=.objs-$@ +o=${DHT_TARGET} ${XFBUILD_DEFAULT_FLAGS} ${DHT_FLAGS} ${DEBUG_FLAGS} ${DHT_SOURCE}
 
 dht-release: revision
-	xfbuild +D=.deps-$@ +O=.objs-$@-${ARCH} +o=${DHT_TARGET} ${XFBUILD_DEFAULT_FLAGS} ${DHT_FLAGS} ${RELEASE_FLAGS} ${DHT_SOURCE}
+	xfbuild +D=.deps-$@ +O=.objs-$@ +o=${DHT_TARGET} ${XFBUILD_DEFAULT_FLAGS} ${DHT_FLAGS} ${RELEASE_FLAGS} ${DHT_SOURCE}
 
 log: revision
-	xfbuild +D=.deps-$@ +O=.objs-$@-${ARCH} +o=${LOG_TARGET} ${XFBUILD_DEFAULT_FLAGS} ${LOG_FLAGS} ${DEBUG_FLAGS} ${LOG_SOURCE}
+	xfbuild +D=.deps-$@ +O=.objs-$@ +o=${LOG_TARGET} ${XFBUILD_DEFAULT_FLAGS} ${LOG_FLAGS} ${DEBUG_FLAGS} ${LOG_SOURCE}
 
 log-release: revision
-	xfbuild +D=.deps-$@ +O=.objs-$@-${ARCH} +o=${LOG_TARGET} ${XFBUILD_DEFAULT_FLAGS} ${LOG_FLAGS} ${RELEASE_FLAGS} ${LOG_SOURCE}
+	xfbuild +D=.deps-$@ +O=.objs-$@ +o=${LOG_TARGET} ${XFBUILD_DEFAULT_FLAGS} ${LOG_FLAGS} ${RELEASE_FLAGS} ${LOG_SOURCE}
 
 queue: revision
-	xfbuild +D=.deps-$@ +O=.objs-$@-${ARCH} +o=${QUEUE_TARGET} ${XFBUILD_DEFAULT_FLAGS} ${QUEUE_FLAGS} ${DEBUG_FLAGS} ${QUEUE_SOURCE}
+	xfbuild +D=.deps-$@ +O=.objs-$@ +o=${QUEUE_TARGET} ${XFBUILD_DEFAULT_FLAGS} ${QUEUE_FLAGS} ${DEBUG_FLAGS} ${QUEUE_SOURCE}
 
 queue-release: revision
-	xfbuild +D=.deps-$@ +O=.objs-$@-${ARCH} +o=${QUEUE_TARGET} ${XFBUILD_DEFAULT_FLAGS} ${QUEUE_FLAGS} ${RELEASE_FLAGS} ${QUEUE_SOURCE}
+	xfbuild +D=.deps-$@ +O=.objs-$@ +o=${QUEUE_TARGET} ${XFBUILD_DEFAULT_FLAGS} ${QUEUE_FLAGS} ${RELEASE_FLAGS} ${QUEUE_SOURCE}
 
 # ------------------------------------------------------------------------------
 # Cleanup
