@@ -53,7 +53,7 @@ private import ocean.util.app.ext.VersionArgsExt;
 
 private import ConfigReader = ocean.util.config.ClassFiller;
 
-debug private import ocean.util.log.Trace;
+private import ocean.util.log.Trace;
 
 private import tango.core.Exception : IllegalArgumentException, OutOfMemoryException;
 
