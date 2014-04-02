@@ -73,4 +73,4 @@ queue-release: revision
 # Cleanup
 
 clean:
-	$(RM) -r .objs-* .deps-* $(DHT_TARGET) $(LOG_TRAGET) $(QUEUE_TARGET)
+	$(RM) -r .objs-* .deps-* $(DHT_TARGET) $(LOG_TARGET) $(QUEUE_TARGET)
