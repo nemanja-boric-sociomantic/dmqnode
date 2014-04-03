@@ -45,6 +45,20 @@ private import tango.core.Memory;
 
 private import swarm.core.node.model.IChannelsNodeInfo;
 
+private import tango.util.log.Log;
+
+/*******************************************************************************
+
+    Static module logger
+
+*******************************************************************************/
+
+private Logger logger;
+static this ( )
+{
+    logger = Log.lookup("src.core.periodic.PeriodicStats");
+}
+
 /*******************************************************************************
 
     Periodic stats class. Displays a message line to the console and writes
@@ -183,12 +197,21 @@ public abstract class PeriodicStats : IPeriodic
 
     protected void handle_ ( )
     {
-        this.consoleOutput();
-        this.logOutput();
+        try
+        {
+            this.consoleOutput();
+            this.logOutput();
 
-        auto node_info = cast(INodeInfo)this.node;
+            auto node_info = cast(INodeInfo)this.node;
 
-        node_info.resetCounters();
+            node_info.resetCounters();
+        }
+        catch ( Exception e )
+        {
+            logger.error("Exception caught in timer handler: {} @ {}:{}",
+                e.msg, e.file, e.line);
+            throw e;
+        }
     }
 
 
