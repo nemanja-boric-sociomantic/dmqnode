@@ -423,6 +423,10 @@ public class DumpManager
 
         // Just to avoid confusion, will go away after the transition.
         ulong num_records = file_format_version;
+        if ( num_records > 0 )
+        {
+            log.info("File is in old, versionless format");
+        }
 
         // Return true if we have to keep reading
         static bool readNextKey(InputStream input, ref char[] key,
