@@ -1,4 +1,4 @@
-src/main/Version.d
+src/Version.d
 bin/
 .deps-*
 .objs-*/
