@@ -439,10 +439,11 @@ public class DumpManager
             return key.length > 0;
         }
 
+        ulong records_read;
         while (readNextKey(input, this.load_key, progress_manager))
         {
             // This will go after the transition!
-            if (num_records > 0 && progress_manager.current == num_records)
+            if (num_records > 0 && records_read == num_records)
             {
                 break;
             }
@@ -450,16 +451,17 @@ public class DumpManager
             read = SimpleSerializer.read(input, this.load_value);
 
             progress_manager.progress(read);
+            records_read++;
 
             storage.put(this.load_key, this.load_value);
         }
 
         // This will go after the transition!
-        if (num_records > 0 && num_records != progress_manager.current)
+        if (num_records > 0 && num_records != records_read)
         {
             log.error("Number of records mismatch while loading dump "
                     "file. Expected {} records, got {}",
-                    num_records, progress_manager.current);
+                    num_records, records_read);
             throw new Exception("Number of records mismatch while "
                     "loading dump file.");
         }
