@@ -45,19 +45,7 @@ private import tango.core.Memory;
 
 private import swarm.core.node.model.IChannelsNodeInfo;
 
-private import tango.util.log.Log;
 
-/*******************************************************************************
-
-    Static module logger
-
-*******************************************************************************/
-
-private Logger logger;
-static this ( )
-{
-    logger = Log.lookup("src.core.periodic.PeriodicStats");
-}
 
 /*******************************************************************************
 
@@ -171,14 +159,15 @@ public abstract class PeriodicStats : IPeriodic
 
         Params:
             stats_config = class containing configuration settings for stats
+            id = identifying string of this periodic, used for logging
 
     ***************************************************************************/
 
-    public this ( StatsConfig stats_config )
+    public this ( StatsConfig stats_config, char[] id )
     {
         this.stats_config = stats_config;
 
-        super(console_update_time);
+        super(console_update_time, id);
 
         this.records_per_sec = new SlidingAverageTime!(ulong)(5, 1_000, 1_000);
 
@@ -197,21 +186,12 @@ public abstract class PeriodicStats : IPeriodic
 
     protected void handle_ ( )
     {
-        try
-        {
-            this.consoleOutput();
-            this.logOutput();
+        this.consoleOutput();
+        this.logOutput();
 
-            auto node_info = cast(INodeInfo)this.node;
+        auto node_info = cast(INodeInfo)this.node;
 
-            node_info.resetCounters();
-        }
-        catch ( Exception e )
-        {
-            logger.error("Exception caught in timer handler: {} @ {}:{}",
-                e.msg, e.file, e.line);
-            throw e;
-        }
+        node_info.resetCounters();
     }
 
 

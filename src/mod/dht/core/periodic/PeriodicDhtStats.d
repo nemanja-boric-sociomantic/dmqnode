@@ -60,7 +60,7 @@ public class PeriodicDhtStats : PeriodicStats
 
     public this ( StatsConfig stats_config )
     {
-        super(stats_config);
+        super(stats_config, typeof(this).stringof);
     }
 
 

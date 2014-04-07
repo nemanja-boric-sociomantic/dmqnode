@@ -31,6 +31,22 @@ private import src.core.util.Terminator;
 private import swarm.core.node.model.INode;
 private import swarm.core.node.model.INodeInfo;
 
+private import tango.util.log.Log;
+
+
+
+/*******************************************************************************
+
+    Static module logger
+
+*******************************************************************************/
+
+private Logger logger;
+static this ( )
+{
+    logger = Log.lookup("src.core.periodic.model.IPeriodic");
+}
+
 
 
 /*******************************************************************************
@@ -62,20 +78,32 @@ public abstract class IPeriodic : TimerEvent
 
     /***************************************************************************
 
+        Identifying string of this periodic, used for logging.
+
+    ***************************************************************************/
+
+    private const char[] id;
+
+
+    /***************************************************************************
+
         Constructor.
 
         Params:
             period_ms = milliseconds between calls to handle()
+            id = identifying string of this periodic, used for logging
 
     ***************************************************************************/
 
-    public this ( uint period_ms )
+    public this ( uint period_ms, char[] id )
     {
         super(&this.handle);
 
         auto s = period_ms / 1000;
         auto ms = (period_ms) % 1000;
         this.set(s, ms, s, ms);
+
+        this.id = id;
     }
 
 
@@ -129,5 +157,23 @@ public abstract class IPeriodic : TimerEvent
     ***************************************************************************/
 
     protected abstract void handle_ ( );
+
+
+    /***************************************************************************
+
+        Error reporting method, called when an Exception is caught from
+        handle().
+
+        Params:
+            exception: Exception thrown by handle()
+            event:     Seletor event while exception was caught
+
+    ***************************************************************************/
+
+    override protected void error_ ( Exception exception, Event event )
+    {
+        logger.error("Exception caught in timer handler for {}: {} @ {}:{}",
+            this.id, exception.msg, exception.file, exception.line);
+    }
 }
 

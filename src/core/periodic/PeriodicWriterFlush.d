@@ -42,7 +42,7 @@ public class PeriodicWriterFlush : IPeriodic
 
     public this ( uint period_ms )
     {
-        super(period_ms);
+        super(period_ms, typeof(this).stringof);
     }
 
 
