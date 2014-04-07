@@ -196,9 +196,9 @@ public class QueueNodeServer : LoggedCliApp
             [SIGINT, SIGTERM, SIGQUIT]);
 
         this.periodics = new Periodics(this.node, this.epoll);
-        this.periodics.add(new PeriodicQueueStats(this.stats_config));
-        this.periodics.add(
-            new PeriodicWriterFlush(this.performance_config.write_flush_ms));
+        this.periodics.add(new PeriodicQueueStats(this.stats_config, this.epoll));
+        this.periodics.add(new PeriodicWriterFlush(
+            this.epoll, this.performance_config.write_flush_ms));
     }
 
 

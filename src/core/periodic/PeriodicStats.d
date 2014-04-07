@@ -159,15 +159,19 @@ public abstract class PeriodicStats : IPeriodic
 
         Params:
             stats_config = class containing configuration settings for stats
+            epoll = epoll select dispatcher to register this periodic with (the
+                registration of periodics is usually dealt with by the Periodics
+                class, but an individual periodic can also reregister itself
+                with epoll in the situation where an error occurs)
             id = identifying string of this periodic, used for logging
 
     ***************************************************************************/
 
-    public this ( StatsConfig stats_config, char[] id )
+    public this ( StatsConfig stats_config, EpollSelectDispatcher epoll, char[] id )
     {
         this.stats_config = stats_config;
 
-        super(console_update_time, id);
+        super(epoll, console_update_time, id);
 
         this.records_per_sec = new SlidingAverageTime!(ulong)(5, 1_000, 1_000);
 

@@ -116,7 +116,7 @@ public class MemoryDhtNode : IDhtNode
             this.memory_config.dump_period);
         this.channel_dumper.start();
 
-        this.periodics.add(new MemoryPeriodicStats(this.stats_config,
+        this.periodics.add(new MemoryPeriodicStats(this.stats_config, this.epoll,
             this.channel_dumper));
     }
 

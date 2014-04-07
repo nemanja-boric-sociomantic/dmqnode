@@ -113,7 +113,7 @@ abstract public class IDhtNode
 
     ***************************************************************************/
 
-    private const EpollSelectDispatcher epoll;
+    protected const EpollSelectDispatcher epoll;
 
 
     /***************************************************************************
@@ -177,8 +177,8 @@ abstract public class IDhtNode
         this.node.connection_limit = server_config.connection_limit;
 
         this.periodics = new Periodics(this.node, this.epoll);
-        this.periodics.add(
-            new PeriodicWriterFlush(this.performance_config.write_flush_ms));
+        this.periodics.add(new PeriodicWriterFlush(
+            this.epoll, this.performance_config.write_flush_ms));
     }
 
 

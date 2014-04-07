@@ -67,6 +67,9 @@ public abstract class IPeriodic : TimerEvent
 
     protected alias .INodeInfo INodeInfo;
 
+    protected alias .EpollSelectDispatcher EpollSelectDispatcher;
+
+
     /***************************************************************************
 
         Interface to a swarm node.
@@ -87,15 +90,28 @@ public abstract class IPeriodic : TimerEvent
 
     /***************************************************************************
 
+        Epoll select dispatcher used by the periodic's timer event.
+
+    ***************************************************************************/
+
+    private const EpollSelectDispatcher epoll;
+
+
+    /***************************************************************************
+
         Constructor.
 
         Params:
+            epoll = epoll select dispatcher to register this periodic with (the
+                registration of periodics is usually dealt with by the Periodics
+                class, but an individual periodic can also reregister itself
+                with epoll in the situation where an error occurs)
             period_ms = milliseconds between calls to handle()
             id = identifying string of this periodic, used for logging
 
     ***************************************************************************/
 
-    public this ( uint period_ms, char[] id )
+    public this ( EpollSelectDispatcher epoll, uint period_ms, char[] id )
     {
         super(&this.handle);
 
@@ -104,6 +120,7 @@ public abstract class IPeriodic : TimerEvent
         this.set(s, ms, s, ms);
 
         this.id = id;
+        this.epoll = epoll;
     }
 
 
@@ -174,6 +191,24 @@ public abstract class IPeriodic : TimerEvent
     {
         logger.error("Exception caught in timer handler for {}: {} @ {}:{}",
             this.id, exception.msg, exception.file, exception.line);
+    }
+
+
+    /***************************************************************************
+
+        Finalize method, called after this instance has been unregistered from
+        epoll.
+
+    ***************************************************************************/
+
+    public override void finalize ( FinalizeStatus status )
+    {
+        logger.error("Timer handler {} unregistered", this.id);
+        if ( status != status.Success )
+        {
+            logger.error("Reregistering timer handler {}", this.id);
+            this.epoll.register(this);
+        }
     }
 }
 

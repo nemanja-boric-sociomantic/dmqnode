@@ -66,15 +66,20 @@ public class MemoryPeriodicStats : PeriodicDhtStats
 
         Params:
             stats_config = stats log configuration (passed to super class)
+            epoll = epoll select dispatcher to register this periodic with (the
+                registration of periodics is usually dealt with by the Periodics
+                class, but an individual periodic can also reregister itself
+                with epoll in the situation where an error occurs)
             channel_dumper = interface to the channel dumper thread
 
     ***************************************************************************/
 
-    public this ( StatsConfig stats_config, IChannelDumpInfo channel_dumper )
+    public this ( StatsConfig stats_config, EpollSelectDispatcher epoll,
+        IChannelDumpInfo channel_dumper )
     {
         this.channel_dumper = channel_dumper;
 
-        super(stats_config);
+        super(stats_config, epoll);
     }
 
 

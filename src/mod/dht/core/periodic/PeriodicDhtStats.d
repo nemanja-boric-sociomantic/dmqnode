@@ -58,9 +58,22 @@ public class PeriodicDhtStats : PeriodicStats
     protected alias .IDhtNodeInfo IDhtNodeInfo;
 
 
-    public this ( StatsConfig stats_config )
+    /***************************************************************************
+
+        Constructor.
+
+        Params:
+            stats_config = class containing configuration settings for stats
+            epoll = epoll select dispatcher to register this periodic with (the
+                registration of periodics is usually dealt with by the Periodics
+                class, but an individual periodic can also reregister itself
+                with epoll in the situation where an error occurs)
+
+    ***************************************************************************/
+
+    public this ( StatsConfig stats_config, EpollSelectDispatcher epoll )
     {
-        super(stats_config, typeof(this).stringof);
+        super(stats_config, epoll, typeof(this).stringof);
     }
 
 

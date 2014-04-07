@@ -79,7 +79,7 @@ public class LogfilesDhtNode : IDhtNode
 
         super(server_config, config);
 
-        this.periodics.add(new PeriodicDhtStats(this.stats_config));
+        this.periodics.add(new PeriodicDhtStats(this.stats_config, this.epoll));
     }
 
 
