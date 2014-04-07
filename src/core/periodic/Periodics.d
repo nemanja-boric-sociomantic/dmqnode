@@ -57,7 +57,7 @@ public class Periodics
 
     /***************************************************************************
 
-        Epoll select dispatcher used by periodcs' timer events.
+        Epoll select dispatcher used by periodics' timer events.
 
     ***************************************************************************/
 
