@@ -113,7 +113,7 @@ abstract public class IDhtNode
 
     ***************************************************************************/
 
-    private EpollSelectDispatcher epoll;
+    private const EpollSelectDispatcher epoll;
 
 
     /***************************************************************************
@@ -122,7 +122,7 @@ abstract public class IDhtNode
 
     ***************************************************************************/
 
-    private DhtNode node;
+    private const DhtNode node;
 
 
     /***************************************************************************
@@ -131,7 +131,7 @@ abstract public class IDhtNode
 
     ***************************************************************************/
 
-    private SignalEvent sigint_event;
+    private const SignalEvent sigint_event;
 
 
     /***************************************************************************
@@ -140,7 +140,7 @@ abstract public class IDhtNode
 
     ***************************************************************************/
 
-    protected Periodics periodics;
+    protected const Periodics periodics;
 
 
     /***************************************************************************
