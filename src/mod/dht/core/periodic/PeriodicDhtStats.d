@@ -166,9 +166,6 @@ public class PeriodicDhtStats : PeriodicStats
         Updates the channel stats associative arrays. Removes any channels from
         the stats log which no longer exist in the dht.
 
-        Params:
-            node_info = dht node info to check for channel info
-
     ***************************************************************************/
 
     protected override void updateChannelStats ( )

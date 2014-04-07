@@ -287,9 +287,6 @@ public abstract class PeriodicStats : IPeriodic
         Updates the channel stats associative arrays. Removes any channels from
         the stats log which no longer exist.
 
-        Params:
-            node_info = dht node info to check for channel info
-
     ***************************************************************************/
 
     protected void updateChannelStats ( )
