@@ -123,7 +123,9 @@ public class PeriodicQueueStats : PeriodicStats
     /***************************************************************************
 
         Write the metadata of the channel which will be logged then resets the
-        old values.
+        old values. The old values are reset here by the queue node so that the
+        stats which are stored are the maximum values since the last log output.
+        See also getChannelSize(), below.
 
     ***************************************************************************/
 
