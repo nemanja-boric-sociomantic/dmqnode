@@ -251,11 +251,34 @@ public class MemoryStorageChannels : DhtStorageChannels
         {
             log.info("Dumping memory channels");
 
-            foreach ( channel; this )
+            synchronized ( this ) foreach ( channel; this )
             {
                 this.dump_manager.dump(channel, false); // silent
             }
         }
+    }
+
+
+    /***************************************************************************
+
+        Removes channel with identifier string channel_id from the registered
+        channels. All records in the channel are deleted.
+
+        Note: this method is overridden in order to synchronize the removal of a
+        channel with the dumping of channel data to disk by maintenance().
+
+        FIXME: This thread synchronisation is purely a temporary measure, as we
+        intend to entirely remove threading from the dht node.
+        See https://github.com/sociomantic/swarmnodes/issues/41 for discussion.
+
+        Params:
+            channel_id = identifier string of channel to remove
+
+    ***************************************************************************/
+
+    public override void remove ( char[] channel_id )
+    {
+        synchronized ( this )  super.remove(channel_id);
     }
 
 
