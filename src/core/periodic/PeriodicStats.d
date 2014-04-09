@@ -334,6 +334,8 @@ public abstract class PeriodicStats : IPeriodic
         this.log.add(this.log_stats);
         this.log.add(this.channel_stats);
 
+        this.log.flush();
+
         this.elapsed_since_last_log_update -= this.log_update_time;
         this.log_stats = LogStats.init;
     }
