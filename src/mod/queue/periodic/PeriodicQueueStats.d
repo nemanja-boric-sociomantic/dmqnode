@@ -77,46 +77,26 @@ public class PeriodicQueueStats : PeriodicStats
 
     /***************************************************************************
 
-        Updates the console output line.
+        Writes the provided fields to the console output line, along with queue
+        specific information.
+
+        Params:
+            memory_buf = information about the memory usage of the app, or an
+                empty string if not built with -version=CDGC
+            records_buf = the number of records in the node
+            bytes_buf = the number of bytes in the node
+            rec_per_sec = the number of records handled by the node  per second
 
     ***************************************************************************/
 
-    protected override void consoleOutput ( )
+    protected override void writeConsoleOutput ( char[] memory_buf,
+        char[] records_buf, char[] bytes_buf, real rec_per_sec )
     {
         auto node_info = cast(IQueueNodeInfo)this.node;
 
-        this.updateChannelStats();
-
-        if ( this.stats_config.console_stats_enabled )
-        {
-
-            auto rec_per_sec = this.recordsPerSecond();
-
-            DigitGrouping.format(node_info.num_records, this.records_buf);
-            BitGrouping.format(node_info.num_bytes, this.bytes_buf, "b");
-
-            version ( CDGC )
-            {
-                const float Mb = 1024 * 1024;
-                size_t used, free;
-                GC.usage(used, free);
-
-                auto mem_allocated = cast(float)(used + free) / Mb;
-                auto mem_free = cast(float)free / Mb;
-
-                StaticTrace.format("  {} queue (Used {}Mb/Free {}Mb): handling {} connections, {} records/s, {} records ({})",
-                        node_info.storage_type, mem_allocated, mem_free,
-                        node_info.num_open_connections, rec_per_sec,
-                        this.records_buf, this.bytes_buf).flush;
-            }
-            else
-            {
-                StaticTrace.format("  {} queue: handling {} connections, {} records/s, {} records ({})",
-                        node_info.storage_type,
-                        node_info.num_open_connections, rec_per_sec,
-                        this.records_buf, this.bytes_buf).flush;
-            }
-        }
+        StaticTrace.format("  {} queue {}: {} conns, {} rec/s, {} recs ({}){}",
+            node_info.storage_type, memory_buf, node_info.num_open_connections,
+            rec_per_sec, records_buf, bytes_buf).flush;
     }
 
 

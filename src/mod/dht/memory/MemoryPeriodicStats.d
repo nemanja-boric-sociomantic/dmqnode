@@ -93,7 +93,7 @@ public class MemoryPeriodicStats : PeriodicDhtStats
 
     ***************************************************************************/
 
-    override protected char[] consoleOutput_ ( )
+    override protected char[] extraConsoleInfo ( )
     {
         if ( this.channel_dumper.busy )
         {

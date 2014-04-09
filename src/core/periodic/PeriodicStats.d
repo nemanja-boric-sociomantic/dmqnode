@@ -129,7 +129,7 @@ public abstract class PeriodicStats : IPeriodic
 
     ***************************************************************************/
 
-    protected char[] records_buf, bytes_buf, memory_buf;
+    private char[] records_buf, bytes_buf, memory_buf;
 
 
     /***************************************************************************
@@ -201,13 +201,63 @@ public abstract class PeriodicStats : IPeriodic
 
     /***************************************************************************
 
-        Updates the console output line. Sub-classes can append additional
-        information to the console output by overriding the consoleOutput_()
-        method, below.
+        Updates the console output line.
 
     ***************************************************************************/
 
-    protected abstract void consoleOutput ( );
+    protected void consoleOutput ( )
+    {
+        this.updateChannelStats();
+
+        if ( this.stats_config.console_stats_enabled )
+        {
+            auto node_info = cast(IChannelsNodeInfo)this.node;
+            assert(node_info, "node is not a channels node");
+
+            DigitGrouping.format(node_info.num_records, this.records_buf);
+            BitGrouping.format(node_info.num_bytes, this.bytes_buf, "b");
+
+            this.memory_buf.length = 0;
+
+            const float Mb = 1024 * 1024;
+            size_t used, free;
+            GC.usage(used, free);
+
+            if ( used + free > 0 )
+            {
+                auto mem_allocated = cast(float)(used + free) / Mb;
+                auto mem_free = cast(float)free / Mb;
+
+                Layout!(char).print(this.memory_buf, " (Used {}Mb/Free {}Mb)",
+                    mem_allocated, mem_free);
+            }
+            else
+            {
+                Layout!(char).print(this.memory_buf, " (mem usage n/a)");
+            }
+
+            this.writeConsoleOutput(this.memory_buf, this.records_buf, this.bytes_buf,
+                this.recordsPerSecond());
+        }
+    }
+
+
+    /***************************************************************************
+
+        Writes the provided fields to the console output line, along with any
+        additional information required by the subclass.
+
+        Params:
+            memory_buf = information about the memory usage of the app, or an
+                empty string if not built with -version=CDGC
+            records_buf = the number of records in the node
+            bytes_buf = the number of bytes in the node
+            rec_per_sec = the number of records handled by the node  per second
+
+    ***************************************************************************/
+
+    protected abstract void writeConsoleOutput ( char[] memory_buf,
+        char[] records_buf, char[] bytes_buf, real rec_per_sec );
 
 
     /***************************************************************************
@@ -219,7 +269,7 @@ public abstract class PeriodicStats : IPeriodic
 
     ***************************************************************************/
 
-    protected real recordsPerSecond ( )
+    private real recordsPerSecond ( )
     {
         auto node_info = cast(INodeInfo)this.node;
 
@@ -272,10 +322,13 @@ public abstract class PeriodicStats : IPeriodic
 
     protected void writeLogOutput ( )
     {
-        auto node_info = cast(INodeInfo) this.node;
+        auto node_info = cast(IChannelsNodeInfo) this.node;
+        assert(node_info, "node is not a channels node");
 
         this.updateChannelStats();
 
+        this.log_stats.total_bytes = node_info.num_bytes;
+        this.log_stats.total_records = node_info.num_records;
         this.log_stats.handling_connections = node_info.num_open_connections;
 
         this.log.add(this.log_stats);
@@ -293,9 +346,10 @@ public abstract class PeriodicStats : IPeriodic
 
     ***************************************************************************/
 
-    protected void updateChannelStats ( )
+    private void updateChannelStats ( )
     {
         auto node_info = cast(IChannelsNodeInfo)this.node;
+
         // Update existing channel stats
         foreach ( channel; node_info )
         {
