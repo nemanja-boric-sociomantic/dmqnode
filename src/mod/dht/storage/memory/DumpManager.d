@@ -22,7 +22,7 @@ module src.mod.dht.storage.memory.DumpManager;
 
 *******************************************************************************/
 
-private import src.mod.dht.storage.memory.DirectIO;
+private import ocean.io.device.DirectIO;
 
 private import src.mod.dht.storage.model.DhtStorageEngine;
 
