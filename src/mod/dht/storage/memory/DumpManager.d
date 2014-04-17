@@ -85,32 +85,6 @@ public class DumpManager
 
     /***********************************************************************
 
-        File suffix constants
-
-    ***********************************************************************/
-
-    private const DumpFileSuffix = ".tcm";
-
-    private const NewFileSuffix = ".dumping";
-
-    private const BackupFileSuffix = ".backup";
-
-    private const DeletedFileSuffix = ".deleted";
-
-
-    /***********************************************************************
-
-        Direct I/O files buffer size.
-
-        See BufferedDirectWriteFile for details on why we use 32MiB.
-
-    ***********************************************************************/
-
-    private const IOBufferSize = 32 * 1024 * 1024;
-
-
-    /***********************************************************************
-
         Output buffered direct I/O file, used to dump the channels.
 
     ***********************************************************************/
@@ -209,7 +183,7 @@ public class DumpManager
 
     public void dump ( DhtStorageEngine storage, bool verbose = false )
     {
-        this.buildFilePath(this.path, storage.id).cat(NewFileSuffix);
+        buildFilePath(this.root_dir, this.path, storage.id).cat(NewFileSuffix);
 
         if ( this.path.exists() )
         {
@@ -236,10 +210,11 @@ public class DumpManager
 
         // Move dump.new -> dump and dump -> dump.backup as atomically as
         // possible
-        this.swapNewAndBackupDumps(storage.id);
+        swapNewAndBackupDumps(storage.id, this.root_dir, this.path,
+            this.dst_path);
 
         log.info("Finished channel dump write and backup, {} bytes written",
-            this.buildFilePath(this.path, storage.id).fileSize());
+            buildFilePath(this.root_dir, this.path, storage.id).fileSize());
     }
 
 
@@ -341,11 +316,11 @@ public class DumpManager
 
             this.path.set(info.name);
 
-            if ( this.path.suffix() == this.DumpFileSuffix )
+            if ( this.path.suffix() == DumpFileSuffix )
             {
                 // We don't reuse this.path for the complete path to avoid
                 // conflicts between buffers
-                this.buildFilePath(this.dst_path, this.path.name);
+                buildFilePath(this.root_dir, this.dst_path, this.path.name);
 
                 this.input.open(this.dst_path.toString());
                 scope (exit) this.input.close();
@@ -353,7 +328,7 @@ public class DumpManager
                 auto channel = new_channel(this.dst_path.name.dup);
                 this.loadChannel(channel, this.input);
             }
-            else if ( this.path.suffix() == this.NewFileSuffix )
+            else if ( this.path.suffix() == NewFileSuffix )
             {
                 log.warn("{}: Unfinished dump file found while scanning "
                         "directory '{}', the program was probably "
@@ -364,14 +339,14 @@ public class DumpManager
                         "restarted uncleanly and data might be old",
                         this.path.name, this.root_dir.toString);
             }
-            else if ( this.path.suffix() != this.BackupFileSuffix )
+            else if ( this.path.suffix() != BackupFileSuffix )
             {
                 log.warn("{}: Ignoring file while scanning directory '{}' "
                         "(no '{}' suffix)", this.path.name,
-                        this.root_dir.toString, this.DumpFileSuffix);
+                        this.root_dir.toString, DumpFileSuffix);
                 Stderr.formatln("{}: Ignoring file while scanning directory "
                         "'{}' (no '{}' suffix)", this.path.name,
-                        this.root_dir.toString, this.DumpFileSuffix);
+                        this.root_dir.toString, DumpFileSuffix);
             }
         }
     }
@@ -456,7 +431,7 @@ public class DumpManager
 
     public void deleteChannel ( char[] id )
     {
-        this.buildFilePath(this.path, id);
+        buildFilePath(this.root_dir, this.path, id);
         if ( this.path.exists )
         {
             this.dst_path.set(this.path).cat(DeletedFileSuffix);
@@ -464,7 +439,7 @@ public class DumpManager
             this.path.rename(this.dst_path);
         }
 
-        this.buildFilePath(this.path, id).cat(BackupFileSuffix);
+        buildFilePath(this.root_dir, this.path, id).cat(BackupFileSuffix);
         if ( this.path.exists )
         {
             this.dst_path.set(this.path).cat(DeletedFileSuffix);
@@ -472,89 +447,6 @@ public class DumpManager
             this.path.rename(this.dst_path);
         }
     }
-
-    /***********************************************************************
-
-        Replace the existing dump with the new one, while moving the
-        existing dump to dump.backup.
-
-        Doing this completely atomically seems to be impossible (link(2)
-        fails if the destination file exists), but since we want to avoid
-        the situation where we end up with an invalid dump, we prioritize
-        always having the plain dump (and updated).
-
-        So, this is the procedure to "rotate" the dump as atomically as
-        possible:
-
-        1. Remove dump.backup
-        2. Link (hard) dump to dump.backup
-        3. Move dump.new to dump
-
-        The worse case ever is loosing the dump.backup (if the application
-        crashes or the server is rebooted between 1 and 2), but that's being
-        backed up already every day.
-
-        The important thing is we never, ever, under no circumstances, end
-        up with a regular dump that is either incomplete or inexistent!
-        (well, there are always exceptions, like hardware failure or kernel
-        bugs ;)
-
-        The downside is now we need disk space to hold 3 times the size of
-        the channel instead of 2 times the size of the channel, because at
-        some point we have all dump, dump.new and dump.backup all existing
-        at the same time.
-
-        Note: dump.new should always exist.
-
-    ***********************************************************************/
-
-    private void swapNewAndBackupDumps ( char[] id )
-    {
-        this.buildFilePath(this.path, id); // dump
-        this.dst_path.set(this.path).cat(BackupFileSuffix); // dump.backup
-
-        if ( this.dst_path.exists )
-        {
-            // 1. rm dump.backup
-            this.dst_path.remove();
-        }
-
-        if ( this.path.exists )
-        {
-            // 2. ln dump dump.backup
-            this.path.link(this.dst_path);
-        }
-
-        // 3. mv dump.new dump (new should always exist)
-        this.path.cat(NewFileSuffix); // dump.new
-        this.buildFilePath(this.dst_path, id); // dump
-        this.path.rename(this.dst_path);
-    }
-
-
-    /***********************************************************************
-
-        Formats the file name for a channel into a provided FilePath.  The name
-        is built using the this.root_dir directory, the ID of the channel and
-        the standard file type suffix.
-
-        Params:
-            path = FilePath object to set with the new file path
-            id = Name of the channel to build the file path for
-
-        Returns:
-            The "path" object passed as parameter and properly reset.
-
-    ***********************************************************************/
-
-    private FilePath buildFilePath ( FilePath path, char[] id )
-    {
-        path.set(this.root_dir);
-        path.append(id);
-        path.cat(this.DumpFileSuffix);
-        return path;
-    }
-
 }
 
 

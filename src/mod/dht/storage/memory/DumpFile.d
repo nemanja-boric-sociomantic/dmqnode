@@ -18,6 +18,8 @@ module src.mod.dht.storage.memory.DumpFile;
 
 private import ocean.io.device.DirectIO;
 
+private import ocean.io.FilePath;
+
 private import ocean.io.serialize.SimpleSerializer;
 
 private import tango.io.device.File;
@@ -32,6 +34,122 @@ private import tango.io.device.File;
 
 public const ulong FileFormatVersion = 0;
 
+
+/*******************************************************************************
+
+    File suffix constants
+
+*******************************************************************************/
+
+public const DumpFileSuffix = ".tcm";
+
+public const NewFileSuffix = ".dumping";
+
+public const BackupFileSuffix = ".backup";
+
+public const DeletedFileSuffix = ".deleted";
+
+
+/*******************************************************************************
+
+    Direct I/O files buffer size.
+
+    See BufferedDirectWriteFile for details on why we use 32MiB.
+
+*******************************************************************************/
+
+public const IOBufferSize = 32 * 1024 * 1024;
+
+
+/*******************************************************************************
+
+    Formats the file name for a channel into a provided FilePath. The name
+    is built using the specified root directory, the name of the channel and
+    the standard file type suffix.
+
+    Params:
+        root = FilePath object denoting the root dump files directory
+        path = FilePath object to set with the new file path
+        channel = name of the channel to build the file path for
+
+    Returns:
+        The "path" object passed as parameter and properly reset.
+
+*******************************************************************************/
+
+public FilePath buildFilePath ( FilePath root, FilePath path, char[] channel )
+{
+    path.set(root);
+    path.append(channel);
+    path.cat(DumpFileSuffix);
+    return path;
+}
+
+
+/*******************************************************************************
+
+    Replace the existing dump with the new one, while moving the
+    existing dump to dump.backup.
+
+    Doing this completely atomically seems to be impossible (link(2)
+    fails if the destination file exists), but since we want to avoid
+    the situation where we end up with an invalid dump, we prioritize
+    always having the plain dump (and updated).
+
+    So, this is the procedure to "rotate" the dump as atomically as
+    possible:
+
+    1. Remove dump.backup
+    2. Link (hard) dump to dump.backup
+    3. Move dump.new to dump
+
+    The worst case ever is losing the dump.backup (if the application
+    crashes or the server is rebooted between 1 and 2), but that's being
+    backed up already every day.
+
+    The important thing is we never, ever, under any circumstances, end
+    up with a regular dump that is either incomplete or inexistent!
+    (well, there are always exceptions, like hardware failure or kernel
+    bugs ;)
+
+    The downside is now we need disk space to hold 3 times the size of
+    the channel instead of 2 times the size of the channel, because at
+    some point we have all dump, dump.new and dump.backup all existing
+    at the same time.
+
+    Note: dump.new should always exist.
+
+    Params:
+        channel = name of dump file
+        root = path of dump files' directory
+        path = FilePath object used for file swapping
+        swap_path = FilePath object used for file swapping
+
+*******************************************************************************/
+
+public void swapNewAndBackupDumps ( char[] channel, FilePath root,
+    FilePath path, FilePath swap_path )
+{
+    buildFilePath(root, path, channel); // dump
+    swap_path.set(path).cat(BackupFileSuffix); // dump.backup
+
+    if ( swap_path.exists )
+    {
+        // 1. rm dump.backup
+        swap_path.remove();
+    }
+
+    if ( path.exists )
+    {
+        // 2. ln dump dump.backup
+        path.link(swap_path);
+    }
+
+    // 3. mv dump.new dump (new should always exist)
+    path.cat(NewFileSuffix); // dump.new
+    buildFilePath(root, swap_path, channel); // dump
+    path.rename(swap_path);
+}
 
 
 /*******************************************************************************
