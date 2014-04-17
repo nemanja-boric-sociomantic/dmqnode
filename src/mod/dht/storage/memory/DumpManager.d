@@ -44,6 +44,8 @@ private import ocean.io.Stdout;
 
 private import tango.util.log.Log;
 
+private import tango.io.model.IConduit : IOStream;
+
 
 
 /*******************************************************************************
@@ -58,6 +60,242 @@ static this ( )
     log = Log.lookup("src.mod.dht.storage.memory.DumpManager");
 }
 
+
+
+/*******************************************************************************
+
+    Dump file format version number.
+
+*******************************************************************************/
+
+public const ulong FileFormatVersion = 0;
+
+
+/*******************************************************************************
+
+    Dump file writer.
+
+*******************************************************************************/
+
+public class ChannelDumper
+{
+    /***************************************************************************
+
+        Output buffered direct I/O file, used to dump the channels.
+
+    ***************************************************************************/
+
+    private const BufferedDirectWriteFile output;
+
+
+    /***************************************************************************
+
+        Constructor.
+
+        Params:
+            buffer = buffer used by internal direct I/O writer
+
+    ***************************************************************************/
+
+    public this ( ubyte[] buffer )
+    {
+        this.output = new BufferedDirectWriteFile(null, buffer);
+    }
+
+
+    /***************************************************************************
+
+        Opens the dump file for writing and writes the file format version
+        number at the beginning.
+
+        Params:
+            path = path to open
+
+    ***************************************************************************/
+
+    public void open ( char[] path )
+    {
+        this.output.open(path);
+
+        SimpleSerializer.write(this.output, FileFormatVersion);
+    }
+
+
+    /***************************************************************************
+
+        Writes a record key/value to the file.
+
+        Params:
+            key = record key
+            value = record value
+
+    ***************************************************************************/
+
+    public void write ( char[] key, char[] value )
+    {
+        SimpleSerializer.write(this.output, key);
+        SimpleSerializer.write(this.output, value);
+    }
+
+
+    /***************************************************************************
+
+        Closes the dump file, writing the requisite end-of-file marker (an empty
+        string) at the end.
+
+    ***************************************************************************/
+
+    public void close ( )
+    {
+        const char[] end_of_file = "";
+        SimpleSerializer.write(this.output, end_of_file);
+
+        this.output.close();
+    }
+}
+
+
+
+/*******************************************************************************
+
+    Dump file reader.
+
+*******************************************************************************/
+
+public class ChannelLoader
+{
+    /***************************************************************************
+
+        Input buffered direct I/O file, used to load the channel dumps.
+
+    ***************************************************************************/
+
+    private const BufferedDirectReadFile input;
+
+
+    /***************************************************************************
+
+        Key and value read buffers.
+
+    ***************************************************************************/
+
+    private char[] load_key, load_value;
+
+
+    /***************************************************************************
+
+        File format version read from beginning of file. Stored so that it can
+        be quired by the user (see file_format_version(), below).
+
+    ***************************************************************************/
+
+    private ulong file_format_version_;
+
+
+    /***************************************************************************
+
+        Constructor.
+
+        Params:
+            buffer = buffer used by internal direct I/O reader
+
+    ***************************************************************************/
+
+    public this ( ubyte[] buffer )
+    {
+        this.input = new BufferedDirectReadFile(null, buffer);
+    }
+
+
+    /***************************************************************************
+
+        Opens the dump file for reading and reads the file format version number
+        at the beginning.
+
+        NOTE: in the old file format, the first 8 bytes actually store the
+        number of records contained in the file.
+
+        Params:
+            path = path to open
+
+    ***************************************************************************/
+
+    public void open ( char[] path )
+    {
+        this.input.open(path);
+
+        SimpleSerializer.read(input, this.file_format_version_);
+    }
+
+
+    /***************************************************************************
+
+        Returns:
+            the file format version number read when the file was opened
+
+    ***************************************************************************/
+
+    public ulong file_format_version ( )
+    {
+        return this.file_format_version_;
+    }
+
+
+    /***************************************************************************
+
+        Returns:
+            the number of bytes contained in the file, excluding the 8 byte file
+            format version number
+
+    ***************************************************************************/
+
+    public ulong length ( )
+    {
+        return (cast(File)this.input.conduit).length - this.file_format_version_.sizeof;
+    }
+
+
+    /***************************************************************************
+
+        foreach iterator over key/value pairs in the file. Reads until the user
+        delegate returns non-0 or a 0-length key is read from the file.
+
+    ***************************************************************************/
+
+    public int opApply ( int delegate ( ref char[] key, ref char[] value ) dg )
+    {
+        int res;
+
+        // Return true if we have to keep reading
+        bool readNextKey ( ref char[] key )
+        {
+            SimpleSerializer.read(this.input, key);
+            return key.length > 0;
+        }
+
+        while ( readNextKey(this.load_key) )
+        {
+            SimpleSerializer.read(this.input, this.load_value);
+
+            res = dg(this.load_key, this.load_value);
+            if ( res ) break;
+        }
+
+        return res;
+    }
+
+
+    /***************************************************************************
+
+        Closes the dump file.
+
+    ***************************************************************************/
+
+    public void close ( )
+    {
+        this.input.close();
+    }
+}
 
 
 /*******************************************************************************
@@ -121,7 +359,7 @@ public class DumpManager
 
     ***********************************************************************/
 
-    private const BufferedDirectWriteFile output;
+    private const ChannelDumper output;
 
 
     /***********************************************************************
@@ -130,7 +368,7 @@ public class DumpManager
 
     ***********************************************************************/
 
-    private const BufferedDirectReadFile input;
+    private const ChannelLoader input;
 
 
     /***********************************************************************
@@ -190,8 +428,8 @@ public class DumpManager
         this.dst_path = new FilePath;
 
         auto buffer = new ubyte[IOBufferSize];
-        this.output = new BufferedDirectWriteFile(null, buffer);
-        this.input = new BufferedDirectReadFile(null, buffer);
+        this.output = new ChannelDumper(buffer);
+        this.input = new ChannelLoader(buffer);
     }
 
 
@@ -237,7 +475,7 @@ public class DumpManager
             this.output.open(this.path.toString());
             scope (exit) this.output.close();
 
-            this.dumpToStream(storage, this.output, verbose);
+            this.dumpChannel(storage, this.output, verbose);
         }
 
         // Move dump.new -> dump and dump -> dump.backup as atomically as
@@ -251,7 +489,7 @@ public class DumpManager
 
     /***********************************************************************
 
-        Writes the contents of a storage engine to a stream.
+        Writes the contents of a storage engine to a file.
 
         THIS CODE IS A TRANSITION BETWEEN AND OLDER DUMP FORMAT AND A NEW ONE.
 
@@ -281,13 +519,13 @@ public class DumpManager
 
         Params:
             storage = DhtStorageEngine to dump
-            output = stream where to write the channel dump
+            output = file where to write the channel dump
             verbose = if true, print progrss on the dumping
 
     ***********************************************************************/
 
-    private void dumpToStream ( DhtStorageEngine storage, OutputStream output,
-            bool verbose = false )
+    private void dumpChannel ( DhtStorageEngine storage, ChannelDumper output,
+        bool verbose = false )
     {
         log.info("Dumping channel '{}' to disk", storage.id);
         if ( verbose )
@@ -299,9 +537,6 @@ public class DumpManager
         scope progress_manager = new ProgressManager("Dumped channel",
                 storage.id, storage.num_records, verbose);
 
-        // Write the transitional version number 0 (has to be ulong)
-        SimpleSerializer.write(output, 0LU);
-
         // Write records
         iterator.setStorage(storage);
         for ( storage.getAll(this.iterator); !this.iterator.lastKey();
@@ -309,15 +544,10 @@ public class DumpManager
         {
             // TODO: handle case where out of disk space
 
-            SimpleSerializer.write(output, this.iterator.key);
-            SimpleSerializer.write(output, this.iterator.value);
+            output.write(this.iterator.key, this.iterator.value);
 
             progress_manager.progress(1);
         }
-
-        // Write the end marker (which is the empty string that just broke the
-        // loop
-        SimpleSerializer.write(output, this.iterator.key);
 
         log.info("Finished dumping channel '{}' to disk, took {}s, "
             "wrote {} records, {} records in channel",
@@ -365,7 +595,7 @@ public class DumpManager
                 scope (exit) this.input.close();
 
                 auto channel = new_channel(this.dst_path.name.dup);
-                this.loadFromStream(channel, this.input);
+                this.loadChannel(channel, this.input);
             }
             else if ( this.path.suffix() == this.NewFileSuffix )
             {
@@ -393,7 +623,7 @@ public class DumpManager
 
     /***********************************************************************
 
-        Loads data from a previously dumped image from a stream.
+        Loads data from a previously dumped image from a file.
 
         THIS CODE IS A TRANSITION BETWEEN AND OLDER DUMP FORMAT AND A NEW ONE.
 
@@ -402,58 +632,39 @@ public class DumpManager
 
         Params:
             storage = channel storage to load the dump to
-            input = stream from where to read the channel dump
+            input = file from where to read the channel dump
 
     ***********************************************************************/
 
-    private void loadFromStream ( DhtStorageEngine storage, InputStream input )
+    private void loadChannel ( DhtStorageEngine storage, ChannelLoader input )
     {
         log.info("Loading channel '{}' from disk", storage.id);
         Stderr.formatln("Loading channel '{}' from disk", storage.id);
 
         scope progress_manager = new ProgressManager("Loaded channel",
-                    storage.id, (cast(File) input.conduit).length);
-
-        // Read the file format version (new format) / number of records (old
-        // format)
-        ulong file_format_version;
-        auto read = SimpleSerializer.read(input, file_format_version);
-
-        progress_manager.progress(read);
+                    storage.id, this.input.length);
 
         // Just to avoid confusion, will go away after the transition.
-        ulong num_records = file_format_version;
+        ulong num_records = this.input.file_format_version;
         if ( num_records > 0 )
         {
             log.info("File is in old, versionless format");
         }
 
-        // Return true if we have to keep reading
-        static bool readNextKey(InputStream input, ref char[] key,
-                ProgressManager progress_manager)
-        {
-            auto read = SimpleSerializer.read(input, key);
-
-            progress_manager.progress(read);
-
-            return key.length > 0;
-        }
-
         ulong records_read;
-        while (readNextKey(input, this.load_key, progress_manager))
+        foreach ( k, v; this.input )
         {
+            records_read++;
+
             // This will go after the transition!
             if (num_records > 0 && records_read == num_records)
             {
                 break;
             }
 
-            read = SimpleSerializer.read(input, this.load_value);
+            progress_manager.progress(k.length + v.length);
 
-            progress_manager.progress(read);
-            records_read++;
-
-            storage.put(this.load_key, this.load_value);
+            storage.put(k, v);
         }
 
         // This will go after the transition!
