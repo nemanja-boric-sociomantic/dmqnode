@@ -34,13 +34,9 @@ private import ocean.util.log.StaticTrace;
 
 private import tango.time.StopWatch;
 
-private import tango.io.model.IConduit : InputStream, OutputStream;
-
 private import ocean.io.Stdout;
 
 private import tango.util.log.Log;
-
-private import tango.io.model.IConduit : IOStream;
 
 
 
