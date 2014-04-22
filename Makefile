@@ -6,6 +6,9 @@ include submodules/ocean/script/common.mk
 DHT_SOURCE = src/main/dhtnode.d
 DHT_TARGET = bin/dhtnode
 
+DHTDUMP_SOURCE = src/main/dhtdump.d
+DHTDUMP_TARGET = bin/dhtdump
+
 LOG_SOURCE = src/main/dhtnode.d
 LOG_TARGET = bin/logfilesnode
 
@@ -25,6 +28,10 @@ DHT_FLAGS =\
 	$(FLAGS)\
     -L-ltokyocabinet
 
+DHTDUMP_FLAGS =\
+	$(FLAGS)\
+	-L-lebtree
+
 LOG_FLAGS =\
 	$(FLAGS)\
     -L-ltokyocabinet
@@ -42,10 +49,10 @@ DEBUG_FLAGS =\
 # ------------------------------------------------------------------------------
 # Debug build of all targets (default)
 
-.PHONY: default all clean revision dht dht-release log log-release queue-release queue
+.PHONY: default all clean revision dht dht-release dhtdump dhtdump-releaese log log-release queue-release queue
 
-debug: dht log queue
-production: dht-release log-release queue-release
+debug: dht dhtdump log queue
+production: dht-release dhtdump-release log-release queue-release
 
 
 # ------------------------------------------------------------------------------
@@ -56,6 +63,12 @@ dht: revision
 
 dht-release: revision
 	xfbuild +D=.deps-$@ +O=.objs-$@ +o=${DHT_TARGET} ${XFBUILD_DEFAULT_FLAGS} ${DHT_FLAGS} ${RELEASE_FLAGS} ${DHT_SOURCE}
+
+dhtdump: revision
+	xfbuild +D=.deps-$@ +O=.objs-$@ +o=${DHTDUMP_TARGET} ${XFBUILD_DEFAULT_FLAGS} ${DHTDUMP_FLAGS} ${DEBUG_FLAGS} ${DHTDUMP_SOURCE}
+
+dhtdump-release: revision
+	xfbuild +D=.deps-$@ +O=.objs-$@ +o=${DHTDUMP_TARGET} ${XFBUILD_DEFAULT_FLAGS} ${DHTDUMP_FLAGS} ${RELEASE_FLAGS} ${DHTDUMP_SOURCE}
 
 log: revision
 	xfbuild +D=.deps-$@ +O=.objs-$@ +o=${LOG_TARGET} ${XFBUILD_DEFAULT_FLAGS} ${LOG_FLAGS} ${DEBUG_FLAGS} ${LOG_SOURCE}
@@ -73,4 +86,4 @@ queue-release: revision
 # Cleanup
 
 clean:
-	$(RM) -r .objs-* .deps-* $(DHT_TARGET) $(LOG_TARGET) $(QUEUE_TARGET)
+	$(RM) -r .objs-* .deps-* $(DHT_TARGET) $(DHTDUMP_TARGET) $(LOG_TARGET) $(QUEUE_TARGET)
