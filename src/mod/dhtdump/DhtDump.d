@@ -151,6 +151,7 @@ public class DhtDump : VersionedLoggedStatsCliApp
         char[] data_dir = "data";
         uint period_s = 60 * 60 * 4;
         uint min_wait_s = 60;
+        uint retry_wait_s = 30;
     }
 
     private DumpConfig dump_config;
@@ -209,7 +210,8 @@ public class DhtDump : VersionedLoggedStatsCliApp
             StopWatch time;
             time.start;
 
-            auto channels = this.getChannels();
+            bool error;
+            auto channels = this.getChannels(error);
 
             log.info("Dumping {} channels", channels.length);
 
@@ -220,7 +222,7 @@ public class DhtDump : VersionedLoggedStatsCliApp
                 log.info("Dumping '{}'", channel);
 
                 ulong records, bytes;
-                this.dumpChannel(channel, records, bytes);
+                this.dumpChannel(channel, records, bytes, error);
 
                 // Move 'channel' -> 'channel.backup' and 'channel.dumping' ->
                 // 'channel' as atomically as possible
@@ -231,7 +233,7 @@ public class DhtDump : VersionedLoggedStatsCliApp
                     records, bytes, (time.microsec - start) / 1_000_000f);
             }
 
-            this.wait(time.microsec);
+            this.wait(time.microsec, error);
         }
 
         return true;
@@ -255,12 +257,16 @@ public class DhtDump : VersionedLoggedStatsCliApp
 
         Connects to the dht node and queries the list of channels it contains.
 
+        Params:
+            error = set to true if an error occurs while getting the list of
+                channels
+
         Returns:
             list of dht channels
 
     ***************************************************************************/
 
-    private char[][] getChannels ( )
+    private char[][] getChannels ( ref bool error )
     {
         log.info("Getting list of channels");
         scope ( exit ) log.info("Got list of channels: {}", this.channels);
@@ -280,7 +286,12 @@ public class DhtDump : VersionedLoggedStatsCliApp
 
         void notifier ( DhtClient.RequestNotification info )
         {
-            // TODO: error handling
+            if ( info.type == info.type.Finished && !info.succeeded )
+            {
+                log.error("DhtClient error during GetChannels: {}",
+                    info.message(this.dht.msg_buf));
+                error = true;
+            }
         }
 
         this.channels.length = 0;
@@ -299,11 +310,13 @@ public class DhtDump : VersionedLoggedStatsCliApp
             channel = name of the channel to dump
             records = out value which returns the number of records dumped
             bytes = out value which returns the number of bytes dumped
+            error = set to true if an error occurs while getting the list of
+                channels
 
     ***************************************************************************/
 
     private void dumpChannel ( char[] channel, out ulong records,
-        out ulong bytes )
+        out ulong bytes, ref bool error )
     {
         void get_dg ( DhtClient.RequestContext, char[] key, char[] value )
         {
@@ -317,7 +330,12 @@ public class DhtDump : VersionedLoggedStatsCliApp
 
         void notifier ( DhtClient.RequestNotification info )
         {
-            // TODO: error handling
+            if ( info.type == info.type.Finished && !info.succeeded )
+            {
+                log.error("DhtClient error during GetAll: {}",
+                    info.message(this.dht.msg_buf));
+                error = true;
+            }
         }
 
         buildFilePath(this.root, this.path, channel).cat(NewFileSuffix);
@@ -372,20 +390,31 @@ public class DhtDump : VersionedLoggedStatsCliApp
             microsec_active = the time (in microseconds) that the dump procedure
                 took. This is subtracted from the configured period to calculate
                 the wait time
+            error = indicates whether a dht error occurred during the last dump
+                cycle
 
     ***************************************************************************/
 
-    private void wait ( ulong microsec_active )
+    private void wait ( ulong microsec_active, bool error )
     {
-        auto wait = this.dump_config.period_s - (microsec_active / 1_000_000f);
-        if ( wait < this.dump_config.min_wait_s )
+        double wait;
+        if ( error )
         {
-            log.warn("Calculated wait time too short -- either the "
-                "channel dump took an unusually long time, or the "
-                "dump period is set too low in config.ini.");
-            wait = this.dump_config.min_wait_s;
+            wait = this.dump_config.retry_wait_s;
+            log.warn("Dump not completed successfully. Retrying in {}s", wait);
         }
-        log.info("Finished dumping channels, sleeping for {}s", wait);
+        else
+        {
+            wait = this.dump_config.period_s - (microsec_active / 1_000_000f);
+            if ( wait < this.dump_config.min_wait_s )
+            {
+                log.warn("Calculated wait time too short -- either the "
+                    "channel dump took an unusually long time, or the "
+                    "dump period is set too low in config.ini.");
+                wait = this.dump_config.min_wait_s;
+            }
+            log.info("Finished dumping channels, sleeping for {}s", wait);
+        }
         Thread.sleep(wait);
     }
 }
