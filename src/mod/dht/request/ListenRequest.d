@@ -32,7 +32,7 @@ private import src.mod.dht.storage.model.DhtStorageEngine;
 
 private import ocean.core.Array : copy, pop; // TODO: copy not used?
 
-private import ocean.io.select.event.FiberSelectEvent;
+private import ocean.io.select.client.FiberSelectEvent;
 
 private import tango.util.log.Log;
 

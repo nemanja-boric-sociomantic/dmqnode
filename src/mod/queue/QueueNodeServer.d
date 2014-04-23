@@ -45,8 +45,8 @@ private import ocean.core.MessageFiber;
 
 private import ocean.io.select.EpollSelectDispatcher;
 private import ocean.io.select.protocol.generic.ErrnoIOException : IOWarning;
-private import ocean.io.select.event.SignalEvent;
-private import ocean.io.select.model.ISelectClient;
+private import ocean.io.select.client.SignalEvent;
+private import ocean.io.select.client.model.ISelectClient;
 
 private import ocean.util.app.LoggedCliApp;
 private import ocean.util.app.ext.VersionArgsExt;

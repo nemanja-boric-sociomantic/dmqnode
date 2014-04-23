@@ -22,7 +22,7 @@ module src.core.periodic.model.IPeriodic;
 
 *******************************************************************************/
 
-private import ocean.io.select.event.TimerEvent;
+private import ocean.io.select.client.TimerEvent;
 
 private import ocean.io.select.EpollSelectDispatcher;
 

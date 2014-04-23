@@ -42,9 +42,9 @@ private import ConfigReader = ocean.util.config.ClassFiller;
 
 private import ocean.io.select.EpollSelectDispatcher;
 
-private import ocean.io.select.model.ISelectClient;
+private import ocean.io.select.client.model.ISelectClient;
 
-private import ocean.io.select.event.SignalEvent;
+private import ocean.io.select.client.SignalEvent;
 
 private import ocean.io.Stdout;
 

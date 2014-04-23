@@ -30,7 +30,7 @@ module src.mod.dht.connection.SharedResources;
 
 private import swarm.core.common.connection.ISharedResources;
 
-public import ocean.io.select.event.FiberSelectEvent;
+public import ocean.io.select.client.FiberSelectEvent;
 
 public import swarm.core.common.request.helper.LoopCeder;
 

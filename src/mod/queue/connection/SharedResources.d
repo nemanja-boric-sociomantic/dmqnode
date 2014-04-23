@@ -34,7 +34,7 @@ public import swarm.core.common.request.helper.LoopCeder;
 
 public import swarm.core.protocol.StringListReader;
 
-public import ocean.io.select.event.FiberSelectEvent;
+public import ocean.io.select.client.FiberSelectEvent;
 
 
 

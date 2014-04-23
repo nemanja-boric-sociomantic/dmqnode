@@ -37,7 +37,7 @@ private import src.mod.dht.request.model.IChannelRequest;
 
 private import src.mod.dht.storage.model.IStepIterator;
 
-private import ocean.io.select.event.FiberSelectEvent;
+private import ocean.io.select.client.FiberSelectEvent;
 
 debug private import ocean.util.log.Trace;
 
