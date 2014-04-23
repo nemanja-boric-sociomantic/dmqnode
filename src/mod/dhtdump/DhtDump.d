@@ -310,8 +310,7 @@ public class DhtDump : VersionedLoggedStatsCliApp
             channel = name of the channel to dump
             records = out value which returns the number of records dumped
             bytes = out value which returns the number of bytes dumped
-            error = set to true if an error occurs while getting the list of
-                channels
+            error = set to true if an error occurs while dumping
 
     ***************************************************************************/
 
