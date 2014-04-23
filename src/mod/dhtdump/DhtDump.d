@@ -381,10 +381,33 @@ public class DhtDump : VersionedLoggedStatsCliApp
     private void finalizeChannel ( char[] filepath, char[] channel,
         ulong records, ulong bytes, bool error, ulong dump_microsec )
     {
-        // Move 'channel' -> 'channel.backup' and 'channel.dumping' ->
-        // 'channel' as atomically as possible
-        swapNewAndBackupDumps(filepath, channel, this.root, this.path,
-            this.swap_path);
+        void removeDumpFile ( )
+        {
+            this.path.set(filepath);
+            this.path.remove();
+        }
+
+        if ( error )
+        {
+            // Delete partial 'channel.dumping' file
+            log.warn("Removing partial dump file '{}'", this.path);
+            removeDumpFile();
+        }
+        else if ( records == 0 )
+        {
+            // If there are no records in the channel, then delete the
+            // 'channel.dumping' file
+            assert(bytes == 0, "channel dump bytes/records mismatch");
+            log.info("Removing empty dump file '{}'", this.path);
+            removeDumpFile();
+        }
+        else
+        {
+            // Move 'channel' -> 'channel.backup' and 'channel.dumping' ->
+            // 'channel' as atomically as possible
+            swapNewAndBackupDumps(filepath, channel, this.root, this.path,
+                this.swap_path);
+        }
 
         log.info("Finished dumping '{}', {} records, {} bytes, {}s{}", channel,
             records, bytes, dump_microsec / 1_000_000f,
