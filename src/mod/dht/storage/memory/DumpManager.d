@@ -313,9 +313,9 @@ public class DumpManager
             if ( info.folder )
             {
                 log.warn("Ignoring subdirectory '{}' in data directory {}",
-                        path.name, this.root_dir.toString);
+                        path, this.root_dir.toString);
                 Stderr.formatln("Ignoring subdirectory '{}' in data directory {}",
-                        path.name, this.root_dir.toString);
+                        path, this.root_dir.toString);
                 continue;
             }
 
@@ -338,19 +338,19 @@ public class DumpManager
                 log.warn("{}: Unfinished dump file found while scanning "
                         "directory '{}', the program was probably "
                         "restarted uncleanly and data might be old",
-                        this.path.name, this.root_dir.toString);
+                        this.path, this.root_dir.toString);
                 Stderr.formatln("{}: Unfinished dump file found while scanning "
                         "directory '{}', the program was probably "
                         "restarted uncleanly and data might be old",
-                        this.path.name, this.root_dir.toString);
+                        this.path, this.root_dir.toString);
             }
             else if ( this.path.suffix() != BackupFileSuffix )
             {
                 log.warn("{}: Ignoring file while scanning directory '{}' "
-                        "(no '{}' suffix)", this.path.name,
+                        "(no '{}' suffix)", this.path,
                         this.root_dir.toString, DumpFileSuffix);
                 Stderr.formatln("{}: Ignoring file while scanning directory "
-                        "'{}' (no '{}' suffix)", this.path.name,
+                        "'{}' (no '{}' suffix)", this.path,
                         this.root_dir.toString, DumpFileSuffix);
             }
         }
