@@ -313,9 +313,9 @@ public class DumpManager
             if ( info.folder )
             {
                 log.warn("Ignoring subdirectory '{}' in data directory {}",
-                        path, this.root_dir.toString);
+                        info.name, this.root_dir.toString);
                 Stderr.formatln("Ignoring subdirectory '{}' in data directory {}",
-                        path, this.root_dir.toString);
+                        info.name, this.root_dir.toString);
                 continue;
             }
 
