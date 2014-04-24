@@ -26,6 +26,22 @@ private import ocean.io.serialize.SimpleSerializer;
 
 private import tango.io.device.File;
 
+private import tango.util.log.Log;
+
+
+
+/*******************************************************************************
+
+    Static module logger
+
+*******************************************************************************/
+
+private Logger log;
+static this ( )
+{
+    log = Log.lookup("src.mod.dht.storage.memory.DumpFile");
+}
+
 
 
 /*******************************************************************************
@@ -140,18 +156,21 @@ public void swapNewAndBackupDumps ( char[] dumped_path, char[] channel,
     {
         // 1. rm dump.backup
         swap_path.remove();
+        log.trace("Removed '{}'", swap_path);
     }
 
     if ( path.exists )
     {
         // 2. ln dump dump.backup
         path.link(swap_path);
+        log.trace("Linked '{}' -> '{}'", path, swap_path);
     }
 
     // 3. mv dump.new dump (new should always exist)
     path.set(dumped_path); // dump.new
     buildFilePath(root, swap_path, channel); // dump
     path.rename(swap_path);
+    log.trace("Moved '{}' -> '{}'", dumped_path, swap_path);
 }
 
 
