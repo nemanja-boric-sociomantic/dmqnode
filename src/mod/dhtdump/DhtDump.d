@@ -20,7 +20,7 @@ private import Version;
 
 private import src.mod.dht.storage.memory.DumpFile;
 
-private import ocean.core.Array : appendCopy;
+private import ocean.core.Array : appendCopy, copy;
 
 private import ocean.io.FilePath;
 
@@ -125,6 +125,15 @@ public class DhtDump : VersionedLoggedStatsCliApp
     private ChannelDumper file;
 
 
+    /***********************************************************************
+
+        Path of temporary file being dumped to.
+
+    ***********************************************************************/
+
+    private char[] dump_path;
+
+
     /***************************************************************************
 
         Dht settings, read from config file
@@ -217,20 +226,10 @@ public class DhtDump : VersionedLoggedStatsCliApp
 
             foreach ( channel; channels )
             {
-                auto start = time.microsec;
-
                 log.info("Dumping '{}'", channel);
 
                 ulong records, bytes;
                 this.dumpChannel(channel, records, bytes, error);
-
-                // Move 'channel' -> 'channel.backup' and 'channel.dumping' ->
-                // 'channel' as atomically as possible
-                swapNewAndBackupDumps(channel, this.root, this.path,
-                    this.swap_path);
-
-                log.info("Finished dumping '{}', {} records, {} bytes, {}s", channel,
-                    records, bytes, (time.microsec - start) / 1_000_000f);
             }
 
             this.wait(time.microsec, error);
@@ -345,14 +344,51 @@ public class DhtDump : VersionedLoggedStatsCliApp
                 "Seems like the dumper crashed.", this.path);
         }
 
-        // If there are no records in the databse, then nothing to save.
-        // TODO: not sure if this is strictly required
+        StopWatch time;
+        time.start;
 
-        this.file.open(this.path.toString);
-        scope ( exit ) this.file.close();
+        // Dump channel to file
+        {
+            this.file.open(this.path.toString);
+            scope ( exit ) this.file.close();
 
-        this.dht.assign(this.dht.getAll(channel, &get_dg, &notifier));
-        this.epoll.eventLoop();
+            this.dump_path.copy(this.file.path);
+
+            this.dht.assign(this.dht.getAll(channel, &get_dg, &notifier));
+            this.epoll.eventLoop();
+        }
+
+        this.finalizeChannel(this.dump_path, channel, records, bytes, error,
+            time.microsec);
+    }
+
+
+    /***************************************************************************
+
+        Rotates current and backup dump files and cleans up intermediary dump
+        files.
+
+        Params:
+            filepath = file which channel was dumped to
+            channel = name of the channel which was dumped
+            records = number of records dumped
+            bytes = number of bytes dumped
+            error = true if an error occurred while dumping
+            dump_microsec = time taken to dump the channel, in microseconds
+
+    ***************************************************************************/
+
+    private void finalizeChannel ( char[] filepath, char[] channel,
+        ulong records, ulong bytes, bool error, ulong dump_microsec )
+    {
+        // Move 'channel' -> 'channel.backup' and 'channel.dumping' ->
+        // 'channel' as atomically as possible
+        swapNewAndBackupDumps(filepath, channel, this.root, this.path,
+            this.swap_path);
+
+        log.info("Finished dumping '{}', {} records, {} bytes, {}s{}", channel,
+            records, bytes, dump_microsec / 1_000_000f,
+            error ? " [error]" : "");
     }
 
 

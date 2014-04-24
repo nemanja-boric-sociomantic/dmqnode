@@ -28,6 +28,8 @@ private import src.mod.dht.storage.model.IStepIterator;
 
 private import src.mod.dht.storage.memory.DumpFile;
 
+private import ocean.core.Array : copy;
+
 private import ocean.io.FilePath;
 
 private import ocean.util.log.StaticTrace;
@@ -114,6 +116,15 @@ public class DumpManager
 
     /***********************************************************************
 
+        Path of temporary file being dumped to.
+
+    ***********************************************************************/
+
+    private char[] dump_path;
+
+
+    /***********************************************************************
+
         Root directory used to look for files and write dump files.
 
     ***********************************************************************/
@@ -185,14 +196,6 @@ public class DumpManager
     {
         buildFilePath(this.root_dir, this.path, storage.id).cat(NewFileSuffix);
 
-        if ( this.path.exists() )
-        {
-            log.warn("{}: OVERWRITING an old, unfinished dump file! "
-                "Seems like the node wasn't properly shut down.", this.path);
-            Stderr.formatln("{}: OVERWRITING an old, unfinished dump file! "
-                "Seems like the node wasn't properly shut down.", this.path);
-        }
-
         // If there are no records in the databse, then nothing to save.
         if ( storage.num_records == 0 )
         {
@@ -205,13 +208,15 @@ public class DumpManager
             this.output.open(this.path.toString());
             scope (exit) this.output.close();
 
+            this.dump_path.copy(this.output.path);
+
             this.dumpChannel(storage, this.output, verbose);
         }
 
         // Move dump.new -> dump and dump -> dump.backup as atomically as
         // possible
-        swapNewAndBackupDumps(storage.id, this.root_dir, this.path,
-            this.dst_path);
+        swapNewAndBackupDumps(this.dump_path, storage.id, this.root_dir,
+            this.path, this.dst_path);
 
         log.info("Finished channel dump write and backup, {} bytes written",
             buildFilePath(this.root_dir, this.path, storage.id).fileSize());

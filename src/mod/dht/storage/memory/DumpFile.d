@@ -16,6 +16,8 @@ module src.mod.dht.storage.memory.DumpFile;
 
 *******************************************************************************/
 
+private import src.mod.dht.storage.memory.DirectIO;
+
 private import ocean.io.device.DirectIO;
 
 private import ocean.io.FilePath;
@@ -120,6 +122,7 @@ public FilePath buildFilePath ( FilePath root, FilePath path, char[] channel )
     Note: dump.new should always exist.
 
     Params:
+        dumped_path = path of the file to which the dump was written (dump.new)
         channel = name of dump file
         root = path of dump files' directory
         path = FilePath object used for file swapping
@@ -127,8 +130,8 @@ public FilePath buildFilePath ( FilePath root, FilePath path, char[] channel )
 
 *******************************************************************************/
 
-public void swapNewAndBackupDumps ( char[] channel, FilePath root,
-    FilePath path, FilePath swap_path )
+public void swapNewAndBackupDumps ( char[] dumped_path, char[] channel,
+    FilePath root, FilePath path, FilePath swap_path )
 {
     buildFilePath(root, path, channel); // dump
     swap_path.set(path).cat(BackupFileSuffix); // dump.backup
@@ -146,7 +149,7 @@ public void swapNewAndBackupDumps ( char[] channel, FilePath root,
     }
 
     // 3. mv dump.new dump (new should always exist)
-    path.cat(NewFileSuffix); // dump.new
+    path.set(dumped_path); // dump.new
     buildFilePath(root, swap_path, channel); // dump
     path.rename(swap_path);
 }
@@ -166,7 +169,7 @@ public class ChannelDumper
 
     ***************************************************************************/
 
-    private const BufferedDirectWriteFile output;
+    private const BufferedDirectWriteTempFile output;
 
 
     /***************************************************************************
@@ -180,7 +183,7 @@ public class ChannelDumper
 
     public this ( ubyte[] buffer )
     {
-        this.output = new BufferedDirectWriteFile(null, buffer);
+        this.output = new BufferedDirectWriteTempFile(null, buffer);
     }
 
 
@@ -201,6 +204,18 @@ public class ChannelDumper
         SimpleSerializer.write(this.output, FileFormatVersion);
     }
 
+
+    /***************************************************************************
+
+        Returns:
+            the path of the open file
+
+    ***************************************************************************/
+
+    public char[] path ( )
+    {
+        return this.output.path();
+    }
 
     /***************************************************************************
 
