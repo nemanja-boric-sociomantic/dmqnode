@@ -163,15 +163,17 @@ public class LogFilesStorageChannels : DhtStorageChannels
 
             Params:
                 id = identifier string for this instance
+                min_hash = minimum hash for which node is responsible
+                max_hash = maximum hash for which node is responsible
 
         ***********************************************************************/
 
-        public this ( char[] id )
+        public this ( char[] id, hash_t min_hash, hash_t max_hash )
         {
             this.log_record_put = new LogRecordPut("",
                 this.outer.write_buffer_size);
 
-            super(id);
+            super(id, min_hash, max_hash);
         }
 
 
@@ -772,14 +774,16 @@ public class LogFilesStorageChannels : DhtStorageChannels
             dir = data directory for logfiles
             size_limit = maximum number of bytes allowed in the node (0 = no
                 limit)
+            min_hash = minimum hash for which node is responsible
+            max_hash = maximum hash for which node is responsible
             write_buffer_size = size in bytes of file write buffer
 
     ***************************************************************************/
 
-    public this ( char[] dir, ulong size_limit, size_t write_buffer_size
-     = DefaultWriteBufferSize )
+    public this ( char[] dir, ulong size_limit, hash_t min_hash, hash_t max_hash,
+        size_t write_buffer_size = DefaultWriteBufferSize )
     {
-        super(dir, size_limit);
+        super(dir, size_limit, min_hash, max_hash);
 
         this.write_buffer_size = write_buffer_size;
 
@@ -848,7 +852,7 @@ public class LogFilesStorageChannels : DhtStorageChannels
 
     protected override DhtStorageEngine create_ ( char[] id )
     {
-        return new LogFiles(id);
+        return new LogFiles(id, this.min_hash, this.max_hash);
     }
 
 

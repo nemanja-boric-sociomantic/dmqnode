@@ -163,14 +163,17 @@ public class MemoryStorageChannels : DhtStorageChannels
             dir = data directory for dumped memory channels
             size_limit = maximum number of bytes allowed in the node (0 = no
                 limit)
+            min_hash = minimum hash for which node is responsible
+            max_hash = maximum hash for which node is responsible
             bnum = estimated number of buckets in map (passed to tokyocabinet
                 "ctor")
 
     ***************************************************************************/
 
-    public this ( char[] dir, ulong size_limit, uint bnum )
+    public this ( char[] dir, ulong size_limit, hash_t min_hash, hash_t max_hash,
+        uint bnum )
     {
-        super(dir, size_limit);
+        super(dir, size_limit, min_hash, max_hash);
 
         this.bnum = bnum;
 
@@ -313,7 +316,8 @@ public class MemoryStorageChannels : DhtStorageChannels
 
     protected override DhtStorageEngine create_ ( char[] id )
     {
-        return new MemoryStorage(id, this.bnum, &this.dump_manager.deleteChannel);
+        return new MemoryStorage(id, this.min_hash, this.max_hash, this.bnum,
+                &this.dump_manager.deleteChannel);
     }
 
 

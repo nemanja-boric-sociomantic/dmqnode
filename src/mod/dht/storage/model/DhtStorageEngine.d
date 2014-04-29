@@ -38,6 +38,7 @@ private import swarm.core.node.storage.listeners.Listeners;
 private import src.mod.dht.storage.model.IStepIterator;
 
 private import swarm.dht.DhtConst;
+private import swarm.dht.DhtHash;
 
 private import ocean.core.Array : copy, append;
 
@@ -86,20 +87,54 @@ abstract public class DhtStorageEngine : IStorageEngine
 
     /***************************************************************************
 
+        Minimum and maximum record hashes supported by node
+
+    ***************************************************************************/
+
+    protected const hash_t min_hash, max_hash;
+
+
+    /***************************************************************************
+
         Constructor
 
         Params:
             id = identifier string for this instance
+            min_hash = minimum hash for which this node is responsible
+            max_hash = maximum hash for which this node is responsible
 
      **************************************************************************/
 
-    protected this ( char[] id )
+    protected this ( char[] id, hash_t min_hash, hash_t max_hash )
     {
         super(id);
 
         this.listeners = new Listeners;
 
         this.not_implemented_exception = new NotImplementedException;
+
+        this.min_hash = min_hash;
+        this.max_hash = max_hash;
+    }
+
+
+    /***************************************************************************
+
+        Checks whether the specified key string (expected to be a hex number) is
+        within the hash range of this storage engine.
+
+        Params:
+            key = record key
+
+        Returns:
+            true if the key is within the storage engine's hash range
+
+    ***************************************************************************/
+
+    public bool responsibleForKey ( char[] key )
+    {
+        auto hash = DhtHash.straightToHash(key);
+        return hash >= this.min_hash && hash <= this.max_hash;
     }
 
 

@@ -64,6 +64,15 @@ abstract public class DhtStorageChannels :
 
     /***************************************************************************
 
+        Minimum and maximum record hashes supported by node
+
+    ***************************************************************************/
+
+    protected const hash_t min_hash, max_hash;
+
+
+    /***************************************************************************
+
         Constructor. Creates storage data directory if it doesn't already exist.
 
         The channels should be loaded (loadChannels()) by the children classes
@@ -73,10 +82,12 @@ abstract public class DhtStorageChannels :
             dir = storage data directory
             size_limit = maximum number of bytes allowed in the node (0 = no
                 limit)
+            min_hash = minimum hash for which this node is responsible
+            max_hash = maximum hash for which this node is responsible
 
     ***************************************************************************/
 
-    public this ( char[] dir, ulong size_limit )
+    public this ( char[] dir, ulong size_limit, hash_t min_hash, hash_t max_hash )
     {
         super(size_limit);
 
@@ -86,6 +97,9 @@ abstract public class DhtStorageChannels :
         {
             this.createWorkingDir();
         }
+
+        this.min_hash = min_hash;
+        this.max_hash = max_hash;
     }
 
 

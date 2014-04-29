@@ -93,7 +93,7 @@ public class LogfilesDhtNode : IDhtNode
     protected DhtStorageChannels newStorageChannels_ ( )
     {
         return new LogFilesStorageChannels(this.server_config.data_dir, 0,
-            this.logfiles_config.write_buffer_size);
+            this.logfiles_config.write_buffer_size, this.min_hash, this.max_hash);
             // TODO: the size_limit of 0 is ignored by the logfiles storage
             // channels -- remove this parameter altogether
     }
