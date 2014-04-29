@@ -64,7 +64,7 @@ abstract public class DhtStorageChannels :
 
     /***************************************************************************
 
-        Constructor. Creates it if it doesn't already exist.
+        Constructor. Creates storage data directory if it doesn't already exist.
 
         The channels should be loaded (loadChannels()) by the children classes
         after everything is properly initialised.
