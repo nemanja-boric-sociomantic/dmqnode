@@ -48,10 +48,6 @@ private import PathUtil = tango.io.Path : normalize;
 
     StorageChannels class.
 
-    Implements all methods required by:
-        1. src.mod.dht.storage.model.IStorageChannels
-        2. src.mod.dht.storage.model.IStorageChannelsService
-
 *******************************************************************************/
 
 abstract public class DhtStorageChannels :
