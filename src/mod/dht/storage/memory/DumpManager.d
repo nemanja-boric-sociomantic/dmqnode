@@ -331,7 +331,7 @@ public class DumpManager
                 scope (exit) this.input.close();
 
                 auto channel = new_channel(this.dst_path.name.dup);
-                this.loadChannel(channel, this.input);
+                this.loadChannel(channel, this.input, true);
             }
             else if ( this.path.suffix() == NewFileSuffix )
             {
@@ -369,10 +369,20 @@ public class DumpManager
         Params:
             storage = channel storage to load the dump to
             input = file from where to read the channel dump
+            allow_out_of_range = determines whether out-of-range records (i.e.
+                those whose keys are not in the range of hashes supported by the
+                node) are loaded (true) or rejected (false). If such records are
+                allowed, they will be logged at trace level. If they are
+                disallowed, an exception will be thrown, aborting the process.
+
+        Throws:
+            if allow_out_of_range == false and an out-of-range record is
+            encountered while loading the input file
 
     ***********************************************************************/
 
-    private void loadChannel ( DhtStorageEngine storage, ChannelLoader input )
+    private void loadChannel ( DhtStorageEngine storage, ChannelLoader input,
+        bool allow_out_of_range )
     {
         log.info("Loading channel '{}' from disk", storage.id);
         Stderr.formatln("Loading channel '{}' from disk", storage.id);
@@ -388,6 +398,7 @@ public class DumpManager
         }
 
         ulong records_read;
+        ulong out_of_range;
         foreach ( k, v; this.input )
         {
             // This will go after the transition!
@@ -400,7 +411,10 @@ public class DumpManager
 
             progress_manager.progress(k.length + v.length);
 
-            storage.put(k, v);
+            if ( !this.loadRecord(storage, k, v, allow_out_of_range) )
+            {
+                out_of_range++;
+            }
         }
 
         // This will go after the transition!
@@ -413,11 +427,72 @@ public class DumpManager
                     "loading dump file.");
         }
 
+        if ( out_of_range )
+        {
+            auto percent_out_of_range =
+                (cast(float)out_of_range / cast(float)records_read) * 100.0;
+            log.warn("Loaded {} out-of-range keys ({}%) from channel '{}'",
+                out_of_range, percent_out_of_range, storage.id);
+            Stderr.red.formatln("Loaded {} out-of-range keys ({}%) from channel '{}'",
+                out_of_range, percent_out_of_range, storage.id).default_colour;
+        }
+
         log.info("Finished loading channel '{}' from disk, took {}s, "
             "read {} bytes (file size including padding is {} bytes), "
             "{} records in channel", storage.id, progress_manager.elapsed,
             progress_manager.current, progress_manager.maximum,
             storage.num_records);
+    }
+
+
+    /***************************************************************************
+
+        Loads a record into the specified storage channel. Checks whether the
+        record is within the hash range of the storage engine.
+
+        Params:
+            storage = channel storage to load the record into
+            key = record key
+            val = record value
+            allow_out_of_range = determines whether out-of-range records (i.e.
+                those whose keys are not in the range of hashes supported by the
+                node) are loaded (true) or rejected (false). If such records are
+                allowed, they will be logged at trace level. If they are
+                disallowed, an exception will be thrown, aborting the process.
+
+        Returns:
+            true if the record was loaded or false if it was out-of-range
+
+        Throws:
+            if allow_out_of_range == false and the record is out-of-range
+
+    ***************************************************************************/
+
+    private bool loadRecord ( DhtStorageEngine storage, char[] key, char[] val,
+        bool allow_out_of_range )
+    {
+        if ( storage.responsibleForKey(key) )
+        {
+            storage.put(key, val);
+            return true;
+        }
+        else
+        {
+            if ( allow_out_of_range )
+            {
+                log.trace("Encountered out-of-range key in channel '{}': {} -- loaded",
+                    storage.id, key);
+                storage.put(key, val);
+                return false;
+            }
+            else
+            {
+                log.fatal("Encountered out-of-range key in channel '{}': {} -- rejected",
+                    storage.id, key);
+                throw new Exception("Encountered out-of-range key in channel '"
+                    ~ storage.id ~ "': " ~ key);
+            }
+        }
     }
 
 
