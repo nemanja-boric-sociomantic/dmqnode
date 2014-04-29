@@ -169,7 +169,7 @@ public class LogFilesStorageChannels : DhtStorageChannels
         public this ( char[] id )
         {
             this.log_record_put = new LogRecordPut("",
-                this.outer.args.write_buffer_size);
+                this.outer.write_buffer_size);
 
             super(id);
         }
@@ -755,22 +755,11 @@ public class LogFilesStorageChannels : DhtStorageChannels
 
     /***************************************************************************
 
-        Logfiles storage channels setup arguments (passed to constructor)
+        Logfile write buffer size in bytes
 
     ***************************************************************************/
 
-    public struct Args
-    {
-        /***********************************************************************
-
-            Logfile write buffer size in bytes
-
-        ***********************************************************************/
-
-        size_t write_buffer_size = DefaultWriteBufferSize;
-    }
-
-    private Args args;
+    private const size_t write_buffer_size;
 
 
     /***************************************************************************
@@ -783,15 +772,16 @@ public class LogFilesStorageChannels : DhtStorageChannels
             dir = data directory for logfiles
             size_limit = maximum number of bytes allowed in the node (0 = no
                 limit)
-            args = setup arguments struct
+            write_buffer_size = size in bytes of file write buffer
 
     ***************************************************************************/
 
-    public this ( char[] dir, ulong size_limit, Args args )
+    public this ( char[] dir, ulong size_limit, size_t write_buffer_size
+     = DefaultWriteBufferSize )
     {
         super(dir, size_limit);
 
-        this.args = args;
+        this.write_buffer_size = write_buffer_size;
 
         this.loadChannels();
     }

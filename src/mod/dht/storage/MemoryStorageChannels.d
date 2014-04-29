@@ -111,22 +111,12 @@ public class MemoryStorageChannels : DhtStorageChannels
 
     /***************************************************************************
 
-        Memory storage channels setup arguments (passed to constructor)
+        Estimated number of buckets in map -- passed to tokyocabinet when
+        creating database instances.
 
     ***************************************************************************/
 
-    public struct Args
-    {
-        /***********************************************************************
-
-            Memory storage channels bnum value
-
-        ***********************************************************************/
-
-        uint bnum;
-    }
-
-    private Args args;
+    private const uint bnum;
 
 
     /***************************************************************************
@@ -173,15 +163,16 @@ public class MemoryStorageChannels : DhtStorageChannels
             dir = data directory for dumped memory channels
             size_limit = maximum number of bytes allowed in the node (0 = no
                 limit)
-            args = setup arguments struct
+            bnum = estimated number of buckets in map (passed to tokyocabinet
+                "ctor")
 
     ***************************************************************************/
 
-    public this ( char[] dir, ulong size_limit, Args args )
+    public this ( char[] dir, ulong size_limit, uint bnum )
     {
         super(dir, size_limit);
 
-        this.args = args;
+        this.bnum = bnum;
 
         this.dump_manager = new DumpManager(this.dir, this.newIterator());
 
@@ -322,8 +313,7 @@ public class MemoryStorageChannels : DhtStorageChannels
 
     protected override DhtStorageEngine create_ ( char[] id )
     {
-        return new MemoryStorage(id, this.args.bnum,
-                &this.dump_manager.deleteChannel);
+        return new MemoryStorage(id, this.bnum, &this.dump_manager.deleteChannel);
     }
 
 

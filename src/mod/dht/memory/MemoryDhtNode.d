@@ -130,11 +130,8 @@ public class MemoryDhtNode : IDhtNode
 
     protected DhtStorageChannels newStorageChannels_ ( )
     {
-        MemoryStorageChannels.Args args;
-        args.bnum = this.memory_config.bnum;
-
         return new MemoryStorageChannels(this.server_config.data_dir,
-            this.memory_config.size_limit, args);
+            this.memory_config.size_limit, this.memory_config.bnum);
     }
 
 
