@@ -64,6 +64,7 @@ private class MemoryConfig
 {
     ulong size_limit = 0; // 0 := no size limit
     uint dump_period = 3600; // default = 1 hour
+    bool allow_out_of_range = true;
     uint bnum = 0; // 0 := use tokyocabinet's default number of buckets
 }
 
@@ -132,7 +133,7 @@ public class MemoryDhtNode : IDhtNode
     {
         return new MemoryStorageChannels(this.server_config.data_dir,
             this.memory_config.size_limit, this.min_hash, this.max_hash,
-            this.memory_config.bnum);
+            this.memory_config.bnum, this.memory_config.allow_out_of_range);
     }
 
 

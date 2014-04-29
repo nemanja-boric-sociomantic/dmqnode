@@ -152,15 +152,32 @@ public class DumpManager
 
     /***************************************************************************
 
+        Determines whether out-of-range records (i.e. those whose keys are not
+        in the range of hashes supported by the node) are loaded (true) or
+        rejected (false)
+
+    ***************************************************************************/
+
+    private const bool allow_out_of_range;
+
+
+    /***************************************************************************
+
         Constructor.
 
         Params:
             root_dir = root directory used to look for files and write dumps.
             iterator = DhtStorageEngine iterator instance to use for dumping.
+            allow_out_of_range = determines whether out-of-range records (i.e.
+                those whose keys are not in the range of hashes supported by the
+                node) are loaded (true) or rejected (false). If such records are
+                allowed, they will be logged at trace level. If they are
+                disallowed, an exception will be thrown, aborting the process.
 
     ***************************************************************************/
 
-    public this ( FilePath root_dir, IStepIterator iterator )
+    public this ( FilePath root_dir, IStepIterator iterator,
+        bool allow_out_of_range )
     {
         this.root_dir = new FilePath(root_dir.toString());
         this.iterator = iterator;
@@ -171,6 +188,8 @@ public class DumpManager
         auto buffer = new ubyte[IOBufferSize];
         this.output = new ChannelDumper(buffer);
         this.input = new ChannelLoader(buffer);
+
+        this.allow_out_of_range = allow_out_of_range;
     }
 
 
@@ -331,7 +350,7 @@ public class DumpManager
                 scope (exit) this.input.close();
 
                 auto channel = new_channel(this.dst_path.name.dup);
-                this.loadChannel(channel, this.input, true);
+                this.loadChannel(channel, this.input);
             }
             else if ( this.path.suffix() == NewFileSuffix )
             {
@@ -369,20 +388,14 @@ public class DumpManager
         Params:
             storage = channel storage to load the dump to
             input = file from where to read the channel dump
-            allow_out_of_range = determines whether out-of-range records (i.e.
-                those whose keys are not in the range of hashes supported by the
-                node) are loaded (true) or rejected (false). If such records are
-                allowed, they will be logged at trace level. If they are
-                disallowed, an exception will be thrown, aborting the process.
 
         Throws:
-            if allow_out_of_range == false and an out-of-range record is
+            if this.allow_out_of_range == false and an out-of-range record is
             encountered while loading the input file
 
     ***********************************************************************/
 
-    private void loadChannel ( DhtStorageEngine storage, ChannelLoader input,
-        bool allow_out_of_range )
+    private void loadChannel ( DhtStorageEngine storage, ChannelLoader input )
     {
         log.info("Loading channel '{}' from disk", storage.id);
         Stderr.formatln("Loading channel '{}' from disk", storage.id);
@@ -411,7 +424,7 @@ public class DumpManager
 
             progress_manager.progress(k.length + v.length);
 
-            if ( !this.loadRecord(storage, k, v, allow_out_of_range) )
+            if ( !this.loadRecord(storage, k, v) )
             {
                 out_of_range++;
             }
@@ -454,22 +467,16 @@ public class DumpManager
             storage = channel storage to load the record into
             key = record key
             val = record value
-            allow_out_of_range = determines whether out-of-range records (i.e.
-                those whose keys are not in the range of hashes supported by the
-                node) are loaded (true) or rejected (false). If such records are
-                allowed, they will be logged at trace level. If they are
-                disallowed, an exception will be thrown, aborting the process.
 
         Returns:
             true if the record was loaded or false if it was out-of-range
 
         Throws:
-            if allow_out_of_range == false and the record is out-of-range
+            if this.allow_out_of_range == false and the record is out-of-range
 
     ***************************************************************************/
 
-    private bool loadRecord ( DhtStorageEngine storage, char[] key, char[] val,
-        bool allow_out_of_range )
+    private bool loadRecord ( DhtStorageEngine storage, char[] key, char[] val )
     {
         if ( storage.responsibleForKey(key) )
         {
@@ -478,7 +485,7 @@ public class DumpManager
         }
         else
         {
-            if ( allow_out_of_range )
+            if ( this.allow_out_of_range )
             {
                 log.trace("Encountered out-of-range key in channel '{}': {} -- loaded",
                     storage.id, key);

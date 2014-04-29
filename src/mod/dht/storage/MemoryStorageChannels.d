@@ -167,17 +167,21 @@ public class MemoryStorageChannels : DhtStorageChannels
             max_hash = maximum hash for which node is responsible
             bnum = estimated number of buckets in map (passed to tokyocabinet
                 "ctor")
+            allow_out_of_range = determines whether out-of-range records (i.e.
+                those whose keys are not in the range of hashes supported by the
+                node) are loaded (true) or rejected (false)
 
     ***************************************************************************/
 
     public this ( char[] dir, ulong size_limit, hash_t min_hash, hash_t max_hash,
-        uint bnum )
+        uint bnum, bool allow_out_of_range )
     {
         super(dir, size_limit, min_hash, max_hash);
 
         this.bnum = bnum;
 
-        this.dump_manager = new DumpManager(this.dir, this.newIterator());
+        this.dump_manager = new DumpManager(this.dir, this.newIterator(),
+            allow_out_of_range);
 
         this.loadChannels();
     }
