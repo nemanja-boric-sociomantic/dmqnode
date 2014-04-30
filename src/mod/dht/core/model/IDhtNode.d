@@ -154,6 +154,15 @@ abstract public class IDhtNode
 
     /***************************************************************************
 
+        Minimum and maximum hashes for which this node is responsible.
+
+    ***************************************************************************/
+
+    protected const hash_t min_hash, max_hash;
+
+
+    /***************************************************************************
+
         Constructor
 
     ***************************************************************************/
@@ -169,6 +178,16 @@ abstract public class IDhtNode
 
         this.sigint_event = new SignalEvent(&this.sigintHandler,
             [SIGINT, SIGTERM, SIGQUIT]);
+
+        assertEx(Hash.hashDigestToHashT(this.server_config.minval(),
+            this.min_hash, true),
+            "Minimum hash specified in config file is invalid -- "
+            "a full-length hash is expected");
+
+        assertEx(Hash.hashDigestToHashT(this.server_config.maxval(),
+            this.max_hash, true),
+            "Maximum hash specified in config file is invalid -- "
+            "a full-length hash is expected");
 
         this.node = new DhtNode(this.node_item, this.newStorageChannels(),
             this.min_hash, this.max_hash, this.epoll, server_config.backlog);
@@ -240,48 +259,6 @@ abstract public class IDhtNode
     {
         return DhtConst.NodeItem(
             this.server_config.address(), this.server_config.port());
-    }
-
-
-    /***************************************************************************
-
-        Returns:
-            minimum hash value handled by this node, as defined in config file
-
-        Throws:
-            if the minimum hash specified in the config file is not a valid hex
-            number
-
-    ***************************************************************************/
-
-    private hash_t min_hash ( )
-    {
-        hash_t hash;
-        assertEx(Hash.hashDigestToHashT(this.server_config.minval(), hash, true),
-            "Minimum hash specified in config file is invalid -- "
-            "a full-length hash is expected");
-        return hash;
-    }
-
-
-    /***************************************************************************
-
-        Returns:
-            maximum hash value handled by this node, as defined in config file
-
-        Throws:
-            if the maximum hash specified in the config file is not a valid hex
-            number
-
-    ***************************************************************************/
-
-    private hash_t max_hash ( )
-    {
-        hash_t hash;
-        assertEx(Hash.hashDigestToHashT(this.server_config.maxval(), hash, true),
-            "Maximum hash specified in config file is invalid -- "
-            "a full-length hash is expected");
-        return hash;
     }
 
 
