@@ -390,13 +390,13 @@ public class DumpManager
         ulong records_read;
         foreach ( k, v; this.input )
         {
-            records_read++;
-
             // This will go after the transition!
             if (num_records > 0 && records_read == num_records)
             {
                 break;
             }
+
+            records_read++;
 
             progress_manager.progress(k.length + v.length);
 
