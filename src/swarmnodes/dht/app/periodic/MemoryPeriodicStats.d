@@ -12,7 +12,7 @@
 
 *******************************************************************************/
 
-module swarmnodes.dht.memory.MemoryPeriodicStats;
+module swarmnodes.dht.app.periodic.MemoryPeriodicStats;
 
 
 
@@ -24,7 +24,7 @@ module swarmnodes.dht.memory.MemoryPeriodicStats;
 
 private import swarmnodes.dht.app.periodic.PeriodicDhtStats;
 
-private import swarmnodes.dht.memory.ChannelDumpThread;
+private import swarmnodes.dht.app.periodic.ChannelDumpThread;
 
 private import swarmnodes.common.config.StatsConfig;
 

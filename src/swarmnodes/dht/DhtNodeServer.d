@@ -28,8 +28,8 @@ private import swarmnodes.dht.app.IDhtNodeApp;
 
 private import swarmnodes.common.util.Terminator;
 
-private import swarmnodes.dht.memory.MemoryPeriodicStats;
-private import swarmnodes.dht.memory.ChannelDumpThread;
+private import swarmnodes.dht.app.periodic.MemoryPeriodicStats;
+private import swarmnodes.dht.app.periodic.ChannelDumpThread;
 
 private import swarmnodes.dht.storage.MemoryStorageChannels;
 

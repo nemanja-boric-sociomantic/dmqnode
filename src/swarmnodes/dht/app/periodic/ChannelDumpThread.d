@@ -12,7 +12,7 @@
 
 *******************************************************************************/
 
-module swarmnodes.dht.memory.ChannelDumpThread;
+module swarmnodes.dht.app.periodic.ChannelDumpThread;
 
 
 
