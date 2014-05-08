@@ -60,6 +60,24 @@ static this ( )
 
 
 
+/*******************************************************************************
+
+    Main function. Parses command line arguments and either displays help or
+    starts dhtdump.
+
+    Params:
+        cl_args = array with raw command line arguments
+
+*******************************************************************************/
+
+private int main ( char[][] cl_args )
+{
+    auto app = new DhtDump;
+    return app.main(cl_args);
+}
+
+
+
 public class DhtDump : VersionedLoggedStatsCliApp
 {
     /***************************************************************************

@@ -57,6 +57,24 @@ static this ( )
 
 /*******************************************************************************
 
+    Main function. Parses command line arguments and either displays help or
+    starts dht node.
+
+    Params:
+        cl_args = array with raw command line arguments
+
+*******************************************************************************/
+
+private int main ( char[][] cl_args )
+{
+    auto app = new DhtNodeServer;
+    return app.main(cl_args);
+}
+
+
+
+/*******************************************************************************
+
     DhtNode
 
 *******************************************************************************/
