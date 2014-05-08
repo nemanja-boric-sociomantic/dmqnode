@@ -32,7 +32,7 @@ private import swarmnodes.dht.connection.SharedResources;
 private import swarmnodes.dht.storage.model.DhtStorageChannels;
 private import swarmnodes.dht.storage.model.IStepIterator;
 
-private import swarmnodes.dht.model.IDhtNodeInfo;
+private import swarmnodes.dht.node.IDhtNodeInfo;
 
 
 

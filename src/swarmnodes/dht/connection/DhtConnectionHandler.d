@@ -26,7 +26,7 @@ private import swarm.core.node.model.INodeInfo;
 
 private import swarm.dht.DhtConst;
 
-private import swarmnodes.dht.model.IDhtNodeInfo;
+private import swarmnodes.dht.node.IDhtNodeInfo;
 
 private import swarmnodes.dht.connection.SharedResources;
 

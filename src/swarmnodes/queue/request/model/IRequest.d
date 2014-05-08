@@ -28,7 +28,7 @@ private import swarm.queue.QueueConst;
 
 private import swarmnodes.queue.storage.model.QueueStorageChannels;
 
-private import swarmnodes.queue.model.IQueueNodeInfo;
+private import swarmnodes.queue.node.IQueueNodeInfo;
 
 
 

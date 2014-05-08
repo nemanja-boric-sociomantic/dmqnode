@@ -26,7 +26,7 @@ private import swarmnodes.dht.request.model.IDhtRequestResources;
 
 private import swarm.dht.DhtConst;
 
-private import swarmnodes.dht.model.IDhtNodeInfo;
+private import swarmnodes.dht.node.IDhtNodeInfo;
 
 private import swarmnodes.dht.storage.model.DhtStorageChannels;
 private import swarmnodes.dht.storage.model.DhtStorageEngine;

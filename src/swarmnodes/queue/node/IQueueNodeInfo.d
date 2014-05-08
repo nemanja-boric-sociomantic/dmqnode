@@ -10,7 +10,7 @@
 
 *******************************************************************************/
 
-module swarmnodes.queue.model.IQueueNodeInfo;
+module swarmnodes.queue.node.IQueueNodeInfo;
 
 
 

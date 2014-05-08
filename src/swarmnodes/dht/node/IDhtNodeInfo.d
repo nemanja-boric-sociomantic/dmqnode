@@ -10,7 +10,7 @@
 
 *******************************************************************************/
 
-module swarmnodes.dht.model.IDhtNodeInfo;
+module swarmnodes.dht.node.IDhtNodeInfo;
 
 
 

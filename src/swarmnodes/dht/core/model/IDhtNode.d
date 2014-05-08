@@ -31,7 +31,7 @@ private import swarmnodes.common.util.Terminator;
 private import swarmnodes.common.periodic.Periodics;
 private import swarmnodes.common.periodic.PeriodicWriterFlush;
 
-private import swarmnodes.dht.DhtNode;
+private import swarmnodes.dht.node.DhtNode;
 private import swarmnodes.dht.storage.model.DhtStorageChannels;
 
 private import ocean.core.MessageFiber;

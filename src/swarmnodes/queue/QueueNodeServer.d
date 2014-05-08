@@ -37,7 +37,7 @@ private import swarmnodes.queue.periodic.PeriodicQueueStats;
 private import swarmnodes.common.periodic.PeriodicWriterFlush;
 
 private import swarmnodes.queue.storage.Ring;
-private import swarmnodes.queue.QueueNode;
+private import swarmnodes.queue.node.QueueNode;
 
 private import swarm.queue.QueueConst;
 

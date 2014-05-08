@@ -31,7 +31,7 @@ private import swarmnodes.queue.connection.SharedResources;
 
 private import swarmnodes.queue.storage.model.QueueStorageChannels;
 
-private import swarmnodes.queue.model.IQueueNodeInfo;
+private import swarmnodes.queue.node.IQueueNodeInfo;
 
 
 

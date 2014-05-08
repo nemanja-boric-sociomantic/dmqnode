@@ -11,7 +11,7 @@
 
 *******************************************************************************/
 
-module swarmnodes.queue.QueueNode;
+module swarmnodes.queue.node.QueueNode;
 
 
 
@@ -23,7 +23,7 @@ module swarmnodes.queue.QueueNode;
 
 private import swarm.core.node.model.ChannelsNode : ChannelsNodeBase;
 
-private import swarmnodes.queue.model.IQueueNodeInfo;
+private import swarmnodes.queue.node.IQueueNodeInfo;
 
 private import swarmnodes.queue.connection.QueueConnectionHandler;
 

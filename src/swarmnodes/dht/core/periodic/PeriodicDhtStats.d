@@ -26,7 +26,7 @@ private import swarmnodes.common.periodic.PeriodicStats;
 
 private import swarmnodes.common.config.StatsConfig;
 
-private import swarmnodes.dht.model.IDhtNodeInfo;
+private import swarmnodes.dht.node.IDhtNodeInfo;
 
 private import swarm.core.node.storage.model.IStorageEngineInfo;
 

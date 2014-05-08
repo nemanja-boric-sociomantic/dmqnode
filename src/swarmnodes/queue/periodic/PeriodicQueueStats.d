@@ -26,7 +26,7 @@ private import swarmnodes.common.periodic.PeriodicStats;
 
 private import swarmnodes.common.config.StatsConfig;
 
-private import swarmnodes.queue.model.IQueueNodeInfo;
+private import swarmnodes.queue.node.IQueueNodeInfo;
 
 private import swarm.core.node.storage.model.IStorageEngineInfo;
 
