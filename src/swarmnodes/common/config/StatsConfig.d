@@ -11,7 +11,7 @@
 
 *******************************************************************************/
 
-module swarmnodes.core.config.StatsConfig;
+module swarmnodes.common.config.StatsConfig;
 
 
 

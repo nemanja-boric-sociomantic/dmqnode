@@ -11,7 +11,7 @@
 
 *******************************************************************************/
 
-module swarmnodes.core.config.PerformanceConfig;
+module swarmnodes.common.config.PerformanceConfig;
 
 
 

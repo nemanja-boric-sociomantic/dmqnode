@@ -26,7 +26,7 @@ private import swarmnodes.dht.core.periodic.PeriodicDhtStats;
 
 private import swarmnodes.dht.memory.ChannelDumpThread;
 
-private import swarmnodes.core.config.StatsConfig;
+private import swarmnodes.common.config.StatsConfig;
 
 private import ocean.text.convert.Layout;
 

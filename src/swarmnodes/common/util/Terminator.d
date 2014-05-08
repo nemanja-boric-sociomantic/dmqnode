@@ -12,7 +12,7 @@
 
 *******************************************************************************/
 
-module swarmnodes.core.util.Terminator;
+module swarmnodes.common.util.Terminator;
 
 
 

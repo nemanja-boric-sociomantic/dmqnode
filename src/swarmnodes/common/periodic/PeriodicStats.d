@@ -9,7 +9,7 @@
 
 *******************************************************************************/
 
-module swarmnodes.core.periodic.PeriodicStats;
+module swarmnodes.common.periodic.PeriodicStats;
 
 
 
@@ -19,9 +19,9 @@ module swarmnodes.core.periodic.PeriodicStats;
 
 *******************************************************************************/
 
-private import swarmnodes.core.periodic.model.IPeriodic;
+private import swarmnodes.common.periodic.model.IPeriodic;
 
-private import swarmnodes.core.config.StatsConfig;
+private import swarmnodes.common.config.StatsConfig;
 
 private import swarmnodes.queue.model.IQueueNodeInfo;
 

@@ -23,7 +23,7 @@ module swarmnodes.dht.memory.MemoryDhtNode;
 
 private import swarmnodes.dht.core.model.IDhtNode;
 
-private import swarmnodes.core.util.Terminator;
+private import swarmnodes.common.util.Terminator;
 
 private import swarmnodes.dht.memory.MemoryPeriodicStats;
 

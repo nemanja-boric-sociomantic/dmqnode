@@ -12,7 +12,7 @@
 
 *******************************************************************************/
 
-module swarmnodes.core.periodic.model.IPeriodic;
+module swarmnodes.common.periodic.model.IPeriodic;
 
 
 
@@ -26,7 +26,7 @@ private import ocean.io.select.client.TimerEvent;
 
 private import ocean.io.select.EpollSelectDispatcher;
 
-private import swarmnodes.core.util.Terminator;
+private import swarmnodes.common.util.Terminator;
 
 private import swarm.core.node.model.INode;
 private import swarm.core.node.model.INodeInfo;
@@ -44,7 +44,7 @@ private import tango.util.log.Log;
 private Logger logger;
 static this ( )
 {
-    logger = Log.lookup("swarmnodes.core.periodic.model.IPeriodic");
+    logger = Log.lookup("swarmnodes.common.periodic.model.IPeriodic");
 }
 
 

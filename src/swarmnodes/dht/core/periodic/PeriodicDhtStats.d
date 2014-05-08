@@ -22,9 +22,9 @@ module swarmnodes.dht.core.periodic.PeriodicDhtStats;
 
 *******************************************************************************/
 
-private import swarmnodes.core.periodic.PeriodicStats;
+private import swarmnodes.common.periodic.PeriodicStats;
 
-private import swarmnodes.core.config.StatsConfig;
+private import swarmnodes.common.config.StatsConfig;
 
 private import swarmnodes.dht.model.IDhtNodeInfo;
 

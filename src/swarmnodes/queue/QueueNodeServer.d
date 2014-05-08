@@ -27,14 +27,14 @@ module swarmnodes.queue.QueueNodeServer;
 private import Version;
 
 private import swarmnodes.queue.config.ServerConfig;
-private import swarmnodes.core.config.PerformanceConfig;
-private import swarmnodes.core.config.StatsConfig;
+private import swarmnodes.common.config.PerformanceConfig;
+private import swarmnodes.common.config.StatsConfig;
 
-private import swarmnodes.core.util.Terminator;
+private import swarmnodes.common.util.Terminator;
 
-private import swarmnodes.core.periodic.Periodics;
+private import swarmnodes.common.periodic.Periodics;
 private import swarmnodes.queue.periodic.PeriodicQueueStats;
-private import swarmnodes.core.periodic.PeriodicWriterFlush;
+private import swarmnodes.common.periodic.PeriodicWriterFlush;
 
 private import swarmnodes.queue.storage.Ring;
 private import swarmnodes.queue.QueueNode;

@@ -24,7 +24,7 @@ module swarmnodes.dht.memory.ChannelDumpThread;
 
 private import swarmnodes.dht.storage.MemoryStorageChannels;
 
-private import swarmnodes.core.util.Terminator;
+private import swarmnodes.common.util.Terminator;
 
 private import tango.core.Thread;
 

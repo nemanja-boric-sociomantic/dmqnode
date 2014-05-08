@@ -23,13 +23,13 @@ module swarmnodes.dht.core.model.IDhtNode;
 *******************************************************************************/
 
 private import swarmnodes.dht.core.config.ServerConfig;
-private import swarmnodes.core.config.PerformanceConfig;
-private import swarmnodes.core.config.StatsConfig;
+private import swarmnodes.common.config.PerformanceConfig;
+private import swarmnodes.common.config.StatsConfig;
 
-private import swarmnodes.core.util.Terminator;
+private import swarmnodes.common.util.Terminator;
 
-private import swarmnodes.core.periodic.Periodics;
-private import swarmnodes.core.periodic.PeriodicWriterFlush;
+private import swarmnodes.common.periodic.Periodics;
+private import swarmnodes.common.periodic.PeriodicWriterFlush;
 
 private import swarmnodes.dht.DhtNode;
 private import swarmnodes.dht.storage.model.DhtStorageChannels;

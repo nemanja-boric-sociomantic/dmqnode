@@ -12,7 +12,7 @@
 
 *******************************************************************************/
 
-module swarmnodes.core.periodic.Periodics;
+module swarmnodes.common.periodic.Periodics;
 
 
 
@@ -22,7 +22,7 @@ module swarmnodes.core.periodic.Periodics;
 
 *******************************************************************************/
 
-private import swarmnodes.core.periodic.model.IPeriodic;
+private import swarmnodes.common.periodic.model.IPeriodic;
 
 private import ocean.io.select.EpollSelectDispatcher;
 

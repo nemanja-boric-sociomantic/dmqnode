@@ -12,7 +12,7 @@
 
 *******************************************************************************/
 
-module swarmnodes.core.periodic.PeriodicWriterFlush;
+module swarmnodes.common.periodic.PeriodicWriterFlush;
 
 
 
@@ -22,7 +22,7 @@ module swarmnodes.core.periodic.PeriodicWriterFlush;
 
 *******************************************************************************/
 
-private import swarmnodes.core.periodic.model.IPeriodic;
+private import swarmnodes.common.periodic.model.IPeriodic;
 
 
 
