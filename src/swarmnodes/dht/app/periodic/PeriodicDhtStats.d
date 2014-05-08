@@ -12,7 +12,7 @@
 
 *******************************************************************************/
 
-module swarmnodes.dht.core.periodic.PeriodicDhtStats;
+module swarmnodes.dht.app.periodic.PeriodicDhtStats;
 
 
 

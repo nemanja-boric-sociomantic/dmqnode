@@ -11,7 +11,7 @@
 
 *******************************************************************************/
 
-module swarmnodes.dht.core.config.ServerConfig;
+module swarmnodes.queue.app.config.ServerConfig;
 
 
 
@@ -37,14 +37,13 @@ public class ServerConfig
 
     ConfigReader.Required!(ushort) port;
 
-    ConfigReader.Required!(char[]) minval;
+    ulong size_limit = 0; // 0 := no global size limit
 
-    ConfigReader.Required!(char[]) maxval;
+    ConfigReader.Required!(ConfigReader.Min!(ulong, 1)) channel_size_limit;
 
     char[] data_dir = "data";
 
-    uint connection_limit = 5_000;
+    uint connection_limit = 5000;
 
     uint backlog = 2048;
 }
-

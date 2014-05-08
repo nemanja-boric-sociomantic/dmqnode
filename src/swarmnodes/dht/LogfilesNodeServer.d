@@ -26,7 +26,7 @@ module swarmnodes.dht.LogfilesNodeServer;
 
 private import swarmnodes.dht.app.IDhtNodeApp;
 
-private import swarmnodes.dht.core.periodic.PeriodicDhtStats;
+private import swarmnodes.dht.app.periodic.PeriodicDhtStats;
 
 private import swarmnodes.dht.storage.LogFilesStorageChannels;
 

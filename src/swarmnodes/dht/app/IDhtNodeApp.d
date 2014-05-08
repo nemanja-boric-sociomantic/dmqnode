@@ -25,7 +25,7 @@ module swarmnodes.dht.app.IDhtNodeApp;
 
 private import Version;
 
-private import swarmnodes.dht.core.config.ServerConfig;
+private import swarmnodes.dht.app.config.ServerConfig;
 private import swarmnodes.common.config.PerformanceConfig;
 private import swarmnodes.common.config.StatsConfig;
 

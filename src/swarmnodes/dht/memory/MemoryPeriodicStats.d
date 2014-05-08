@@ -22,7 +22,7 @@ module swarmnodes.dht.memory.MemoryPeriodicStats;
 
 *******************************************************************************/
 
-private import swarmnodes.dht.core.periodic.PeriodicDhtStats;
+private import swarmnodes.dht.app.periodic.PeriodicDhtStats;
 
 private import swarmnodes.dht.memory.ChannelDumpThread;
 

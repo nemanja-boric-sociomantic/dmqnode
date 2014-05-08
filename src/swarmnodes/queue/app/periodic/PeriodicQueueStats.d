@@ -12,7 +12,7 @@
 
 *******************************************************************************/
 
-module swarmnodes.queue.periodic.PeriodicQueueStats;
+module swarmnodes.queue.app.periodic.PeriodicQueueStats;
 
 
 
