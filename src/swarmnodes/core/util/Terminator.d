@@ -20,7 +20,7 @@ struct Terminator
 {
     static bool terminating;
 
-    // FIXME: see FIXME in swarmnodes.mod.dht.core.model.IDhtNode, nodeError()
+    // FIXME: see FIXME in swarmnodes.dht.core.model.IDhtNode, nodeError()
     static bool shutdown;
 }
 
