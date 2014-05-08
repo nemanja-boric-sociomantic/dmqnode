@@ -95,7 +95,7 @@ public interface IDhtRequestResources : IRequestResources
     Mix in a scope class called RequestResources which implements
     IRequestResources. Note that this class does not implement the additional
     methods required by IDhtRequestResources -- this is done in
-     swarmnodes.dht.DhtConnectionHandler.
+     swarmnodes.dht.connection.DhtConnectionHandler.
 
 *******************************************************************************/
 

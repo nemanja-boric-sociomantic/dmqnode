@@ -25,7 +25,7 @@ private import swarm.core.node.model.ChannelsNode : ChannelsNodeBase;
 
 private import swarmnodes.queue.model.IQueueNodeInfo;
 
-private import swarmnodes.queue.QueueConnectionHandler;
+private import swarmnodes.queue.connection.QueueConnectionHandler;
 
 private import swarmnodes.queue.storage.model.QueueStorageEngine;
 private import swarmnodes.queue.storage.model.QueueStorageChannels;

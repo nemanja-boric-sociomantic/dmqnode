@@ -10,7 +10,7 @@
 
 *******************************************************************************/
 
-module swarmnodes.dht.DhtConnectionHandler;
+module swarmnodes.dht.connection.DhtConnectionHandler;
 
 
 
@@ -20,7 +20,7 @@ module swarmnodes.dht.DhtConnectionHandler;
 
 *******************************************************************************/
 
-private import swarm.core.node.ConnectionHandler;
+private import swarm.core.node.connection.ConnectionHandler;
 
 private import swarm.core.node.model.INodeInfo;
 

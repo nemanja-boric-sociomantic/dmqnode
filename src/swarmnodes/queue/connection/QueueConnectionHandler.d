@@ -10,7 +10,7 @@
 
 *******************************************************************************/
 
-module swarmnodes.queue.QueueConnectionHandler;
+module swarmnodes.queue.connection.QueueConnectionHandler;
 
 
 
@@ -20,7 +20,7 @@ module swarmnodes.queue.QueueConnectionHandler;
 
 *******************************************************************************/
 
-private import swarm.core.node.ConnectionHandler;
+private import swarm.core.node.connection.ConnectionHandler;
 
 private import swarm.core.node.model.INodeInfo;
 

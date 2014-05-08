@@ -94,7 +94,7 @@ public interface IQueueRequestResources : IRequestResources
     Mix in a scope class called RequestResources which implements
     IRequestResources. Note that this class does not implement the additional
     methods required by IQueueRequestResources -- this is done in
-     swarmnodes.queue.QueueConnectionHandler.
+     swarmnodes.queue.connection.QueueConnectionHandler.
 
 *******************************************************************************/
 

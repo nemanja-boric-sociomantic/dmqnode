@@ -28,7 +28,7 @@ private import swarm.dht.DhtConst;
 
 private import swarmnodes.dht.model.IDhtNodeInfo;
 
-private import swarmnodes.dht.DhtConnectionHandler;
+private import swarmnodes.dht.connection.DhtConnectionHandler;
 
 private import swarmnodes.dht.connection.SharedResources;
 
