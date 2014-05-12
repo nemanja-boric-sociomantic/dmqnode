@@ -9,7 +9,7 @@ DHT_TARGET = bin/dhtnode
 DHTDUMP_SOURCE = src/swarmnodes/dhtdump/DhtDump.d
 DHTDUMP_TARGET = bin/dhtdump
 
-LOG_SOURCE = src/swarmnodes/dht/DhtNodeServer.d
+LOG_SOURCE = src/swarmnodes/dht/LogfilesNodeServer.d
 LOG_TARGET = bin/logfilesnode
 
 QUEUE_SOURCE = src/swarmnodes/queue/QueueNodeServer.d

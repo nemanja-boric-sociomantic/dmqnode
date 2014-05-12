@@ -8,11 +8,12 @@
     authors:        Gavin Norman, Hans Bjerkander
 
     Dht node base class - contains members which are shared by both types of
-    node.
+    node, including an instance of DhtNode, which is the node derived from the
+    node base classes in swarm.
 
 *******************************************************************************/
 
-module swarmnodes.dht.core.model.IDhtNode;
+module swarmnodes.dht.app.IDhtNodeApp;
 
 
 
@@ -21,6 +22,8 @@ module swarmnodes.dht.core.model.IDhtNode;
     Imports
 
 *******************************************************************************/
+
+private import Version;
 
 private import swarmnodes.dht.core.config.ServerConfig;
 private import swarmnodes.common.config.PerformanceConfig;
@@ -40,6 +43,9 @@ private import ocean.io.select.protocol.generic.ErrnoIOException : IOWarning;
 private import ocean.util.config.ConfigParser;
 private import ConfigReader = ocean.util.config.ClassFiller;
 
+private import ocean.util.app.LoggedCliApp;
+private import ocean.util.app.ext.VersionArgsExt;
+
 private import ocean.io.select.EpollSelectDispatcher;
 
 private import ocean.io.select.client.model.ISelectClient;
@@ -51,7 +57,6 @@ private import ocean.io.Stdout;
 private import Hash = ocean.text.convert.Hash;
 
 private import swarm.dht.DhtConst;
-private import swarm.dht.DhtHash;
 
 private import tango.core.Exception : IOException, OutOfMemoryException;
 
@@ -70,18 +75,18 @@ private import tango.util.log.Log;
 private Logger log;
 static this ( )
 {
-    log = Log.lookup("swarmnodes.node.model.IDhtNode");
+    log = Log.lookup("swarmnodes.dht.app.IDhtNodeApp");
 }
 
 
 
 /*******************************************************************************
 
-    Dht node base class
+    Dht node application base class
 
 *******************************************************************************/
 
-abstract public class IDhtNode
+abstract public class IDhtNodeApp : LoggedCliApp
 {
     /***************************************************************************
 
@@ -92,6 +97,16 @@ abstract public class IDhtNode
     protected alias .ConfigParser ConfigParser;
     protected alias .ServerConfig ServerConfig;
     protected alias .DhtStorageChannels DhtStorageChannels;
+    protected alias .Periodics Periodics;
+
+
+    /***************************************************************************
+
+        Version information extension.
+
+    ***************************************************************************/
+
+    public VersionArgsExt ver_ext;
 
 
     /***************************************************************************
@@ -118,11 +133,12 @@ abstract public class IDhtNode
 
     /***************************************************************************
 
-        Dht node instance
+        Dht node instance. Constructed after the config file has been parsed --
+        currently the type of node is setin the config file.
 
     ***************************************************************************/
 
-    private const DhtNode node;
+    private DhtNode node;
 
 
     /***************************************************************************
@@ -140,7 +156,7 @@ abstract public class IDhtNode
 
     ***************************************************************************/
 
-    protected const Periodics periodics;
+    private Periodics periodics;
 
 
     /***************************************************************************
@@ -158,7 +174,7 @@ abstract public class IDhtNode
 
     ***************************************************************************/
 
-    protected const hash_t min_hash, max_hash;
+    protected hash_t min_hash, max_hash;
 
 
     /***************************************************************************
@@ -167,17 +183,46 @@ abstract public class IDhtNode
 
     ***************************************************************************/
 
-    public this ( ServerConfig server_config, ConfigParser config )
+    public this ( )
     {
-        this.server_config = server_config;
+        const app_name = "dhtnode";
+        const app_desc = "dhtnode: distributed hashtable server node.";
+        const usage = null;
+        const help = null;
+        const use_insert_appender = false;
+        const loose_config_parsing = false;
+        const char[][] default_configs = [ "etc/config.ini" ];
+
+        super(app_name, app_desc, usage, help, use_insert_appender,
+                loose_config_parsing, default_configs, config);
+
+        this.ver_ext = new VersionArgsExt(Version);
+        this.args_ext.registerExtension(this.ver_ext);
+        this.log_ext.registerExtension(this.ver_ext);
+        this.registerExtension(this.ver_ext);
 
         this.epoll = new EpollSelectDispatcher;
 
-        ConfigReader.fill("Stats", this.stats_config, config);
-        ConfigReader.fill("Performance", this.performance_config, config);
-
         this.sigint_event = new SignalEvent(&this.sigintHandler,
             [SIGINT, SIGTERM, SIGQUIT]);
+    }
+
+
+    /***************************************************************************
+
+        Get values from the configuration file.
+
+        Params:
+            app = application instance
+            config = config parser instance
+
+    ***************************************************************************/
+
+    public override void processConfig ( IApplication app, ConfigParser config )
+    {
+        ConfigReader.fill("Server", this.server_config, config);
+        ConfigReader.fill("Stats", this.stats_config, config);
+        ConfigReader.fill("Performance", this.performance_config, config);
 
         assertEx(Hash.hashDigestToHashT(this.server_config.minval(),
             this.min_hash, true),
@@ -188,16 +233,6 @@ abstract public class IDhtNode
             this.max_hash, true),
             "Maximum hash specified in config file is invalid -- "
             "a full-length hash is expected");
-
-        this.node = new DhtNode(this.node_item, this.newStorageChannels(),
-            this.min_hash, this.max_hash, this.epoll, server_config.backlog);
-
-        this.node.error_callback = &this.nodeError;
-        this.node.connection_limit = server_config.connection_limit;
-
-        this.periodics = new Periodics(this.node, this.epoll);
-        this.periodics.add(new PeriodicWriterFlush(
-            this.epoll, this.performance_config.write_flush_ms));
     }
 
 
@@ -214,17 +249,46 @@ abstract public class IDhtNode
 
     ***************************************************************************/
 
-    public void run ( )
+    protected int run ( Arguments args, ConfigParser config )
     {
-        this.epoll.register(this.sigint_event);
+        this.node = new DhtNode(this.node_item, this.newStorageChannels(),
+            this.min_hash, this.max_hash, this.epoll, server_config.backlog);
 
+        this.node.error_callback = &this.nodeError;
+        this.node.connection_limit = server_config.connection_limit;
+
+        log.info("Starting dht node --------------------------------");
+
+        this.periodics = new Periodics(this.node, this.epoll);
+        this.initPeriodics(this.periodics);
         this.periodics.register();
+
+        this.epoll.register(this.sigint_event);
 
         this.node.register(this.epoll);
 
         log.info("Starting event loop");
         this.epoll.eventLoop();
         log.info("Event loop exited");
+
+        return 0;
+    }
+
+
+    /***************************************************************************
+
+        Sets up any periodics required by the node. The default just adds a
+        periodic writer flusher, but derived classes may override to add others.
+
+        Params:
+            periodics = periodics instance to which periodics can be added
+
+    ***************************************************************************/
+
+    protected void initPeriodics ( Periodics periodics )
+    {
+        this.periodics.add(new PeriodicWriterFlush(
+            this.epoll, this.performance_config.write_flush_ms));
     }
 
 

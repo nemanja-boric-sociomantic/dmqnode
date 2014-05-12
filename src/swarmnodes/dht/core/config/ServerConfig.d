@@ -41,8 +41,6 @@ public class ServerConfig
 
     ConfigReader.Required!(char[]) maxval;
 
-    ConfigReader.Required!(char[]) storage_engine;
-
     char[] data_dir = "data";
 
     uint connection_limit = 5_000;

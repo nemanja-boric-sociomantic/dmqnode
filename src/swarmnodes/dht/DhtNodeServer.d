@@ -24,18 +24,16 @@ module swarmnodes.dht.DhtNodeServer;
 
 *******************************************************************************/
 
-private import Version;
+private import swarmnodes.dht.app.IDhtNodeApp;
 
-private import swarmnodes.dht.core.config.ServerConfig;
+private import swarmnodes.common.util.Terminator;
 
-private import swarmnodes.dht.core.model.IDhtNode;
+private import swarmnodes.dht.memory.MemoryPeriodicStats;
+private import swarmnodes.dht.memory.ChannelDumpThread;
 
-private import swarmnodes.dht.memory.MemoryDhtNode;
+private import swarmnodes.dht.storage.MemoryStorageChannels;
 
-private import swarmnodes.dht.logfiles.LogfilesDhtNode;
-
-private import ocean.util.app.LoggedCliApp;
-private import ocean.util.app.ext.VersionArgsExt;
+private import ocean.io.Stdout;
 
 private import tango.util.log.Log;
 
@@ -50,7 +48,7 @@ private import tango.util.log.Log;
 private Logger log;
 static this ( )
 {
-    log = Log.lookup("swarmnodes.node.DhtNode");
+    log = Log.lookup("swarmnodes.dht.DhtNodeServer");
 }
 
 
@@ -79,99 +77,120 @@ private int main ( char[][] cl_args )
 
 *******************************************************************************/
 
-public class DhtNodeServer : LoggedCliApp
+public class DhtNodeServer : IDhtNodeApp
 {
     /***************************************************************************
 
-        Version information extension.
+        Memory node config values
 
     ***************************************************************************/
 
-    public VersionArgsExt ver_ext;
-
-
-    /***************************************************************************
-
-        Dht node instance
-
-    ***************************************************************************/
-
-    private IDhtNode node;
-
-
-    /***************************************************************************
-
-        Constructor
-
-    ***************************************************************************/
-
-    public this ( )
+    private static class MemoryConfig
     {
-        const app_name = "dhtnode";
-        const app_desc = "dhtnode: distributed hashtable server node.";
-        const usage = null;
-        const help = null;
-        const use_insert_appender = false;
-        const loose_config_parsing = false;
-        const char[][] default_configs = [ "etc/config.ini" ];
-
-        super(app_name, app_desc, usage, help, use_insert_appender,
-                loose_config_parsing, default_configs, config);
-
-        this.ver_ext = new VersionArgsExt(Version);
-        this.args_ext.registerExtension(this.ver_ext);
-        this.log_ext.registerExtension(this.ver_ext);
-        this.registerExtension(this.ver_ext);
+        ulong size_limit = 0; // 0 := no size limit
+        uint dump_period = 3600; // default = 1 hour
+        bool allow_out_of_range = true;
+        uint bnum = 0; // 0 := use tokyocabinet's default number of buckets
     }
 
+    private MemoryConfig memory_config;
+
 
     /***************************************************************************
 
-        Get values from the configuration file.
+        Channel dumper thread.
 
     ***************************************************************************/
 
-    public override void processConfig ( IApplication app, ConfigParser config )
-    {
-        ServerConfig server_config;
-        ConfigReader.fill("Server", server_config, config);
-
-        log.info("Starting dht node --------------------------------");
-
-        switch ( cast(char[])server_config.storage_engine )
-        {
-            case "memory":
-                this.node = new MemoryDhtNode(server_config, config);
-                break;
-
-            case "logfiles":
-                this.node = new LogfilesDhtNode(server_config, config);
-                break;
-
-            default:
-                throw new Exception("Invalid / unsupported data storage");
-        }
-    }
+    private ChannelDumpThread channel_dumper;
 
 
     /***************************************************************************
 
-        Do the actual application work. Called by the super class.
+        Get values from the configuration file. Overridden to read additional
+        memory config options.
 
         Params:
-            args = command line arguments
-            config = parser instance with the parsed configuration
-
-        Returns:
-            status code to return to the OS
+            app = application instance
+            config = config parser instance
 
     ***************************************************************************/
 
-    protected int run ( Arguments args, ConfigParser config )
+    protected override void processConfig ( IApplication app, ConfigParser config )
     {
-        this.node.run();
+        super.processConfig(app, config);
 
-        return 0;
+        ConfigReader.fill("Options_Memory", this.memory_config, config);
+    }
+
+
+    /***************************************************************************
+
+        Returns:
+            a new memory storage channels instance.
+
+    ***************************************************************************/
+
+    override protected DhtStorageChannels newStorageChannels_ ( )
+    {
+        return new MemoryStorageChannels(this.server_config.data_dir,
+            this.memory_config.size_limit, this.min_hash, this.max_hash,
+            this.memory_config.bnum, this.memory_config.allow_out_of_range);
+    }
+
+
+    /***************************************************************************
+
+        Sets up any periodics required by the node. Calls the super class'
+        method and sets up the channel dump thread and the memory dht stats
+        periodic (which relies on the channel dump thread).
+
+        Params:
+            periodics = periodics instance to which periodics can be added
+
+    ***************************************************************************/
+
+    protected override void initPeriodics ( Periodics periodics )
+    {
+        super.initPeriodics(periodics);
+
+        this.channel_dumper = new ChannelDumpThread(
+            cast(MemoryStorageChannels)this.storage_channels,
+            this.memory_config.dump_period);
+        this.channel_dumper.start();
+
+        periodics.add(new MemoryPeriodicStats(this.stats_config, this.epoll,
+            this.channel_dumper));
+    }
+
+
+    /***************************************************************************
+
+        At node shutdown, waits for the channel dump thread to finish what it's
+        doing (if it is indeed doing something) before continuing with the
+        storage channels shutdown.
+
+    ***************************************************************************/
+
+    override protected void shutdown ( )
+    {
+        assert(Terminator.terminating);
+
+        auto dumping = this.channel_dumper.busy;
+        if ( dumping )
+        {
+            Stdout.format("Waiting for channel dump thread to exit...").flush;
+            log.info("SIGINT handler: waiting for channel dump thread to exit");
+        }
+
+        // Wait for dump thread to exit.
+        this.channel_dumper.join();
+
+        if ( dumping )
+        {
+            Stdout.formatln(" DONE");
+            log.info("SIGINT handler: waiting for channel dump thread to exit finished");
+        }
     }
 }
 

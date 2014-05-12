@@ -10,6 +10,8 @@
 
     authors:        Lars Kirchhoff, Thomas Nicolai, David Eckardt, Gavin Norman
 
+    DHT node class derived from the node base classes in swarm.
+
 *******************************************************************************/
 
 module swarmnodes.dht.node.DhtNode;
