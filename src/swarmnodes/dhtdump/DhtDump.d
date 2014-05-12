@@ -18,7 +18,7 @@ module swarmnodes.dhtdump.DhtDump;
 
 private import Version;
 
-private import swarmnodes.dht.storage.memory.DumpFile;
+private import swarmnodes.dht.memory.storage.DumpFile;
 
 private import ocean.core.Array : appendCopy, copy;
 

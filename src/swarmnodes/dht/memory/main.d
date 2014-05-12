@@ -24,14 +24,14 @@ module swarmnodes.dht.memory.main;
 
 *******************************************************************************/
 
-private import swarmnodes.dht.app.IDhtNodeApp;
+private import swarmnodes.dht.common.app.IDhtNodeApp;
 
 private import swarmnodes.common.util.Terminator;
 
-private import swarmnodes.dht.app.periodic.MemoryPeriodicStats;
-private import swarmnodes.dht.app.periodic.ChannelDumpThread;
+private import swarmnodes.dht.memory.app.periodic.MemoryPeriodicStats;
+private import swarmnodes.dht.memory.app.periodic.ChannelDumpThread;
 
-private import swarmnodes.dht.storage.MemoryStorageChannels;
+private import swarmnodes.dht.memory.storage.MemoryStorageChannels;
 
 private import ocean.io.Stdout;
 

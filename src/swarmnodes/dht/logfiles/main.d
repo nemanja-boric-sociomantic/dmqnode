@@ -24,13 +24,13 @@ module swarmnodes.dht.logfiles.main;
 
 *******************************************************************************/
 
-private import swarmnodes.dht.app.IDhtNodeApp;
+private import swarmnodes.dht.common.app.IDhtNodeApp;
 
-private import swarmnodes.dht.app.periodic.PeriodicDhtStats;
+private import swarmnodes.dht.common.app.periodic.PeriodicDhtStats;
 
-private import swarmnodes.dht.storage.LogFilesStorageChannels;
+private import swarmnodes.dht.logfiles.storage.LogFilesStorageChannels;
 
-private import swarmnodes.dht.storage.logfiles.LogRecordPut;
+private import swarmnodes.dht.logfiles.storage.LogRecordPut;
 
 private import tango.util.log.Log;
 
