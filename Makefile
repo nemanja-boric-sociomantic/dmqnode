@@ -3,16 +3,16 @@ include submodules/ocean/script/common.mk
 # ------------------------------------------------------------------------------
 # Targets
 
-DHT_SOURCE = src/swarmnodes/dht/DhtNodeServer.d
+DHT_SOURCE = src/swarmnodes/dht/memory/main.d
 DHT_TARGET = bin/dhtnode
 
 DHTDUMP_SOURCE = src/swarmnodes/dhtdump/DhtDump.d
 DHTDUMP_TARGET = bin/dhtdump
 
-LOG_SOURCE = src/swarmnodes/dht/LogfilesNodeServer.d
+LOG_SOURCE = src/swarmnodes/dht/logfiles/main.d
 LOG_TARGET = bin/logfilesnode
 
-QUEUE_SOURCE = src/swarmnodes/queue/QueueNodeServer.d
+QUEUE_SOURCE = src/swarmnodes/queue/main.d
 QUEUE_TARGET = bin/queuenode
 
 

@@ -14,7 +14,7 @@
 
 *******************************************************************************/
 
-module swarmnodes.dht.DhtNodeServer;
+module swarmnodes.dht.memory.main;
 
 
 
@@ -48,7 +48,7 @@ private import tango.util.log.Log;
 private Logger log;
 static this ( )
 {
-    log = Log.lookup("swarmnodes.dht.DhtNodeServer");
+    log = Log.lookup("swarmnodes.dht.memory.main");
 }
 
 

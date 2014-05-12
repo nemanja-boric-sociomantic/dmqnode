@@ -14,7 +14,7 @@
 
 *******************************************************************************/
 
-module swarmnodes.queue.QueueNodeServer;
+module swarmnodes.queue.main;
 
 
 
@@ -72,7 +72,7 @@ private import tango.util.log.Log;
 static Logger log;
 static this ( )
 {
-    log = Log.lookup("swarmnodes.node.QueueNode");
+    log = Log.lookup("swarmnodes.queue.main");
 }
 
 
