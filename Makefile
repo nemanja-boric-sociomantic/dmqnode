@@ -6,7 +6,7 @@ include submodules/ocean/script/common.mk
 DHT_SOURCE = src/swarmnodes/dht/memory/main.d
 DHT_TARGET = bin/dhtnode
 
-DHTDUMP_SOURCE = src/swarmnodes/dhtdump/DhtDump.d
+DHTDUMP_SOURCE = src/swarmnodes/dht/memory/dhtdump/main.d
 DHTDUMP_TARGET = bin/dhtdump
 
 LOG_SOURCE = src/swarmnodes/dht/logfiles/main.d

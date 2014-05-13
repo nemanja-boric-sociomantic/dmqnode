@@ -6,7 +6,7 @@
 
 *******************************************************************************/
 
-module swarmnodes.dhtdump.DhtDump;
+module swarmnodes.dht.memory.dhtdump.main;
 
 
 
