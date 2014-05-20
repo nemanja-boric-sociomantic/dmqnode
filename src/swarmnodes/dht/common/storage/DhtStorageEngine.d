@@ -134,7 +134,7 @@ abstract public class DhtStorageEngine : IStorageEngine
     public bool responsibleForKey ( char[] key )
     {
         auto hash = DhtHash.straightToHash(key);
-        return hash >= this.min_hash && hash <= this.max_hash;
+        return DhtHash.isWithinNodeResponsibility(hash, this.min_hash, this.max_hash);
     }
 
 
