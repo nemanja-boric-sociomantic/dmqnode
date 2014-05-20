@@ -19,18 +19,17 @@ module swarmnodes.dht.memory.dhtdump.main;
 private import Version;
 
 private import swarmnodes.dht.memory.dhtdump.DumpCycle;
+private import swarmnodes.dht.memory.dhtdump.DumpStats;
 
 private import ocean.io.select.EpollSelectDispatcher;
 
-private import ocean.text.convert.Integer : toUshort;
+private import ocean.io.select.client.TimerEvent;
 
-private import ocean.util.app.VersionedLoggedStatsCliApp;
+private import ocean.util.app.VersionedLoggedCliApp;
 
 private import ConfigReader = ocean.util.config.ClassFiller;
 
 private import swarm.dht.DhtClient;
-
-private import tango.core.Array : contains;
 
 private import tango.math.random.Random;
 
@@ -56,7 +55,7 @@ private int main ( char[][] cl_args )
 
 
 
-public class DhtDump : VersionedLoggedStatsCliApp
+public class DhtDump : VersionedLoggedCliApp
 {
     /***************************************************************************
 
@@ -111,6 +110,15 @@ public class DhtDump : VersionedLoggedStatsCliApp
 
     /***************************************************************************
 
+        Stats log settings, read from config file
+
+    ***************************************************************************/
+
+    private DumpStats.Config stats_config;
+
+
+    /***************************************************************************
+
         Constructor.
 
     ***************************************************************************/
@@ -148,10 +156,13 @@ public class DhtDump : VersionedLoggedStatsCliApp
     {
         ConfigReader.fill("Dht", this.dht_config, config);
         ConfigReader.fill("Dump", this.dump_config, config);
+        ConfigReader.fill("Stats", this.stats_config, config);
+
+        scope stats = new DumpStats(this.stats_config, this.epoll);
 
         this.initDht();
 
-        this.dump_cycle.start(this.dump_config);
+        this.dump_cycle.start(this.dump_config, stats);
         this.epoll.eventLoop();
 
         return true;

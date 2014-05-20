@@ -22,6 +22,8 @@ module swarmnodes.dht.memory.dhtdump.DumpCycle;
 
 *******************************************************************************/
 
+private import swarmnodes.dht.memory.dhtdump.DumpStats;
+
 private import swarmnodes.dht.memory.storage.DumpFile;
 
 private import ocean.core.Array : appendCopy, copy;
@@ -156,6 +158,15 @@ public class DumpCycle : SelectFiber
 
     /***************************************************************************
 
+        Dump stats instance, passed to start()
+
+    ***************************************************************************/
+
+    private DumpStats stats;
+
+
+    /***************************************************************************
+
         Constructor.
 
         Params:
@@ -190,9 +201,10 @@ public class DumpCycle : SelectFiber
 
     ***************************************************************************/
 
-    public void start ( Config dump_config )
+    public void start ( Config dump_config, DumpStats stats )
     {
         this.dump_config = dump_config;
+        this.stats = stats;
 
         this.root.set(this.dump_config.data_dir);
 
@@ -302,6 +314,9 @@ public class DumpCycle : SelectFiber
             {
                 records++;
                 bytes += key.length + value.length;
+
+                this.stats.dumpedRecord(key, value);
+
                 this.file.write(key, value);
             }
         }
@@ -392,6 +407,8 @@ public class DumpCycle : SelectFiber
         log.info("Finished dumping '{}', {} records, {} bytes, {}s{}", channel,
             records, bytes, dump_microsec / 1_000_000f,
             error ? " [error]" : "");
+
+        this.stats.dumpedChannel(channel, records, bytes);
     }
 
 
