@@ -460,8 +460,8 @@ public class DumpCycle : SelectFiber
         }
         else
         {
-            wait = this.dump_config.period_s -
-                (microsec_active / 1_000_000f);
+            double sec_active = microsec_active / 1_000_000f;
+            wait = this.dump_config.period_s - sec_active;
             if ( wait < this.dump_config.min_wait_s )
             {
                 log.warn("Calculated wait time too short -- either the "
@@ -469,7 +469,8 @@ public class DumpCycle : SelectFiber
                     "dump period is set too low in config.ini.");
                 wait = this.dump_config.min_wait_s;
             }
-            log.info("Finished dumping channels, sleeping for {}s", wait);
+            log.info("Finished dumping channels, took {}s, sleeping for {}s",
+                sec_active, wait);
         }
 
         this.timer.wait(wait);
