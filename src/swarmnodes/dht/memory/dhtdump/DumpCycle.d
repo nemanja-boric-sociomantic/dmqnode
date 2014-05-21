@@ -43,6 +43,7 @@ private import tango.core.Array : contains;
 private import tango.math.random.Random;
 
 private import tango.time.StopWatch;
+private import tango.time.WallClock;
 
 private import tango.util.log.Log;
 
@@ -469,8 +470,12 @@ public class DumpCycle : SelectFiber
                     "dump period is set too low in config.ini.");
                 wait = this.dump_config.min_wait_s;
             }
-            log.info("Finished dumping channels, took {}s, sleeping for {}s",
-                sec_active, wait);
+
+            auto restart_time =
+                WallClock.now() + TimeSpan().fromSeconds(cast(long)wait);
+            log.info("Finished dumping channels, took {}s, sleeping for {}s "
+                "(next cycle scheduled at {})", sec_active, wait,
+                restart_time);
         }
 
         this.timer.wait(wait);
