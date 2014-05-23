@@ -127,6 +127,44 @@ public class DumpStats : IPeriodicStatsLog
 
     /***************************************************************************
 
+        Returns:
+            the total number of bytes written to all channels during the last
+            cycle
+
+    ***************************************************************************/
+
+    public ulong total_bytes ( )
+    {
+        ulong sum;
+        foreach ( channel; this.channel_stats )
+        {
+            sum += channel.bytes_written;
+        }
+        return sum;
+    }
+
+
+    /***************************************************************************
+
+        Returns:
+            the total number of records written to all channels during the last
+            cycle
+
+    ***************************************************************************/
+
+    public ulong total_records ( )
+    {
+        ulong sum;
+        foreach ( channel; this.channel_stats )
+        {
+            sum += channel.records_written;
+        }
+        return sum;
+    }
+
+
+    /***************************************************************************
+
         Called periodically by the super class. Adds the aggregated stats to the
         stats log.
 

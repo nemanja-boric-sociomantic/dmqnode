@@ -34,6 +34,8 @@ private import ocean.io.select.client.FiberTimerEvent;
 
 private import ocean.io.select.fiber.SelectFiber;
 
+private import ocean.text.util.DigitGrouping : BitGrouping;
+
 private import swarm.dht.DhtClient;
 
 private import ocean.io.FilePath;
@@ -164,6 +166,15 @@ public class DumpCycle : SelectFiber
     ***************************************************************************/
 
     private DumpStats stats;
+
+
+    /***************************************************************************
+
+        Buffer used for message formatting in wait()
+
+    ***************************************************************************/
+
+    private char[] bytes_buf;
 
 
     /***************************************************************************
@@ -473,9 +484,10 @@ public class DumpCycle : SelectFiber
 
             auto restart_time =
                 WallClock.now() + TimeSpan().fromSeconds(cast(long)wait);
-            log.info("Finished dumping channels, took {}s, sleeping for {}s "
-                "(next cycle scheduled at {})", sec_active, wait,
-                restart_time);
+            log.info("Finished dumping channels, took {}s, dumped {}, "
+                "sleeping for {}s (next cycle scheduled at {})", sec_active,
+                BitGrouping.format(this.stats.total_bytes, this.bytes_buf, "b"),
+                wait, restart_time);
         }
 
         this.timer.wait(wait);
