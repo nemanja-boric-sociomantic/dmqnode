@@ -121,11 +121,11 @@ public class DumpCycle : SelectFiber
     private FilePath swap_path;
 
 
-    /***********************************************************************
+    /***************************************************************************
 
         List of channels being iterated over
 
-    ***********************************************************************/
+    ***************************************************************************/
 
     private char[][] channels;
 
@@ -413,14 +413,14 @@ public class DumpCycle : SelectFiber
     }
 
 
-    /***********************************************************************
+    /***************************************************************************
 
         Before the first dump, waits a randomly determined amount of time.
         This is to ensure that, in the situation when multiple instances of
         this tool are started simultaneously, they will not all start
         dumping at the same time, in order to minimise impact on the dht.
 
-    ***********************************************************************/
+    ***************************************************************************/
 
     private void initialWait ( )
     {
@@ -436,7 +436,7 @@ public class DumpCycle : SelectFiber
     }
 
 
-    /***********************************************************************
+    /***************************************************************************
 
         After dumping, waits for the remaining time specified in the config.
         If the remaining time is less than the configured minimum wait time,
@@ -449,7 +449,7 @@ public class DumpCycle : SelectFiber
             error = indicates whether a dht error occurred during the last
                 dump cycle
 
-    ***********************************************************************/
+    ***************************************************************************/
 
     private void wait ( ulong microsec_active, bool error )
     {
