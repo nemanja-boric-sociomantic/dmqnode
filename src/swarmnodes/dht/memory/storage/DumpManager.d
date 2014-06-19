@@ -401,10 +401,10 @@ public class DumpManager
         Stderr.formatln("Loading channel '{}' from disk", storage.id);
 
         scope progress_manager = new ProgressManager("Loaded channel",
-                    storage.id, this.input.length);
+                    storage.id, input.length);
 
         // Just to avoid confusion, will go away after the transition.
-        ulong num_records = this.input.file_format_version;
+        ulong num_records = input.file_format_version;
         if ( num_records > 0 )
         {
             log.info("File is in old, versionless format");
@@ -412,7 +412,7 @@ public class DumpManager
 
         ulong records_read;
         ulong out_of_range;
-        foreach ( k, v; this.input )
+        foreach ( k, v; input )
         {
             // This will go after the transition!
             if (num_records > 0 && records_read == num_records)
