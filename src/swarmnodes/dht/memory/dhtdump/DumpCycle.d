@@ -325,7 +325,8 @@ public class DumpCycle : SelectFiber
             if ( key.length && value.length )
             {
                 records++;
-                bytes += key.length + value.length;
+                // bytes of key, value, and length specifiers of each
+                bytes += key.length + value.length + (size_t.sizeof * 2);
 
                 this.stats.dumpedRecord(key, value);
 

@@ -86,7 +86,7 @@ public class DumpStats : IPeriodicStatsLog
     /***************************************************************************
 
         Should be called when a record has been dumped. Updates the stats
-        counters.
+        counters with the amount of data written to disk for this record.
 
         Params:
             key = key of record dumped
@@ -97,7 +97,9 @@ public class DumpStats : IPeriodicStatsLog
     public void dumpedRecord ( char[] key, char[] value )
     {
         this.current_stats.records_written++;
-        this.current_stats.bytes_written += key.length + value.length;
+        // bytes of key, value, and length specifiers of each
+        this.current_stats.bytes_written += key.length + value.length
+            + (size_t.sizeof * 2);
     }
 
 
