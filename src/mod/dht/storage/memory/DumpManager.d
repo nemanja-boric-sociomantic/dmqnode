@@ -398,7 +398,7 @@ public class DumpManager
 
             records_read++;
 
-            progress_manager.progress(k.length + v.length);
+            progress_manager.progress(k.length + v.length + (size_t.sizeof * 2));
 
             storage.put(k, v);
         }
