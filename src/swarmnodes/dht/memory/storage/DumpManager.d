@@ -350,7 +350,7 @@ public class DumpManager
                 scope (exit) this.input.close();
 
                 auto channel = new_channel(this.dst_path.name.dup);
-                this.loadChannel(channel, this.input);
+                this.loadChannel(channel, this.input, this.allow_out_of_range);
             }
             else if ( this.path.suffix() == NewFileSuffix )
             {
@@ -388,14 +388,17 @@ public class DumpManager
         Params:
             storage = channel storage to load the dump to
             input = file from where to read the channel dump
+            allow_out_of_range = if true, out-of-range records will be loaded;
+                if false, they are treated as a fatal error
 
         Throws:
-            if this.allow_out_of_range == false and an out-of-range record is
+            if allow_out_of_range == false and an out-of-range record is
             encountered while loading the input file
 
     ***********************************************************************/
 
-    private void loadChannel ( DhtStorageEngine storage, ChannelLoader input )
+    static private void loadChannel ( DhtStorageEngine storage,
+        ChannelLoaderBase input, bool allow_out_of_range )
     {
         log.info("Loading channel '{}' from disk", storage.id);
         Stderr.formatln("Loading channel '{}' from disk", storage.id);
@@ -414,19 +417,19 @@ public class DumpManager
         ulong out_of_range;
         foreach ( k, v; input )
         {
-            // This will go after the transition!
-            if (num_records > 0 && records_read == num_records)
-            {
-                break;
-            }
-
             records_read++;
 
             progress_manager.progress(k.length + v.length + (size_t.sizeof * 2));
 
-            if ( !this.loadRecord(storage, k, v) )
+            if ( !loadRecord(storage, k, v, allow_out_of_range) )
             {
                 out_of_range++;
+            }
+
+            // This will go after the transition!
+            if (num_records > 0 && records_read == num_records)
+            {
+                break;
             }
         }
 
@@ -467,16 +470,19 @@ public class DumpManager
             storage = channel storage to load the record into
             key = record key
             val = record value
+            allow_out_of_range = if true, out-of-range records will be loaded;
+                if false, they are treated as a fatal error
 
         Returns:
             true if the record was loaded or false if it was out-of-range
 
         Throws:
-            if this.allow_out_of_range == false and the record is out-of-range
+            if allow_out_of_range == false and the record is out-of-range
 
     ***************************************************************************/
 
-    private bool loadRecord ( DhtStorageEngine storage, char[] key, char[] val )
+    static private bool loadRecord ( DhtStorageEngine storage, char[] key,
+        char[] val, bool allow_out_of_range )
     {
         if ( storage.responsibleForKey(key) )
         {
@@ -485,7 +491,7 @@ public class DumpManager
         }
         else
         {
-            if ( this.allow_out_of_range )
+            if ( allow_out_of_range )
             {
                 log.trace("Encountered out-of-range key in channel '{}': {} -- loaded",
                     storage.id, key);
@@ -535,6 +541,113 @@ public class DumpManager
         }
     }
 }
+
+
+
+/*******************************************************************************
+
+    Unittest for DumpManager.loadChannel()
+
+*******************************************************************************/
+
+version ( UnitTest )
+{
+    private import ocean.io.device.MemoryDevice;
+    private import tango.core.Exception : IOException;
+
+    private class DummyStorageEngine : DhtStorageEngine
+    {
+        private uint count;
+
+        this ( ) { super("test", hash_t.min, hash_t.max); }
+        override typeof(this) put ( char[] key, char[] value )
+        {
+            this.count++;
+            return this;
+        }
+        typeof(this) clear ( ) { return this; }
+        typeof(this) close ( ) { return this; }
+        ulong num_records ( ) { return this.count; }
+        ulong num_bytes ( ) { return 0; }
+    }
+
+    private class DummyChannelLoader : ChannelLoaderBase
+    {
+        const size_t len;
+        this ( ubyte[] data )
+        {
+            this.len = data.length;
+            auto mem = new MemoryDevice;
+            mem.write(data);
+            mem.seek(0);
+            super(mem);
+        }
+        protected ulong length_ ( ) { return this.len; }
+    }
+}
+
+unittest
+{
+    /***************************************************************************
+
+        Calls DumpManager.loadChannel() with the provided input data.
+
+        Params:
+            data = data to load
+
+        Returns:
+            the number of records in the storage engine after loading
+
+    ***************************************************************************/
+
+    ulong test ( ubyte[] data )
+    {
+        auto storage = new DummyStorageEngine;
+        auto input = new DummyChannelLoader(data);
+        input.open();
+
+        DumpManager.loadChannel(storage, input, true);
+
+        return storage.num_records;
+    }
+
+    ubyte[] versionless = [3,0,0,0,0,0,0,0]; // number of records
+    ubyte[] version0 =    [0,0,0,0,0,0,0,0]; // version number
+    ubyte[] data = [
+        16,0,0,0,0,0,0,0, // key 1 len
+        1,2,3,4,5,6,7,8,1,2,3,4,5,6,7,8, // key 1
+        4,0,0,0,0,0,0,0, // value 1 len
+        1,2,3,4, // value 1
+        16,0,0,0,0,0,0,0, // key 2 len
+        1,2,3,4,5,6,7,8,1,2,3,4,5,6,7,8, // key 2
+        4,0,0,0,0,0,0,0, // value 2 len
+        1,2,3,4, // value 2
+        16,0,0,0,0,0,0,0, // key 3 len
+        1,2,3,4,5,6,7,8,1,2,3,4,5,6,7,8, // key 3
+        4,0,0,0,0,0,0,0, // value 3 len
+        1,2,3,4 // value 3
+    ];
+    ubyte[] extra = [0,0,0,0,0,0,0,0];
+
+    // versionless file with no extra bytes at end
+    assert(test(versionless ~ data) == 3);
+
+    // versionless file with extra bytes at end
+    assert(test(versionless ~ data ~ extra) == 3);
+
+    // version 0 file with no extra bytes at end
+    bool io_error;
+    try
+    {
+        test(version0 ~ data);
+    }
+    catch ( IOException ) { io_error = true; }
+    assert(io_error); // expected to fail
+
+    // version 0 file with extra bytes at end
+    assert(test(version0 ~ data ~ extra) == 3);
+}
+
 
 
 /***************************************************************************
