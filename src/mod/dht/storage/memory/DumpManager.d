@@ -372,7 +372,8 @@ public class DumpManager
 
     ***********************************************************************/
 
-    private void loadChannel ( DhtStorageEngine storage, ChannelLoader input )
+    static private void loadChannel ( DhtStorageEngine storage,
+        ChannelLoaderBase input )
     {
         log.info("Loading channel '{}' from disk", storage.id);
         Stderr.formatln("Loading channel '{}' from disk", storage.id);
@@ -390,17 +391,17 @@ public class DumpManager
         ulong records_read;
         foreach ( k, v; input )
         {
-            // This will go after the transition!
-            if (num_records > 0 && records_read == num_records)
-            {
-                break;
-            }
-
             records_read++;
 
             progress_manager.progress(k.length + v.length + (size_t.sizeof * 2));
 
             storage.put(k, v);
+
+            // This will go after the transition!
+            if (num_records > 0 && records_read == num_records)
+            {
+                break;
+            }
         }
 
         // This will go after the transition!
@@ -453,6 +454,113 @@ public class DumpManager
         }
     }
 }
+
+
+
+/*******************************************************************************
+
+    Unittest for DumpManager.loadChannel()
+
+*******************************************************************************/
+
+version ( UnitTest )
+{
+    private import ocean.io.device.MemoryDevice;
+    private import tango.core.Exception : IOException;
+
+    private class DummyStorageEngine : DhtStorageEngine
+    {
+        private uint count;
+
+        this ( ) { super("test"); }
+        override typeof(this) put ( char[] key, char[] value )
+        {
+            this.count++;
+            return this;
+        }
+        typeof(this) clear ( ) { return this; }
+        typeof(this) close ( ) { return this; }
+        ulong num_records ( ) { return this.count; }
+        ulong num_bytes ( ) { return 0; }
+    }
+
+    private class DummyChannelLoader : ChannelLoaderBase
+    {
+        const size_t len;
+        this ( ubyte[] data )
+        {
+            this.len = data.length;
+            auto mem = new MemoryDevice;
+            mem.write(data);
+            mem.seek(0);
+            super(mem);
+        }
+        protected ulong length_ ( ) { return this.len; }
+    }
+}
+
+unittest
+{
+    /***************************************************************************
+
+        Calls DumpManager.loadChannel() with the provided input data.
+
+        Params:
+            data = data to load
+
+        Returns:
+            the number of records in the storage engine after loading
+
+    ***************************************************************************/
+
+    ulong test ( ubyte[] data )
+    {
+        auto storage = new DummyStorageEngine;
+        auto input = new DummyChannelLoader(data);
+        input.open();
+
+        DumpManager.loadChannel(storage, input);
+
+        return storage.num_records;
+    }
+
+    ubyte[] versionless = [3,0,0,0,0,0,0,0]; // number of records
+    ubyte[] version0 =    [0,0,0,0,0,0,0,0]; // version number
+    ubyte[] data = [
+        16,0,0,0,0,0,0,0, // key 1 len
+        1,2,3,4,5,6,7,8,1,2,3,4,5,6,7,8, // key 1
+        4,0,0,0,0,0,0,0, // value 1 len
+        1,2,3,4, // value 1
+        16,0,0,0,0,0,0,0, // key 2 len
+        1,2,3,4,5,6,7,8,1,2,3,4,5,6,7,8, // key 2
+        4,0,0,0,0,0,0,0, // value 2 len
+        1,2,3,4, // value 2
+        16,0,0,0,0,0,0,0, // key 3 len
+        1,2,3,4,5,6,7,8,1,2,3,4,5,6,7,8, // key 3
+        4,0,0,0,0,0,0,0, // value 3 len
+        1,2,3,4 // value 3
+    ];
+    ubyte[] extra = [0,0,0,0,0,0,0,0];
+
+    // versionless file with no extra bytes at end
+    assert(test(versionless ~ data) == 3);
+
+    // versionless file with extra bytes at end
+    assert(test(versionless ~ data ~ extra) == 3);
+
+    // version 0 file with no extra bytes at end
+    bool io_error;
+    try
+    {
+        test(version0 ~ data);
+    }
+    catch ( IOException ) { io_error = true; }
+    assert(io_error); // expected to fail
+
+    // version 0 file with extra bytes at end
+    assert(test(version0 ~ data ~ extra) == 3);
+}
+
 
 
 /***************************************************************************

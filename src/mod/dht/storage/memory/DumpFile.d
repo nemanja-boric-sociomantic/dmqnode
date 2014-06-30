@@ -24,6 +24,8 @@ private import ocean.io.FilePath;
 
 private import ocean.io.serialize.SimpleSerializer;
 
+private import tango.io.model.IConduit : InputStream;
+
 private import tango.io.device.File;
 
 private import tango.util.log.Log;
@@ -273,19 +275,19 @@ public class ChannelDumper
 
 /*******************************************************************************
 
-    Dump file reader.
+    Dump file reader base class.
 
 *******************************************************************************/
 
-public class ChannelLoader
+abstract public class ChannelLoaderBase
 {
     /***************************************************************************
 
-        Input buffered direct I/O file, used to load the channel dumps.
+        Input stream, used to load the channel dumps.
 
     ***************************************************************************/
 
-    private const BufferedDirectReadFile input;
+    protected const InputStream input;
 
 
     /***************************************************************************
@@ -312,13 +314,13 @@ public class ChannelLoader
         Constructor.
 
         Params:
-            buffer = buffer used by internal direct I/O reader
+            input = input stream to load channel data from
 
     ***************************************************************************/
 
-    public this ( ubyte[] buffer )
+    public this ( InputStream input )
     {
-        this.input = new BufferedDirectReadFile(null, buffer);
+        this.input = input;
     }
 
 
@@ -335,11 +337,9 @@ public class ChannelLoader
 
     ***************************************************************************/
 
-    public void open ( char[] path )
+    public void open ( )
     {
-        this.input.open(path);
-
-        SimpleSerializer.read(input, this.file_format_version_);
+        SimpleSerializer.read(this.input, this.file_format_version_);
     }
 
 
@@ -364,10 +364,20 @@ public class ChannelLoader
 
     ***************************************************************************/
 
-    public ulong length ( )
+    final public ulong length ( )
     {
-        return (cast(File)this.input.conduit).length - this.file_format_version_.sizeof;
+        return this.length_() - this.file_format_version_.sizeof;
     }
+
+
+    /***************************************************************************
+
+        Returns:
+            the number of bytes contained in the file
+
+    ***************************************************************************/
+
+    abstract protected ulong length_ ( );
 
 
     /***************************************************************************
@@ -409,6 +419,64 @@ public class ChannelLoader
     public void close ( )
     {
         this.input.close();
+    }
+}
+
+
+
+/*******************************************************************************
+
+    Input buffered direct I/O file dump file reader class.
+
+*******************************************************************************/
+
+public class ChannelLoader : ChannelLoaderBase
+{
+    /***************************************************************************
+
+        Constructor.
+
+        Params:
+            buffer = buffer used by internal direct I/O reader
+
+    ***************************************************************************/
+
+    public this ( ubyte[] buffer )
+    {
+        super(new BufferedDirectReadFile(null, buffer));
+    }
+
+    /***************************************************************************
+
+        Opens the dump file for reading and reads the file format version number
+        at the beginning.
+
+        NOTE: in the old file format, the first 8 bytes actually store the
+        number of records contained in the file.
+
+        Params:
+            path = path to open
+
+    ***************************************************************************/
+
+    public void open ( char[] path )
+    {
+        (cast(BufferedDirectReadFile)this.input).open(path);
+
+        super.open();
+    }
+
+
+    /***************************************************************************
+
+        Returns:
+            the number of bytes contained in the file
+
+    ***************************************************************************/
+
+    override protected ulong length_ ( )
+    {
+        return (cast(File)this.input.conduit).length;
     }
 }
 
