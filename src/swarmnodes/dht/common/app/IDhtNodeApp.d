@@ -34,7 +34,10 @@ private import swarmnodes.common.util.Terminator;
 private import swarmnodes.common.periodic.Periodics;
 private import swarmnodes.common.periodic.PeriodicWriterFlush;
 
+private import swarmnodes.dht.common.app.config.HashRangeConfig;
+
 private import swarmnodes.dht.common.node.DhtNode;
+private import swarmnodes.dht.common.node.DhtHashRange;
 private import swarmnodes.dht.common.storage.DhtStorageChannels;
 
 private import ocean.core.MessageFiber;
@@ -172,11 +175,12 @@ abstract public class IDhtNodeApp : LoggedCliApp
 
     /***************************************************************************
 
-        Minimum and maximum hashes for which this node is responsible.
+        Hash range for which node is responsible. Set from config file at
+        startup.
 
     ***************************************************************************/
 
-    protected hash_t min_hash, max_hash;
+    protected DhtHashRange hash_range;
 
 
     /***************************************************************************
@@ -226,15 +230,18 @@ abstract public class IDhtNodeApp : LoggedCliApp
         ConfigReader.fill("Stats", this.stats_config, config);
         ConfigReader.fill("Performance", this.performance_config, config);
 
-        enforce(Hash.hashDigestToHashT(this.server_config.minval(),
-            this.min_hash, true),
+        hash_t min, max;
+
+        enforce(Hash.hashDigestToHashT(this.server_config.minval(), min, true),
             "Minimum hash specified in config file is invalid -- "
             "a full-length hash is expected");
 
-        enforce(Hash.hashDigestToHashT(this.server_config.maxval(),
-            this.max_hash, true),
+        enforce(Hash.hashDigestToHashT(this.server_config.maxval(), max, true),
             "Maximum hash specified in config file is invalid -- "
             "a full-length hash is expected");
+
+        this.hash_range = new DhtHashRange(min, max,
+            new HashRangeConfig(this.config_ext.default_configs));
     }
 
 
@@ -254,7 +261,7 @@ abstract public class IDhtNodeApp : LoggedCliApp
     protected int run ( Arguments args, ConfigParser config )
     {
         this.node = new DhtNode(this.node_item, this.newStorageChannels(),
-            this.min_hash, this.max_hash, this.epoll, server_config.backlog);
+            this.hash_range, this.epoll, server_config.backlog);
 
         this.node.error_callback = &this.nodeError;
         this.node.connection_limit = server_config.connection_limit;

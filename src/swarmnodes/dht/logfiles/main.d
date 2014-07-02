@@ -119,7 +119,7 @@ public class LogfilesNodeServer : IDhtNodeApp
     override protected DhtStorageChannels newStorageChannels_ ( )
     {
         return new LogFilesStorageChannels(this.server_config.data_dir, 0,
-            this.min_hash, this.max_hash, this.logfiles_config.write_buffer_size);
+            this.hash_range, this.logfiles_config.write_buffer_size);
             // TODO: the size_limit of 0 is ignored by the logfiles storage
             // channels -- remove this parameter altogether
     }

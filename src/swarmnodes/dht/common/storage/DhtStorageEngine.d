@@ -31,6 +31,8 @@ module swarmnodes.dht.common.storage.DhtStorageEngine;
 
 *******************************************************************************/
 
+private import swarmnodes.dht.common.node.DhtHashRange;
+
 private import swarm.core.node.storage.model.IStorageEngine;
 
 private import swarm.core.node.storage.listeners.Listeners;
@@ -54,6 +56,15 @@ debug private import ocean.util.log.Trace;
 
 abstract public class DhtStorageEngine : IStorageEngine
 {
+    /***************************************************************************
+
+        Aliases for derived classes.
+
+    ***************************************************************************/
+
+    protected alias .DhtHashRange DhtHashRange;
+
+
     /***************************************************************************
 
         Set of listeners waiting for data on this storage channel. When data
@@ -91,7 +102,7 @@ abstract public class DhtStorageEngine : IStorageEngine
 
     ***************************************************************************/
 
-    protected const hash_t min_hash, max_hash;
+    protected const DhtHashRange hash_range;
 
 
     /***************************************************************************
@@ -100,12 +111,11 @@ abstract public class DhtStorageEngine : IStorageEngine
 
         Params:
             id = identifier string for this instance
-            min_hash = minimum hash for which this node is responsible
-            max_hash = maximum hash for which this node is responsible
+            hash_range = hash range for which this node is responsible
 
      **************************************************************************/
 
-    protected this ( char[] id, hash_t min_hash, hash_t max_hash )
+    protected this ( char[] id, DhtHashRange hash_range )
     {
         super(id);
 
@@ -113,8 +123,7 @@ abstract public class DhtStorageEngine : IStorageEngine
 
         this.not_implemented_exception = new NotImplementedException;
 
-        this.min_hash = min_hash;
-        this.max_hash = max_hash;
+        this.hash_range = hash_range;
     }
 
 
@@ -134,7 +143,8 @@ abstract public class DhtStorageEngine : IStorageEngine
     public bool responsibleForKey ( char[] key )
     {
         auto hash = DhtHash.straightToHash(key);
-        return DhtHash.isWithinNodeResponsibility(hash, this.min_hash, this.max_hash);
+        return DhtHash.isWithinNodeResponsibility(hash, this.hash_range.range.min,
+            this.hash_range.range.max);
     }
 
 

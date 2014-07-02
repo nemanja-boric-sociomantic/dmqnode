@@ -27,6 +27,8 @@ module swarmnodes.dht.common.storage.DhtStorageChannels;
 
 *******************************************************************************/
 
+private import swarmnodes.dht.common.node.DhtHashRange;
+
 private import ocean.core.Array;
 
 private import swarm.core.node.storage.model.IStorageChannels;
@@ -55,6 +57,15 @@ abstract public class DhtStorageChannels :
 {
     /***************************************************************************
 
+        Aliases for derived classes.
+
+    ***************************************************************************/
+
+    protected alias .DhtHashRange DhtHashRange;
+
+
+    /***************************************************************************
+
         Storage data directory (copied in constructor)
 
     ***************************************************************************/
@@ -68,7 +79,7 @@ abstract public class DhtStorageChannels :
 
     ***************************************************************************/
 
-    protected const hash_t min_hash, max_hash;
+    protected const DhtHashRange hash_range;
 
 
     /***************************************************************************
@@ -82,12 +93,11 @@ abstract public class DhtStorageChannels :
             dir = storage data directory
             size_limit = maximum number of bytes allowed in the node (0 = no
                 limit)
-            min_hash = minimum hash for which this node is responsible
-            max_hash = maximum hash for which this node is responsible
+            hash_range = hash range for which this node is responsible
 
     ***************************************************************************/
 
-    public this ( char[] dir, ulong size_limit, hash_t min_hash, hash_t max_hash )
+    public this ( char[] dir, ulong size_limit, DhtHashRange hash_range )
     {
         super(size_limit);
 
@@ -98,8 +108,7 @@ abstract public class DhtStorageChannels :
             this.createWorkingDir();
         }
 
-        this.min_hash = min_hash;
-        this.max_hash = max_hash;
+        this.hash_range = hash_range;
     }
 
 
@@ -128,6 +137,26 @@ abstract public class DhtStorageChannels :
     ***************************************************************************/
 
     abstract public bool commandSupported ( DhtConst.Command.E cmd );
+
+
+    /***************************************************************************
+
+        Changes the hash range of the node. All storage engines have a reference
+        to the same NodeHashRange instance, so will be updated immediately.
+
+        Params:
+            min = new min hash
+            max = new max hash
+
+        Throws:
+            if the specified range is invalid
+
+    ***************************************************************************/
+
+    public void setHashRange ( hash_t min, hash_t max )
+    {
+        this.hash_range.set(min, max);
+    }
 
 
     /***************************************************************************

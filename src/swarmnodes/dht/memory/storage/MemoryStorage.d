@@ -84,18 +84,17 @@ public class MemoryStorage : DhtStorageEngine
 
         Params:
             id = identifier string for this instance
-            min_hash = minimum hash for which this node is responsible
-            max_hash = maximum hash for which this node is responsible
+            hash_range = hash range for which this node is responsible
             bnum = memory storage channels bnum value
             delete_channel = callback used to delete channel files when the
                     channel is removed
 
     ***********************************************************************/
 
-    public this ( char[] id, hash_t min_hash, hash_t max_hash, uint bnum,
+    public this ( char[] id, DhtHashRange hash_range, uint bnum,
         DeleteChannelCb delete_channel )
     {
-        super(id, min_hash, max_hash);
+        super(id, hash_range);
 
         this.delete_channel = delete_channel;
 

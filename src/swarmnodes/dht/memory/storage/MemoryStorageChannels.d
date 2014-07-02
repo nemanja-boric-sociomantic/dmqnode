@@ -163,8 +163,7 @@ public class MemoryStorageChannels : DhtStorageChannels
             dir = data directory for dumped memory channels
             size_limit = maximum number of bytes allowed in the node (0 = no
                 limit)
-            min_hash = minimum hash for which node is responsible
-            max_hash = maximum hash for which node is responsible
+            hash_range = hash range for which this node is responsible
             bnum = estimated number of buckets in map (passed to tokyocabinet
                 "ctor")
             allow_out_of_range = determines whether out-of-range records (i.e.
@@ -173,10 +172,10 @@ public class MemoryStorageChannels : DhtStorageChannels
 
     ***************************************************************************/
 
-    public this ( char[] dir, ulong size_limit, hash_t min_hash, hash_t max_hash,
+    public this ( char[] dir, ulong size_limit, DhtHashRange hash_range,
         uint bnum, bool allow_out_of_range )
     {
-        super(dir, size_limit, min_hash, max_hash);
+        super(dir, size_limit, hash_range);
 
         this.bnum = bnum;
 
@@ -320,7 +319,7 @@ public class MemoryStorageChannels : DhtStorageChannels
 
     protected override DhtStorageEngine create_ ( char[] id )
     {
-        return new MemoryStorage(id, this.min_hash, this.max_hash, this.bnum,
+        return new MemoryStorage(id, this.hash_range, this.bnum,
                 &this.dump_manager.deleteChannel);
     }
 

@@ -134,7 +134,7 @@ public class DhtNodeServer : IDhtNodeApp
     override protected DhtStorageChannels newStorageChannels_ ( )
     {
         return new MemoryStorageChannels(this.server_config.data_dir,
-            this.memory_config.size_limit, this.min_hash, this.max_hash,
+            this.memory_config.size_limit, this.hash_range,
             this.memory_config.bnum, this.memory_config.allow_out_of_range);
     }
 

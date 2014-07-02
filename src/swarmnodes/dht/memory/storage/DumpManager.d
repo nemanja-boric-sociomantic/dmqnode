@@ -554,12 +554,14 @@ version ( UnitTest )
 {
     private import ocean.io.device.MemoryDevice;
     private import tango.core.Exception : IOException;
+    private import swarmnodes.dht.common.app.config.HashRangeConfig;
 
     private class DummyStorageEngine : DhtStorageEngine
     {
         private uint count;
 
-        this ( ) { super("test", hash_t.min, hash_t.max); }
+        this ( ) { super("test", new DhtHashRange(hash_t.min, hash_t.max,
+            new HashRangeConfig([]))); }
         override typeof(this) put ( char[] key, char[] value )
         {
             this.count++;

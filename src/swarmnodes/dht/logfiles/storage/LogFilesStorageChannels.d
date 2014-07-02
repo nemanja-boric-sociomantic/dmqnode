@@ -163,17 +163,16 @@ public class LogFilesStorageChannels : DhtStorageChannels
 
             Params:
                 id = identifier string for this instance
-                min_hash = minimum hash for which node is responsible
-                max_hash = maximum hash for which node is responsible
+                hash_range = hash range for which this node is responsible
 
         ***********************************************************************/
 
-        public this ( char[] id, hash_t min_hash, hash_t max_hash )
+        public this ( char[] id, DhtHashRange hash_range )
         {
             this.log_record_put = new LogRecordPut("",
                 this.outer.write_buffer_size);
 
-            super(id, min_hash, max_hash);
+            super(id, hash_range);
         }
 
 
@@ -774,16 +773,15 @@ public class LogFilesStorageChannels : DhtStorageChannels
             dir = data directory for logfiles
             size_limit = maximum number of bytes allowed in the node (0 = no
                 limit)
-            min_hash = minimum hash for which node is responsible
-            max_hash = maximum hash for which node is responsible
+            hash_range = hash range for which this node is responsible
             write_buffer_size = size in bytes of file write buffer
 
     ***************************************************************************/
 
-    public this ( char[] dir, ulong size_limit, hash_t min_hash, hash_t max_hash,
+    public this ( char[] dir, ulong size_limit, DhtHashRange hash_range,
         size_t write_buffer_size = DefaultWriteBufferSize )
     {
-        super(dir, size_limit, min_hash, max_hash);
+        super(dir, size_limit, hash_range);
 
         this.write_buffer_size = write_buffer_size;
 
@@ -852,7 +850,7 @@ public class LogFilesStorageChannels : DhtStorageChannels
 
     protected override DhtStorageEngine create_ ( char[] id )
     {
-        return new LogFiles(id, this.min_hash, this.max_hash);
+        return new LogFiles(id, this.hash_range);
     }
 
 

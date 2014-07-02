@@ -29,6 +29,7 @@ private import swarm.core.node.model.ChannelsNode : ChannelsNodeBase;
 private import swarm.dht.DhtConst;
 
 private import swarmnodes.dht.common.node.IDhtNodeInfo;
+private import swarmnodes.dht.common.node.DhtHashRange;
 
 private import swarmnodes.dht.common.connection.DhtConnectionHandler;
 
@@ -58,9 +59,7 @@ public class DhtNode : ChannelsNodeBase!(DhtStorageEngine, DhtConnectionHandler)
 
     ***************************************************************************/
 
-    private hash_t min_hash_;
-
-    private hash_t max_hash_;
+    private const DhtHashRange hash_range;
 
 
     /***************************************************************************
@@ -70,19 +69,17 @@ public class DhtNode : ChannelsNodeBase!(DhtStorageEngine, DhtConnectionHandler)
         Params:
             node_item = node address/port
             channels = storage channels instance to use
-            min_hash = minimum hash handled by this ndoe
-            max_hash = maximum hash handled by this ndoe
+            hash_range = min/max hash range tracker
             epoll = epoll select dispatcher to be used internally
             backlog = (see ISelectListener ctor)
 
     ***************************************************************************/
 
     public this ( DhtConst.NodeItem node_item, DhtStorageChannels channels,
-        hash_t min_hash, hash_t max_hash, EpollSelectDispatcher epoll,
+        DhtHashRange hash_range, EpollSelectDispatcher epoll,
         int backlog )
     {
-        this.min_hash_ = min_hash;
-        this.max_hash_ = max_hash;
+        this.hash_range = hash_range;
 
         auto conn_setup_params = new DhtConnectionSetupParams;
         conn_setup_params.node_info = this;
@@ -124,7 +121,7 @@ public class DhtNode : ChannelsNodeBase!(DhtStorageEngine, DhtConnectionHandler)
 
     public hash_t min_hash ( )
     {
-        return this.min_hash_;
+        return this.hash_range.range.min;
     }
 
 
@@ -137,7 +134,7 @@ public class DhtNode : ChannelsNodeBase!(DhtStorageEngine, DhtConnectionHandler)
 
     public hash_t max_hash ( )
     {
-        return this.max_hash_;
+        return this.hash_range.range.max;
     }
 
 
