@@ -38,6 +38,8 @@ private import swarmnodes.dht.common.node.DhtNode;
 private import swarmnodes.dht.common.storage.DhtStorageChannels;
 
 private import ocean.core.MessageFiber;
+private import ocean.core.Exception : enforce;
+
 private import ocean.io.select.protocol.generic.ErrnoIOException : IOWarning;
 
 private import ocean.util.config.ConfigParser;
@@ -224,12 +226,12 @@ abstract public class IDhtNodeApp : LoggedCliApp
         ConfigReader.fill("Stats", this.stats_config, config);
         ConfigReader.fill("Performance", this.performance_config, config);
 
-        assertEx(Hash.hashDigestToHashT(this.server_config.minval(),
+        enforce(Hash.hashDigestToHashT(this.server_config.minval(),
             this.min_hash, true),
             "Minimum hash specified in config file is invalid -- "
             "a full-length hash is expected");
 
-        assertEx(Hash.hashDigestToHashT(this.server_config.maxval(),
+        enforce(Hash.hashDigestToHashT(this.server_config.maxval(),
             this.max_hash, true),
             "Maximum hash specified in config file is invalid -- "
             "a full-length hash is expected");

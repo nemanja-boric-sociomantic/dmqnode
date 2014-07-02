@@ -80,7 +80,7 @@ private import swarm.dht.DhtHash;
 private import swarmnodes.dht.logfiles.storage.SizeInfoFile;
 
 private import ocean.core.Array;
-private import ocean.core.Exception: assertEx;
+private import ocean.core.Exception: enforce;
 
 private import ocean.io.serialize.SimpleSerializer;
 
@@ -379,7 +379,7 @@ public class LogRecord
 
         // Read header of next record
         bytes_read = SimpleSerializer.readData(file, &header, header.sizeof);
-        assertEx(bytes_read == header.sizeof, typeof(this).stringof ~ "readRecord - header read failed");
+        enforce(bytes_read == header.sizeof, typeof(this).stringof ~ "readRecord - header read failed");
         file_pos += bytes_read;
 
         // Sanity check: if the length of the record is beyond the end of
@@ -414,7 +414,7 @@ public class LogRecord
         value.length = header.len;
         auto bytes_read = SimpleSerializer.readData(file, value.ptr,
             value.length * typeof(value[0]).sizeof);
-        assertEx(bytes_read == value.length * typeof(value[0]).sizeof, typeof(this).stringof ~ "readRecord - record read failed");
+        enforce(bytes_read == value.length * typeof(value[0]).sizeof, typeof(this).stringof ~ "readRecord - record read failed");
     }
 
     /***************************************************************************

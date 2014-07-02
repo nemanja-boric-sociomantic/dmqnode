@@ -641,6 +641,19 @@ public class DhtConnectionHandler
 
     /***************************************************************************
 
+        Command code 'Redistribute' handler.
+
+        TODO: currently does nothing
+
+    ***************************************************************************/
+
+    protected void handleRedistribute ( )
+    {
+    }
+
+
+    /***************************************************************************
+
         Called when an invalid command code is read from the connection.
 
     ***************************************************************************/

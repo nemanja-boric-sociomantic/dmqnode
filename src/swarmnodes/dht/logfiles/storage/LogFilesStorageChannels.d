@@ -35,7 +35,7 @@ private import swarmnodes.dht.logfiles.storage.LogRecord,
                swarmnodes.dht.logfiles.storage.LogRecordPut;
 
 private import ocean.core.Array : concat;
-private import ocean.core.Exception : assertEx;
+private import ocean.core.Exception : enforce;
 
 private import ocean.io.FilePath;
 
@@ -355,7 +355,7 @@ public class LogFilesStorageChannels : DhtStorageChannels
 
             if ( path.exists )
             {
-                assertEx(path.isFolder(), typeof (this).stringof ~ ": '" ~
+                enforce(path.isFolder(), typeof (this).stringof ~ ": '" ~
                                           path.toString() ~ "' - not a directory");
             }
             else
