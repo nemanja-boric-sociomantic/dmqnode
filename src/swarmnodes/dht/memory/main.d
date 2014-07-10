@@ -89,6 +89,7 @@ public class DhtNodeServer : IDhtNodeApp
     {
         ulong size_limit = 0; // 0 := no size limit
         uint dump_period = 3600; // default = 1 hour
+        bool disable_dump_thread = false;
         bool allow_out_of_range = true;
         uint bnum = 0; // 0 := use tokyocabinet's default number of buckets
     }
@@ -154,10 +155,13 @@ public class DhtNodeServer : IDhtNodeApp
     {
         super.initPeriodics(periodics);
 
-        this.channel_dumper = new ChannelDumpThread(
-            cast(MemoryStorageChannels)this.storage_channels,
-            this.memory_config.dump_period);
-        this.channel_dumper.start();
+        if ( !this.memory_config.disable_dump_thread )
+        {
+            this.channel_dumper = new ChannelDumpThread(
+                cast(MemoryStorageChannels)this.storage_channels,
+                this.memory_config.dump_period);
+            this.channel_dumper.start();
+        }
 
         periodics.add(new MemoryPeriodicStats(this.stats_config, this.epoll,
             this.channel_dumper));
@@ -176,20 +180,23 @@ public class DhtNodeServer : IDhtNodeApp
     {
         assert(Terminator.terminating);
 
-        auto dumping = this.channel_dumper.busy;
-        if ( dumping )
+        if ( this.channel_dumper )
         {
-            Stdout.format("Waiting for channel dump thread to exit...").flush;
-            log.info("SIGINT handler: waiting for channel dump thread to exit");
-        }
+            auto dumping = this.channel_dumper.busy;
+            if ( dumping )
+            {
+                Stdout.format("Waiting for channel dump thread to exit...").flush;
+                log.info("SIGINT handler: waiting for channel dump thread to exit");
+            }
 
-        // Wait for dump thread to exit.
-        this.channel_dumper.join();
+            // Wait for dump thread to exit.
+            this.channel_dumper.join();
 
-        if ( dumping )
-        {
-            Stdout.formatln(" DONE");
-            log.info("SIGINT handler: waiting for channel dump thread to exit finished");
+            if ( dumping )
+            {
+                Stdout.formatln(" DONE");
+                log.info("SIGINT handler: waiting for channel dump thread to exit finished");
+            }
         }
     }
 }

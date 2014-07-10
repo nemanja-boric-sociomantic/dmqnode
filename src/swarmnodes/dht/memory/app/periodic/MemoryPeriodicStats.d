@@ -53,7 +53,7 @@ public class MemoryPeriodicStats : PeriodicDhtStats
 
     /***************************************************************************
 
-        Interface to the channel dumper thread.
+        Interface to the channel dumper thread (may be null).
 
     ***************************************************************************/
 
@@ -86,7 +86,7 @@ public class MemoryPeriodicStats : PeriodicDhtStats
     /***************************************************************************
 
         Provides additional text to be displayed on the console stats line.
-        Displays info about the status of the channel dumper.
+        Displays info about the status of the channel dump thread (if enabled).
 
         Returns:
             text to append to console stats line
@@ -95,6 +95,11 @@ public class MemoryPeriodicStats : PeriodicDhtStats
 
     override protected char[] extraConsoleInfo ( )
     {
+        if ( !this.channel_dumper )
+        {
+            return " (no dump thread)";
+        }
+
         if ( this.channel_dumper.busy )
         {
             return " (dumping channels)";
