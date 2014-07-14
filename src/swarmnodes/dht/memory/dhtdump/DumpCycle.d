@@ -27,6 +27,7 @@ private import swarmnodes.dht.memory.dhtdump.DumpStats;
 private import swarmnodes.dht.memory.storage.DumpFile;
 
 private import ocean.core.Array : appendCopy, copy;
+private import ocean.core.Exception : enforce;
 
 private import ocean.io.select.EpollSelectDispatcher;
 
@@ -219,6 +220,7 @@ public class DumpCycle : SelectFiber
         this.stats = stats;
 
         this.root.set(this.dump_config.data_dir);
+        enforce(this.root.exists, "Data directory does not exist");
 
         super.start();
     }
@@ -356,6 +358,7 @@ public class DumpCycle : SelectFiber
         time.start;
 
         // Dump channel to file
+        try
         {
             this.file.open(this.path.toString);
             scope ( exit ) this.file.close();
@@ -364,10 +367,15 @@ public class DumpCycle : SelectFiber
 
             this.dht.perform(this,
                 this.dht.getAll(channel, &get_dg, &notifier));
-        }
 
-        this.finalizeChannel(this.dump_path, channel, records, bytes, error,
-            time.microsec);
+            this.finalizeChannel(this.dump_path, channel, records, bytes, error,
+                time.microsec);
+        }
+        catch ( Exception e )
+        {
+            log.error("Failed to dump channel to file '{}': {} @ {} : {}",
+                this.path.toString, e.msg, e.file, e.line);
+        }
     }
 
 
