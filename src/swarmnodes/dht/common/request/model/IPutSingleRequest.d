@@ -83,6 +83,11 @@ public scope class IPutSingleRequest : ISingleKeyRequest
         {
             status = DhtConst.Status.E.EmptyValue;
         }
+        else if ( !this.resources.storage_channels.responsibleForKey(
+            *this.resources.key_buffer) )
+        {
+            status = DhtConst.Status.E.WrongNode;
+        }
         else
         {
             if ( this.resources.storage_channels.sizeLimitOk(
