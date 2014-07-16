@@ -74,6 +74,13 @@ public scope class RemoveChannelRequest : IChannelRequest
 
     protected void handle___ ( )
     {
+        if ( !this.resources.storage_channels.responsibleForKey(
+            *this.resources.key_buffer) )
+        {
+            this.writer.write(DhtConst.Status.E.WrongNode);
+            return;
+        }
+
         this.writer.write(DhtConst.Status.E.Ok);
 
         this.resources.storage_channels.remove(*this.resources.channel_buffer);
