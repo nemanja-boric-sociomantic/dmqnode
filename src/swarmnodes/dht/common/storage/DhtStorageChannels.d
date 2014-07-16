@@ -37,6 +37,7 @@ private import swarmnodes.dht.common.storage.DhtStorageEngine;
 private import swarmnodes.dht.common.storage.IStepIterator;
 
 private import swarm.dht.DhtConst;
+private import swarm.dht.DhtHash;
 
 private import ocean.io.FilePath;
 
@@ -156,6 +157,27 @@ abstract public class DhtStorageChannels :
     public void setHashRange ( hash_t min, hash_t max )
     {
         this.hash_range.set(min, max);
+    }
+
+
+    /***************************************************************************
+
+        Checks whether the specified key string (expected to be a hex number) is
+        within the hash range of this storage engine.
+
+        Params:
+            key = record key
+
+        Returns:
+            true if the key is within the storage engine's hash range
+
+    ***************************************************************************/
+
+    public bool responsibleForKey ( char[] key )
+    {
+        auto hash = DhtHash.straightToHash(key);
+        return DhtHash.isWithinNodeResponsibility(hash, this.hash_range.range.min,
+            this.hash_range.range.max);
     }
 
 
