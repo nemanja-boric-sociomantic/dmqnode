@@ -17,13 +17,13 @@ $B/dhtdump: src/swarmnodes/dht/memory/dhtdump/main.d
 dhtdump: $B/dhtdump
 all += dhtdump
 
-$B/log: src/swarmnodes/dht/logfiles/main.d
-log: $B/log
-all += log
+$B/logfilesnode: src/swarmnodes/dht/logfiles/main.d
+logfilesnode: $B/logfilesnode
+all += logfilesnode
 
-$B/queue: src/swarmnodes/queue/main.d
-queue: $B/queue
-all += queue
+$B/queuenode: src/swarmnodes/queue/main.d
+queuenode: $B/queuenode
+all += queuenode
 
 # Additional flags needed when unittesting
 $U/src/swarmnodes/dht/memory/storage/% \
