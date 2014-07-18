@@ -17,7 +17,6 @@ $B/dhtdump: src/swarmnodes/dht/memory/dhtdump/main.d
 dhtdump: $B/dhtdump
 all += dhtdump
 
-$B/log: override LDFLAGS += -ltokyocabinet
 $B/log: src/swarmnodes/dht/logfiles/main.d
 log: $B/log
 all += log
