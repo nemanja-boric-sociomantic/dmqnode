@@ -1,6 +1,6 @@
 /*******************************************************************************
 
-    GetRangeFilter request class.
+    GetRange request class.
 
     copyright:      Copyright (c) 2011 sociomantic labs. All rights reserved
 
@@ -10,7 +10,7 @@
 
 *******************************************************************************/
 
-module swarmnodes.dht.common.request.GetRangeFilterRequest;
+module swarmnodes.dht.logfiles.request.GetRangeRequest;
 
 
 
@@ -26,28 +26,17 @@ private import swarm.dht.common.RecordBatcher;
 
 debug private import ocean.util.log.Trace;
 
-private import tango.text.Search;
-
 
 
 /*******************************************************************************
 
-    GetRangeFilter request
+    GetRange request
 
 *******************************************************************************/
 
-private scope class IGetRangeFilterRequest ( bool ChunkedBatcher, DhtConst.Command.E Cmd )
+private scope class IGetRangeRequest ( bool ChunkedBatcher, DhtConst.Command.E Cmd )
     : IBulkGetRequest!(ChunkedBatcher)
 {
-    /***************************************************************************
-
-        Sub-string search instance.
-
-    ***************************************************************************/
-
-    SearchFruct!(char) match;
-
-
     /***************************************************************************
 
         Constructor
@@ -80,9 +69,6 @@ private scope class IGetRangeFilterRequest ( bool ChunkedBatcher, DhtConst.Comma
     {
         this.reader.readArray(*this.resources.key_buffer);
         this.reader.readArray(*this.resources.key2_buffer);
-        this.reader.readArray(*this.resources.filter_buffer);
-
-        this.match = search(*this.resources.filter_buffer);
     }
 
 
@@ -97,7 +83,8 @@ private scope class IGetRangeFilterRequest ( bool ChunkedBatcher, DhtConst.Comma
 
     ***************************************************************************/
 
-    protected void beginIteration_ ( DhtStorageEngine storage_channel, IStepIterator iterator )
+    protected void beginIteration_ ( DhtStorageEngine storage_channel,
+        IStepIterator iterator )
     {
         storage_channel.getRange(iterator, *this.resources.key_buffer,
             *this.resources.key2_buffer);
@@ -122,21 +109,17 @@ private scope class IGetRangeFilterRequest ( bool ChunkedBatcher, DhtConst.Comma
     protected bool handleRecord ( out AddResult add_result )
     {
         if ( super.key >= *this.resources.key_buffer &&
-             super.key <= *this.resources.key2_buffer )
+              super.key <= *this.resources.key2_buffer )
         {
-            auto value = super.value;
-            if ( this.match.forward(value) < value.length )
-            {
-                add_result = super.addToBatch(super.key, value);
-                return true;
-            }
+            add_result = super.addToBatch(super.key, super.value);
+            return true;
         }
 
         return false;
     }
 }
 
-public alias IGetRangeFilterRequest!(true, DhtConst.Command.E.GetRangeFilter) GetRangeFilterRequest;
+public alias IGetRangeRequest!(true, DhtConst.Command.E.GetRange) GetRangeRequest;
 
-public alias IGetRangeFilterRequest!(false, DhtConst.Command.E.GetRangeFilter2) GetRangeFilterRequest2;
+public alias IGetRangeRequest!(false, DhtConst.Command.E.GetRange2) GetRangeRequest2;
 

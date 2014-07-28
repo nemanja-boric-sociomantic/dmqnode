@@ -10,7 +10,7 @@
 
 *******************************************************************************/
 
-module swarmnodes.dht.common.request.ListenRequest;
+module swarmnodes.dht.memory.request.ListenRequest;
 
 
 

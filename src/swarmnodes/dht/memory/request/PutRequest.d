@@ -1,6 +1,6 @@
 /*******************************************************************************
 
-    Exists request class.
+    Put request class.
 
     copyright:      Copyright (c) 2011 sociomantic labs. All rights reserved
 
@@ -10,7 +10,7 @@
 
 *******************************************************************************/
 
-module swarmnodes.dht.common.request.ExistsRequest;
+module swarmnodes.dht.memory.request.PutRequest;
 
 
 
@@ -20,7 +20,7 @@ module swarmnodes.dht.common.request.ExistsRequest;
 
 *******************************************************************************/
 
-private import swarmnodes.dht.common.request.model.IChannelRequest;
+private import swarmnodes.dht.common.request.model.IPutSingleRequest;
 
 debug private import ocean.util.log.Trace;
 
@@ -28,11 +28,11 @@ debug private import ocean.util.log.Trace;
 
 /*******************************************************************************
 
-    Exists request
+    Put request
 
 *******************************************************************************/
 
-public scope class ExistsRequest : IChannelRequest
+public scope class PutRequest : IPutSingleRequest
 {
     /***************************************************************************
 
@@ -48,47 +48,25 @@ public scope class ExistsRequest : IChannelRequest
     public this ( FiberSelectReader reader, FiberSelectWriter writer,
         IDhtRequestResources resources )
     {
-        super(DhtConst.Command.E.Exists, reader, writer, resources);
+        super(DhtConst.Command.E.Put, reader, writer, resources);
     }
 
 
     /***************************************************************************
 
-        Reads any data from the client which is required for the request. If the
-        request is invalid in some way (the channel name is invalid, or the
-        command is not supported) then the command can be simply not executed,
-        and all client data has been read, leaving the read buffer in a clean
-        state ready for the next request.
+        Performs the put request on the storage channel request.
+
+        Params:
+            channel = channel to put to
+            key = key to put
+            value = value to put
 
     ***************************************************************************/
 
-    protected void readRequestData_ ( )
+    protected void performRequest ( DhtStorageEngine channel, char[] key,
+        char[] value )
     {
-        this.reader.readArray(*this.resources.key_buffer);
-    }
-
-
-    /***************************************************************************
-
-        Performs this request. (Fiber method, after command and channel validity
-        have been confirmed.)
-
-    ***************************************************************************/
-
-    protected void handle___ ( )
-    {
-        this.writer.write(DhtConst.Status.E.Ok);
-
-        bool exists;
-
-        auto storage_channel =
-            *this.resources.channel_buffer in this.resources.storage_channels;
-        if ( storage_channel !is null )
-        {
-            exists = storage_channel.exists(*this.resources.key_buffer);
-        }
-
-        this.writer.write(exists);
+        channel.put(key, value);
     }
 }
 

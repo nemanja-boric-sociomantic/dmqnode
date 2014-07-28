@@ -1,6 +1,6 @@
 /*******************************************************************************
 
-    Remove request class.
+    Get request class.
 
     copyright:      Copyright (c) 2011 sociomantic labs. All rights reserved
 
@@ -10,7 +10,7 @@
 
 *******************************************************************************/
 
-module swarmnodes.dht.common.request.RemoveRequest;
+module swarmnodes.dht.memory.request.GetRequest;
 
 
 
@@ -28,11 +28,11 @@ debug private import ocean.util.log.Trace;
 
 /*******************************************************************************
 
-    Remove request
+    Get request
 
 *******************************************************************************/
 
-public scope class RemoveRequest : IChannelRequest
+public scope class GetRequest : IChannelRequest
 {
     /***************************************************************************
 
@@ -48,7 +48,7 @@ public scope class RemoveRequest : IChannelRequest
     public this ( FiberSelectReader reader, FiberSelectWriter writer,
         IDhtRequestResources resources )
     {
-        super(DhtConst.Command.E.Remove, reader, writer, resources);
+        super(DhtConst.Command.E.Get, reader, writer, resources);
     }
 
 
@@ -83,8 +83,13 @@ public scope class RemoveRequest : IChannelRequest
             *this.resources.channel_buffer in this.resources.storage_channels;
         if ( storage_channel !is null )
         {
-            storage_channel.remove(*this.resources.key_buffer);
+            storage_channel.get(*this.resources.key_buffer,
+                *this.resources.value_buffer);
         }
+
+        this.writer.writeArray(*this.resources.value_buffer);
+
+        this.resources.node_info.handledRecord();
     }
 }
 

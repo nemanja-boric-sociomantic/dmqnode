@@ -39,19 +39,21 @@ private import swarmnodes.dht.common.request.GetSupportedCommandsRequest;
 private import swarmnodes.dht.common.request.GetChannelsRequest;
 private import swarmnodes.dht.common.request.GetSizeRequest;
 private import swarmnodes.dht.common.request.GetChannelSizeRequest;
-private import swarmnodes.dht.common.request.PutRequest;
-private import swarmnodes.dht.common.request.PutDupRequest;
-private import swarmnodes.dht.common.request.GetRequest;
 private import swarmnodes.dht.common.request.GetAllRequest;
 private import swarmnodes.dht.common.request.GetAllFilterRequest;
 private import swarmnodes.dht.common.request.GetAllKeysRequest;
-private import swarmnodes.dht.common.request.GetRangeRequest;
-private import swarmnodes.dht.common.request.GetRangeFilterRequest;
-private import swarmnodes.dht.common.request.ListenRequest;
-private import swarmnodes.dht.common.request.ExistsRequest;
-private import swarmnodes.dht.common.request.RemoveRequest;
 private import swarmnodes.dht.common.request.RemoveChannelRequest;
 private import swarmnodes.dht.common.request.GetNumConnectionsRequest;
+
+private import swarmnodes.dht.memory.request.ExistsRequest;
+private import swarmnodes.dht.memory.request.GetRequest;
+private import swarmnodes.dht.memory.request.PutRequest;
+private import swarmnodes.dht.memory.request.RemoveRequest;
+private import swarmnodes.dht.memory.request.ListenRequest;
+
+private import swarmnodes.dht.logfiles.request.PutDupRequest;
+private import swarmnodes.dht.logfiles.request.GetRangeRequest;
+private import swarmnodes.dht.logfiles.request.GetRangeFilterRequest;
 
 private import swarmnodes.dht.common.storage.DhtStorageChannels;
 

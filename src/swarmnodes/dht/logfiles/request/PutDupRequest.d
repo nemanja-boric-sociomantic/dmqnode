@@ -1,16 +1,16 @@
 /*******************************************************************************
 
-    Put request class.
+    PutDup request class.
 
     copyright:      Copyright (c) 2011 sociomantic labs. All rights reserved
 
-    version:        January 2011: Initial release
+    version:        August 2011: Initial release
 
     authors:        Gavin Norman
 
 *******************************************************************************/
 
-module swarmnodes.dht.common.request.PutRequest;
+module swarmnodes.dht.logfiles.request.PutDupRequest;
 
 
 
@@ -28,11 +28,11 @@ debug private import ocean.util.log.Trace;
 
 /*******************************************************************************
 
-    Put request
+    PutDup request
 
 *******************************************************************************/
 
-public scope class PutRequest : IPutSingleRequest
+public scope class PutDupRequest : IPutSingleRequest
 {
     /***************************************************************************
 
@@ -48,7 +48,7 @@ public scope class PutRequest : IPutSingleRequest
     public this ( FiberSelectReader reader, FiberSelectWriter writer,
         IDhtRequestResources resources )
     {
-        super(DhtConst.Command.E.Put, reader, writer, resources);
+        super(DhtConst.Command.E.PutDup, reader, writer, resources);
     }
 
 
@@ -66,7 +66,7 @@ public scope class PutRequest : IPutSingleRequest
     protected void performRequest ( DhtStorageEngine channel, char[] key,
         char[] value )
     {
-        channel.put(key, value);
+        channel.putDup(key, value);
     }
 }
 

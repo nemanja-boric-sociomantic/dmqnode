@@ -1,16 +1,16 @@
 /*******************************************************************************
 
-    GetRange request class.
+    Remove request class.
 
     copyright:      Copyright (c) 2011 sociomantic labs. All rights reserved
 
-    version:        August 2011: Initial release
+    version:        January 2011: Initial release
 
     authors:        Gavin Norman
 
 *******************************************************************************/
 
-module swarmnodes.dht.common.request.GetRangeRequest;
+module swarmnodes.dht.memory.request.RemoveRequest;
 
 
 
@@ -20,9 +20,7 @@ module swarmnodes.dht.common.request.GetRangeRequest;
 
 *******************************************************************************/
 
-private import swarmnodes.dht.common.request.model.IBulkGetRequest;
-
-private import swarm.dht.common.RecordBatcher;
+private import swarmnodes.dht.common.request.model.IChannelRequest;
 
 debug private import ocean.util.log.Trace;
 
@@ -30,12 +28,11 @@ debug private import ocean.util.log.Trace;
 
 /*******************************************************************************
 
-    GetRange request
+    Remove request
 
 *******************************************************************************/
 
-private scope class IGetRangeRequest ( bool ChunkedBatcher, DhtConst.Command.E Cmd )
-    : IBulkGetRequest!(ChunkedBatcher)
+public scope class RemoveRequest : IChannelRequest
 {
     /***************************************************************************
 
@@ -51,7 +48,7 @@ private scope class IGetRangeRequest ( bool ChunkedBatcher, DhtConst.Command.E C
     public this ( FiberSelectReader reader, FiberSelectWriter writer,
         IDhtRequestResources resources )
     {
-        super(Cmd, reader, writer, resources);
+        super(DhtConst.Command.E.Remove, reader, writer, resources);
     }
 
 
@@ -68,58 +65,26 @@ private scope class IGetRangeRequest ( bool ChunkedBatcher, DhtConst.Command.E C
     protected void readRequestData_ ( )
     {
         this.reader.readArray(*this.resources.key_buffer);
-        this.reader.readArray(*this.resources.key2_buffer);
     }
 
 
     /***************************************************************************
 
-        Initiates iteration over the specified channel using the specified
-        iterator.
-
-        Params:
-            storage = storage channel to iterate over
-            iterator = iterator instance to use
+        Performs this request. (Fiber method, after command and channel validity
+        have been confirmed.)
 
     ***************************************************************************/
 
-    protected void beginIteration_ ( DhtStorageEngine storage_channel,
-        IStepIterator iterator )
+    protected void handle___ ( )
     {
-        storage_channel.getRange(iterator, *this.resources.key_buffer,
-            *this.resources.key2_buffer);
-    }
+        this.writer.write(DhtConst.Status.E.Ok);
 
-
-    /***************************************************************************
-
-        Called by getBatch() when a record is retrieved from the storage engine.
-        Should add the record to the batch if desired (using the super class'
-        addToBatch() methods), and return true in this case.
-
-        Params:
-            add_result = out value which receives a code indicating if the
-                record was successfully added, and if not, why not
-
-        Returns:
-            true if the record was added
-
-    ***************************************************************************/
-
-    protected bool handleRecord ( out AddResult add_result )
-    {
-        if ( super.key >= *this.resources.key_buffer &&
-              super.key <= *this.resources.key2_buffer )
+        auto storage_channel =
+            *this.resources.channel_buffer in this.resources.storage_channels;
+        if ( storage_channel !is null )
         {
-            add_result = super.addToBatch(super.key, super.value);
-            return true;
+            storage_channel.remove(*this.resources.key_buffer);
         }
-
-        return false;
     }
 }
-
-public alias IGetRangeRequest!(true, DhtConst.Command.E.GetRange) GetRangeRequest;
-
-public alias IGetRangeRequest!(false, DhtConst.Command.E.GetRange2) GetRangeRequest2;
 
