@@ -260,10 +260,11 @@ public abstract scope class IBulkGetRequest ( bool ChunkedBatcher ) : IChannelRe
                         batch_full = true;
                     break;
                     case TooBig:
-                        log.warn("Large record ({} bytes) being skipped in bulk request"
-                            "on channel {}",
+                        log.warn("Large record ({} bytes) being skipped in bulk "
+                            "request on channel {} (key = {})",
                             this.resources.iterator.value.length,
-                            *this.resources.channel_buffer);
+                            *this.resources.channel_buffer,
+                            this.resources.iterator.key);
                         advance_iterator = true;
                         batch_full = false;
                     break;
