@@ -44,7 +44,7 @@ private import ocean.util.log.StaticTrace;
 
 private import tango.core.Memory;
 
-private import tango.util.MinMax;
+private import tango.math.Math : max;
 
 
 /*******************************************************************************
