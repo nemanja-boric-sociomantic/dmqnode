@@ -239,22 +239,40 @@ public class DumpCycle : SelectFiber
 
         while ( true )
         {
-            StopWatch time;
-            time.start;
-
-            bool error;
-            auto channels = this.getChannels(error);
-
-            log.info("Dumping {} channels", channels.length);
-
-            foreach ( channel; channels )
+            try
             {
-                log.info("Dumping '{}'", channel);
+                StopWatch time;
+                time.start;
 
-                this.dumpChannel(channel, error);
+                bool error;
+                auto channels = this.getChannels(error);
+
+                log.info("Dumping {} channels", channels.length);
+
+                foreach ( channel; channels )
+                {
+                    log.info("Dumping '{}'", channel);
+
+                    try
+                    {
+                        this.dumpChannel(channel, error);
+                    }
+                    catch ( Exception e )
+                    {
+                        log.error("Exception thrown while dumping channel '{}': '{}' @ {}:{}",
+                            channel, e.msg, e.file, e.line);
+                        throw e;
+                    }
+                }
+
+                this.wait(time.microsec, error);
             }
-
-            this.wait(time.microsec, error);
+            catch ( Exception e )
+            {
+                log.error("Exception thrown in dump cycle: '{}' @ {}:{}",
+                    e.msg, e.file, e.line);
+                throw e;
+            }
         }
     }
 
