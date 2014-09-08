@@ -40,7 +40,7 @@ private import swarmnodes.dht.common.storage.DhtStorageChannels;
 
 private import ocean.io.select.EpollSelectDispatcher;
 
-debug private import ocean.util.log.Trace;
+debug private import tango.io.Stdout : Stderr;
 
 
 
@@ -91,22 +91,22 @@ public class DhtNode : ChannelsNodeBase!(DhtStorageEngine, DhtConnectionHandler)
 
         debug
         {
-            Trace.format("Supported commands: ");
+            Stderr.format("Supported commands: ");
             foreach ( i, desc, command; DhtConst.Command() )
             {
                 auto dht_cmd = cast(DhtConst.Command.E)command;
                 if ( command != DhtConst.Command.E.None )
                 {
-                    Trace.format("{}:{}", desc,
+                    Stderr.format("{}:{}", desc,
                         channels.commandSupported(dht_cmd));
                     if ( i < DhtConst.Command().length - 1 )
                     {
-                        Trace.format(", ");
+                        Stderr.format(", ");
                     }
                 }
             }
 
-            Trace.formatln("\nResponsible for hash range 0x{:X} - 0x{:X}",
+            Stderr.formatln("\nResponsible for hash range 0x{:X} - 0x{:X}",
                 min_hash, max_hash);
         }
     }

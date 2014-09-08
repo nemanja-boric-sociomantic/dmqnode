@@ -41,7 +41,7 @@ private import ocean.io.FilePath;
 
 private import tango.io.device.File;
 
-debug private import ocean.util.log.Trace;
+debug private import tango.io.Stdout : Stderr;
 
 private import tango.util.log.Log;
 
@@ -864,7 +864,7 @@ public class LogFilesStorageChannels : DhtStorageChannels
     protected override void loadChannels ( )
     {
         log.info("Scanning {} for logfiles directories", this.dir.toString);
-        debug Trace.formatln("Scanning {} for logfiles directories",
+        debug Stderr.formatln("Scanning {} for logfiles directories",
             this.dir.toString);
 
         foreach ( info; this.dir )
@@ -874,7 +874,7 @@ public class LogFilesStorageChannels : DhtStorageChannels
                 auto id = info.name.dup;
 
                 log.info("Opening logfiles directory '{}'", id);
-                debug Trace.formatln("    Opening logfiles directory '{}'", id);
+                debug Stderr.formatln("    Opening logfiles directory '{}'", id);
 
                 this.create(id);
             }
@@ -887,7 +887,7 @@ public class LogFilesStorageChannels : DhtStorageChannels
 
         log.info("Finished scanning {} for logfiles directories",
             this.dir.toString);
-        debug Trace.formatln("Finished scanning {} for logfiles directories",
+        debug Stderr.formatln("Finished scanning {} for logfiles directories",
             this.dir.toString);
     }
 }

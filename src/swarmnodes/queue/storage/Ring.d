@@ -40,7 +40,7 @@ private import tango.io.Path : normalize, PathParser;
 
 private import tango.sys.Environment;
 
-debug private import ocean.util.log.Trace;
+debug private import tango.io.Stdout : Stderr;
 
 private import tango.util.log.Log;
 
@@ -153,13 +153,13 @@ public class RingNode : QueueStorageChannels
 
         private void loadDumpedChannel ( )
         {
-            debug Trace.formatln("Loading from file {}", this.filename);
+            debug Stderr.formatln("Loading from file {}", this.filename);
 
             this.file_path.set(this.filename);
 
             if ( this.file_path.exists() )
             {
-                debug Trace.formatln("(File exists, loading)");
+                debug Stderr.formatln("(File exists, loading)");
 
                 scope file = new File(this.file_path.toString(), File.ReadExisting);
                 scope ( exit ) file.close();
@@ -168,7 +168,7 @@ public class RingNode : QueueStorageChannels
             }
             else
             {
-                debug Trace.formatln("(File doesn't exist)");
+                debug Stderr.formatln("(File doesn't exist)");
             }
         }
 
@@ -491,7 +491,7 @@ public class RingNode : QueueStorageChannels
     {
         scope filename = new FilePath;
 
-        debug Trace.formatln("Scanning {} for queue files", path.toString);
+        debug Stderr.formatln("Scanning {} for queue files", path.toString);
 
         this.channels_scan = true;
         scope ( exit ) this.channels_scan = false;
@@ -504,7 +504,7 @@ public class RingNode : QueueStorageChannels
                 {
                     auto id = filename.name.dup;
 
-                    debug Trace.formatln("    Loading queue file '{}'", id);
+                    debug Stderr.formatln("    Loading queue file '{}'", id);
 
                     this.create(id);
                 }
