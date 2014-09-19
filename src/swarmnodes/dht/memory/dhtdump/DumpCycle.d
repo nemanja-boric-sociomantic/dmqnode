@@ -427,14 +427,6 @@ public class DumpCycle : SelectFiber
             log.warn("Removing partial dump file '{}'", this.path);
             removeDumpFile();
         }
-        else if ( records == 0 )
-        {
-            // If there are no records in the channel, then delete the
-            // 'channel.dumping' file
-            assert(bytes == 0, "channel dump bytes/records mismatch");
-            log.info("Removing empty dump file '{}'", this.path);
-            removeDumpFile();
-        }
         else
         {
             // Move 'channel' -> 'channel.backup' and 'channel.dumping' ->

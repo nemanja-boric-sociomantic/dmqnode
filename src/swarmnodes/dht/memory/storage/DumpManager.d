@@ -215,13 +215,6 @@ public class DumpManager
     {
         buildFilePath(this.root_dir, this.path, storage.id).cat(NewFileSuffix);
 
-        // If there are no records in the databse, then nothing to save.
-        if ( storage.num_records == 0 )
-        {
-            log.trace("Not dumping empty channel '{}'", storage.id);
-            return;
-        }
-
         // Make the dump and close the file after leaving this scope
         {
             this.output.open(this.path.toString());
