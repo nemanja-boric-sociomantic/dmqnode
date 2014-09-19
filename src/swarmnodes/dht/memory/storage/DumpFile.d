@@ -67,8 +67,6 @@ public const NewFileSuffix = ".dumping";
 
 public const BackupFileSuffix = ".backup";
 
-public const DeletedFileSuffix = ".deleted";
-
 
 /*******************************************************************************
 

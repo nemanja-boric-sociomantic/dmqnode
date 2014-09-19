@@ -134,6 +134,16 @@ public class DumpManager
 
     /***************************************************************************
 
+        Delete directory, inside root directory, where deleted dump files are
+        moved to.
+
+    ***************************************************************************/
+
+    private const FilePath delete_dir;
+
+
+    /***************************************************************************
+
         DhtStorageEngine iterator to use while dumping.
 
     ***************************************************************************/
@@ -180,6 +190,14 @@ public class DumpManager
         bool allow_out_of_range )
     {
         this.root_dir = new FilePath(root_dir.toString());
+        this.delete_dir = new FilePath(root_dir.append("deleted").toString());
+
+        // ensure 'deleted' folder exists
+        if ( !this.delete_dir.exists )
+        {
+            this.delete_dir.create();
+        }
+
         this.iterator = iterator;
 
         this.path = new FilePath;
@@ -506,9 +524,9 @@ public class DumpManager
 
         Virtually delete a channel dump file.
 
-        What this method really does is renaming the old file and its backup
-        with a new suffix to indicate they are removed. Files with this suffix
-        (DeletedFileSuffix) are not loaded by loadChannels().
+        What this method really does is move the old file and its backup into
+        the 'deleted' sub-folder of the data directory. Files in this folder
+        are not loaded by loadChannels().
 
         Params:
             id = name of the channel to delete
@@ -520,16 +538,16 @@ public class DumpManager
         buildFilePath(this.root_dir, this.path, id);
         if ( this.path.exists )
         {
-            this.dst_path.set(this.path).cat(DeletedFileSuffix);
-            // file -> file.deleted
+            buildFilePath(this.delete_dir, this.dst_path, id);
+            // file -> deleted/file
             this.path.rename(this.dst_path);
         }
 
         buildFilePath(this.root_dir, this.path, id).cat(BackupFileSuffix);
         if ( this.path.exists )
         {
-            this.dst_path.set(this.path).cat(DeletedFileSuffix);
-            // file.backup -> file.backup.deleted
+            buildFilePath(this.delete_dir, this.dst_path, id).cat(BackupFileSuffix);
+            // file.backup -> deleted/file.backup
             this.path.rename(this.dst_path);
         }
     }
