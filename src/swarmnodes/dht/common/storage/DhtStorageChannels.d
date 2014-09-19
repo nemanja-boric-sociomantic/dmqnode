@@ -227,10 +227,6 @@ abstract public class DhtStorageChannels :
 
         Creates data directory.
 
-        Params:
-            dir = directory to initialize; set to null to use the
-                current working directory
-
     ***************************************************************************/
 
     private void createWorkingDir ( )
