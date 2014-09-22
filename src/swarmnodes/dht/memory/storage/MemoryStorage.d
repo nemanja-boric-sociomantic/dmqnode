@@ -233,11 +233,10 @@ public class MemoryStorage : DhtStorageEngine
 
     /***********************************************************************
 
-        Removes all records from database. We also move the dump file (and
-        the backup dump file) for this channel (if one has been written) to
-        deleted/channel_name.tcm (and deleted/channel_name.tcm.backup), in
-        order to ensure that if the node is restarted the deleted channel
-        will not be loaded again and restored!
+        Removes all records from database. We also move the dump file for this
+        channel (if one has been written) to deleted/channel_name.tcm, in order
+        to ensure that if the node is restarted the deleted channel will not be
+        loaded again and restored!
 
         (Called from IStorageChannels when removing a channel.)
 

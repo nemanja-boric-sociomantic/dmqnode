@@ -399,8 +399,7 @@ public class DumpCycle : SelectFiber
 
     /***************************************************************************
 
-        Rotates current and backup dump files and cleans up intermediary dump
-        files.
+        Rotates dump file and cleans up intermediary file.
 
         Params:
             filepath = file which channel was dumped to
@@ -429,9 +428,8 @@ public class DumpCycle : SelectFiber
         }
         else
         {
-            // Move 'channel' -> 'channel.backup' and 'channel.dumping' ->
-            // 'channel' as atomically as possible
-            swapNewAndBackupDumps(filepath, channel, this.root, this.path,
+            // Atomically move 'channel.dumping' -> 'channel'
+            rotateDumpFile(filepath, channel, this.root, this.path,
                 this.swap_path);
         }
 

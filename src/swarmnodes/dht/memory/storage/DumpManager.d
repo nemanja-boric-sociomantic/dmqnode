@@ -60,14 +60,11 @@ static this ( )
 
     Dump manager class.
 
-    This class takes care of all dumping/loading operations for the channels,
-    including opening the files that channels should use to dump and load.
-
-    It takes care of backups and deleting dumps too, and about dump files
-    integrity, making sure a dump file have the right file name only when it was
-    completed successfully. To handle this different file stages, it applies
-    different suffixes to file, depending on in which stage is it (dumping,
-    done, backup, deleted).
+    This class takes care of all file operations for the channels (that is:
+    loading, dumping, deleting), including opening the files that channels
+    should use to dump and load. The manager is careful to maintain the
+    integrity of dump files, such that a partially written file will never exist
+    with the standard file suffix (they are written to remporary files first).
 
 *******************************************************************************/
 
@@ -225,7 +222,7 @@ public class DumpManager
             verbose = true if a progress indication must be shown.
 
         See_Also:
-            swapNewAndBackupDumps() for details on the rotation algorithm.
+            rotateDumpFile() for details on the rotation algorithm.
 
     ***************************************************************************/
 
@@ -243,12 +240,11 @@ public class DumpManager
             this.dumpChannel(storage, this.output, verbose);
         }
 
-        // Move dump.new -> dump and dump -> dump.backup as atomically as
-        // possible
-        swapNewAndBackupDumps(this.dump_path, storage.id, this.root_dir,
-            this.path, this.dst_path);
+        // Atomically move dump.new -> dump
+        rotateDumpFile(this.dump_path, storage.id, this.root_dir, this.path,
+            this.dst_path);
 
-        log.info("Finished channel dump write and backup, {} bytes written",
+        log.info("Finished channel dump, {} bytes written",
             buildFilePath(this.root_dir, this.path, storage.id).fileSize());
     }
 
@@ -327,9 +323,8 @@ public class DumpManager
         Load channel dump files found in this.root_dir.
 
         We look for dump files in the directory and load the channel when
-        a valid found is found. Backup and deleted files are ignored, but other
-        files trigger a warning message. Ongoing file dumps trigger
-        a differentiated warning message.
+        a valid file is found. Other files in the data directory trigger a
+        warning message (a special warning for partially written dump files).
 
         Params:
             new_channel = callback to use to create new channels
@@ -374,7 +369,7 @@ public class DumpManager
                         "restarted uncleanly and data might be old",
                         this.path, this.root_dir.toString);
             }
-            else if ( this.path.suffix() != BackupFileSuffix )
+            else
             {
                 log.warn("{}: Ignoring file while scanning directory '{}' "
                         "(no '{}' suffix)", this.path,
@@ -524,9 +519,9 @@ public class DumpManager
 
         Virtually delete a channel dump file.
 
-        What this method really does is move the old file and its backup into
-        the 'deleted' sub-folder of the data directory. Files in this folder
-        are not loaded by loadChannels().
+        What this method really does is move the old file into the 'deleted'
+        sub-folder of the data directory. Files in this folder are not loaded by
+        loadChannels().
 
         Params:
             id = name of the channel to delete
@@ -540,14 +535,6 @@ public class DumpManager
         {
             buildFilePath(this.delete_dir, this.dst_path, id);
             // file -> deleted/file
-            this.path.rename(this.dst_path);
-        }
-
-        buildFilePath(this.root_dir, this.path, id).cat(BackupFileSuffix);
-        if ( this.path.exists )
-        {
-            buildFilePath(this.delete_dir, this.dst_path, id).cat(BackupFileSuffix);
-            // file.backup -> deleted/file.backup
             this.path.rename(this.dst_path);
         }
     }

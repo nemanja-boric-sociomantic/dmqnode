@@ -65,8 +65,6 @@ public const DumpFileSuffix = ".tcm";
 
 public const NewFileSuffix = ".dumping";
 
-public const BackupFileSuffix = ".backup";
-
 
 /*******************************************************************************
 
@@ -106,71 +104,23 @@ public FilePath buildFilePath ( FilePath root, FilePath path, char[] channel )
 
 /*******************************************************************************
 
-    Replace the existing dump with the new one, while moving the
-    existing dump to dump.backup.
-
-    Doing this completely atomically seems to be impossible (link(2)
-    fails if the destination file exists), but since we want to avoid
-    the situation where we end up with an invalid dump, we prioritize
-    always having the plain dump (and updated).
-
-    So, this is the procedure to "rotate" the dump as atomically as
-    possible:
-
-    1. Remove dump.backup
-    2. Link (hard) dump to dump.backup
-    3. Move dump.new to dump
-
-    The worst case ever is losing the dump.backup (if the application
-    crashes or the server is rebooted between 1 and 2), but that's being
-    backed up already every day.
-
-    The important thing is we never, ever, under any circumstances, end
-    up with a regular dump that is either incomplete or inexistent!
-    (well, there are always exceptions, like hardware failure or kernel
-    bugs ;)
-
-    The downside is now we need disk space to hold 3 times the size of
-    the channel instead of 2 times the size of the channel, because at
-    some point we have all dump, dump.new and dump.backup all existing
-    at the same time.
-
-    Note: dump.new should always exist.
+    Atomically replace the existing dump with the new one.
 
     Params:
         dumped_path = path of the file to which the dump was written (dump.new)
-        channel = name of dump file
+        channel = name of dump file (without suffix)
         root = path of dump files' directory
         path = FilePath object used for file swapping
         swap_path = FilePath object used for file swapping
 
 *******************************************************************************/
 
-public void swapNewAndBackupDumps ( char[] dumped_path, char[] channel,
-    FilePath root, FilePath path, FilePath swap_path )
+public void rotateDumpFile ( char[] dumped_path, char[] channel, FilePath root,
+    FilePath path, FilePath swap_path )
 {
-    buildFilePath(root, path, channel); // dump
-    swap_path.set(path).cat(BackupFileSuffix); // dump.backup
-
-    if ( swap_path.exists )
-    {
-        // 1. rm dump.backup
-        swap_path.remove();
-        log.trace("Removed '{}'", swap_path);
-    }
-
-    if ( path.exists )
-    {
-        // 2. ln dump dump.backup
-        path.link(swap_path);
-        log.trace("Linked '{}' -> '{}'", path, swap_path);
-    }
-
-    // 3. mv dump.new dump (new should always exist)
     path.set(dumped_path); // dump.new
     buildFilePath(root, swap_path, channel); // dump
     path.rename(swap_path);
-    log.trace("Moved '{}' -> '{}'", dumped_path, swap_path);
 }
 
 
