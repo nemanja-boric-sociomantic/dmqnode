@@ -28,7 +28,7 @@ private import swarmnodes.dht.common.storage.IStepIterator;
 
 private import swarmnodes.dht.memory.storage.DumpFile;
 
-private import ocean.core.Array : copy;
+private import ocean.core.Array : copy, startsWith;
 
 private import ocean.io.FilePath;
 
@@ -363,7 +363,7 @@ public class DumpManager
                 auto channel = new_channel(this.dst_path.name.dup);
                 this.loadChannel(channel, this.input, this.allow_out_of_range);
             }
-            else if ( this.path.suffix() == NewFileSuffix )
+            else if ( this.path.suffix().startsWith(NewFileSuffix) )
             {
                 log.warn("{}: Unfinished dump file found while scanning "
                         "directory '{}', the program was probably "
