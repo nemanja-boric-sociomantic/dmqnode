@@ -49,7 +49,7 @@ public scope class PopRequest : IChannelRequest
     public this ( FiberSelectReader reader, FiberSelectWriter writer,
         IQueueRequestResources resources )
     {
-        super(reader, writer, resources);
+        super(QueueConst.Command.E.Pop, reader, writer, resources);
     }
 
 

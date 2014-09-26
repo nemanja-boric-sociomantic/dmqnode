@@ -49,7 +49,7 @@ public scope class GetNumConnectionsRequest : IRequest
     public this ( FiberSelectReader reader, FiberSelectWriter writer,
         IQueueRequestResources resources )
     {
-        super(reader, writer, resources);
+        super(QueueConst.Command.E.GetNumConnections, reader, writer, resources);
     }
 
 

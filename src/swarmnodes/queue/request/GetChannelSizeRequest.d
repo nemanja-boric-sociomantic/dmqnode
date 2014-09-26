@@ -49,7 +49,7 @@ public scope class GetChannelSizeRequest : IChannelRequest
     public this ( FiberSelectReader reader, FiberSelectWriter writer,
         IQueueRequestResources resources )
     {
-        super(reader, writer, resources);
+        super(QueueConst.Command.E.GetChannelSize, reader, writer, resources);
     }
 
 

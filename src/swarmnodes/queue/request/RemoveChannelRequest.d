@@ -48,7 +48,7 @@ public scope class RemoveChannelRequest : IChannelRequest
     public this ( FiberSelectReader reader, FiberSelectWriter writer,
         IQueueRequestResources resources )
     {
-        super(reader, writer, resources);
+        super(QueueConst.Command.E.RemoveChannel, reader, writer, resources);
     }
 
 

@@ -57,6 +57,15 @@ public abstract scope class IRequest : Core.IRequest
 
     /***************************************************************************
 
+        Code of command.
+
+    ***************************************************************************/
+
+    private const QueueConst.Command.E cmd;
+
+
+    /***************************************************************************
+
         Shared resources which might be required by the request.
 
     ***************************************************************************/
@@ -69,17 +78,19 @@ public abstract scope class IRequest : Core.IRequest
         Constructor
 
         Params:
+            cmd = command code
             reader = FiberSelectReader instance to use for read requests
             writer = FiberSelectWriter instance to use for write requests
             resources = shared resources which might be required by the request
 
     ***************************************************************************/
 
-    public this ( FiberSelectReader reader, FiberSelectWriter writer,
-        IQueueRequestResources resources )
+    public this ( QueueConst.Command.E cmd, FiberSelectReader reader,
+        FiberSelectWriter writer, IQueueRequestResources resources )
     {
         super(reader, writer);
 
+        this.cmd = cmd;
         this.resources = resources;
     }
 }

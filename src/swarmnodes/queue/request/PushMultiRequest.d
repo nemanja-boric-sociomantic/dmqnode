@@ -51,7 +51,7 @@ public scope class PushMultiRequest : IMultiChannelRequest
     public this ( FiberSelectReader reader, FiberSelectWriter writer,
         IQueueRequestResources resources )
     {
-        super(reader, writer, resources);
+        super(QueueConst.Command.E.PushMulti, reader, writer, resources);
     }
 
 

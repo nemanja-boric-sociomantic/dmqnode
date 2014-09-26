@@ -49,7 +49,7 @@ public scope class GetSizeRequest : IRequest
     public this ( FiberSelectReader reader, FiberSelectWriter writer,
         IQueueRequestResources resources )
     {
-        super(reader, writer, resources);
+        super(QueueConst.Command.E.GetSize, reader, writer, resources);
     }
 
 

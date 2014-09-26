@@ -92,7 +92,7 @@ public scope class ConsumeRequest : IChannelRequest, QueueStorageEngine.IConsume
     public this ( FiberSelectReader reader, FiberSelectWriter writer,
         IQueueRequestResources resources )
     {
-        super(reader, writer, resources);
+        super(QueueConst.Command.E.Consume, reader, writer, resources);
     }
 
 

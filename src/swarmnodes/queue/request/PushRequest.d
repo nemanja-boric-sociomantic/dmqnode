@@ -49,7 +49,7 @@ public scope class PushRequest : IChannelRequest
     public this ( FiberSelectReader reader, FiberSelectWriter writer,
         IQueueRequestResources resources )
     {
-        super(reader, writer, resources);
+        super(QueueConst.Command.E.Push, reader, writer, resources);
     }
 
 

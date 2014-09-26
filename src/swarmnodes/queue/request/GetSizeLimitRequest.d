@@ -50,7 +50,7 @@ public scope class GetSizeLimitRequest : IRequest
     public this ( FiberSelectReader reader, FiberSelectWriter writer,
         IQueueRequestResources resources )
     {
-        super(reader, writer, resources);
+        super(QueueConst.Command.E.GetSizeLimit, reader, writer, resources);
     }
 
 
