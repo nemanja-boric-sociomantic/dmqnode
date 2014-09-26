@@ -41,6 +41,7 @@ public abstract scope class IChannelRequest : IRequest
         Constructor
 
         Params:
+            cmd = command code
             reader = FiberSelectReader instance to use for read requests
             writer = FiberSelectWriter instance to use for write requests
             resources = shared resources which might be required by the request
