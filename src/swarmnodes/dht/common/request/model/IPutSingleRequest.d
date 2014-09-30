@@ -20,7 +20,7 @@ module swarmnodes.dht.common.request.model.IPutSingleRequest;
 
 *******************************************************************************/
 
-private import swarmnodes.dht.common.request.model.IChannelRequest;
+private import swarmnodes.dht.common.request.model.ISingleKeyRequest;
 
 debug private import ocean.util.log.Trace;
 
@@ -32,7 +32,7 @@ debug private import ocean.util.log.Trace;
 
 *******************************************************************************/
 
-public scope class IPutSingleRequest : IChannelRequest
+public scope class IPutSingleRequest : ISingleKeyRequest
 {
     /***************************************************************************
 
@@ -62,10 +62,8 @@ public scope class IPutSingleRequest : IChannelRequest
 
     ***************************************************************************/
 
-    protected void readRequestData_ ( )
+    protected void readRequestData__ ( )
     {
-        this.reader.readArray(*this.resources.key_buffer);
-
         this.reader.readArray(*this.resources.value_buffer);
 
         this.resources.node_info.handledRecord();

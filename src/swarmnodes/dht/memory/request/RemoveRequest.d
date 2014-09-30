@@ -20,7 +20,7 @@ module swarmnodes.dht.memory.request.RemoveRequest;
 
 *******************************************************************************/
 
-private import swarmnodes.dht.common.request.model.IChannelRequest;
+private import swarmnodes.dht.common.request.model.ISingleKeyRequest;
 
 debug private import ocean.util.log.Trace;
 
@@ -32,7 +32,7 @@ debug private import ocean.util.log.Trace;
 
 *******************************************************************************/
 
-public scope class RemoveRequest : IChannelRequest
+public scope class RemoveRequest : ISingleKeyRequest
 {
     /***************************************************************************
 
@@ -49,22 +49,6 @@ public scope class RemoveRequest : IChannelRequest
         IDhtRequestResources resources )
     {
         super(DhtConst.Command.E.Remove, reader, writer, resources);
-    }
-
-
-    /***************************************************************************
-
-        Reads any data from the client which is required for the request. If the
-        request is invalid in some way (the channel name is invalid, or the
-        command is not supported) then the command can be simply not executed,
-        and all client data has been read, leaving the read buffer in a clean
-        state ready for the next request.
-
-    ***************************************************************************/
-
-    protected void readRequestData_ ( )
-    {
-        this.reader.readArray(*this.resources.key_buffer);
     }
 
 
