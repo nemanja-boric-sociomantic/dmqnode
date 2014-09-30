@@ -22,8 +22,6 @@ module swarmnodes.dht.memory.request.PutRequest;
 
 private import swarmnodes.dht.common.request.model.IPutSingleRequest;
 
-debug private import ocean.util.log.Trace;
-
 
 
 /*******************************************************************************

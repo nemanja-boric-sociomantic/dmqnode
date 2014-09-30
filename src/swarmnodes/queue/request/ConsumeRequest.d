@@ -27,8 +27,6 @@ private import swarmnodes.queue.storage.model.QueueStorageEngine;
 
 private import ocean.core.Array : copy;
 
-debug private import ocean.util.log.Trace;
-
 
 
 /*******************************************************************************

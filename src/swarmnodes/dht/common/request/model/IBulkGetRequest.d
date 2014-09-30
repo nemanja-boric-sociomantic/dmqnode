@@ -39,8 +39,6 @@ private import swarmnodes.dht.common.storage.IStepIterator;
 
 private import ocean.io.select.client.FiberSelectEvent;
 
-debug private import ocean.util.log.Trace;
-
 private import tango.util.log.Log;
 
 // TODO: wile transitioning from the old to the new bulk get requests, all

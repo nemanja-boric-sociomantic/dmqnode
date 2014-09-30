@@ -23,8 +23,6 @@ module swarmnodes.queue.request.GetNumConnectionsRequest;
 
 private import swarmnodes.queue.request.model.IRequest;
 
-debug private import ocean.util.log.Trace;
-
 
 
 /*******************************************************************************

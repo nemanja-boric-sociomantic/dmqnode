@@ -22,8 +22,6 @@ module swarmnodes.dht.common.request.GetNumConnectionsRequest;
 
 private import swarmnodes.dht.common.request.model.IRequest;
 
-debug private import ocean.util.log.Trace;
-
 
 
 /*******************************************************************************

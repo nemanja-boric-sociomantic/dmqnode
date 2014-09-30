@@ -43,6 +43,8 @@ private import swarm.queue.QueueConst;
 
 private import ocean.core.MessageFiber;
 
+private import ocean.io.Stdout;
+
 private import ocean.io.select.EpollSelectDispatcher;
 private import ocean.io.select.protocol.generic.ErrnoIOException : IOWarning;
 private import ocean.io.select.client.SignalEvent;
@@ -52,8 +54,6 @@ private import ocean.util.app.LoggedCliApp;
 private import ocean.util.app.ext.VersionArgsExt;
 
 private import ConfigReader = ocean.util.config.ClassFiller;
-
-private import ocean.util.log.Trace;
 
 private import tango.core.Exception : IllegalArgumentException, OutOfMemoryException;
 
@@ -241,9 +241,9 @@ public class QueueNodeServer : LoggedCliApp
 
         this.node.register(this.epoll);
 
-        Trace.formatln("Starting event loop");
+        Stdout.formatln("Starting event loop");
         this.epoll.eventLoop();
-        Trace.formatln("Event loop exited");
+        Stdout.formatln("Event loop exited");
 
         return true;
     }

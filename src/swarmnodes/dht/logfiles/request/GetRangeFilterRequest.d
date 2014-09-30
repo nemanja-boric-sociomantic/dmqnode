@@ -24,8 +24,6 @@ private import swarmnodes.dht.common.request.model.IBulkGetRequest;
 
 private import swarm.dht.common.RecordBatcher;
 
-debug private import ocean.util.log.Trace;
-
 private import tango.text.Search;
 
 

@@ -25,8 +25,6 @@ private import swarmnodes.queue.request.model.IMultiChannelRequest;
 
 private import swarm.core.Const;
 
-debug private import ocean.util.log.Trace;
-
 
 
 /*******************************************************************************

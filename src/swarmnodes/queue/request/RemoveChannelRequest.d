@@ -22,8 +22,6 @@ module swarmnodes.queue.request.RemoveChannelRequest;
 
 private import swarmnodes.queue.request.model.IChannelRequest;
 
-debug private import ocean.util.log.Trace;
-
 
 
 /*******************************************************************************

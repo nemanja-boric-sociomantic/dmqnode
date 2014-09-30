@@ -46,8 +46,6 @@ private import swarmnodes.queue.request.RemoveChannelRequest;
 
 private import swarmnodes.queue.storage.model.QueueStorageChannels;
 
-debug private import ocean.util.log.Trace;
-
 
 
 /*******************************************************************************

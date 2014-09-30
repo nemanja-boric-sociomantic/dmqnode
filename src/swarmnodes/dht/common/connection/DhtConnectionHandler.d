@@ -57,8 +57,6 @@ private import swarmnodes.dht.logfiles.request.GetRangeFilterRequest;
 
 private import swarmnodes.dht.common.storage.DhtStorageChannels;
 
-debug private import ocean.util.log.Trace;
-
 
 
 /*******************************************************************************

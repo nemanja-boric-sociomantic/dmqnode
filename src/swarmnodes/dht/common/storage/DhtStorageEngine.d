@@ -44,8 +44,6 @@ private import swarm.dht.DhtHash;
 
 private import ocean.core.Array : copy, append;
 
-debug private import ocean.util.log.Trace;
-
 
 
 /*******************************************************************************

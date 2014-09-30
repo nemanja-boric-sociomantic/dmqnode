@@ -29,8 +29,6 @@ private import swarm.core.node.storage.model.IStorageChannels;
 
 private import swarmnodes.queue.storage.model.QueueStorageEngine;
 
-debug private import ocean.util.log.Trace;
-
 
 
 /*******************************************************************************

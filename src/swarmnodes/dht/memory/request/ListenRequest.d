@@ -36,8 +36,6 @@ private import ocean.io.select.client.FiberSelectEvent;
 
 private import tango.util.log.Log;
 
-debug private import ocean.util.log.Trace;
-
 
 
 /*******************************************************************************

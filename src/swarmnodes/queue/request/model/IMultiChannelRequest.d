@@ -24,8 +24,6 @@ private import swarmnodes.queue.request.model.IRequest;
 
 private import swarm.core.protocol.StringListReader;
 
-debug private import ocean.util.log.Trace;
-
 
 
 /*******************************************************************************

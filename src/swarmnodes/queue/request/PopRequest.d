@@ -23,8 +23,6 @@ module swarmnodes.queue.request.PopRequest;
 
 private import swarmnodes.queue.request.model.IChannelRequest;
 
-debug private import ocean.util.log.Trace;
-
 
 
 /*******************************************************************************

@@ -25,8 +25,6 @@ private import swarmnodes.queue.request.model.IChannelRequest;
 
 private import swarm.core.common.request.helper.LoopCeder;
 
-debug private import ocean.util.log.Trace;
-
 
 
 /*******************************************************************************

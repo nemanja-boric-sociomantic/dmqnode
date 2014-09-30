@@ -34,8 +34,6 @@ private import swarm.queue.QueueConst;
 
 private import swarmnodes.queue.connection.SharedResources;
 
-debug private import ocean.util.log.Trace;
-
 private import ocean.io.select.EpollSelectDispatcher;
 
 

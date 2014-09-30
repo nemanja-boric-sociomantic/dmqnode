@@ -22,8 +22,6 @@ module swarmnodes.dht.memory.request.RemoveRequest;
 
 private import swarmnodes.dht.common.request.model.ISingleKeyRequest;
 
-debug private import ocean.util.log.Trace;
-
 
 
 /*******************************************************************************

@@ -22,8 +22,6 @@ module swarmnodes.dht.common.request.GetChannelsRequest;
 
 private import swarmnodes.dht.common.request.model.IRequest;
 
-debug private import ocean.util.log.Trace;
-
 
 
 /*******************************************************************************

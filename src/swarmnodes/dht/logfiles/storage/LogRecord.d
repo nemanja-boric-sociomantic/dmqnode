@@ -84,8 +84,6 @@ private import ocean.core.Exception: enforce;
 
 private import ocean.io.serialize.SimpleSerializer;
 
-debug private import ocean.util.log.Trace;
-
 private import ocean.text.convert.Layout;
 
 private import tango.io.model.IConduit: IOStream, InputStream, OutputStream;
@@ -99,6 +97,8 @@ private import tango.core.Exception: IOException;
 private import Integer = tango.text.convert.Integer : toUlong;
 
 private import tango.util.log.Log;
+
+debug ( LogRecord ) private import ocean.io.Stdout;
 
 
 
@@ -533,13 +533,13 @@ public class LogRecord
             (max_bucket_slot >> SplitBits.bucket_bits);
         hash_t slot = min_slot.val;
 
-        debug ( LogRecord ) Trace.formatln("getFirstBucket_: {:x13}..{:x13} (slot {:x10}..{:x10})",
+        debug ( LogRecord ) Stderr.formatln("getFirstBucket_: {:x13}..{:x13} (slot {:x10}..{:x10})",
             min_bucket_slot, max_bucket_slot, min_slot.val, max_slot.val);
 
         bool no_bucket;
         do
         {
-            debug ( LogRecord ) Trace.formatln("slot {:x10}", slot);
+            debug ( LogRecord ) Stderr.formatln("slot {:x10}", slot);
 
             // Find first slot directory within range
             hash_t found_slot;
@@ -547,11 +547,11 @@ public class LogRecord
                 slot, max_slot.val);
             if ( no_slot )
             {
-                debug ( LogRecord ) Trace.formatln("  no slot dir found");
+                debug ( LogRecord ) Stderr.formatln("  no slot dir found");
                 return true;
             }
             slot = found_slot;
-            debug ( LogRecord ) Trace.formatln("  found slot {:x10}", slot);
+            debug ( LogRecord ) Stderr.formatln("  found slot {:x10}", slot);
 
             // Work out which buckets within the slot directory count as a
             // match. Generally, all buckets in a slot are valid...
@@ -576,14 +576,14 @@ public class LogRecord
             char[SplitBits.slot_digits] slot_name_buf;
             auto slot_name = DhtHash.intToHex(slot, slot_name_buf);
 
-            debug ( LogRecord ) Trace.formatln("  buckets {:x3}..{:x3}", min_bucket, max_bucket);
+            debug ( LogRecord ) Stderr.formatln("  buckets {:x3}..{:x3}", min_bucket, max_bucket);
 
             hash_t found_bucket;
             no_bucket = filesystem.findFirstBucketFile(base_dir, slot_name, found_bucket,
                 min_bucket, max_bucket);
             if ( !no_bucket )
             {
-                debug ( LogRecord ) Trace.formatln("  found bucket {:x3}", found_bucket);
+                debug ( LogRecord ) Stderr.formatln("  found bucket {:x3}", found_bucket);
 
                 // Set output parameters
                 char[SplitBits.bucket_digits] bucket_name_buf;
@@ -604,7 +604,7 @@ public class LogRecord
         }
         while ( slot <= max_slot.val );
 
-        debug ( LogRecord ) Trace.formatln("  no bucket found");
+        debug ( LogRecord ) Stderr.formatln("  no bucket found");
         return true;
     }
 
@@ -971,7 +971,7 @@ unittest
 
         auto empty = LogRecord.getFirstBucket_(fs, base_dir, path, found_bucket_slot,
             start, end);
-        debug ( LogRecord ) Trace.formatln("found={}, path={}, bucket/slot={:x13}",
+        debug ( LogRecord ) Stderr.formatln("found={}, path={}, bucket/slot={:x13}",
             !empty, path, found_bucket_slot);
         assert(empty != expected_found, desc ~ ": found mismatch");
 
