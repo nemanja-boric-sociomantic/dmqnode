@@ -31,6 +31,8 @@ private import swarmnodes.dht.common.node.IDhtNodeInfo;
 private import swarmnodes.dht.common.storage.DhtStorageChannels;
 private import swarmnodes.dht.common.storage.DhtStorageEngine;
 
+private import ocean.text.convert.Layout;
+
 debug private import ocean.util.log.Trace;
 
 
@@ -91,6 +93,30 @@ public abstract scope class IRequest : Core.IRequest
 
         this.cmd = cmd;
         this.resources = resources;
+    }
+
+
+    /***************************************************************************
+
+        Formats a description of this command into the provided buffer. The
+        default implementation simply formats the name of the command. Derived
+        request classes may override and add more detailed information.
+
+        Params:
+            dst = buffer to format description into
+
+        Returns:
+            description of command (slice of dst)
+
+    ***************************************************************************/
+
+    override public char[] description ( ref char[] dst )
+    {
+        auto cmd_str = this.cmd in DhtConst.Command();
+
+        dst.length = 0;
+        Layout!(char).print(dst, "{} request", cmd_str ? *cmd_str : "?");
+        return dst;
     }
 
 

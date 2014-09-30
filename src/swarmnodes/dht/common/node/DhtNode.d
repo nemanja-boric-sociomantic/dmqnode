@@ -145,7 +145,7 @@ public class DhtNode : ChannelsNodeBase!(DhtStorageEngine, DhtConnectionHandler)
 
     ***************************************************************************/
 
-    debug protected char[] id ( )
+    override protected char[] id ( )
     {
         return typeof(this).stringof;
     }

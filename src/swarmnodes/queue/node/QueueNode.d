@@ -107,7 +107,7 @@ public class QueueNode
 
     ***************************************************************************/
 
-    debug protected char[] id ( )
+    override protected char[] id ( )
     {
         return typeof(this).stringof;
     }

@@ -679,7 +679,10 @@ public class DhtConnectionHandler
     {
         scope resources = new DhtRequestResources;
         scope handler = new Handler(this.reader, this.writer, resources);
-        handler.handle();
+
+        // calls handler.handle() and checks memory and buffer allocation after
+        // request finishes
+        this.handleRequest!(DhtConnectionResources)(handler, resources);
     }
 }
 

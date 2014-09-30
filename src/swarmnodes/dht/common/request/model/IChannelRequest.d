@@ -24,6 +24,8 @@ private import swarmnodes.dht.common.request.model.IRequest;
 
 private import swarm.core.Const;
 
+private import ocean.text.convert.Layout;
+
 debug private import ocean.util.log.Trace;
 
 
@@ -52,6 +54,31 @@ public abstract scope class IChannelRequest : IRequest
         FiberSelectWriter writer, IDhtRequestResources resources )
     {
         super(cmd, reader, writer, resources);
+    }
+
+
+    /***************************************************************************
+
+        Formats a description of this command into the provided buffer. The
+        default implementation formats the name of the command and the channel
+        on which it operates. Derived request classes may override and add more
+        detailed information.
+
+        Params:
+            dst = buffer to format description into
+
+        Returns:
+            description of command (slice of dst)
+
+    ***************************************************************************/
+
+    override public char[] description ( ref char[] dst )
+    {
+        super.description(dst);
+
+        auto channel = *this.resources.channel_buffer;
+        Layout!(char).print(dst, " on channel '{}'", channel.length ? channel : "?");
+        return dst;
     }
 
 
