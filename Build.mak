@@ -26,6 +26,4 @@ queuenode: $B/queuenode
 all += queuenode
 
 # Additional flags needed when unittesting
-$U/src/swarmnodes/dht/memory/storage/% \
-$U/src/swarmnodes/dht/memory/app/periodic/% \
-    : override LDFLAGS += -ltokyocabinet
+$O/unittests: override LDFLAGS += -ltokyocabinet -lebtree
