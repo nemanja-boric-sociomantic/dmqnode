@@ -191,11 +191,15 @@ public class DumpManager
             out_of_range_handling = determines how out-of-range records (i.e.
                 those whose keys are not in the range of hashes supported by the
                 node) are handled (see enum, above)
+            disable_direct_io = determines if regular buffered I/O (true) or
+                direct I/O is used (false). Regular I/O is only useful for
+                testing, because direct I/O imposes some restrictions over the
+                type of filesystem that can be used.
 
     ***************************************************************************/
 
     public this ( FilePath root_dir, IStepIterator iterator,
-        OutOfRangeHandling out_of_range_handling )
+        OutOfRangeHandling out_of_range_handling, bool disable_direct_io )
     {
         this.root_dir = new FilePath(root_dir.toString());
         this.delete_dir = new FilePath(root_dir.append("deleted").toString());
@@ -212,8 +216,8 @@ public class DumpManager
         this.dst_path = new FilePath;
 
         auto buffer = new ubyte[IOBufferSize];
-        this.output = new ChannelDumper(buffer);
-        this.input = new ChannelLoader(buffer);
+        this.output = new ChannelDumper(buffer, disable_direct_io);
+        this.input = new ChannelLoader(buffer, disable_direct_io);
 
         this.out_of_range_handling = out_of_range_handling;
     }

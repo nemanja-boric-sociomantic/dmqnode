@@ -93,6 +93,7 @@ public class DhtNodeServer : IDhtNodeApp
         uint dump_period = 3600; // default = 1 hour
         bool disable_dump_thread = false;
         LimitInit!(char[], "load", "load", "fatal", "ignore") allow_out_of_range;
+        bool disable_direct_io = false;
         uint bnum = 0; // 0 := use tokyocabinet's default number of buckets
 
 
@@ -160,7 +161,8 @@ public class DhtNodeServer : IDhtNodeApp
     {
         return new MemoryStorageChannels(this.server_config.data_dir,
             this.memory_config.size_limit, this.hash_range,
-            this.memory_config.bnum, this.memory_config.out_of_range_handling);
+            this.memory_config.bnum, this.memory_config.out_of_range_handling,
+            this.memory_config.disable_direct_io);
     }
 
 

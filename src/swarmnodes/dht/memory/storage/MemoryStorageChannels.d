@@ -178,18 +178,23 @@ public class MemoryStorageChannels : DhtStorageChannels
             out_of_range_handling = determines how out-of-range records (i.e.
                 those whose keys are not in the range of hashes supported by the
                 node) are handled (see DumpManager)
+            disable_direct_io = determines if regular buffered I/O (true) or
+                direct I/O is used (false). Regular I/O is only useful for
+                testing, because direct I/O imposes some restrictions over the
+                type of filesystem that can be used.
 
     ***************************************************************************/
 
     public this ( char[] dir, ulong size_limit, DhtHashRange hash_range,
-        uint bnum, OutOfRangeHandling out_of_range_handling )
+        uint bnum, OutOfRangeHandling out_of_range_handling,
+        bool disable_direct_io )
     {
         super(dir, size_limit, hash_range);
 
         this.bnum = bnum;
 
         this.dump_manager = new DumpManager(this.dir, this.newIterator(),
-            out_of_range_handling);
+            out_of_range_handling, disable_direct_io);
 
         this.loadChannels();
     }

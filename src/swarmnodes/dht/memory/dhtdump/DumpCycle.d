@@ -81,6 +81,7 @@ public class DumpCycle : SelectFiber
         uint period_s = 60 * 60 * 4;
         uint min_wait_s = 60;
         uint retry_wait_s = 30;
+        bool disable_direct_io = false;
     }
 
     private Config dump_config;
@@ -195,8 +196,6 @@ public class DumpCycle : SelectFiber
 
         this.dht = dht;
 
-        this.file = new ChannelDumper(new ubyte[IOBufferSize]);
-
         this.root = new FilePath;
         this.path = new FilePath;
         this.swap_path = new FilePath;
@@ -218,6 +217,9 @@ public class DumpCycle : SelectFiber
     {
         this.dump_config = dump_config;
         this.stats = stats;
+
+        this.file = new ChannelDumper(new ubyte[IOBufferSize],
+                dump_config.disable_direct_io);
 
         this.root.set(this.dump_config.data_dir);
         enforce(this.root.exists, "Data directory does not exist");

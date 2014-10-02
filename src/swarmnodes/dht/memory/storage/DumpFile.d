@@ -16,9 +16,8 @@ module swarmnodes.dht.memory.storage.DumpFile;
 
 *******************************************************************************/
 
-private import swarmnodes.dht.memory.storage.DirectIO;
 
-private import ocean.io.device.DirectIO;
+private import swarmnodes.dht.memory.storage.DirectIO;
 
 private import ocean.io.FilePath;
 
@@ -147,12 +146,18 @@ public class ChannelDumper
 
         Params:
             buffer = buffer used by internal direct I/O writer
+            disable_direct_io = determines if regular buffered I/O (true) or
+                                direct I/O is used (false). Regular I/O is only
+                                useful for testing, because direct I/O imposes
+                                some restrictions over the type of filesystem
+                                that can be used.
 
     ***************************************************************************/
 
-    public this ( ubyte[] buffer )
+    public this ( ubyte[] buffer, bool disable_direct_io )
     {
-        this.output = new BufferedDirectWriteTempFile(null, buffer);
+        this.output = new BufferedDirectWriteTempFile(null, buffer,
+                disable_direct_io);
     }
 
 
@@ -386,12 +391,16 @@ public class ChannelLoader : ChannelLoaderBase
 
         Params:
             buffer = buffer used by internal direct I/O reader
+            disable_direct_io = determines if regular buffered I/O (false) or direct
+                I/O is used (true). Regular I/O is only useful for testing,
+                because direct I/O imposes some restrictions over the type of
+                filesystem that can be used.
 
     ***************************************************************************/
 
-    public this ( ubyte[] buffer )
+    public this ( ubyte[] buffer, bool disable_direct_io )
     {
-        super(new BufferedDirectReadFile(null, buffer));
+        super(new BufferedDirectReadFile(null, buffer, disable_direct_io));
     }
 
     /***************************************************************************
