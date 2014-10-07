@@ -35,6 +35,8 @@ private import swarmnodes.dht.memory.storage.MemoryStorageChannels;
 
 private import ocean.io.Stdout;
 
+private import ocean.util.config.ClassFiller : LimitInit;
+
 private import tango.util.log.Log;
 
 
@@ -90,8 +92,30 @@ public class DhtNodeServer : IDhtNodeApp
         ulong size_limit = 0; // 0 := no size limit
         uint dump_period = 3600; // default = 1 hour
         bool disable_dump_thread = false;
-        bool allow_out_of_range = true;
+        LimitInit!(char[], "load", "load", "fatal", "ignore") allow_out_of_range;
         uint bnum = 0; // 0 := use tokyocabinet's default number of buckets
+
+
+        /***********************************************************************
+
+            Returns:
+                OutOfRangeHandling enum value corresponding to value of
+                allow_out_of_range, read from config file
+
+        ***********************************************************************/
+
+        public MemoryStorageChannels.OutOfRangeHandling out_of_range_handling ( )
+        {
+            with ( MemoryStorageChannels.OutOfRangeHandling )
+            switch ( this.allow_out_of_range() )
+            {
+                case "load":    return Load;
+                case "fatal":   return Fatal;
+                case "ignore":  return Ignore;
+                default:
+                    assert(false);
+            }
+        }
     }
 
     private MemoryConfig memory_config;
@@ -136,7 +160,7 @@ public class DhtNodeServer : IDhtNodeApp
     {
         return new MemoryStorageChannels(this.server_config.data_dir,
             this.memory_config.size_limit, this.hash_range,
-            this.memory_config.bnum, this.memory_config.allow_out_of_range);
+            this.memory_config.bnum, this.memory_config.out_of_range_handling);
     }
 
 

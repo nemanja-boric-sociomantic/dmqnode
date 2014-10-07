@@ -111,6 +111,15 @@ public class MemoryStorageChannels : DhtStorageChannels
 
     /***************************************************************************
 
+        Public alias of enum type.
+
+    ***************************************************************************/
+
+    public alias DumpManager.OutOfRangeHandling OutOfRangeHandling;
+
+
+    /***************************************************************************
+
         Estimated number of buckets in map -- passed to tokyocabinet when
         creating database instances.
 
@@ -166,21 +175,21 @@ public class MemoryStorageChannels : DhtStorageChannels
             hash_range = hash range for which this node is responsible
             bnum = estimated number of buckets in map (passed to tokyocabinet
                 "ctor")
-            allow_out_of_range = determines whether out-of-range records (i.e.
+            out_of_range_handling = determines how out-of-range records (i.e.
                 those whose keys are not in the range of hashes supported by the
-                node) are loaded (true) or rejected (false)
+                node) are handled (see DumpManager)
 
     ***************************************************************************/
 
     public this ( char[] dir, ulong size_limit, DhtHashRange hash_range,
-        uint bnum, bool allow_out_of_range )
+        uint bnum, OutOfRangeHandling out_of_range_handling )
     {
         super(dir, size_limit, hash_range);
 
         this.bnum = bnum;
 
         this.dump_manager = new DumpManager(this.dir, this.newIterator(),
-            allow_out_of_range);
+            out_of_range_handling);
 
         this.loadChannels();
     }

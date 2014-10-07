@@ -72,6 +72,20 @@ public class DumpManager
 {
     /***************************************************************************
 
+        Enum of out-of-range records handling modes.
+
+    ***************************************************************************/
+
+    public enum OutOfRangeHandling
+    {
+        Load,   // out-of-range records loaded (logged as trace)
+        Fatal,  // quit on finding an out-of-range record (logged as fatal)
+        Ignore  // out-of-range records not loaded (logged as warn)
+    }
+
+
+    /***************************************************************************
+
         Callback type used to create a new storage engine instance.
 
         Params:
@@ -159,13 +173,12 @@ public class DumpManager
 
     /***************************************************************************
 
-        Determines whether out-of-range records (i.e. those whose keys are not
-        in the range of hashes supported by the node) are loaded (true) or
-        rejected (false)
+        Determines how out-of-range records (i.e. those whose keys are not in
+        the range of hashes supported by the node) are handled (see enum, above)
 
     ***************************************************************************/
 
-    private const bool allow_out_of_range;
+    private const OutOfRangeHandling out_of_range_handling;
 
 
     /***************************************************************************
@@ -175,16 +188,14 @@ public class DumpManager
         Params:
             root_dir = root directory used to look for files and write dumps.
             iterator = DhtStorageEngine iterator instance to use for dumping.
-            allow_out_of_range = determines whether out-of-range records (i.e.
+            out_of_range_handling = determines how out-of-range records (i.e.
                 those whose keys are not in the range of hashes supported by the
-                node) are loaded (true) or rejected (false). If such records are
-                allowed, they will be logged at trace level. If they are
-                disallowed, an exception will be thrown, aborting the process.
+                node) are handled (see enum, above)
 
     ***************************************************************************/
 
     public this ( FilePath root_dir, IStepIterator iterator,
-        bool allow_out_of_range )
+        OutOfRangeHandling out_of_range_handling )
     {
         this.root_dir = new FilePath(root_dir.toString());
         this.delete_dir = new FilePath(root_dir.append("deleted").toString());
@@ -204,7 +215,7 @@ public class DumpManager
         this.output = new ChannelDumper(buffer);
         this.input = new ChannelLoader(buffer);
 
-        this.allow_out_of_range = allow_out_of_range;
+        this.out_of_range_handling = out_of_range_handling;
     }
 
 
@@ -356,7 +367,7 @@ public class DumpManager
                 scope (exit) this.input.close();
 
                 auto channel = new_channel(this.dst_path.name.dup);
-                this.loadChannel(channel, this.input, this.allow_out_of_range);
+                this.loadChannel(channel, this.input, this.out_of_range_handling);
             }
             else if ( this.path.suffix().startsWith(NewFileSuffix) )
             {
@@ -394,17 +405,16 @@ public class DumpManager
         Params:
             storage = channel storage to load the dump to
             input = file from where to read the channel dump
-            allow_out_of_range = if true, out-of-range records will be loaded;
-                if false, they are treated as a fatal error
+            out_of_range_handling = out-of-range record handling mode
 
         Throws:
-            if allow_out_of_range == false and an out-of-range record is
+            if out_of_range_handling == Fatal and an out-of-range record is
             encountered while loading the input file
 
     ***************************************************************************/
 
     static private void loadChannel ( DhtStorageEngine storage,
-        ChannelLoaderBase input, bool allow_out_of_range )
+        ChannelLoaderBase input, OutOfRangeHandling out_of_range_handling )
     {
         log.info("Loading channel '{}' from disk", storage.id);
         Stderr.formatln("Loading channel '{}' from disk", storage.id);
@@ -427,7 +437,7 @@ public class DumpManager
 
             progress_manager.progress(k.length + v.length + (size_t.sizeof * 2));
 
-            if ( !loadRecord(storage, k, v, allow_out_of_range) )
+            if ( !loadRecord(storage, k, v, out_of_range_handling) )
             {
                 out_of_range++;
             }
@@ -453,9 +463,9 @@ public class DumpManager
         {
             auto percent_out_of_range =
                 (cast(float)out_of_range / cast(float)records_read) * 100.0;
-            log.warn("Loaded {} out-of-range keys ({}%) from channel '{}'",
+            log.warn("Found {} out-of-range keys ({}%) in channel '{}'",
                 out_of_range, percent_out_of_range, storage.id);
-            Stderr.red.formatln("Loaded {} out-of-range keys ({}%) from channel '{}'",
+            Stderr.red.formatln("Found {} out-of-range keys ({}%) in channel '{}'",
                 out_of_range, percent_out_of_range, storage.id).default_colour;
         }
 
@@ -476,19 +486,18 @@ public class DumpManager
             storage = channel storage to load the record into
             key = record key
             val = record value
-            allow_out_of_range = if true, out-of-range records will be loaded;
-                if false, they are treated as a fatal error
+            out_of_range_handling = out-of-range record handling mode
 
         Returns:
-            true if the record was loaded or false if it was out-of-range
+            true if the record was within the node's hash range
 
         Throws:
-            if allow_out_of_range == false and the record is out-of-range
+            if out_of_range_handling == Fatal and the record is out-of-range
 
     ***************************************************************************/
 
     static private bool loadRecord ( DhtStorageEngine storage, char[] key,
-        char[] val, bool allow_out_of_range )
+        char[] val, OutOfRangeHandling out_of_range_handling )
     {
         if ( storage.responsibleForKey(key) )
         {
@@ -497,19 +506,27 @@ public class DumpManager
         }
         else
         {
-            if ( allow_out_of_range )
+            with ( OutOfRangeHandling ) switch ( out_of_range_handling )
             {
-                log.trace("Encountered out-of-range key in channel '{}': {} -- loaded",
-                    storage.id, key);
-                storage.put(key, val);
-                return false;
-            }
-            else
-            {
-                log.fatal("Encountered out-of-range key in channel '{}': {} -- rejected",
-                    storage.id, key);
-                throw new Exception("Encountered out-of-range key in channel '"
-                    ~ storage.id ~ "': " ~ key);
+                case Load:
+                    log.trace("Encountered out-of-range key in channel '{}': "
+                        "{} -- loaded", storage.id, key);
+                    storage.put(key, val);
+                    return false;
+
+                case Fatal:
+                    log.fatal("Encountered out-of-range key in channel '{}': "
+                    "{} -- rejected", storage.id, key);
+                    throw new Exception("Encountered out-of-range key in channel '"
+                        ~ storage.id ~ "': " ~ key);
+
+                case Ignore:
+                    log.warn("Encountered out-of-range key in channel '{}': "
+                        "{} -- ignored", storage.id, key);
+                    return false;
+
+                default:
+                    assert(false);
             }
         }
     }
@@ -550,6 +567,7 @@ public class DumpManager
 
 version ( UnitTest )
 {
+    private import ocean.core.Test : testThrown;
     private import ocean.io.device.MemoryDevice;
     private import tango.core.Exception : IOException;
     private import swarmnodes.dht.common.app.config.HashRangeConfig;
@@ -558,8 +576,10 @@ version ( UnitTest )
     {
         private uint count;
 
-        this ( ) { super("test", new DhtHashRange(hash_t.min, hash_t.max,
-            new HashRangeConfig([]))); }
+        this ( hash_t min = hash_t.min, hash_t max = hash_t.max )
+        {
+            super("test", new DhtHashRange(min, max, new HashRangeConfig([])));
+        }
         override typeof(this) put ( char[] key, char[] value )
         {
             this.count++;
@@ -586,6 +606,13 @@ version ( UnitTest )
     }
 }
 
+
+/*******************************************************************************
+
+    Tests for handling file version and extra bytes at the end of the file.
+
+*******************************************************************************/
+
 unittest
 {
     /***************************************************************************
@@ -606,7 +633,8 @@ unittest
         auto input = new DummyChannelLoader(data);
         input.open();
 
-        DumpManager.loadChannel(storage, input, true);
+        DumpManager.loadChannel(storage, input,
+            DumpManager.OutOfRangeHandling.Load);
 
         return storage.num_records;
     }
@@ -646,6 +674,75 @@ unittest
 
     // version 0 file with extra bytes at end
     assert(test(version0 ~ data ~ extra) == 3);
+}
+
+
+/*******************************************************************************
+
+    Tests for out-of-range record handling.
+
+*******************************************************************************/
+
+unittest
+{
+    /***************************************************************************
+
+        Calls DumpManager.loadChannel() with the provided input data.
+
+        Params:
+            data = data to load
+            out_of_range_handling = behaviour upon finding out-of-range records
+            min = min hash of dummy node
+            max = max hash of dummy node
+
+        Returns:
+            the number of records in the storage engine after loading
+
+    ***************************************************************************/
+
+    ulong test ( ubyte[] data, DumpManager.OutOfRangeHandling
+        out_of_range_handling, hash_t min, hash_t max )
+    {
+        auto storage = new DummyStorageEngine(min, max);
+        auto input = new DummyChannelLoader(data);
+        input.open();
+
+        DumpManager.loadChannel(storage, input, out_of_range_handling);
+
+        return storage.num_records;
+    }
+
+    ubyte[] data = [
+        0,0,0,0,0,0,0,0, // version number
+        16,0,0,0,0,0,0,0, // key 1 len
+        48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,49, // key 1 (..001)
+        4,0,0,0,0,0,0,0, // value 1 len
+        1,2,3,4, // value 1
+        16,0,0,0,0,0,0,0, // key 2 len
+        48,48,48,48,48,48,48,48,49,48,48,48,48,48,48,48, // key 2 (..010..)
+        4,0,0,0,0,0,0,0, // value 2 len
+        1,2,3,4, // value 2
+        16,0,0,0,0,0,0,0, // key 3 len
+        49,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48, // key 3 (100..)
+        4,0,0,0,0,0,0,0, // value 3 len
+        1,2,3,4, // value 3
+        0,0,0,0,0,0,0,0 // EOF
+    ];
+
+    // no out-of-range records
+    assert(test(data, DumpManager.OutOfRangeHandling.Ignore,
+        hash_t.min, hash_t.max) == 3);
+
+    // load out-of-range records
+    assert(test(data, DumpManager.OutOfRangeHandling.Load, 0, 1) == 3);
+
+    // ignore out-of-range records
+    assert(test(data, DumpManager.OutOfRangeHandling.Ignore, 0, 1) == 0);
+    assert(test(data, DumpManager.OutOfRangeHandling.Ignore,
+        0x0000000100000000, hash_t.max) == 2);
+
+    // fatal upon out-of-range record
+    testThrown!(Exception)(test(data, DumpManager.OutOfRangeHandling.Fatal, 0, 1));
 }
 
 
