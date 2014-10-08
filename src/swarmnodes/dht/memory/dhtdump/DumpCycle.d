@@ -368,12 +368,6 @@ public class DumpCycle : SelectFiber
 
         buildFilePath(this.root, this.path, channel).cat(NewFileSuffix);
 
-        if ( this.path.exists() )
-        {
-            log.warn("{}: OVERWRITING an old, unfinished dump file! "
-                "Seems like the dumper crashed.", this.path);
-        }
-
         StopWatch time;
         time.start;
 
