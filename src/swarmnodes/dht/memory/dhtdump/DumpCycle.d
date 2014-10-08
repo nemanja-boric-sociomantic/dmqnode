@@ -425,7 +425,7 @@ public class DumpCycle : SelectFiber
         if ( error )
         {
             // Delete partial 'channel.dumping' file
-            log.warn("Removing partial dump file '{}'", this.path);
+            log.warn("Removing partial dump file '{}'", filepath);
             removeDumpFile();
         }
         else
