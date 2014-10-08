@@ -388,7 +388,7 @@ public class DumpCycle : SelectFiber
         catch ( Exception e )
         {
             log.error("Failed to dump channel to file '{}': {} @ {} : {}",
-                this.path.toString, e.msg, e.file, e.line);
+                this.dump_path, e.msg, e.file, e.line);
         }
     }
 
