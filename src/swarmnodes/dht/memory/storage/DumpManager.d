@@ -339,16 +339,21 @@ public class DumpManager
     {
         foreach ( info; this.root_dir )
         {
+            this.path.set(this.root_dir);
+            this.path.append(info.name);
+
             if ( info.folder )
             {
+                // Having the delete_dir there is, of course, fine
+                if ( this.path == this.delete_dir )
+                    continue;
+
                 log.warn("Ignoring subdirectory '{}' in data directory {}",
                         info.name, this.root_dir.toString);
                 Stderr.formatln("Ignoring subdirectory '{}' in data directory {}",
                         info.name, this.root_dir.toString);
                 continue;
             }
-
-            this.path.set(info.name);
 
             if ( this.path.suffix() == DumpFileSuffix )
             {
@@ -367,19 +372,19 @@ public class DumpManager
                 log.warn("{}: Unfinished dump file found while scanning "
                         "directory '{}', the program was probably "
                         "restarted uncleanly and data might be old",
-                        this.path, this.root_dir.toString);
+                        this.path.file, this.root_dir.toString);
                 Stderr.formatln("{}: Unfinished dump file found while scanning "
                         "directory '{}', the program was probably "
                         "restarted uncleanly and data might be old",
-                        this.path, this.root_dir.toString);
+                        this.path.file, this.root_dir.toString);
             }
             else
             {
                 log.warn("{}: Ignoring file while scanning directory '{}' "
-                        "(no '{}' suffix)", this.path,
+                        "(no '{}' suffix)", this.path.file,
                         this.root_dir.toString, DumpFileSuffix);
                 Stderr.formatln("{}: Ignoring file while scanning directory "
-                        "'{}' (no '{}' suffix)", this.path,
+                        "'{}' (no '{}' suffix)", this.path.file,
                         this.root_dir.toString, DumpFileSuffix);
             }
         }
