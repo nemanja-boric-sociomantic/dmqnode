@@ -416,17 +416,12 @@ public class DumpCycle : SelectFiber
     private void finalizeChannel ( char[] filepath, char[] channel,
         ulong records, ulong bytes, bool error, ulong dump_microsec )
     {
-        void removeDumpFile ( )
-        {
-            this.path.set(filepath);
-            this.path.remove();
-        }
-
         if ( error )
         {
             // Delete partial 'channel.dumping' file
             log.warn("Removing partial dump file '{}'", filepath);
-            removeDumpFile();
+            this.path.set(filepath);
+            this.path.remove();
         }
         else
         {
