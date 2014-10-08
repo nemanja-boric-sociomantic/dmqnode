@@ -20,7 +20,28 @@ private import ocean.core.Array : concat;
 
 private import ocean.io.device.DirectIO;
 
+private import tango.stdc.posix.unistd : unlink;
+
+private import tango.stdc.errno : errno, ENOENT;
+
 private import tango.stdc.posix.fcntl : open, O_DIRECT; // O_DIRECT is Linux only
+
+private import tango.util.log.Log;
+
+
+
+/*******************************************************************************
+
+    Static module logger
+
+*******************************************************************************/
+
+private Logger log;
+static this ( )
+{
+    log = Log.lookup("swarmnodes.dht.memory.storage.DirectIO");
+}
+
 
 
 
@@ -90,6 +111,20 @@ public class BufferedDirectWriteTempFile : BufferedDirectWriteFile
                     this.outer.disable_direct_io ? 0 : O_DIRECT);
             if ( fd == -1 )
             {
+                // If mkostemp() fails, it might leave the file created
+                // afterall, apparently the file is created first and just
+                // afterwards O_DIRECT is set and fails.
+                // scope (exit) is used so we don't interfere with errno before
+                // calling this.error();
+                scope (exit)
+                {
+                    auto r = unlink(this.temp_file_path.ptr);
+                    // We ignore NOENT errors as we have nothing to do if the
+                    // file wasn't created after all
+                    if (r == -1 && errno != ENOENT)
+                        log.error("Can't remove failed temporary file {}",
+                                this.temp_file_path[0..$-1]);
+                }
                 this.error(); // throws an IOException
             }
 
