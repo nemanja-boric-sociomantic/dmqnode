@@ -191,7 +191,8 @@ public class DumpManager
         OutOfRangeHandling out_of_range_handling, bool disable_direct_io )
     {
         this.root_dir = new FilePath(root_dir.toString());
-        this.delete_dir = new FilePath(root_dir.append("deleted").toString());
+        this.delete_dir = new FilePath(root_dir.toString());
+        this.delete_dir.append("deleted");
 
         // ensure 'deleted' folder exists
         if ( !this.delete_dir.exists )
