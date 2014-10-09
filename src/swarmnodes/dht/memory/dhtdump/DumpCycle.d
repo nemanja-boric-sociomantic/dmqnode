@@ -145,15 +145,6 @@ public class DumpCycle : SelectFiber
 
     /***************************************************************************
 
-        Path of temporary file being dumped to.
-
-    ***************************************************************************/
-
-    private char[] dump_path;
-
-
-    /***************************************************************************
-
         Fiber-suspending timer event. Used to wait between dump cycles.
 
     ***************************************************************************/
@@ -377,18 +368,16 @@ public class DumpCycle : SelectFiber
             this.file.open(this.path.toString);
             scope ( exit ) this.file.close();
 
-            this.dump_path.copy(this.file.path);
-
             this.dht.perform(this,
                 this.dht.getAll(channel, &get_dg, &notifier));
 
-            this.finalizeChannel(this.dump_path, channel, records, bytes, error,
+            this.finalizeChannel(this.file.path, channel, records, bytes, error,
                 time.microsec);
         }
         catch ( Exception e )
         {
             log.error("Failed to dump channel to file '{}': {} @ {} : {}",
-                this.dump_path, e.msg, e.file, e.line);
+                this.file.path, e.msg, e.file, e.line);
         }
     }
 

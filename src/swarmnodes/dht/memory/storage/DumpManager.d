@@ -127,15 +127,6 @@ public class DumpManager
 
     /***************************************************************************
 
-        Path of temporary file being dumped to.
-
-    ***************************************************************************/
-
-    private char[] dump_path;
-
-
-    /***************************************************************************
-
         Root directory used to look for files and write dump files.
 
     ***************************************************************************/
@@ -250,13 +241,11 @@ public class DumpManager
             this.output.open(this.path.toString());
             scope (exit) this.output.close();
 
-            this.dump_path.copy(this.output.path);
-
             this.dumpChannel(storage, this.output, verbose);
         }
 
         // Atomically move dump.new -> dump
-        rotateDumpFile(this.dump_path, storage.id, this.root_dir, this.path,
+        rotateDumpFile(this.output.path, storage.id, this.root_dir, this.path,
             this.dst_path);
 
         log.info("Finished channel dump, {} bytes written",
