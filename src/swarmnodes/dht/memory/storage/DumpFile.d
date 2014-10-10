@@ -146,6 +146,7 @@ public class ChannelDumper
 
         Params:
             buffer = buffer used by internal direct I/O writer
+            suffix = suffix to use for temporary files used while dumping
             disable_direct_io = determines if regular buffered I/O (true) or
                                 direct I/O is used (false). Regular I/O is only
                                 useful for testing, because direct I/O imposes
@@ -154,9 +155,9 @@ public class ChannelDumper
 
     ***************************************************************************/
 
-    public this ( ubyte[] buffer, bool disable_direct_io )
+    public this ( ubyte[] buffer, char[] suffix, bool disable_direct_io )
     {
-        this.output = new BufferedDirectWriteTempFile(null, buffer,
+        this.output = new BufferedDirectWriteTempFile(null, buffer, suffix,
                 disable_direct_io);
     }
 

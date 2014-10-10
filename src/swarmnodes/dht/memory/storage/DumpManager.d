@@ -28,8 +28,6 @@ private import swarmnodes.dht.common.storage.IStepIterator;
 
 private import swarmnodes.dht.memory.storage.DumpFile;
 
-private import ocean.core.Array : copy, startsWith;
-
 private import ocean.io.FilePath;
 
 private import ocean.util.log.StaticTrace;
@@ -207,7 +205,8 @@ public class DumpManager
         this.dst_path = new FilePath;
 
         auto buffer = new ubyte[IOBufferSize];
-        this.output = new ChannelDumper(buffer, disable_direct_io);
+        this.output = new ChannelDumper(buffer, NewFileSuffix,
+                disable_direct_io);
         this.input = new ChannelLoader(buffer, disable_direct_io);
 
         this.out_of_range_handling = out_of_range_handling;
@@ -234,10 +233,10 @@ public class DumpManager
 
     public void dump ( DhtStorageEngine storage, bool verbose = false )
     {
-        buildFilePath(this.root_dir, this.path, storage.id).cat(NewFileSuffix);
 
         // Make the dump and close the file after leaving this scope
         {
+            buildFilePath(this.root_dir, this.path, storage.id).cat(".");
             this.output.open(this.path.toString());
             scope (exit) this.output.close();
 
@@ -362,7 +361,7 @@ public class DumpManager
                 auto channel = new_channel(this.dst_path.name.dup);
                 this.loadChannel(channel, this.input, this.out_of_range_handling);
             }
-            else if ( this.path.suffix().startsWith(NewFileSuffix) )
+            else if ( this.path.suffix() == NewFileSuffix )
             {
                 log.warn("{}: Unfinished dump file found while scanning "
                         "directory '{}', the program was probably "

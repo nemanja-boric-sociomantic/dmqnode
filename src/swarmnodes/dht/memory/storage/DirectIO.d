@@ -53,7 +53,7 @@ static this ( )
 
 extern ( C )
 {
-    int mkostemp(char *path_template, int flags);
+    int mkostemps(char *path_template, int suffixlen, int flags);
 }
 
 
@@ -94,7 +94,8 @@ public class BufferedDirectWriteTempFile : BufferedDirectWriteFile
         /***********************************************************************
 
             Opens a temporary file at the specified path. The file will have a
-            unique 6-character string appended to the path.
+            unique 6-character string appended to the path and after that, the
+            suffix provided by the outer class.
 
             Params:
                 path = path at which to create temporary file
@@ -106,8 +107,9 @@ public class BufferedDirectWriteTempFile : BufferedDirectWriteFile
 
         public override void open ( char[] path )
         {
-            this.temp_file_path.concat(path, "XXXXXX\0");
-            auto fd = mkostemp(this.temp_file_path.ptr,
+            this.temp_file_path.concat(path, "XXXXXX", this.outer.suffix, "\0");
+            auto fd = mkostemps(this.temp_file_path.ptr,
+                    this.outer.suffix.length,
                     this.outer.disable_direct_io ? 0 : O_DIRECT);
             if ( fd == -1 )
             {
@@ -147,6 +149,14 @@ public class BufferedDirectWriteTempFile : BufferedDirectWriteFile
 
     /***************************************************************************
 
+        Suffix part of the file name. Is assumed to never change.
+
+    ***************************************************************************/
+
+        private const char[] suffix;
+
+    /***************************************************************************
+
         Determines if regular buffered I/O (true) or direct I/O is used (false).
 
         This option seems to be completely pointless in this class, and even
@@ -164,15 +174,24 @@ public class BufferedDirectWriteTempFile : BufferedDirectWriteFile
 
         Constructs a new BufferedDirectWriteTempFile.
 
-        If a path is specified, a temporary file is opened there.
+        If a path is specified, a temporary file is opened. The name of the
+        temporary file is composed of a base path and a suffix. Between both
+        there is a random string consisting of 6 lettters to make the name
+        unique (this is picked up by mkostemps(3), read the man page for
+        details). If path is null, the object is created but no file is opened.
+        The suffix is saved for later use, so when opening the file later the
+        name will be built as explained before, combining the path, a random
+        component and the suffix.
 
-        See documentation for super(char[], ubyte[]) for details.
+        See documentation for super(char[], ubyte[]) for details on the buffers
+        and restrictions.
 
         Params:
-            path = Path of the file to write to.
+            path = Base path part of the temporary file name.
             buffer = Buffer to use for writing, the length must be multiple of
                      the BLOCK_SIZE and the memory must be aligned to the
                      BLOCK_SIZE
+            suffix = Suffix part of the temporary file name.
             disable_direct_io = determines if regular buffered I/O (true) or
                      direct I/O is used (false). This is for testing only,
                      please refer to the documentation for the disable_direct_io
@@ -180,8 +199,10 @@ public class BufferedDirectWriteTempFile : BufferedDirectWriteFile
 
     ***************************************************************************/
 
-    public this ( char[] path, ubyte[] buffer, bool disable_direct_io = false )
+    public this ( char[] path, ubyte[] buffer, char[] suffix = ".tmp",
+            bool disable_direct_io = false )
     {
+        this.suffix = suffix;
         this.disable_direct_io = disable_direct_io;
         super(path, buffer);
     }
@@ -190,13 +211,22 @@ public class BufferedDirectWriteTempFile : BufferedDirectWriteFile
 
         Constructs a new BufferedDirectWriteTempFile allocating a new buffer.
 
-        If a path is specified, a temporary file is opened there.
+        If a path is specified, a temporary file is opened. The name of the
+        temporary file is composed of a base path and a suffix. Between both
+        there is a random string consisting of 6 lettters to make the name
+        unique (this is picked up by mkostemps(3), read the man page for
+        details). If path is null, the object is created but no file is opened.
+        The suffix is saved for later use, so when opening the file later the
+        name will be built as explained before, combining the path, a random
+        component and the suffix.
 
-        See documentation for super(char[], ubyte[]) for details.
+        See documentation for super(char[], ubyte[]) for details on the buffers
+        and restrictions.
 
         Params:
             path = Path of the file to write to.
             buffer_blocks = Buffer size in blocks (default 32MiB)
+            suffix = Suffix part of the temporary file name.
             disable_direct_io = determines if regular buffered I/O (true) or
                     direct I/O is used (false). This is for testing only, please
                     refer to the documentation for the disable_direct_io
@@ -205,8 +235,9 @@ public class BufferedDirectWriteTempFile : BufferedDirectWriteFile
     ***************************************************************************/
 
     public this ( char[] path = null, size_t buffer_blocks = 32 * 2 * 1024,
-            bool disable_direct_io = false )
+            char[] suffix = ".tmp", bool disable_direct_io = false )
     {
+        this.suffix = suffix;
         this.disable_direct_io = disable_direct_io;
         super(path, new ubyte[buffer_blocks * BLOCK_SIZE]);
     }

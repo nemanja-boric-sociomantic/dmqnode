@@ -209,7 +209,7 @@ public class DumpCycle : SelectFiber
         this.dump_config = dump_config;
         this.stats = stats;
 
-        this.file = new ChannelDumper(new ubyte[IOBufferSize],
+        this.file = new ChannelDumper(new ubyte[IOBufferSize], NewFileSuffix,
                 dump_config.disable_direct_io);
 
         this.root.set(this.dump_config.data_dir);
@@ -357,15 +357,14 @@ public class DumpCycle : SelectFiber
             }
         }
 
-        buildFilePath(this.root, this.path, channel).cat(NewFileSuffix);
-
         StopWatch time;
         time.start;
 
         // Dump channel to file
         try
         {
-            this.file.open(this.path.toString);
+            buildFilePath(this.root, this.path, channel).cat(".");
+            this.file.open(this.path.toString());
             scope ( exit ) this.file.close();
 
             this.dht.perform(this,
