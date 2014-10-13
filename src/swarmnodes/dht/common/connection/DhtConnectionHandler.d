@@ -44,6 +44,7 @@ private import swarmnodes.dht.common.request.GetAllFilterRequest;
 private import swarmnodes.dht.common.request.GetAllKeysRequest;
 private import swarmnodes.dht.common.request.RemoveChannelRequest;
 private import swarmnodes.dht.common.request.GetNumConnectionsRequest;
+private import swarmnodes.dht.common.request.RedistributeRequest;
 
 private import swarmnodes.dht.memory.request.ExistsRequest;
 private import swarmnodes.dht.memory.request.GetRequest;
@@ -237,6 +238,18 @@ public class DhtConnectionHandler
 
         /***********************************************************************
 
+            RedistributeNode buffer newer.
+
+        ***********************************************************************/
+
+        protected RedistributeNode[] new_redistribute_node_buffer ( )
+        {
+            return new RedistributeNode[2];
+        }
+
+
+        /***********************************************************************
+
             Select event newer.
 
         ***********************************************************************/
@@ -244,6 +257,18 @@ public class DhtConnectionHandler
         protected FiberSelectEvent new_event ( )
         {
             return new FiberSelectEvent(this.outer.fiber);
+        }
+
+
+        /***********************************************************************
+
+            Select timer newer.
+
+        ***********************************************************************/
+
+        protected FiberTimerEvent new_timer ( )
+        {
+            return new FiberTimerEvent(this.outer.fiber);
         }
 
 
@@ -285,6 +310,18 @@ public class DhtConnectionHandler
 
         /***********************************************************************
 
+            Dht client newer.
+
+        ***********************************************************************/
+
+        protected DhtClient new_dht_client ( )
+        {
+            return new DhtClient(this.outer.fiber.epoll);
+        }
+
+
+        /***********************************************************************
+
             Select event initialiser.
 
         ***********************************************************************/
@@ -297,6 +334,18 @@ public class DhtConnectionHandler
 
         /***********************************************************************
 
+            Select timer initialiser.
+
+        ***********************************************************************/
+
+        override protected void init_timer ( FiberTimerEvent timer )
+        {
+            timer.fiber = this.timer.fiber;
+        }
+
+
+        /***********************************************************************
+
             Loop ceder initialiser.
 
         ***********************************************************************/
@@ -304,6 +353,18 @@ public class DhtConnectionHandler
         override protected void init_loop_ceder ( LoopCeder loop_ceder )
         {
             loop_ceder.event = this.event;
+        }
+
+
+        /***********************************************************************
+
+            Dht client initialiser.
+
+        ***********************************************************************/
+
+        override protected void init_dht_client ( DhtClient dht_client )
+        {
+            dht_client.clearNodes();
         }
 
 
@@ -643,12 +704,11 @@ public class DhtConnectionHandler
 
         Command code 'Redistribute' handler.
 
-        TODO: currently does nothing
-
     ***************************************************************************/
 
     protected void handleRedistribute ( )
     {
+        this.handleCommand!(RedistributeRequest);
     }
 
 

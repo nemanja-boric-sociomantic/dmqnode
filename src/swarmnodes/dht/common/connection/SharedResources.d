@@ -31,12 +31,17 @@ module swarmnodes.dht.common.connection.SharedResources;
 private import swarm.core.common.connection.ISharedResources;
 
 public import ocean.io.select.client.FiberSelectEvent;
+public import ocean.io.select.client.FiberTimerEvent;
 
 public import swarm.core.common.request.helper.LoopCeder;
 
 public import swarmnodes.dht.common.storage.IStepIterator;
 
+public import swarmnodes.dht.common.connection.DhtClient;
+
 public import swarm.dht.common.RecordBatcher2;
+
+public import swarmnodes.dht.common.request.params.RedistributeNode;
 
 
 
@@ -57,9 +62,12 @@ public struct DhtConnectionResources
     char[] value_buffer;
     hash_t[] hash_buffer;
     FiberSelectEvent event;
+    FiberTimerEvent timer;
     LoopCeder loop_ceder;
     IStepIterator iterator;
     RecordBatcher batcher;
+    RedistributeNode[] redistribute_node_buffer;
+    DhtClient dht_client;
 }
 
 

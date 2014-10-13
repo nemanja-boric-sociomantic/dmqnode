@@ -109,6 +109,7 @@ public class LogFilesStorageChannels : DhtStorageChannels
             supported_commands[RemoveChannel] = true;
             supported_commands[GetNumConnections] = true;
             supported_commands[GetVersion] = true;
+            supported_commands[Redistribute] = false;
         }
 
         supported_commands.rehash;

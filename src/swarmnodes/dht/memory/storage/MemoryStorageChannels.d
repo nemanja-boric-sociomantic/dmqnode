@@ -103,6 +103,7 @@ public class MemoryStorageChannels : DhtStorageChannels
             supported_commands[GetNumConnections] = true;
             supported_commands[GetVersion] = true;
             supported_commands[Listen] = true;
+            supported_commands[Redistribute] = true;
         }
 
         supported_commands.rehash;
