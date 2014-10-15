@@ -11,7 +11,7 @@
 
 *******************************************************************************/
 
-module swarmnodes.dht.logfiles.storage.LogFilesStorageChannels;
+module swarmnodes.logfiles.storage.LogFilesStorageChannels;
 
 
 
@@ -31,8 +31,8 @@ private import swarmnodes.dht.common.storage.DhtStorageEngine;
 
 private import swarmnodes.dht.common.storage.IStepIterator;
 
-private import swarmnodes.dht.logfiles.storage.LogRecord,
-               swarmnodes.dht.logfiles.storage.LogRecordPut;
+private import swarmnodes.logfiles.storage.LogRecord,
+               swarmnodes.logfiles.storage.LogRecordPut;
 
 private import ocean.core.Array : concat;
 private import ocean.core.Exception : enforce;

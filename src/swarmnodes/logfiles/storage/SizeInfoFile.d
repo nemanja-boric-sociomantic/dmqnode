@@ -11,7 +11,7 @@
 
 *******************************************************************************/
 
-module swarmnodes.dht.logfiles.storage.SizeInfoFile;
+module swarmnodes.logfiles.storage.SizeInfoFile;
 
 
 
@@ -40,7 +40,7 @@ private import tango.util.log.Log;
 private Logger log;
 static this ( )
 {
-    log = Log.lookup("swarmnodes.dht.logfiles.storage.SizeInfoFile");
+    log = Log.lookup("swarmnodes.logfiles.storage.SizeInfoFile");
 }
 
 

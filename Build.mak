@@ -17,7 +17,7 @@ $B/dhtdump: src/swarmnodes/dht/memory/dhtdump/main.d
 dhtdump: $B/dhtdump
 all += dhtdump
 
-$B/logfilesnode: src/swarmnodes/dht/logfiles/main.d
+$B/logfilesnode: src/swarmnodes/logfiles/main.d
 logfilesnode: $B/logfilesnode
 all += logfilesnode
 

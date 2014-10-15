@@ -10,7 +10,7 @@
 
 *******************************************************************************/
 
-module swarmnodes.dht.logfiles.request.GetRangeRequest;
+module swarmnodes.logfiles.request.GetRangeRequest;
 
 
 

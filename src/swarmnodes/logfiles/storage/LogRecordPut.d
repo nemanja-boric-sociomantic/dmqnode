@@ -15,12 +15,12 @@
     instantiation this information is read from that file, if the file exists,
     otherwise the number and size values are initialized to 0.
 
-    See swarmnodes.dht.logfiles.storage.LogRecord for a description of the database
+    See swarmnodes.logfiles.storage.LogRecord for a description of the database
     file organization and slot/bucket association.
 
  ******************************************************************************/
 
-module swarmnodes.dht.logfiles.storage.LogRecordPut;
+module swarmnodes.logfiles.storage.LogRecordPut;
 
 /******************************************************************************
 
@@ -28,9 +28,9 @@ module swarmnodes.dht.logfiles.storage.LogRecordPut;
 
  ******************************************************************************/
 
-private import swarmnodes.dht.logfiles.storage.LogRecord;
+private import swarmnodes.logfiles.storage.LogRecord;
 
-private import swarmnodes.dht.logfiles.storage.SizeInfoFile;
+private import swarmnodes.logfiles.storage.SizeInfoFile;
 
 private import swarm.dht.DhtHash;
 

@@ -65,7 +65,7 @@
 
  ******************************************************************************/
 
-module swarmnodes.dht.logfiles.storage.LogRecord;
+module swarmnodes.logfiles.storage.LogRecord;
 
 
 
@@ -77,7 +77,7 @@ module swarmnodes.dht.logfiles.storage.LogRecord;
 
 private import swarm.dht.DhtHash;
 
-private import swarmnodes.dht.logfiles.storage.SizeInfoFile;
+private import swarmnodes.logfiles.storage.SizeInfoFile;
 
 private import ocean.core.Array;
 private import ocean.core.Exception: enforce;
@@ -111,7 +111,7 @@ debug ( LogRecord ) private import ocean.io.Stdout;
 private Logger log;
 static this ( )
 {
-    log = Log.lookup("swarmnodes.dht.logfiles.storage.LogRecord");
+    log = Log.lookup("swarmnodes.logfiles.storage.LogRecord");
 }
 
 

@@ -14,7 +14,7 @@
 
 *******************************************************************************/
 
-module swarmnodes.dht.logfiles.main;
+module swarmnodes.logfiles.main;
 
 
 
@@ -28,9 +28,9 @@ private import swarmnodes.dht.common.app.IDhtNodeApp;
 
 private import swarmnodes.dht.common.app.periodic.PeriodicDhtStats;
 
-private import swarmnodes.dht.logfiles.storage.LogFilesStorageChannels;
+private import swarmnodes.logfiles.storage.LogFilesStorageChannels;
 
-private import swarmnodes.dht.logfiles.storage.LogRecordPut;
+private import swarmnodes.logfiles.storage.LogRecordPut;
 
 private import tango.util.log.Log;
 
@@ -45,7 +45,7 @@ private import tango.util.log.Log;
 private Logger log;
 static this ( )
 {
-    log = Log.lookup("swarmnodes.dht.logfiles.main");
+    log = Log.lookup("swarmnodes.logfiles.main");
 }
 
 

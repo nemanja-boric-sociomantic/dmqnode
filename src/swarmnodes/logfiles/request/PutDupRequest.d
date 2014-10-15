@@ -10,7 +10,7 @@
 
 *******************************************************************************/
 
-module swarmnodes.dht.logfiles.request.PutDupRequest;
+module swarmnodes.logfiles.request.PutDupRequest;
 
 
 

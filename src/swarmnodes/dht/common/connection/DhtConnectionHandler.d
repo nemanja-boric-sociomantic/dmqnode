@@ -52,9 +52,9 @@ private import swarmnodes.dht.memory.request.PutRequest;
 private import swarmnodes.dht.memory.request.RemoveRequest;
 private import swarmnodes.dht.memory.request.ListenRequest;
 
-private import swarmnodes.dht.logfiles.request.PutDupRequest;
-private import swarmnodes.dht.logfiles.request.GetRangeRequest;
-private import swarmnodes.dht.logfiles.request.GetRangeFilterRequest;
+private import swarmnodes.logfiles.request.PutDupRequest;
+private import swarmnodes.logfiles.request.GetRangeRequest;
+private import swarmnodes.logfiles.request.GetRangeFilterRequest;
 
 private import swarmnodes.dht.common.storage.DhtStorageChannels;
 
