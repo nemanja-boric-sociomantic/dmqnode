@@ -385,7 +385,7 @@ public class DhtConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleNone ( )
+    override protected void handleNone ( )
     {
         this.handleInvalidCommand();
     }
@@ -397,7 +397,7 @@ public class DhtConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleGetVersion ( )
+    override protected void handleGetVersion ( )
     {
         this.handleCommand!(GetVersionRequest);
     }
@@ -409,7 +409,7 @@ public class DhtConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleGetResponsibleRange ( )
+    override protected void handleGetResponsibleRange ( )
     {
         this.handleCommand!(GetResponsibleRangeRequest);
     }
@@ -421,7 +421,7 @@ public class DhtConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleGetSupportedCommands ( )
+    override protected void handleGetSupportedCommands ( )
     {
         this.handleCommand!(GetSupportedCommandsRequest);
     }
@@ -433,7 +433,7 @@ public class DhtConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleGetNumConnections ( )
+    override protected void handleGetNumConnections ( )
     {
         this.handleCommand!(GetNumConnectionsRequest);
     }
@@ -445,7 +445,7 @@ public class DhtConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleGetChannels ( )
+    override protected void handleGetChannels ( )
     {
         this.handleCommand!(GetChannelsRequest);
     }
@@ -457,7 +457,7 @@ public class DhtConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleGetSize ( )
+    override protected void handleGetSize ( )
     {
         this.handleCommand!(GetSizeRequest);
     }
@@ -469,7 +469,7 @@ public class DhtConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleGetChannelSize ( )
+    override protected void handleGetChannelSize ( )
     {
         this.handleCommand!(GetChannelSizeRequest);
     }
@@ -481,7 +481,7 @@ public class DhtConnectionHandler
 
     ***************************************************************************/
 
-    protected void handlePut ( )
+    override protected void handlePut ( )
     {
         this.handleCommand!(PutRequest);
     }
@@ -493,7 +493,7 @@ public class DhtConnectionHandler
 
     ***************************************************************************/
 
-    protected void handlePutDup ( )
+    override protected void handlePutDup ( )
     {
         // TODO: remove this method when this command is removed from the list
         // of codes
@@ -507,7 +507,7 @@ public class DhtConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleGet ( )
+    override protected void handleGet ( )
     {
         this.handleCommand!(GetRequest);
     }
@@ -519,7 +519,7 @@ public class DhtConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleGetAll ( )
+    override protected void handleGetAll ( )
     {
         this.handleCommand!(GetAllRequest);
     }
@@ -531,7 +531,7 @@ public class DhtConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleGetAll2 ( )
+    override protected void handleGetAll2 ( )
     {
         this.handleCommand!(GetAllRequest2);
     }
@@ -543,7 +543,7 @@ public class DhtConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleGetAllFilter ( )
+    override protected void handleGetAllFilter ( )
     {
         this.handleCommand!(GetAllFilterRequest);
     }
@@ -555,7 +555,7 @@ public class DhtConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleGetAllFilter2 ( )
+    override protected void handleGetAllFilter2 ( )
     {
         this.handleCommand!(GetAllFilterRequest2);
     }
@@ -567,7 +567,7 @@ public class DhtConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleGetAllKeys ( )
+    override protected void handleGetAllKeys ( )
     {
         this.handleCommand!(GetAllKeysRequest);
     }
@@ -579,7 +579,7 @@ public class DhtConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleGetAllKeys2 ( )
+    override protected void handleGetAllKeys2 ( )
     {
         this.handleCommand!(GetAllKeysRequest2);
     }
@@ -591,7 +591,7 @@ public class DhtConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleGetRange ( )
+    override protected void handleGetRange ( )
     {
         // TODO: remove this method when this command is removed from the list
         // of codes
@@ -605,7 +605,7 @@ public class DhtConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleGetRange2 ( )
+    override protected void handleGetRange2 ( )
     {
         // TODO: remove this method when this command is removed from the list
         // of codes
@@ -619,7 +619,7 @@ public class DhtConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleGetRangeFilter ( )
+    override protected void handleGetRangeFilter ( )
     {
         // TODO: remove this method when this command is removed from the list
         // of codes
@@ -633,7 +633,7 @@ public class DhtConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleGetRangeFilter2 ( )
+    override protected void handleGetRangeFilter2 ( )
     {
         // TODO: remove this method when this command is removed from the list
         // of codes
@@ -647,7 +647,7 @@ public class DhtConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleListen ( )
+    override protected void handleListen ( )
     {
         this.handleCommand!(ListenRequest);
     }
@@ -659,7 +659,7 @@ public class DhtConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleExists ( )
+    override protected void handleExists ( )
     {
         this.handleCommand!(ExistsRequest);
     }
@@ -671,7 +671,7 @@ public class DhtConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleRemove ( )
+    override protected void handleRemove ( )
     {
         this.handleCommand!(RemoveRequest);
     }
@@ -683,7 +683,7 @@ public class DhtConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleRemoveChannel ( )
+    override protected void handleRemoveChannel ( )
     {
         this.handleCommand!(RemoveChannelRequest);
     }
@@ -695,7 +695,7 @@ public class DhtConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleRedistribute ( )
+    override protected void handleRedistribute ( )
     {
         this.handleCommand!(RedistributeRequest);
     }
@@ -707,7 +707,7 @@ public class DhtConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleInvalidCommand_ ( )
+    override protected void handleInvalidCommand_ ( )
     {
         super.writer.write(DhtConst.Status.E.InvalidRequest);
     }

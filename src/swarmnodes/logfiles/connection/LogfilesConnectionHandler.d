@@ -379,7 +379,7 @@ public class LogfilesConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleNone ( )
+    override protected void handleNone ( )
     {
         this.handleInvalidCommand();
     }
@@ -391,7 +391,7 @@ public class LogfilesConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleGetVersion ( )
+    override protected void handleGetVersion ( )
     {
         this.handleCommand!(GetVersionRequest);
     }
@@ -403,7 +403,7 @@ public class LogfilesConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleGetResponsibleRange ( )
+    override protected void handleGetResponsibleRange ( )
     {
         this.handleCommand!(GetResponsibleRangeRequest);
     }
@@ -415,7 +415,7 @@ public class LogfilesConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleGetSupportedCommands ( )
+    override protected void handleGetSupportedCommands ( )
     {
         this.handleCommand!(GetSupportedCommandsRequest);
     }
@@ -427,7 +427,7 @@ public class LogfilesConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleGetNumConnections ( )
+    override protected void handleGetNumConnections ( )
     {
         this.handleCommand!(GetNumConnectionsRequest);
     }
@@ -439,7 +439,7 @@ public class LogfilesConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleGetChannels ( )
+    override protected void handleGetChannels ( )
     {
         this.handleCommand!(GetChannelsRequest);
     }
@@ -451,7 +451,7 @@ public class LogfilesConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleGetSize ( )
+    override protected void handleGetSize ( )
     {
         this.handleCommand!(GetSizeRequest);
     }
@@ -463,7 +463,7 @@ public class LogfilesConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleGetChannelSize ( )
+    override protected void handleGetChannelSize ( )
     {
         this.handleCommand!(GetChannelSizeRequest);
     }
@@ -475,7 +475,7 @@ public class LogfilesConnectionHandler
 
     ***************************************************************************/
 
-    protected void handlePut ( )
+    override protected void handlePut ( )
     {
         // TODO: remove this method when this command is removed from the list
         // of codes
@@ -489,7 +489,7 @@ public class LogfilesConnectionHandler
 
     ***************************************************************************/
 
-    protected void handlePutDup ( )
+    override protected void handlePutDup ( )
     {
         this.handleCommand!(PutDupRequest);
     }
@@ -501,7 +501,7 @@ public class LogfilesConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleGet ( )
+    override protected void handleGet ( )
     {
         // TODO: remove this method when this command is removed from the list
         // of codes
@@ -515,7 +515,7 @@ public class LogfilesConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleGetAll ( )
+    override protected void handleGetAll ( )
     {
         this.handleCommand!(GetAllRequest);
     }
@@ -527,7 +527,7 @@ public class LogfilesConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleGetAll2 ( )
+    override protected void handleGetAll2 ( )
     {
         this.handleCommand!(GetAllRequest2);
     }
@@ -539,7 +539,7 @@ public class LogfilesConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleGetAllFilter ( )
+    override protected void handleGetAllFilter ( )
     {
         this.handleCommand!(GetAllFilterRequest);
     }
@@ -551,7 +551,7 @@ public class LogfilesConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleGetAllFilter2 ( )
+    override protected void handleGetAllFilter2 ( )
     {
         this.handleCommand!(GetAllFilterRequest2);
     }
@@ -563,7 +563,7 @@ public class LogfilesConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleGetAllKeys ( )
+    override protected void handleGetAllKeys ( )
     {
         this.handleCommand!(GetAllKeysRequest);
     }
@@ -575,7 +575,7 @@ public class LogfilesConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleGetAllKeys2 ( )
+    override protected void handleGetAllKeys2 ( )
     {
         this.handleCommand!(GetAllKeysRequest2);
     }
@@ -587,7 +587,7 @@ public class LogfilesConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleGetRange ( )
+    override protected void handleGetRange ( )
     {
         this.handleCommand!(GetRangeRequest);
     }
@@ -599,7 +599,7 @@ public class LogfilesConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleGetRange2 ( )
+    override protected void handleGetRange2 ( )
     {
         this.handleCommand!(GetRangeRequest2);
     }
@@ -611,7 +611,7 @@ public class LogfilesConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleGetRangeFilter ( )
+    override protected void handleGetRangeFilter ( )
     {
         this.handleCommand!(GetRangeFilterRequest);
     }
@@ -623,7 +623,7 @@ public class LogfilesConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleGetRangeFilter2 ( )
+    override protected void handleGetRangeFilter2 ( )
     {
         this.handleCommand!(GetRangeFilterRequest2);
     }
@@ -635,7 +635,7 @@ public class LogfilesConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleListen ( )
+    override protected void handleListen ( )
     {
         // TODO: remove this method when this command is removed from the list
         // of codes
@@ -649,7 +649,7 @@ public class LogfilesConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleExists ( )
+    override protected void handleExists ( )
     {
         // TODO: remove this method when this command is removed from the list
         // of codes
@@ -663,7 +663,7 @@ public class LogfilesConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleRemove ( )
+    override protected void handleRemove ( )
     {
         // TODO: remove this method when this command is removed from the list
         // of codes
@@ -677,7 +677,7 @@ public class LogfilesConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleRemoveChannel ( )
+    override protected void handleRemoveChannel ( )
     {
         this.handleCommand!(RemoveChannelRequest);
     }
@@ -689,7 +689,7 @@ public class LogfilesConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleRedistribute ( )
+    override protected void handleRedistribute ( )
     {
         this.handleCommand!(RedistributeRequest);
     }
@@ -701,7 +701,7 @@ public class LogfilesConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleInvalidCommand_ ( )
+    override protected void handleInvalidCommand_ ( )
     {
         super.writer.write(DhtConst.Status.E.InvalidRequest);
     }

@@ -306,7 +306,7 @@ public class QueueConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleNone ( )
+    override protected void handleNone ( )
     {
         this.handleInvalidCommand();
     }
@@ -318,7 +318,7 @@ public class QueueConnectionHandler
 
     ***************************************************************************/
 
-    protected void handlePush ( )
+    override protected void handlePush ( )
     {
         this.handleCommand!(PushRequest);
     }
@@ -329,7 +329,7 @@ public class QueueConnectionHandler
 
     ***************************************************************************/
 
-    protected void handlePop ( )
+    override protected void handlePop ( )
     {
         this.handleCommand!(PopRequest);
     }
@@ -341,7 +341,7 @@ public class QueueConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleGetChannels ( )
+    override protected void handleGetChannels ( )
     {
         this.handleCommand!(GetChannelsRequest);
     }
@@ -353,7 +353,7 @@ public class QueueConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleGetChannelSize ( )
+    override protected void handleGetChannelSize ( )
     {
         this.handleCommand!(GetChannelSizeRequest);
     }
@@ -365,7 +365,7 @@ public class QueueConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleGetSize ( )
+    override protected void handleGetSize ( )
     {
         this.handleCommand!(GetSizeRequest);
     }
@@ -377,7 +377,7 @@ public class QueueConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleConsume ( )
+    override protected void handleConsume ( )
     {
         this.handleCommand!(ConsumeRequest);
     }
@@ -389,7 +389,7 @@ public class QueueConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleGetSizeLimit ( )
+    override protected void handleGetSizeLimit ( )
     {
         this.handleCommand!(GetSizeLimitRequest);
     }
@@ -401,7 +401,7 @@ public class QueueConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleGetNumConnections ( )
+    override protected void handleGetNumConnections ( )
     {
         this.handleCommand!(GetNumConnectionsRequest);
     }
@@ -413,7 +413,7 @@ public class QueueConnectionHandler
 
     ***************************************************************************/
 
-    protected void handlePushMulti ( )
+    override protected void handlePushMulti ( )
     {
         this.handleCommand!(PushMultiRequest);
     }
@@ -425,7 +425,7 @@ public class QueueConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleProduce ( )
+    override protected void handleProduce ( )
     {
         this.handleCommand!(ProduceRequest);
     }
@@ -437,7 +437,7 @@ public class QueueConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleProduceMulti ( )
+    override protected void handleProduceMulti ( )
     {
         this.handleCommand!(ProduceMultiRequest);
     }
@@ -449,7 +449,7 @@ public class QueueConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleRemoveChannel ( )
+    override protected void handleRemoveChannel ( )
     {
         this.handleCommand!(RemoveChannelRequest);
     }
@@ -461,7 +461,7 @@ public class QueueConnectionHandler
 
     ***************************************************************************/
 
-    protected void handleInvalidCommand_ ( )
+    override protected void handleInvalidCommand_ ( )
     {
         super.writer.write(QueueConst.Status.E.InvalidRequest);
     }
