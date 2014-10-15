@@ -20,7 +20,7 @@ module swarmnodes.dht.memory.request.GetRequest;
 
 *******************************************************************************/
 
-private import swarmnodes.dht.common.request.model.ISingleKeyRequest;
+private import swarmnodes.common.kvstore.request.model.ISingleKeyRequest;
 
 
 
@@ -44,7 +44,7 @@ public scope class GetRequest : ISingleKeyRequest
     ***************************************************************************/
 
     public this ( FiberSelectReader reader, FiberSelectWriter writer,
-        IDhtRequestResources resources )
+        IKVRequestResources resources )
     {
         super(DhtConst.Command.E.Get, reader, writer, resources);
     }

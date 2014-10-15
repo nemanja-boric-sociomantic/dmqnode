@@ -24,7 +24,7 @@ module swarmnodes.dht.memory.main;
 
 *******************************************************************************/
 
-private import swarmnodes.dht.common.app.IDhtNodeApp;
+private import swarmnodes.common.kvstore.app.IKVNodeApp;
 
 private import swarmnodes.common.util.Terminator;
 
@@ -75,11 +75,11 @@ private int main ( char[][] cl_args )
 
 /*******************************************************************************
 
-    DhtNode
+    KVNode
 
 *******************************************************************************/
 
-public class DhtNodeServer : IDhtNodeApp
+public class DhtNodeServer : IKVNodeApp
 {
     /***************************************************************************
 
@@ -157,7 +157,7 @@ public class DhtNodeServer : IDhtNodeApp
 
     ***************************************************************************/
 
-    override protected DhtStorageChannels newStorageChannels_ ( )
+    override protected KVStorageChannels newStorageChannels_ ( )
     {
         return new MemoryStorageChannels(this.server_config.data_dir,
             this.memory_config.size_limit, this.hash_range,

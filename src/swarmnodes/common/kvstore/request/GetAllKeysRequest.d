@@ -1,6 +1,6 @@
 /*******************************************************************************
 
-    GetRangeFilter request class.
+    GetAllKeys request class.
 
     copyright:      Copyright (c) 2011 sociomantic labs. All rights reserved
 
@@ -10,7 +10,7 @@
 
 *******************************************************************************/
 
-module swarmnodes.logfiles.request.GetRangeFilterRequest;
+module swarmnodes.common.kvstore.request.GetAllKeysRequest;
 
 
 
@@ -24,28 +24,17 @@ private import swarmnodes.common.kvstore.request.model.IBulkGetRequest;
 
 private import swarm.dht.common.RecordBatcher;
 
-private import tango.text.Search;
-
 
 
 /*******************************************************************************
 
-    GetRangeFilter request
+    GetAllKeys request
 
 *******************************************************************************/
 
-private scope class IGetRangeFilterRequest ( bool ChunkedBatcher, DhtConst.Command.E Cmd )
+private scope class IGetAllKeysRequest ( bool ChunkedBatcher, DhtConst.Command.E Cmd )
     : IBulkGetRequest!(ChunkedBatcher)
 {
-    /***************************************************************************
-
-        Sub-string search instance.
-
-    ***************************************************************************/
-
-    SearchFruct!(char) match;
-
-
     /***************************************************************************
 
         Constructor
@@ -76,11 +65,6 @@ private scope class IGetRangeFilterRequest ( bool ChunkedBatcher, DhtConst.Comma
 
     protected void readRequestData_ ( )
     {
-        this.reader.readArray(*this.resources.key_buffer);
-        this.reader.readArray(*this.resources.key2_buffer);
-        this.reader.readArray(*this.resources.filter_buffer);
-
-        this.match = search(*this.resources.filter_buffer);
     }
 
 
@@ -95,10 +79,10 @@ private scope class IGetRangeFilterRequest ( bool ChunkedBatcher, DhtConst.Comma
 
     ***************************************************************************/
 
-    protected void beginIteration_ ( KVStorageEngine storage_channel, IStepIterator iterator )
+    protected void beginIteration_ ( KVStorageEngine storage_channel,
+        IStepIterator iterator )
     {
-        storage_channel.getRange(iterator, *this.resources.key_buffer,
-            *this.resources.key2_buffer);
+        storage_channel.getAll(iterator);
     }
 
 
@@ -119,22 +103,12 @@ private scope class IGetRangeFilterRequest ( bool ChunkedBatcher, DhtConst.Comma
 
     protected bool handleRecord ( out AddResult add_result )
     {
-        if ( super.key >= *this.resources.key_buffer &&
-             super.key <= *this.resources.key2_buffer )
-        {
-            auto value = super.value;
-            if ( this.match.forward(value) < value.length )
-            {
-                add_result = super.addToBatch(super.key, value);
-                return true;
-            }
-        }
-
-        return false;
+        add_result = super.addToBatch(super.key);
+        return true;
     }
 }
 
-public alias IGetRangeFilterRequest!(true, DhtConst.Command.E.GetRangeFilter) GetRangeFilterRequest;
+public alias IGetAllKeysRequest!(true, DhtConst.Command.E.GetAllKeys) GetAllKeysRequest;
 
-public alias IGetRangeFilterRequest!(false, DhtConst.Command.E.GetRangeFilter2) GetRangeFilterRequest2;
+public alias IGetAllKeysRequest!(false, DhtConst.Command.E.GetAllKeys2) GetAllKeysRequest2;
 

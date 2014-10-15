@@ -6,7 +6,7 @@
 
     authors:        Leandro Lucarella
 
-    This module implements the DhtStorageEngine for a memory channel using
+    This module implements the KVStorageEngine for a memory channel using
     Tokyo Cabinet as the real storage engine.
 
 *******************************************************************************/
@@ -23,9 +23,9 @@ module swarmnodes.dht.memory.storage.MemoryStorage;
 
 private import swarm.dht.DhtConst;
 
-private import swarmnodes.dht.common.storage.DhtStorageEngine;
+private import swarmnodes.common.kvstore.storage.KVStorageEngine;
 
-private import swarmnodes.dht.common.storage.IStepIterator;
+private import swarmnodes.common.kvstore.storage.IStepIterator;
 
 private import ocean.db.tokyocabinet.TokyoCabinetM;
 
@@ -53,7 +53,7 @@ static this ( )
 
 ***************************************************************************/
 
-public class MemoryStorage : DhtStorageEngine
+public class MemoryStorage : KVStorageEngine
 {
     /***********************************************************************
 
@@ -91,7 +91,7 @@ public class MemoryStorage : DhtStorageEngine
 
     ***********************************************************************/
 
-    public this ( char[] id, DhtHashRange hash_range, uint bnum,
+    public this ( char[] id, KVHashRange hash_range, uint bnum,
         DeleteChannelCb delete_channel )
     {
         super(id, hash_range);
@@ -375,7 +375,7 @@ public class MemoryStorageStepIterator : IStepIterator
 
     *******************************************************************/
 
-    public void setStorage ( DhtStorageEngine storage )
+    public void setStorage ( KVStorageEngine storage )
     {
         this.storage = cast(MemoryStorage)storage;
     }

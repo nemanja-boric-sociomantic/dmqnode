@@ -22,7 +22,7 @@ module swarmnodes.dht.memory.app.periodic.MemoryPeriodicStats;
 
 *******************************************************************************/
 
-private import swarmnodes.dht.common.app.periodic.PeriodicDhtStats;
+private import swarmnodes.common.kvstore.app.periodic.PeriodicKVStats;
 
 private import swarmnodes.dht.memory.app.periodic.ChannelDumpThread;
 
@@ -40,7 +40,7 @@ private import ocean.text.util.Time;
 
 *******************************************************************************/
 
-public class MemoryPeriodicStats : PeriodicDhtStats
+public class MemoryPeriodicStats : PeriodicKVStats
 {
     /***************************************************************************
 

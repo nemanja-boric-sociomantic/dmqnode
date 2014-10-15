@@ -25,11 +25,11 @@ private import swarm.dht.DhtConst;
 
 private import swarm.dht.DhtHash;
 
-private import swarmnodes.dht.common.storage.DhtStorageChannels;
+private import swarmnodes.common.kvstore.storage.KVStorageChannels;
 
-private import swarmnodes.dht.common.storage.DhtStorageEngine;
+private import swarmnodes.common.kvstore.storage.KVStorageEngine;
 
-private import swarmnodes.dht.common.storage.IStepIterator;
+private import swarmnodes.common.kvstore.storage.IStepIterator;
 
 private import swarmnodes.logfiles.storage.LogRecord,
                swarmnodes.logfiles.storage.LogRecordPut;
@@ -56,7 +56,7 @@ private import tango.util.log.Log;
 private Logger log;
 static this ( )
 {
-    log = Log.lookup("swarmnodes.dht.common.storage.LogFilesStorageChannels");
+    log = Log.lookup("swarmnodes.common.kvstore.storage.LogFilesStorageChannels");
 }
 
 
@@ -67,7 +67,7 @@ static this ( )
 
 *******************************************************************************/
 
-public class LogFilesStorageChannels : DhtStorageChannels
+public class LogFilesStorageChannels : KVStorageChannels
 {
     /***************************************************************************
 
@@ -131,7 +131,7 @@ public class LogFilesStorageChannels : DhtStorageChannels
 
     ***************************************************************************/
 
-    private class LogFiles : DhtStorageEngine
+    private class LogFiles : KVStorageEngine
     {
         /***********************************************************************
 
@@ -168,7 +168,7 @@ public class LogFilesStorageChannels : DhtStorageChannels
 
         ***********************************************************************/
 
-        public this ( char[] id, DhtHashRange hash_range )
+        public this ( char[] id, KVHashRange hash_range )
         {
             this.log_record_put = new LogRecordPut("",
                 this.outer.write_buffer_size);
@@ -503,7 +503,7 @@ public class LogFilesStorageChannels : DhtStorageChannels
 
         *******************************************************************/
 
-        public void setStorage ( DhtStorageEngine storage )
+        public void setStorage ( KVStorageEngine storage )
         {
             this.storage = cast(LogFiles)storage;
         }
@@ -779,7 +779,7 @@ public class LogFilesStorageChannels : DhtStorageChannels
 
     ***************************************************************************/
 
-    public this ( char[] dir, ulong size_limit, DhtHashRange hash_range,
+    public this ( char[] dir, ulong size_limit, KVHashRange hash_range,
         size_t write_buffer_size = DefaultWriteBufferSize )
     {
         super(dir, size_limit, hash_range);
@@ -838,18 +838,18 @@ public class LogFilesStorageChannels : DhtStorageChannels
 
     /***************************************************************************
 
-        Creates a new DhtStorageEngine instance of the LogFiles class with the
+        Creates a new KVStorageEngine instance of the LogFiles class with the
         specified id.
 
         Params:
             id = channel id
 
         Returns:
-            new DhtStorageEngine instance
+            new KVStorageEngine instance
 
     ***************************************************************************/
 
-    protected override DhtStorageEngine create_ ( char[] id )
+    protected override KVStorageEngine create_ ( char[] id )
     {
         return new LogFiles(id, this.hash_range);
     }

@@ -20,7 +20,7 @@ module swarmnodes.logfiles.request.PutDupRequest;
 
 *******************************************************************************/
 
-private import swarmnodes.dht.common.request.model.IPutSingleRequest;
+private import swarmnodes.common.kvstore.request.model.IPutSingleRequest;
 
 
 
@@ -44,7 +44,7 @@ public scope class PutDupRequest : IPutSingleRequest
     ***************************************************************************/
 
     public this ( FiberSelectReader reader, FiberSelectWriter writer,
-        IDhtRequestResources resources )
+        IKVRequestResources resources )
     {
         super(DhtConst.Command.E.PutDup, reader, writer, resources);
     }
@@ -61,7 +61,7 @@ public scope class PutDupRequest : IPutSingleRequest
 
     ***************************************************************************/
 
-    protected void performRequest ( DhtStorageEngine channel, char[] key,
+    protected void performRequest ( KVStorageEngine channel, char[] key,
         char[] value )
     {
         channel.putDup(key, value);

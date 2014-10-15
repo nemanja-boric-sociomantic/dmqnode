@@ -1,6 +1,6 @@
 /*******************************************************************************
 
-    Remove request class.
+    Get channels request class.
 
     copyright:      Copyright (c) 2011 sociomantic labs. All rights reserved
 
@@ -10,7 +10,7 @@
 
 *******************************************************************************/
 
-module swarmnodes.dht.memory.request.RemoveRequest;
+module swarmnodes.common.kvstore.request.GetChannelsRequest;
 
 
 
@@ -20,17 +20,17 @@ module swarmnodes.dht.memory.request.RemoveRequest;
 
 *******************************************************************************/
 
-private import swarmnodes.common.kvstore.request.model.ISingleKeyRequest;
+private import swarmnodes.common.kvstore.request.model.IRequest;
 
 
 
 /*******************************************************************************
 
-    Remove request
+    Get channels request
 
 *******************************************************************************/
 
-public scope class RemoveRequest : ISingleKeyRequest
+public scope class GetChannelsRequest : IRequest
 {
     /***************************************************************************
 
@@ -46,27 +46,41 @@ public scope class RemoveRequest : ISingleKeyRequest
     public this ( FiberSelectReader reader, FiberSelectWriter writer,
         IKVRequestResources resources )
     {
-        super(DhtConst.Command.E.Remove, reader, writer, resources);
+        super(DhtConst.Command.E.GetChannels, reader, writer, resources);
     }
 
 
     /***************************************************************************
 
-        Performs this request. (Fiber method, after command and channel validity
-        have been confirmed.)
+        Reads any data from the client which is required for the request. If the
+        request is invalid in some way (the channel name is invalid, or the
+        command is not supported) then the command can be simply not executed,
+        and all client data has been read, leaving the read buffer in a clean
+        state ready for the next request.
 
     ***************************************************************************/
 
-    protected void handle___ ( )
+    protected void readRequestData ( )
+    {
+    }
+
+
+    /***************************************************************************
+
+        Performs this request. (Fiber method.)
+
+    ***************************************************************************/
+
+    protected void handle__ ( )
     {
         this.writer.write(DhtConst.Status.E.Ok);
 
-        auto storage_channel =
-            *this.resources.channel_buffer in this.resources.storage_channels;
-        if ( storage_channel !is null )
+        foreach ( channel; this.resources.storage_channels )
         {
-            storage_channel.remove(*this.resources.key_buffer);
+            this.writer.writeArray(channel.id);
         }
+
+        this.writer.writeArray(""); // End of list
     }
 }
 

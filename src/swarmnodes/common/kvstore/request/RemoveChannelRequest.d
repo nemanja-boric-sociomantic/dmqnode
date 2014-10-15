@@ -1,16 +1,16 @@
 /*******************************************************************************
 
-    Remove request class.
+    RemoveChannel request.
 
     copyright:      Copyright (c) 2011 sociomantic labs. All rights reserved
 
-    version:        January 2011: Initial release
+    version:        August 2011: Initial release
 
     authors:        Gavin Norman
 
 *******************************************************************************/
 
-module swarmnodes.dht.memory.request.RemoveRequest;
+module swarmnodes.common.kvstore.request.RemoveChannelRequest;
 
 
 
@@ -20,17 +20,17 @@ module swarmnodes.dht.memory.request.RemoveRequest;
 
 *******************************************************************************/
 
-private import swarmnodes.common.kvstore.request.model.ISingleKeyRequest;
+private import swarmnodes.common.kvstore.request.model.IChannelRequest;
 
 
 
 /*******************************************************************************
 
-    Remove request
+    RemoveChannel request
 
 *******************************************************************************/
 
-public scope class RemoveRequest : ISingleKeyRequest
+public scope class RemoveChannelRequest : IChannelRequest
 {
     /***************************************************************************
 
@@ -46,7 +46,22 @@ public scope class RemoveRequest : ISingleKeyRequest
     public this ( FiberSelectReader reader, FiberSelectWriter writer,
         IKVRequestResources resources )
     {
-        super(DhtConst.Command.E.Remove, reader, writer, resources);
+        super(DhtConst.Command.E.RemoveChannel, reader, writer, resources);
+    }
+
+
+    /***************************************************************************
+
+        Reads any data from the client which is required for the request. If the
+        request is invalid in some way (the channel name is invalid, or the
+        command is not supported) then the command can be simply not executed,
+        and all client data has been read, leaving the read buffer in a clean
+        state ready for the next request.
+
+    ***************************************************************************/
+
+    protected void readRequestData_ ( )
+    {
     }
 
 
@@ -59,14 +74,16 @@ public scope class RemoveRequest : ISingleKeyRequest
 
     protected void handle___ ( )
     {
+        if ( !this.resources.storage_channels.responsibleForKey(
+            *this.resources.key_buffer) )
+        {
+            this.writer.write(DhtConst.Status.E.WrongNode);
+            return;
+        }
+
         this.writer.write(DhtConst.Status.E.Ok);
 
-        auto storage_channel =
-            *this.resources.channel_buffer in this.resources.storage_channels;
-        if ( storage_channel !is null )
-        {
-            storage_channel.remove(*this.resources.key_buffer);
-        }
+        this.resources.storage_channels.remove(*this.resources.channel_buffer);
     }
 }
 

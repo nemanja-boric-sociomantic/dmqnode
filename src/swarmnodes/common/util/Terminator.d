@@ -8,7 +8,7 @@
     authors:        Gavin Norman
 
     Namespace struct containing a global boolean which is set to true when the
-    application is terminating (after receiving SIGINT - see IDhtNode).
+    application is terminating (after receiving SIGINT - see IKVNode).
 
 *******************************************************************************/
 
@@ -20,7 +20,7 @@ struct Terminator
 {
     static bool terminating;
 
-    // FIXME: see FIXME in swarmnodes.dht.core.model.IDhtNode, nodeError()
+    // FIXME: see FIXME in swarmnodes.dht.core.model.IKVNode, nodeError()
     static bool shutdown;
 }
 

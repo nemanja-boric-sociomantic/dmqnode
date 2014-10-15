@@ -23,11 +23,11 @@ module swarmnodes.dht.memory.storage.MemoryStorageChannels;
 
 private import swarm.dht.DhtConst;
 
-private import swarmnodes.dht.common.storage.DhtStorageChannels;
+private import swarmnodes.common.kvstore.storage.KVStorageChannels;
 
-private import swarmnodes.dht.common.storage.DhtStorageEngine;
+private import swarmnodes.common.kvstore.storage.KVStorageEngine;
 
-private import swarmnodes.dht.common.storage.IStepIterator;
+private import swarmnodes.common.kvstore.storage.IStepIterator;
 
 private import swarmnodes.dht.memory.storage.DumpManager;
 
@@ -50,7 +50,7 @@ private import tango.util.log.Log;
 private Logger log;
 static this ( )
 {
-    log = Log.lookup("swarmnodes.dht.common.storage.MemoryStorageChannels");
+    log = Log.lookup("swarmnodes.common.kvstore.storage.MemoryStorageChannels");
 }
 
 
@@ -61,7 +61,7 @@ static this ( )
 
 *******************************************************************************/
 
-public class MemoryStorageChannels : DhtStorageChannels
+public class MemoryStorageChannels : KVStorageChannels
 {
     /***************************************************************************
 
@@ -186,7 +186,7 @@ public class MemoryStorageChannels : DhtStorageChannels
 
     ***************************************************************************/
 
-    public this ( char[] dir, ulong size_limit, DhtHashRange hash_range,
+    public this ( char[] dir, ulong size_limit, KVHashRange hash_range,
         uint bnum, OutOfRangeHandling out_of_range_handling,
         bool disable_direct_io )
     {
@@ -321,18 +321,18 @@ public class MemoryStorageChannels : DhtStorageChannels
 
     /***************************************************************************
 
-        Creates a new DhtStorageEngine instance of the MemoryStorage
+        Creates a new KVStorageEngine instance of the MemoryStorage
         class with the specified id.
 
         Params:
             id = channel id
 
         Returns:
-            new DhtStorageEngine instance
+            new KVStorageEngine instance
 
     ***************************************************************************/
 
-    protected override DhtStorageEngine create_ ( char[] id )
+    protected override KVStorageEngine create_ ( char[] id )
     {
         return new MemoryStorage(id, this.hash_range, this.bnum,
                 &this.dump_manager.deleteChannel);

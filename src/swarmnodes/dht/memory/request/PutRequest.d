@@ -20,7 +20,7 @@ module swarmnodes.dht.memory.request.PutRequest;
 
 *******************************************************************************/
 
-private import swarmnodes.dht.common.request.model.IPutSingleRequest;
+private import swarmnodes.common.kvstore.request.model.IPutSingleRequest;
 
 
 
@@ -44,7 +44,7 @@ public scope class PutRequest : IPutSingleRequest
     ***************************************************************************/
 
     public this ( FiberSelectReader reader, FiberSelectWriter writer,
-        IDhtRequestResources resources )
+        IKVRequestResources resources )
     {
         super(DhtConst.Command.E.Put, reader, writer, resources);
     }
@@ -61,7 +61,7 @@ public scope class PutRequest : IPutSingleRequest
 
     ***************************************************************************/
 
-    protected void performRequest ( DhtStorageEngine channel, char[] key,
+    protected void performRequest ( KVStorageEngine channel, char[] key,
         char[] value )
     {
         channel.put(key, value);

@@ -20,7 +20,7 @@ module swarmnodes.logfiles.request.GetRangeRequest;
 
 *******************************************************************************/
 
-private import swarmnodes.dht.common.request.model.IBulkGetRequest;
+private import swarmnodes.common.kvstore.request.model.IBulkGetRequest;
 
 private import swarm.dht.common.RecordBatcher;
 
@@ -47,7 +47,7 @@ private scope class IGetRangeRequest ( bool ChunkedBatcher, DhtConst.Command.E C
     ***************************************************************************/
 
     public this ( FiberSelectReader reader, FiberSelectWriter writer,
-        IDhtRequestResources resources )
+        IKVRequestResources resources )
     {
         super(Cmd, reader, writer, resources);
     }
@@ -81,7 +81,7 @@ private scope class IGetRangeRequest ( bool ChunkedBatcher, DhtConst.Command.E C
 
     ***************************************************************************/
 
-    protected void beginIteration_ ( DhtStorageEngine storage_channel,
+    protected void beginIteration_ ( KVStorageEngine storage_channel,
         IStepIterator iterator )
     {
         storage_channel.getRange(iterator, *this.resources.key_buffer,

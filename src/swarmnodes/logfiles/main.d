@@ -24,9 +24,9 @@ module swarmnodes.logfiles.main;
 
 *******************************************************************************/
 
-private import swarmnodes.dht.common.app.IDhtNodeApp;
+private import swarmnodes.common.kvstore.app.IKVNodeApp;
 
-private import swarmnodes.dht.common.app.periodic.PeriodicDhtStats;
+private import swarmnodes.common.kvstore.app.periodic.PeriodicKVStats;
 
 private import swarmnodes.logfiles.storage.LogFilesStorageChannels;
 
@@ -70,11 +70,11 @@ private int main ( char[][] cl_args )
 
 /*******************************************************************************
 
-    DhtNode
+    KVNode
 
 *******************************************************************************/
 
-public class LogfilesNodeServer : IDhtNodeApp
+public class LogfilesNodeServer : IKVNodeApp
 {
     /***************************************************************************
 
@@ -116,7 +116,7 @@ public class LogfilesNodeServer : IDhtNodeApp
 
     ***************************************************************************/
 
-    override protected DhtStorageChannels newStorageChannels_ ( )
+    override protected KVStorageChannels newStorageChannels_ ( )
     {
         return new LogFilesStorageChannels(this.server_config.data_dir, 0,
             this.hash_range, this.logfiles_config.write_buffer_size);
@@ -139,7 +139,7 @@ public class LogfilesNodeServer : IDhtNodeApp
     {
         super.initPeriodics(periodics);
 
-        periodics.add(new PeriodicDhtStats(this.stats_config, this.epoll));
+        periodics.add(new PeriodicKVStats(this.stats_config, this.epoll));
     }
 }
 

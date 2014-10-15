@@ -22,9 +22,9 @@ module swarmnodes.dht.memory.storage.DumpManager;
 
 *******************************************************************************/
 
-private import swarmnodes.dht.common.storage.DhtStorageEngine;
+private import swarmnodes.common.kvstore.storage.KVStorageEngine;
 
-private import swarmnodes.dht.common.storage.IStepIterator;
+private import swarmnodes.common.kvstore.storage.IStepIterator;
 
 private import swarmnodes.dht.memory.storage.DumpFile;
 
@@ -91,7 +91,7 @@ public class DumpManager
 
     ***************************************************************************/
 
-    public alias DhtStorageEngine delegate ( char[] id ) NewChannelCb;
+    public alias KVStorageEngine delegate ( char[] id ) NewChannelCb;
 
 
     /***************************************************************************
@@ -144,7 +144,7 @@ public class DumpManager
 
     /***************************************************************************
 
-        DhtStorageEngine iterator to use while dumping.
+        KVStorageEngine iterator to use while dumping.
 
     ***************************************************************************/
 
@@ -176,7 +176,7 @@ public class DumpManager
 
         Params:
             root_dir = root directory used to look for files and write dumps.
-            iterator = DhtStorageEngine iterator instance to use for dumping.
+            iterator = KVStorageEngine iterator instance to use for dumping.
             out_of_range_handling = determines how out-of-range records (i.e.
                 those whose keys are not in the range of hashes supported by the
                 node) are handled (see enum, above)
@@ -232,7 +232,7 @@ public class DumpManager
 
     ***************************************************************************/
 
-    public void dump ( DhtStorageEngine storage, bool verbose = false )
+    public void dump ( KVStorageEngine storage, bool verbose = false )
     {
 
         // Make the dump and close the file after leaving this scope
@@ -284,13 +284,13 @@ public class DumpManager
         number.
 
         Params:
-            storage = DhtStorageEngine to dump
+            storage = KVStorageEngine to dump
             output = file where to write the channel dump
             verbose = if true, print progrss on the dumping
 
     ***************************************************************************/
 
-    private void dumpChannel ( DhtStorageEngine storage, ChannelDumper output,
+    private void dumpChannel ( KVStorageEngine storage, ChannelDumper output,
         bool verbose = false )
     {
         log.info("Dumping channel '{}' to disk", storage.id);
@@ -411,7 +411,7 @@ public class DumpManager
 
     ***************************************************************************/
 
-    static private void loadChannel ( DhtStorageEngine storage,
+    static private void loadChannel ( KVStorageEngine storage,
         ChannelLoaderBase input, OutOfRangeHandling out_of_range_handling )
     {
         log.info("Loading channel '{}' from disk", storage.id);
@@ -494,7 +494,7 @@ public class DumpManager
 
     ***************************************************************************/
 
-    static private bool loadRecord ( DhtStorageEngine storage, char[] key,
+    static private bool loadRecord ( KVStorageEngine storage, char[] key,
         char[] val, OutOfRangeHandling out_of_range_handling )
     {
         if ( storage.responsibleForKey(key) )
@@ -568,15 +568,15 @@ version ( UnitTest )
     private import ocean.core.Test : testThrown;
     private import ocean.io.device.MemoryDevice;
     private import tango.core.Exception : IOException;
-    private import swarmnodes.dht.common.app.config.HashRangeConfig;
+    private import swarmnodes.common.kvstore.app.config.HashRangeConfig;
 
-    private class DummyStorageEngine : DhtStorageEngine
+    private class DummyStorageEngine : KVStorageEngine
     {
         private uint count;
 
         this ( hash_t min = hash_t.min, hash_t max = hash_t.max )
         {
-            super("test", new DhtHashRange(min, max, new HashRangeConfig([])));
+            super("test", new KVHashRange(min, max, new HashRangeConfig([])));
         }
         override typeof(this) put ( char[] key, char[] value )
         {

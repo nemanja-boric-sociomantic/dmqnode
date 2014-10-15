@@ -26,9 +26,9 @@ private import swarm.core.common.request.helper.DisconnectDetector;
 
 private import swarm.dht.DhtHash;
 
-private import swarmnodes.dht.common.request.model.IChannelRequest;
+private import swarmnodes.common.kvstore.request.model.IChannelRequest;
 
-private import swarmnodes.dht.common.storage.DhtStorageEngine;
+private import swarmnodes.common.kvstore.storage.KVStorageEngine;
 
 private import ocean.core.Array : copy, pop; // TODO: copy not used?
 
@@ -47,7 +47,7 @@ private import tango.util.log.Log;
 private Logger log;
 static this ( )
 {
-    log = Log.lookup("swarmnodes.dht.common.request.ListenRequest");
+    log = Log.lookup("swarmnodes.common.kvstore.request.ListenRequest");
 }
 
 
@@ -58,7 +58,7 @@ static this ( )
 
 *******************************************************************************/
 
-public scope class ListenRequest : IChannelRequest, DhtStorageEngine.IListener
+public scope class ListenRequest : IChannelRequest, KVStorageEngine.IListener
 {
     /***************************************************************************
 
@@ -67,7 +67,7 @@ public scope class ListenRequest : IChannelRequest, DhtStorageEngine.IListener
 
     ***************************************************************************/
 
-    private DhtStorageEngine storage_channel;
+    private KVStorageEngine storage_channel;
 
 
     /***************************************************************************
@@ -123,7 +123,7 @@ public scope class ListenRequest : IChannelRequest, DhtStorageEngine.IListener
     ***************************************************************************/
 
     public this ( FiberSelectReader reader, FiberSelectWriter writer,
-        IDhtRequestResources resources )
+        IKVRequestResources resources )
     {
         super(DhtConst.Command.E.Listen, reader, writer, resources);
     }
