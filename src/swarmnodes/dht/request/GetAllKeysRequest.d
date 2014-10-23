@@ -10,7 +10,7 @@
 
 *******************************************************************************/
 
-module swarmnodes.common.kvstore.request.GetAllKeysRequest;
+module swarmnodes.dht.request.GetAllKeysRequest;
 
 
 

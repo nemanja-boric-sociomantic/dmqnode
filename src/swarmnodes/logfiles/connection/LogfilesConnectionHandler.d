@@ -38,7 +38,6 @@ private import swarmnodes.common.kvstore.request.GetSizeRequest;
 private import swarmnodes.common.kvstore.request.GetChannelSizeRequest;
 private import swarmnodes.common.kvstore.request.GetAllRequest;
 private import swarmnodes.common.kvstore.request.GetAllFilterRequest;
-private import swarmnodes.common.kvstore.request.GetAllKeysRequest;
 private import swarmnodes.common.kvstore.request.RemoveChannelRequest;
 private import swarmnodes.common.kvstore.request.GetNumConnectionsRequest;
 private import swarmnodes.common.kvstore.request.RedistributeRequest;
@@ -565,7 +564,8 @@ public class LogfilesConnectionHandler
 
     override protected void handleGetAllKeys ( )
     {
-        this.handleCommand!(GetAllKeysRequest);
+        // TODO: remove this method when this command is removed from the list
+        // of codes
     }
 
 
@@ -577,7 +577,8 @@ public class LogfilesConnectionHandler
 
     override protected void handleGetAllKeys2 ( )
     {
-        this.handleCommand!(GetAllKeysRequest2);
+        // TODO: remove this method when this command is removed from the list
+        // of codes
     }
 
 

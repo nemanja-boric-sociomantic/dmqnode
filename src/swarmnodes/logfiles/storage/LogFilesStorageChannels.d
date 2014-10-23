@@ -99,7 +99,7 @@ public class LogFilesStorageChannels : KVStorageChannels
             supported_commands[GetAll2] = true;
             supported_commands[GetAllFilter] = true;
             supported_commands[GetAllFilter2] = true;
-            supported_commands[GetAllKeys] = true;
+            supported_commands[GetAllKeys] = false;
             supported_commands[GetAllKeys2] = true;
             supported_commands[GetChannels] = true;
             supported_commands[GetChannelSize] = true;
