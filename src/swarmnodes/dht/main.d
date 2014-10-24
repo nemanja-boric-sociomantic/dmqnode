@@ -26,6 +26,8 @@ module swarmnodes.dht.main;
 
 private import swarmnodes.common.kvstore.app.IKVNodeApp;
 
+private import swarmnodes.dht.connection.DhtConnectionHandler;
+
 private import swarmnodes.common.util.Terminator;
 
 private import swarmnodes.dht.app.periodic.MemoryPeriodicStats;
@@ -79,7 +81,7 @@ private int main ( char[][] cl_args )
 
 *******************************************************************************/
 
-public class DhtNodeServer : IKVNodeApp
+public class DhtNodeServer : IKVNodeApp!(DhtConnectionHandler)
 {
     /***************************************************************************
 

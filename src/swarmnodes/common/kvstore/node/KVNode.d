@@ -32,7 +32,6 @@ private import swarmnodes.common.kvstore.node.IKVNodeInfo;
 private import swarmnodes.common.kvstore.node.KVHashRange;
 
 private import swarmnodes.common.kvstore.connection.KVConnectionHandler;
-
 private import swarmnodes.common.kvstore.connection.SharedResources;
 
 private import swarmnodes.common.kvstore.storage.KVStorageEngine;
@@ -48,10 +47,13 @@ debug private import tango.io.Stdout : Stderr;
 
     KVNode
 
+    Template params:
+        ConnHandler = type of connection handler used by this node
+
 *******************************************************************************/
 
-public class KVNode : ChannelsNodeBase!(KVStorageEngine, KVConnectionHandler),
-    IKVNodeInfo
+public class KVNode ( ConnHandler ) :
+    ChannelsNodeBase!(KVStorageEngine, ConnHandler), IKVNodeInfo
 {
     /**************************************************************************
 

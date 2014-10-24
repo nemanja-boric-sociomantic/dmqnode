@@ -89,9 +89,12 @@ static this ( )
 
     Key/value node application base class
 
+    Template params:
+        ConnHandler = type of connection handler used by this node
+
 *******************************************************************************/
 
-abstract public class IKVNodeApp : LoggedCliApp
+abstract public class IKVNodeApp ( ConnHandler ) : LoggedCliApp
 {
     /***************************************************************************
 
@@ -143,7 +146,7 @@ abstract public class IKVNodeApp : LoggedCliApp
 
     ***************************************************************************/
 
-    private KVNode node;
+    private KVNode!(ConnHandler) node;
 
 
     /***************************************************************************
@@ -260,7 +263,7 @@ abstract public class IKVNodeApp : LoggedCliApp
 
     protected int run ( Arguments args, ConfigParser config )
     {
-        this.node = new KVNode(this.node_item, this.newStorageChannels(),
+        this.node = new KVNode!(ConnHandler)(this.node_item, this.newStorageChannels(),
             this.hash_range, this.epoll, server_config.backlog);
 
         this.node.error_callback = &this.nodeError;

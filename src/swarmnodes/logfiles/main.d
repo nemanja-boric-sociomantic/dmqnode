@@ -28,6 +28,8 @@ private import swarmnodes.common.kvstore.app.IKVNodeApp;
 
 private import swarmnodes.common.kvstore.app.periodic.PeriodicKVStats;
 
+private import swarmnodes.logfiles.connection.LogfilesConnectionHandler;
+
 private import swarmnodes.logfiles.storage.LogFilesStorageChannels;
 
 private import swarmnodes.logfiles.storage.LogRecordPut;
@@ -74,7 +76,7 @@ private int main ( char[][] cl_args )
 
 *******************************************************************************/
 
-public class LogfilesNodeServer : IKVNodeApp
+public class LogfilesNodeServer : IKVNodeApp!(LogfilesConnectionHandler)
 {
     /***************************************************************************
 
