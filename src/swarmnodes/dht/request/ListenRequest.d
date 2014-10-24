@@ -28,7 +28,7 @@ private import swarm.dht.DhtHash;
 
 private import swarmnodes.common.kvstore.request.model.IChannelRequest;
 
-private import swarmnodes.common.kvstore.storage.KVStorageEngine;
+private import swarmnodes.dht.storage.MemoryStorage;
 
 private import ocean.core.Array : copy, pop; // TODO: copy not used?
 
@@ -58,7 +58,7 @@ static this ( )
 
 *******************************************************************************/
 
-public scope class ListenRequest : IChannelRequest, KVStorageEngine.IListener
+public scope class ListenRequest : IChannelRequest, MemoryStorage.IListener
 {
     /***************************************************************************
 
@@ -67,7 +67,7 @@ public scope class ListenRequest : IChannelRequest, KVStorageEngine.IListener
 
     ***************************************************************************/
 
-    private KVStorageEngine storage_channel;
+    private MemoryStorage storage_channel;
 
 
     /***************************************************************************
@@ -212,8 +212,12 @@ public scope class ListenRequest : IChannelRequest, KVStorageEngine.IListener
 
     protected void handle___ ( )
     {
-        this.storage_channel = this.resources.storage_channels.getCreate(
+        auto storage = this.resources.storage_channels.getCreate(
             *this.resources.channel_buffer);
+        auto dht_storage = cast(MemoryStorage)storage;
+        assert(dht_storage);
+
+        this.storage_channel = dht_storage;
         if ( this.storage_channel is null )
         {
             this.writer.write(DhtConst.Status.E.Error);

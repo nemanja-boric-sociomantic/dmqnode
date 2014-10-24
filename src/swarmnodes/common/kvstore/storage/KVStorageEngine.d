@@ -35,8 +35,6 @@ private import swarmnodes.common.kvstore.node.KVHashRange;
 
 private import swarm.core.node.storage.model.IStorageEngine;
 
-private import swarm.core.node.storage.listeners.Listeners;
-
 private import swarmnodes.common.kvstore.storage.IStepIterator;
 
 private import swarm.dht.DhtConst;
@@ -61,28 +59,6 @@ abstract public class KVStorageEngine : IStorageEngine
     ***************************************************************************/
 
     protected alias .KVHashRange KVHashRange;
-
-
-    /***************************************************************************
-
-        Set of listeners waiting for data on this storage channel. When data
-        arrives (or a flush / finish signal for the channel), all registered
-        listeners are notified.
-
-    ***************************************************************************/
-
-    protected alias IListeners!(char[]) Listeners;
-
-    protected Listeners listeners;
-
-
-    /***************************************************************************
-
-        Alias for a listener.
-
-    ***************************************************************************/
-
-    public alias Listeners.Listener IListener;
 
 
     /***************************************************************************
@@ -116,8 +92,6 @@ abstract public class KVStorageEngine : IStorageEngine
     protected this ( char[] id, KVHashRange hash_range )
     {
         super(id);
-
-        this.listeners = new Listeners;
 
         this.not_implemented_exception = new NotImplementedException;
 
@@ -289,64 +263,6 @@ abstract public class KVStorageEngine : IStorageEngine
         throw this.not_implemented_exception(DhtConst.Command.E.Remove);
 
         return this;
-    }
-
-
-    /***************************************************************************
-
-        Reset method, called when the storage engine is returned to the pool in
-        IStorageChannels. Sends the Finish trigger to all registered listeners,
-        which will cause the requests to end (as the channel being listened to
-        is now gone).
-
-    ***************************************************************************/
-
-    public override void reset ( )
-    {
-        this.listeners.trigger(IListener.Code.Finish, "");
-    }
-
-
-    /***************************************************************************
-
-        Flushes sending data buffers of consumer connections.
-
-    ***************************************************************************/
-
-    public override void flush ( )
-    {
-        this.listeners.trigger(IListener.Code.Flush, "");
-    }
-
-
-    /***************************************************************************
-
-        Registers a listener with the channel. The dataReady() method of the
-        given listener will be called when data is put to the channel.
-
-        Params:
-            listener = listener to notify when data is ready
-
-     **************************************************************************/
-
-    public void registerListener ( IListener listener )
-    {
-        this.listeners.register(listener);
-    }
-
-
-    /***************************************************************************
-
-        Unregisters a listener from the channel.
-
-        Params:
-            listener = listener to stop notifying when data is ready
-
-     **************************************************************************/
-
-    public void unregisterListener ( IListener listener )
-    {
-        this.listeners.unregister(listener);
     }
 
 

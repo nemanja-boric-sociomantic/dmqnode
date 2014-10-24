@@ -212,8 +212,6 @@ public class LogFilesStorageChannels : KVStorageChannels
         {
             this.log_record_put.putDup(DhtHash.straightToHash(key), value);
 
-            super.listeners.trigger(Listeners.Listener.Code.DataReady, key);
-
             return this;
         }
 

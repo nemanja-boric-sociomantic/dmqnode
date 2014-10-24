@@ -23,6 +23,8 @@ module swarmnodes.dht.storage.MemoryStorage;
 
 private import swarm.dht.DhtConst;
 
+private import swarm.core.node.storage.listeners.Listeners;
+
 private import swarmnodes.common.kvstore.storage.KVStorageEngine;
 
 private import swarmnodes.common.kvstore.storage.IStepIterator;
@@ -69,6 +71,28 @@ public class MemoryStorage : KVStorageEngine
     private const DeleteChannelCb delete_channel;
 
 
+    /***************************************************************************
+
+        Set of listeners waiting for data on this storage channel. When data
+        arrives (or a flush / finish signal for the channel), all registered
+        listeners are notified.
+
+    ***************************************************************************/
+
+    protected alias IListeners!(char[]) Listeners;
+
+    protected Listeners listeners;
+
+
+    /***************************************************************************
+
+        Alias for a listener.
+
+    ***************************************************************************/
+
+    public alias Listeners.Listener IListener;
+
+
     /***********************************************************************
 
         Tokyo Cabinet instance
@@ -98,6 +122,8 @@ public class MemoryStorage : KVStorageEngine
 
         this.delete_channel = delete_channel;
 
+        this.listeners = new Listeners;
+
         if ( bnum == 0 )
         {
             this.tokyo = new TokyoCabinetM;
@@ -126,7 +152,7 @@ public class MemoryStorage : KVStorageEngine
     {
         this.tokyo.put(key, value);
 
-        super.listeners.trigger(Listeners.Listener.Code.DataReady, key);
+        this.listeners.trigger(Listeners.Listener.Code.DataReady, key);
 
         return this;
     }
@@ -208,6 +234,64 @@ public class MemoryStorage : KVStorageEngine
         (cast(MemoryStorageStepIterator)iterator).getAll();
 
         return this;
+    }
+
+
+    /***************************************************************************
+
+        Reset method, called when the storage engine is returned to the pool in
+        IStorageChannels. Sends the Finish trigger to all registered listeners,
+        which will cause the requests to end (as the channel being listened to
+        is now gone).
+
+    ***************************************************************************/
+
+    public override void reset ( )
+    {
+        this.listeners.trigger(IListener.Code.Finish, "");
+    }
+
+
+    /***************************************************************************
+
+        Flushes sending data buffers of consumer connections.
+
+    ***************************************************************************/
+
+    public override void flush ( )
+    {
+        this.listeners.trigger(IListener.Code.Flush, "");
+    }
+
+
+    /***************************************************************************
+
+        Registers a listener with the channel. The dataReady() method of the
+        given listener will be called when data is put to the channel.
+
+        Params:
+            listener = listener to notify when data is ready
+
+     **************************************************************************/
+
+    public void registerListener ( IListener listener )
+    {
+        this.listeners.register(listener);
+    }
+
+
+    /***************************************************************************
+
+        Unregisters a listener from the channel.
+
+        Params:
+            listener = listener to stop notifying when data is ready
+
+     **************************************************************************/
+
+    public void unregisterListener ( IListener listener )
+    {
+        this.listeners.unregister(listener);
     }
 
 
