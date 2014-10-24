@@ -230,7 +230,7 @@ public class LogFilesStorageChannels : KVStorageChannels
 
         override public typeof(this) getAll ( IStepIterator iterator )
         {
-            iterator.getAll();
+            (cast(LogFilesStepIterator)iterator).getAll();
 
             return this;
         }
@@ -250,7 +250,7 @@ public class LogFilesStorageChannels : KVStorageChannels
 
         override public typeof(this) getRange ( IStepIterator iterator, char[] min, char[] max )
         {
-            iterator.getRange(min, max);
+            (cast(LogFilesStepIterator)iterator).getRange(min, max);
 
             return this;
         }

@@ -205,7 +205,7 @@ public class MemoryStorage : KVStorageEngine
 
     override public typeof(this) getAll ( IStepIterator iterator )
     {
-        iterator.getAll();
+        (cast(MemoryStorageStepIterator)iterator).getAll();
 
         return this;
     }
@@ -397,31 +397,6 @@ public class MemoryStorageStepIterator : IStepIterator
     body
     {
         this.storage.getFirstKey(this.current_key);
-    }
-
-
-    /*******************************************************************
-
-        Initialises the iterator to iterate over all records in the
-        storage engine within the specified range of keys. Not supported
-        by the memory storage engine.
-
-        Params:
-            min = string containing the hexadecimal key of the first
-                record to iterate
-            max = string containing the hexadecimal key of the last
-                record to iterate
-
-    *******************************************************************/
-
-    public void getRange ( char[] min, char[] max )
-    in
-    {
-        assert(this.storage, typeof(this).stringof ~ ".getRange: storage not set");
-    }
-    body
-    {
-        throw this.storage.not_implemented_exception(DhtConst.Command.E.GetRange);
     }
 
 

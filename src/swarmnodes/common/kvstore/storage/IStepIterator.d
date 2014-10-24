@@ -17,6 +17,10 @@
     state (ie which record it's up to, and which is next). This class provides
     the interface for that kind of iterator.
 
+    This abstract iterator class has no methods to begin an iteration. As
+    various different types of iteration are possible, it is left to derived
+    classes to implement suitable methods to start iterations.
+
 *******************************************************************************/
 
 module swarmnodes.common.kvstore.storage.IStepIterator;
@@ -45,36 +49,6 @@ abstract public class IStepIterator
     ***************************************************************************/
 
     abstract public void setStorage ( KVStorageEngine storage );
-
-
-    /***************************************************************************
-
-        Initialises the iterator to iterate over all records in the storage
-        engine. In this method, the implementing class must queue up the first
-        key and value, ready to be fetched with the methods below.
-
-    ***************************************************************************/
-
-    abstract public void getAll ( );
-
-
-    /***************************************************************************
-
-        Initialises the iterator to iterate over all records in the storage
-        engine within the specified range of keys (including the specified min &
-        max in the range of returned records). In this method, the implementing
-        class must queue up the first key and value, ready to be fetched with
-        the methods below.
-
-        Params:
-            min = string containing the hexadecimal key of the first record to
-                iterate
-            max = string containing the hexadecimal key of the last record to
-                iterate
-
-    ***************************************************************************/
-
-    abstract public void getRange ( char[] min, char[] max );
 
 
     /***************************************************************************
