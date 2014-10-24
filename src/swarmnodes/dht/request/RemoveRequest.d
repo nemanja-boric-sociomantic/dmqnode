@@ -1,6 +1,6 @@
 /*******************************************************************************
 
-    Exists request class.
+    Remove request class.
 
     copyright:      Copyright (c) 2011 sociomantic labs. All rights reserved
 
@@ -10,7 +10,7 @@
 
 *******************************************************************************/
 
-module swarmnodes.dht.memory.request.ExistsRequest;
+module swarmnodes.dht.request.RemoveRequest;
 
 
 
@@ -26,11 +26,11 @@ private import swarmnodes.common.kvstore.request.model.ISingleKeyRequest;
 
 /*******************************************************************************
 
-    Exists request
+    Remove request
 
 *******************************************************************************/
 
-public scope class ExistsRequest : ISingleKeyRequest
+public scope class RemoveRequest : ISingleKeyRequest
 {
     /***************************************************************************
 
@@ -46,7 +46,7 @@ public scope class ExistsRequest : ISingleKeyRequest
     public this ( FiberSelectReader reader, FiberSelectWriter writer,
         IKVRequestResources resources )
     {
-        super(DhtConst.Command.E.Exists, reader, writer, resources);
+        super(DhtConst.Command.E.Remove, reader, writer, resources);
     }
 
 
@@ -61,16 +61,12 @@ public scope class ExistsRequest : ISingleKeyRequest
     {
         this.writer.write(DhtConst.Status.E.Ok);
 
-        bool exists;
-
         auto storage_channel =
             *this.resources.channel_buffer in this.resources.storage_channels;
         if ( storage_channel !is null )
         {
-            exists = storage_channel.exists(*this.resources.key_buffer);
+            storage_channel.remove(*this.resources.key_buffer);
         }
-
-        this.writer.write(exists);
     }
 }
 

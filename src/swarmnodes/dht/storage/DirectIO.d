@@ -6,7 +6,7 @@
 
 *******************************************************************************/
 
-module swarmnodes.dht.memory.storage.DirectIO;
+module swarmnodes.dht.storage.DirectIO;
 
 
 
@@ -39,7 +39,7 @@ private import tango.util.log.Log;
 private Logger log;
 static this ( )
 {
-    log = Log.lookup("swarmnodes.dht.memory.storage.DirectIO");
+    log = Log.lookup("swarmnodes.dht.storage.DirectIO");
 }
 
 

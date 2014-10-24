@@ -6,7 +6,7 @@
 
 *******************************************************************************/
 
-module swarmnodes.dht.memory.storage.DumpFile;
+module swarmnodes.dht.storage.DumpFile;
 
 
 
@@ -17,7 +17,7 @@ module swarmnodes.dht.memory.storage.DumpFile;
 *******************************************************************************/
 
 
-private import swarmnodes.dht.memory.storage.DirectIO;
+private import swarmnodes.dht.storage.DirectIO;
 
 private import ocean.io.FilePath;
 
@@ -40,7 +40,7 @@ private import tango.util.log.Log;
 private Logger log;
 static this ( )
 {
-    log = Log.lookup("swarmnodes.dht.memory.storage.DumpFile");
+    log = Log.lookup("swarmnodes.dht.storage.DumpFile");
 }
 
 

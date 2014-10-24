@@ -12,7 +12,7 @@
 
 *******************************************************************************/
 
-module swarmnodes.dht.memory.dhtdump.DumpCycle;
+module swarmnodes.dht.dhtdump.DumpCycle;
 
 
 
@@ -22,9 +22,9 @@ module swarmnodes.dht.memory.dhtdump.DumpCycle;
 
 *******************************************************************************/
 
-private import swarmnodes.dht.memory.dhtdump.DumpStats;
+private import swarmnodes.dht.dhtdump.DumpStats;
 
-private import swarmnodes.dht.memory.storage.DumpFile;
+private import swarmnodes.dht.storage.DumpFile;
 
 private import ocean.core.Array : appendCopy, copy;
 private import ocean.core.Exception : enforce;
@@ -62,7 +62,7 @@ private Logger log;
 
 static this ( )
 {
-    log = Log.lookup("swarmnodes.dht.memory.dhtdump.DumpCycle");
+    log = Log.lookup("swarmnodes.dht.dhtdump.DumpCycle");
 }
 
 

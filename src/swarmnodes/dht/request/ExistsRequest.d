@@ -1,6 +1,6 @@
 /*******************************************************************************
 
-    Get request class.
+    Exists request class.
 
     copyright:      Copyright (c) 2011 sociomantic labs. All rights reserved
 
@@ -10,7 +10,7 @@
 
 *******************************************************************************/
 
-module swarmnodes.dht.memory.request.GetRequest;
+module swarmnodes.dht.request.ExistsRequest;
 
 
 
@@ -26,11 +26,11 @@ private import swarmnodes.common.kvstore.request.model.ISingleKeyRequest;
 
 /*******************************************************************************
 
-    Get request
+    Exists request
 
 *******************************************************************************/
 
-public scope class GetRequest : ISingleKeyRequest
+public scope class ExistsRequest : ISingleKeyRequest
 {
     /***************************************************************************
 
@@ -46,7 +46,7 @@ public scope class GetRequest : ISingleKeyRequest
     public this ( FiberSelectReader reader, FiberSelectWriter writer,
         IKVRequestResources resources )
     {
-        super(DhtConst.Command.E.Get, reader, writer, resources);
+        super(DhtConst.Command.E.Exists, reader, writer, resources);
     }
 
 
@@ -61,17 +61,16 @@ public scope class GetRequest : ISingleKeyRequest
     {
         this.writer.write(DhtConst.Status.E.Ok);
 
+        bool exists;
+
         auto storage_channel =
             *this.resources.channel_buffer in this.resources.storage_channels;
         if ( storage_channel !is null )
         {
-            storage_channel.get(*this.resources.key_buffer,
-                *this.resources.value_buffer);
+            exists = storage_channel.exists(*this.resources.key_buffer);
         }
 
-        this.writer.writeArray(*this.resources.value_buffer);
-
-        this.resources.node_info.handledRecord();
+        this.writer.write(exists);
     }
 }
 

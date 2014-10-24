@@ -6,7 +6,7 @@
 
 *******************************************************************************/
 
-module swarmnodes.dht.memory.dhtdump.DumpStats;
+module swarmnodes.dht.dhtdump.DumpStats;
 
 
 

@@ -14,7 +14,7 @@
 
 *******************************************************************************/
 
-module swarmnodes.dht.memory.main;
+module swarmnodes.dht.main;
 
 
 
@@ -28,10 +28,10 @@ private import swarmnodes.common.kvstore.app.IKVNodeApp;
 
 private import swarmnodes.common.util.Terminator;
 
-private import swarmnodes.dht.memory.app.periodic.MemoryPeriodicStats;
-private import swarmnodes.dht.memory.app.periodic.ChannelDumpThread;
+private import swarmnodes.dht.app.periodic.MemoryPeriodicStats;
+private import swarmnodes.dht.app.periodic.ChannelDumpThread;
 
-private import swarmnodes.dht.memory.storage.MemoryStorageChannels;
+private import swarmnodes.dht.storage.MemoryStorageChannels;
 
 private import ocean.io.Stdout;
 
@@ -50,7 +50,7 @@ private import tango.util.log.Log;
 private Logger log;
 static this ( )
 {
-    log = Log.lookup("swarmnodes.dht.memory.main");
+    log = Log.lookup("swarmnodes.dht.main");
 }
 
 

@@ -1,6 +1,6 @@
 /*******************************************************************************
 
-    Put request class.
+    Get request class.
 
     copyright:      Copyright (c) 2011 sociomantic labs. All rights reserved
 
@@ -10,7 +10,7 @@
 
 *******************************************************************************/
 
-module swarmnodes.dht.memory.request.PutRequest;
+module swarmnodes.dht.request.GetRequest;
 
 
 
@@ -20,17 +20,17 @@ module swarmnodes.dht.memory.request.PutRequest;
 
 *******************************************************************************/
 
-private import swarmnodes.common.kvstore.request.model.IPutSingleRequest;
+private import swarmnodes.common.kvstore.request.model.ISingleKeyRequest;
 
 
 
 /*******************************************************************************
 
-    Put request
+    Get request
 
 *******************************************************************************/
 
-public scope class PutRequest : IPutSingleRequest
+public scope class GetRequest : ISingleKeyRequest
 {
     /***************************************************************************
 
@@ -46,25 +46,32 @@ public scope class PutRequest : IPutSingleRequest
     public this ( FiberSelectReader reader, FiberSelectWriter writer,
         IKVRequestResources resources )
     {
-        super(DhtConst.Command.E.Put, reader, writer, resources);
+        super(DhtConst.Command.E.Get, reader, writer, resources);
     }
 
 
     /***************************************************************************
 
-        Performs the put request on the storage channel request.
-
-        Params:
-            channel = channel to put to
-            key = key to put
-            value = value to put
+        Performs this request. (Fiber method, after command and channel validity
+        have been confirmed.)
 
     ***************************************************************************/
 
-    protected void performRequest ( KVStorageEngine channel, char[] key,
-        char[] value )
+    protected void handle___ ( )
     {
-        channel.put(key, value);
+        this.writer.write(DhtConst.Status.E.Ok);
+
+        auto storage_channel =
+            *this.resources.channel_buffer in this.resources.storage_channels;
+        if ( storage_channel !is null )
+        {
+            storage_channel.get(*this.resources.key_buffer,
+                *this.resources.value_buffer);
+        }
+
+        this.writer.writeArray(*this.resources.value_buffer);
+
+        this.resources.node_info.handledRecord();
     }
 }
 

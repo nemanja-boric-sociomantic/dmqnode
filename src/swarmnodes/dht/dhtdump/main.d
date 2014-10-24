@@ -6,7 +6,7 @@
 
 *******************************************************************************/
 
-module swarmnodes.dht.memory.dhtdump.main;
+module swarmnodes.dht.dhtdump.main;
 
 
 
@@ -18,8 +18,8 @@ module swarmnodes.dht.memory.dhtdump.main;
 
 private import Version;
 
-private import swarmnodes.dht.memory.dhtdump.DumpCycle;
-private import swarmnodes.dht.memory.dhtdump.DumpStats;
+private import swarmnodes.dht.dhtdump.DumpCycle;
+private import swarmnodes.dht.dhtdump.DumpStats;
 
 private import ocean.io.select.EpollSelectDispatcher;
 

@@ -11,7 +11,7 @@
 
 *******************************************************************************/
 
-module swarmnodes.dht.memory.storage.MemoryStorageChannels;
+module swarmnodes.dht.storage.MemoryStorageChannels;
 
 
 
@@ -29,9 +29,9 @@ private import swarmnodes.common.kvstore.storage.KVStorageEngine;
 
 private import swarmnodes.common.kvstore.storage.IStepIterator;
 
-private import swarmnodes.dht.memory.storage.DumpManager;
+private import swarmnodes.dht.storage.DumpManager;
 
-private import swarmnodes.dht.memory.storage.MemoryStorage;
+private import swarmnodes.dht.storage.MemoryStorage;
 
 debug private import ocean.io.Stdout;
 

@@ -46,11 +46,11 @@ private import swarmnodes.common.kvstore.request.RemoveChannelRequest;
 private import swarmnodes.common.kvstore.request.GetNumConnectionsRequest;
 private import swarmnodes.common.kvstore.request.RedistributeRequest;
 
-private import swarmnodes.dht.memory.request.ExistsRequest;
-private import swarmnodes.dht.memory.request.GetRequest;
-private import swarmnodes.dht.memory.request.PutRequest;
-private import swarmnodes.dht.memory.request.RemoveRequest;
-private import swarmnodes.dht.memory.request.ListenRequest;
+private import swarmnodes.dht.request.ExistsRequest;
+private import swarmnodes.dht.request.GetRequest;
+private import swarmnodes.dht.request.PutRequest;
+private import swarmnodes.dht.request.RemoveRequest;
+private import swarmnodes.dht.request.ListenRequest;
 
 private import swarmnodes.logfiles.request.PutDupRequest;
 private import swarmnodes.logfiles.request.GetRangeRequest;

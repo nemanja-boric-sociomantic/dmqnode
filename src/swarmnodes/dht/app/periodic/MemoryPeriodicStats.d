@@ -12,7 +12,7 @@
 
 *******************************************************************************/
 
-module swarmnodes.dht.memory.app.periodic.MemoryPeriodicStats;
+module swarmnodes.dht.app.periodic.MemoryPeriodicStats;
 
 
 
@@ -24,7 +24,7 @@ module swarmnodes.dht.memory.app.periodic.MemoryPeriodicStats;
 
 private import swarmnodes.common.kvstore.app.periodic.PeriodicKVStats;
 
-private import swarmnodes.dht.memory.app.periodic.ChannelDumpThread;
+private import swarmnodes.dht.app.periodic.ChannelDumpThread;
 
 private import swarmnodes.common.config.StatsConfig;
 

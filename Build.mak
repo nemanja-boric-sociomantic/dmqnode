@@ -8,12 +8,12 @@ TEST_FILTER_OUT += \
 	$T/src/swarmnodes/dht/logfiles/main.d
 
 $B/dhtnode: override LDFLAGS += -ltokyocabinet
-$B/dhtnode: src/swarmnodes/dht/memory/main.d
+$B/dhtnode: src/swarmnodes/dht/main.d
 dht: $B/dhtnode
 all += dht
 
 $B/dhtdump: override LDFLAGS += -lebtree
-$B/dhtdump: src/swarmnodes/dht/memory/dhtdump/main.d
+$B/dhtdump: src/swarmnodes/dht/dhtdump/main.d
 dhtdump: $B/dhtdump
 all += dhtdump
 

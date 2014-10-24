@@ -11,7 +11,7 @@
 
 *******************************************************************************/
 
-module swarmnodes.dht.memory.storage.MemoryStorage;
+module swarmnodes.dht.storage.MemoryStorage;
 
 
 
@@ -42,7 +42,7 @@ private import tango.util.log.Log;
 private Logger log;
 static this ( )
 {
-    log = Log.lookup("swarmnodes.dht.memory.storage.MemoryStorage");
+    log = Log.lookup("swarmnodes.dht.storage.MemoryStorage");
 }
 
 

@@ -12,7 +12,7 @@
 
 *******************************************************************************/
 
-module swarmnodes.dht.memory.app.periodic.ChannelDumpThread;
+module swarmnodes.dht.app.periodic.ChannelDumpThread;
 
 
 
@@ -22,7 +22,7 @@ module swarmnodes.dht.memory.app.periodic.ChannelDumpThread;
 
 *******************************************************************************/
 
-private import swarmnodes.dht.memory.storage.MemoryStorageChannels;
+private import swarmnodes.dht.storage.MemoryStorageChannels;
 
 private import swarmnodes.common.util.Terminator;
 

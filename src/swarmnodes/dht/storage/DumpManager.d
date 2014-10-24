@@ -12,7 +12,7 @@
 
 *******************************************************************************/
 
-module swarmnodes.dht.memory.storage.DumpManager;
+module swarmnodes.dht.storage.DumpManager;
 
 
 
@@ -26,7 +26,7 @@ private import swarmnodes.common.kvstore.storage.KVStorageEngine;
 
 private import swarmnodes.common.kvstore.storage.IStepIterator;
 
-private import swarmnodes.dht.memory.storage.DumpFile;
+private import swarmnodes.dht.storage.DumpFile;
 
 private import ocean.io.FilePath;
 
@@ -49,7 +49,7 @@ private import tango.util.log.Log;
 private Logger log;
 static this ( )
 {
-    log = Log.lookup("swarmnodes.dht.memory.storage.DumpManager");
+    log = Log.lookup("swarmnodes.dht.storage.DumpManager");
 }
 
 
