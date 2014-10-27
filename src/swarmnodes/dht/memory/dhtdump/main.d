@@ -141,6 +141,23 @@ public class DhtDump : VersionedLoggedCliApp
 
     /***************************************************************************
 
+        Set up the arguments parser for the app.
+
+        Params:
+            app = application instance
+            argument = arguments parser to initialise
+
+    ***************************************************************************/
+
+    public override void setupArgs ( IApplication app, Arguments args )
+    {
+        args("oneshot").aliased('o').
+            help("one-shot mode, perform a single dump immediately then exit");
+    }
+
+
+    /***************************************************************************
+
         Do the actual application work. Called by the super class.
 
         Params:
@@ -158,12 +175,21 @@ public class DhtDump : VersionedLoggedCliApp
         ConfigReader.fill("Dump", this.dump_config, config);
         ConfigReader.fill("Stats", this.stats_config, config);
 
-        scope stats = new DumpStats(this.stats_config, this.epoll);
-
         this.initDht();
 
-        this.dump_cycle.start(this.dump_config, stats);
-        this.epoll.eventLoop();
+        if ( args.exists("oneshot") )
+        {
+            scope stats = new DumpStats;
+            this.dump_cycle.one_shot = true;
+            this.dump_cycle.start(this.dump_config, stats);
+            this.epoll.eventLoop();
+        }
+        else
+        {
+            scope stats = new DumpStats(this.stats_config, this.epoll);
+            this.dump_cycle.start(this.dump_config, stats);
+            this.epoll.eventLoop();
+        }
 
         return true;
     }

@@ -89,6 +89,16 @@ public class DumpCycle : SelectFiber
 
     /***************************************************************************
 
+        Flag indicating that a single dump cycle should be performed immediately
+        (without initial pause) and exit afterwards.
+
+    ***************************************************************************/
+
+    public bool one_shot;
+
+
+    /***************************************************************************
+
         Dht client instance
 
     ***************************************************************************/
@@ -221,51 +231,94 @@ public class DumpCycle : SelectFiber
 
     /***************************************************************************
 
-        Fiber method. Cycles infinitely, periodically dumping dht channels to
-        disk.
+        Fiber method. In the normal mode, cycles infinitely, periodically
+        dumping dht channels to disk. In one-shot mode, performs a single cycle
+        then exits.
 
     ***************************************************************************/
 
     private void run ( )
     {
-        this.initialWait();
-
-        while ( true )
+        if ( this.one_shot )
         {
-            try
+            bool ok;
+            do
             {
-                StopWatch time;
-                time.start;
+                ulong microsecs;
 
-                bool error;
-                auto channels = this.getChannels(error);
-
-                log.info("Dumping {} channels", channels.length);
-
-                foreach ( channel; channels )
+                ok = this.cycle(microsecs);
+                if ( !ok )
                 {
-                    log.info("Dumping '{}'", channel);
-
-                    try
-                    {
-                        this.dumpChannel(channel, error);
-                    }
-                    catch ( Exception e )
-                    {
-                        log.error("Exception thrown while dumping channel '{}': '{}' @ {}:{}",
-                            channel, e.msg, e.file, e.line);
-                        throw e;
-                    }
+                    this.wait(microsecs, true);
                 }
+            }
+            while ( !ok );
+        }
+        else
+        {
+            this.initialWait();
 
-                this.wait(time.microsec, error);
-            }
-            catch ( Exception e )
+            while ( true )
             {
-                log.error("Exception thrown in dump cycle: '{}' @ {}:{}",
-                    e.msg, e.file, e.line);
-                throw e;
+                bool ok;
+                ulong microsecs;
+
+                ok = this.cycle(microsecs);
+                this.wait(microsecs, !ok);
             }
+        }
+    }
+
+
+    /***************************************************************************
+
+        Performs a single dump cycle, getting the list of channels from the dht
+        node then writing them all to disk.
+
+        Params:
+            microsecs = (output) number of microseconds taken by the cycle
+
+        Returns:
+            true if the cycle succeeded, false if an error occurred
+
+    ***************************************************************************/
+
+    private bool cycle ( out ulong microsecs )
+    {
+        try
+        {
+            StopWatch time;
+            time.start;
+
+            bool error;
+            auto channels = this.getChannels(error);
+
+            log.info("Dumping {} channels", channels.length);
+
+            foreach ( channel; channels )
+            {
+                log.info("Dumping '{}'", channel);
+
+                try
+                {
+                    this.dumpChannel(channel, error);
+                }
+                catch ( Exception e )
+                {
+                    log.error("Exception thrown while dumping channel '{}': '{}' @ {}:{}",
+                        channel, e.msg, e.file, e.line);
+                    throw e;
+                }
+            }
+
+            microsecs = time.microsec;
+            return !error;
+        }
+        catch ( Exception e )
+        {
+            log.error("Exception thrown in dump cycle: '{}' @ {}:{}",
+                e.msg, e.file, e.line);
+            throw e;
         }
     }
 
