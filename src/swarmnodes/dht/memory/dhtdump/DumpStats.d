@@ -24,8 +24,72 @@ private import ocean.io.select.EpollSelectDispatcher;
 
 
 
-public class DumpStats : IPeriodicStatsLog
+public class DumpStats
 {
+    /***************************************************************************
+
+        Alias for the periodic stats logger config class.
+
+    ***************************************************************************/
+
+    public alias IPeriodicStatsLog.Config Config;
+
+
+    /***************************************************************************
+
+        Stats logging class, registered with epoll in super class' ctor. Writes
+        gathered stats to a log file periodically.
+
+    ***************************************************************************/
+
+    private class StatsLog : IPeriodicStatsLog
+    {
+        /***********************************************************************
+
+            Buffer used for string formatting in addStats().
+
+        ***********************************************************************/
+
+        private char[] suffix_buffer;
+
+
+        /***********************************************************************
+
+            Constructor. Registers an update timer with epoll.
+
+            Params:
+                config = periodic stats config parameters
+                epoll = epoll instance to register update timer with
+
+        ***********************************************************************/
+
+        public this ( Config config, EpollSelectDispatcher epoll )
+        {
+            super(epoll, config);
+        }
+
+
+        /***********************************************************************
+
+            Called periodically by the super class. Adds the aggregated stats to
+            the stats log and resets the counters.
+
+        ***********************************************************************/
+
+        protected override void addStats ( )
+        {
+            this.stats_log.add(this.outer.current_stats);
+            foreach ( channel, stats; this.outer.channel_stats )
+            {
+                this.suffix_buffer.concat("_", channel);
+                this.stats_log.addSuffix(stats, this.suffix_buffer);
+            }
+
+            this.outer.current_stats = this.outer.current_stats.init;
+        }
+    }
+
+
     /***************************************************************************
 
         Struct wrapping the set of stats to be recorded about a dump cycle.
@@ -60,16 +124,8 @@ public class DumpStats : IPeriodicStatsLog
 
     /***************************************************************************
 
-        Buffer used for string formatting in addStats().
-
-    ***************************************************************************/
-
-    private char[] suffix_buffer;
-
-
-    /***************************************************************************
-
-        Constructor. Registers an update timer with epoll.
+        Constructor. Registers an update timer with epoll which writes the stats
+        to the log periodically.
 
         Params:
             config = periodic stats config parameters
@@ -79,7 +135,22 @@ public class DumpStats : IPeriodicStatsLog
 
     public this ( Config config, EpollSelectDispatcher epoll )
     {
-        super(epoll, config);
+        new StatsLog(config, epoll);
+    }
+
+
+    /***************************************************************************
+
+        Constructor. Does not register an update timer with epoll.
+
+        Params:
+            config = periodic stats config parameters
+            epoll = epoll instance to register update timer with
+
+    ***************************************************************************/
+
+    public this ( )
+    {
     }
 
 
@@ -162,26 +233,6 @@ public class DumpStats : IPeriodicStatsLog
             sum += channel.records_written;
         }
         return sum;
-    }
-
-
-    /***************************************************************************
-
-        Called periodically by the super class. Adds the aggregated stats to the
-        stats log.
-
-    ***************************************************************************/
-
-    protected override void addStats ( )
-    {
-        this.stats_log.add(this.current_stats);
-        foreach ( channel, stats; this.channel_stats )
-        {
-            this.suffix_buffer.concat("_", channel);
-            this.stats_log.addSuffix(stats, this.suffix_buffer);
-        }
-
-        this.current_stats = this.current_stats.init;
     }
 }
 
