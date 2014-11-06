@@ -11,7 +11,7 @@
 
 *******************************************************************************/
 
-module swarmnodes.common.kvstore.request.RedistributeRequest;
+module swarmnodes.dht.request.RedistributeRequest;
 
 
 

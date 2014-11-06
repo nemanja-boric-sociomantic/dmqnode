@@ -40,7 +40,6 @@ private import swarmnodes.common.kvstore.request.GetAllRequest;
 private import swarmnodes.common.kvstore.request.GetAllFilterRequest;
 private import swarmnodes.common.kvstore.request.RemoveChannelRequest;
 private import swarmnodes.common.kvstore.request.GetNumConnectionsRequest;
-private import swarmnodes.common.kvstore.request.RedistributeRequest;
 
 private import swarmnodes.logfiles.request.PutDupRequest;
 private import swarmnodes.logfiles.request.GetRangeRequest;
@@ -692,7 +691,9 @@ public class LogfilesConnectionHandler
 
     override protected void handleRedistribute ( )
     {
-        this.handleCommand!(RedistributeRequest);
+        // TODO: remove this method when this command is removed from the list
+        // of codes
+        throw this.invalid_command_exception;
     }
 
 
