@@ -94,8 +94,9 @@ public interface IKVRequestResources : IRequestResources
 
     Mix in a scope class called RequestResources which implements
     IRequestResources. Note that this class does not implement the additional
-    methods required by IKVRequestResources -- this is done in
-     swarmnodes.common.kvstore.connection.KVConnectionHandler.
+    methods required by IKVRequestResources -- this is done by the template in
+    swarmnodes.common.kvstore.connection.KVConnectionHandler, which must be
+    mixed into the concrete connection handler class.
 
 *******************************************************************************/
 
