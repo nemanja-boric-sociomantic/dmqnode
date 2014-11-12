@@ -567,7 +567,7 @@ public class DumpManager
 
 version ( UnitTest )
 {
-    private import ocean.core.Test : testThrown;
+    private import ocean.core.Test : test, testThrown;
     private import ocean.io.device.MemoryDevice;
     private import tango.core.Exception : IOException;
     private import swarmnodes.dht.common.app.config.HashRangeConfig;
@@ -627,7 +627,7 @@ unittest
 
     ***************************************************************************/
 
-    ulong test ( ubyte[] data )
+    ulong testData ( ubyte[] data )
     {
         auto storage = new DummyStorageEngine;
         auto input = new DummyChannelLoader(data);
@@ -658,22 +658,16 @@ unittest
     ubyte[] extra = [0,0,0,0,0,0,0,0];
 
     // versionless file with no extra bytes at end
-    assert(test(versionless ~ data) == 3);
+    test!("==")(testData(versionless ~ data), 3);
 
     // versionless file with extra bytes at end
-    assert(test(versionless ~ data ~ extra) == 3);
+    test!("==")(testData(versionless ~ data ~ extra), 3);
 
     // version 0 file with no extra bytes at end
-    bool io_error;
-    try
-    {
-        test(version0 ~ data);
-    }
-    catch ( IOException ) { io_error = true; }
-    assert(io_error); // expected to fail
+    testThrown!(IOException)(testData(version0 ~ data));
 
     // version 0 file with extra bytes at end
-    assert(test(version0 ~ data ~ extra) == 3);
+    test!("==")(testData(version0 ~ data ~ extra), 3);
 }
 
 
@@ -700,7 +694,7 @@ unittest
 
     ***************************************************************************/
 
-    ulong test ( ubyte[] data, DumpManager.OutOfRangeHandling
+    ulong testData ( ubyte[] data, DumpManager.OutOfRangeHandling
         out_of_range_handling, hash_t min, hash_t max )
     {
         auto storage = new DummyStorageEngine(min, max);
@@ -730,19 +724,19 @@ unittest
     ];
 
     // no out-of-range records
-    assert(test(data, DumpManager.OutOfRangeHandling.Ignore,
-        hash_t.min, hash_t.max) == 3);
+    test!("==")(testData(data, DumpManager.OutOfRangeHandling.Ignore,
+        hash_t.min, hash_t.max), 3);
 
     // load out-of-range records
-    assert(test(data, DumpManager.OutOfRangeHandling.Load, 0, 1) == 3);
+    test!("==")(testData(data, DumpManager.OutOfRangeHandling.Load, 0, 1), 3);
 
     // ignore out-of-range records
-    assert(test(data, DumpManager.OutOfRangeHandling.Ignore, 0, 1) == 0);
-    assert(test(data, DumpManager.OutOfRangeHandling.Ignore,
-        0x0000000100000000, hash_t.max) == 2);
+    test!("==")(testData(data, DumpManager.OutOfRangeHandling.Ignore, 0, 1), 0);
+    test!("==")(testData(data, DumpManager.OutOfRangeHandling.Ignore,
+        0x0000000100000000, hash_t.max), 2);
 
     // fatal upon out-of-range record
-    testThrown!(Exception)(test(data, DumpManager.OutOfRangeHandling.Fatal, 0, 1));
+    testThrown!(Exception)(testData(data, DumpManager.OutOfRangeHandling.Fatal, 0, 1));
 }
 
 
