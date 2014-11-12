@@ -28,6 +28,8 @@ private import swarmnodes.dht.common.storage.IStepIterator;
 
 private import swarmnodes.dht.memory.storage.DumpFile;
 
+private import swarm.dht.DhtHash;
+
 private import ocean.core.Array : copy, startsWith;
 
 private import ocean.io.FilePath;
@@ -429,18 +431,15 @@ public class DumpManager
             log.info("File is in old, versionless format");
         }
 
-        ulong records_read;
-        ulong out_of_range;
+        ulong records_read, invalid, out_of_range;
         foreach ( k, v; input )
         {
             records_read++;
 
             progress_manager.progress(k.length + v.length + (size_t.sizeof * 2));
 
-            if ( !loadRecord(storage, k, v, out_of_range_handling) )
-            {
-                out_of_range++;
-            }
+            loadRecord(storage, k, v, out_of_range_handling,
+                out_of_range, invalid);
 
             // This will go after the transition!
             if (num_records > 0 && records_read == num_records)
@@ -459,15 +458,21 @@ public class DumpManager
                     "loading dump file.");
         }
 
-        if ( out_of_range )
+        void reportBadRecordCount ( ulong bad, char[] desc )
         {
-            auto percent_out_of_range =
-                (cast(float)out_of_range / cast(float)records_read) * 100.0;
-            log.warn("Found {} out-of-range keys ({}%) in channel '{}'",
-                out_of_range, percent_out_of_range, storage.id);
-            Stderr.red.formatln("Found {} out-of-range keys ({}%) in channel '{}'",
-                out_of_range, percent_out_of_range, storage.id).default_colour;
+            if ( bad )
+            {
+                auto percent_bad =
+                    (cast(float)bad / cast(float)records_read) * 100.0;
+                log.warn("Found {} {} ({}%) in channel '{}'", bad, desc,
+                    percent_bad, storage.id);
+                Stderr.red.formatln("Found {} {} ({}%) in channel '{}'",
+                    bad, desc, percent_bad, storage.id).default_colour;
+            }
         }
+
+        reportBadRecordCount(out_of_range, "out-of-range keys");
+        reportBadRecordCount(invalid, "invalid keys");
 
         log.info("Finished loading channel '{}' from disk, took {}s, "
             "read {} bytes (file size including padding is {} bytes), "
@@ -480,29 +485,37 @@ public class DumpManager
     /***************************************************************************
 
         Loads a record into the specified storage channel. Checks whether the
-        record is within the hash range of the storage engine.
+        record's key is valid and within the hash range of the storage engine.
 
         Params:
             storage = channel storage to load the record into
             key = record key
             val = record value
             out_of_range_handling = out-of-range record handling mode
-
-        Returns:
-            true if the record was within the node's hash range
+            out_of_range = count of out-of-range records; incremented if key is
+                outside of the node's hash range
+            invalid = count of invalid keys; incremented if key is invalid
 
         Throws:
             if out_of_range_handling == Fatal and the record is out-of-range
 
     ***************************************************************************/
 
-    static private bool loadRecord ( DhtStorageEngine storage, char[] key,
-        char[] val, OutOfRangeHandling out_of_range_handling )
+    static private void loadRecord ( DhtStorageEngine storage, char[] key,
+        char[] val, OutOfRangeHandling out_of_range_handling,
+        ref ulong out_of_range, ref ulong invalid )
     {
+        if ( !DhtHash.isHash(key) )
+        {
+            log.error("Encountered invalid non-hexadecimal key in channel '{}': "
+                "{} -- ignored", storage.id, key);
+            invalid++;
+            return;
+        }
+
         if ( storage.responsibleForKey(key) )
         {
             storage.put(key, val);
-            return true;
         }
         else
         {
@@ -512,7 +525,8 @@ public class DumpManager
                     log.trace("Encountered out-of-range key in channel '{}': "
                         "{} -- loaded", storage.id, key);
                     storage.put(key, val);
-                    return false;
+                    out_of_range++;
+                    return;
 
                 case Fatal:
                     log.fatal("Encountered out-of-range key in channel '{}': "
@@ -523,7 +537,8 @@ public class DumpManager
                 case Ignore:
                     log.warn("Encountered out-of-range key in channel '{}': "
                         "{} -- ignored", storage.id, key);
-                    return false;
+                    out_of_range++;
+                    return;
 
                 default:
                     assert(false);
@@ -737,6 +752,80 @@ unittest
 
     // fatal upon out-of-range record
     testThrown!(Exception)(testData(data, DumpManager.OutOfRangeHandling.Fatal, 0, 1));
+}
+
+
+
+/*******************************************************************************
+
+    Tests for invalid key handling.
+
+*******************************************************************************/
+
+unittest
+{
+    /***************************************************************************
+
+        Calls DumpManager.loadChannel() with the provided input data.
+
+        Params:
+            data = data to load
+
+        Returns:
+            the number of records in the storage engine after loading
+
+    ***************************************************************************/
+
+    ulong testData ( ubyte[] data )
+    {
+        auto storage = new DummyStorageEngine;
+        auto input = new DummyChannelLoader(data);
+        input.open();
+
+        DumpManager.loadChannel(storage, input,
+            DumpManager.OutOfRangeHandling.Load);
+
+        return storage.num_records;
+    }
+
+    ubyte[] data_header = [ 0,0,0,0,0,0,0,0 ]; // version number
+    ubyte[] data_footer = [ 0,0,0,0,0,0,0,0 ]; // EOF
+
+    // load good record
+    ubyte[] good = [
+        16,0,0,0,0,0,0,0, // key len
+        48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,49, // good key
+        4,0,0,0,0,0,0,0, // value len
+        1,2,3,4 // value
+    ];
+    test!("==")(testData(data_header ~ good ~ data_footer), 1);
+
+    // ignore record with short key
+    ubyte[] short_key = [
+        15,0,0,0,0,0,0,0, // key len
+        48,48,48,48,48,48,48,48,48,48,48,48,48,48,49, // short key
+        4,0,0,0,0,0,0,0, // value len
+        1,2,3,4 // value
+    ];
+    test!("==")(testData(data_header ~ short_key ~ data_footer), 0);
+
+    // ignore record with long key
+    ubyte[] long_key = [
+        17,0,0,0,0,0,0,0, // key len
+        48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,49, // short key
+        4,0,0,0,0,0,0,0, // value len
+        1,2,3,4 // value
+    ];
+    test!("==")(testData(data_header ~ long_key ~ data_footer), 0);
+
+    // ignore record with non-hexadecimal key
+    ubyte[] bad_key = [
+        16,0,0,0,0,0,0,0, // key len
+        47,48,48,48,48,48,48,48,48,48,48,48,48,48,48,49, // bad key
+        4,0,0,0,0,0,0,0, // value len
+        1,2,3,4 // value
+    ];
+    test!("==")(testData(data_header ~ bad_key ~ data_footer), 0);
 }
 
 
