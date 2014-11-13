@@ -24,7 +24,7 @@ private import swarm.core.common.request.helper.LoopCeder;
 
 private import swarm.core.common.request.helper.DisconnectDetector;
 
-private import swarm.dht.DhtHash;
+private import Hash = swarm.core.Hash;
 
 private import swarmnodes.common.kvstore.request.model.IChannelRequest;
 
@@ -153,7 +153,7 @@ public scope class ListenRequest : IChannelRequest, MemoryStorage.IListener
                     //several times. Since the buffer is flushed often and
                     //checking the value before adding it could be a to heavy
                     //cost there's no need to do a check before adding the key.
-                    (*this.resources.hash_buffer) ~= DhtHash.straightToHash(key);
+                    (*this.resources.hash_buffer) ~= Hash.straightToHash(key);
                 }
                 else
                 {
@@ -250,8 +250,8 @@ public scope class ListenRequest : IChannelRequest, MemoryStorage.IListener
             hash_t hash;
             while ( (*this.resources.hash_buffer).pop(hash) )
             {
-                DhtHash.HexDigest hex_digest;
-                auto hash_str = DhtHash.toString(hash, hex_digest);
+                Hash.HexDigest hex_digest;
+                auto hash_str = Hash.toString(hash, hex_digest);
 
                 // Get record from storage engine
                 this.storage_channel.get(hash_str, *this.resources.value_buffer);

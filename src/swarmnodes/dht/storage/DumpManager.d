@@ -28,7 +28,7 @@ private import swarmnodes.common.kvstore.storage.IStepIterator;
 
 private import swarmnodes.dht.storage.DumpFile;
 
-private import swarm.dht.DhtHash;
+private import Hash = swarm.core.Hash;
 
 private import ocean.core.Array : copy, startsWith;
 
@@ -505,7 +505,7 @@ public class DumpManager
         char[] val, OutOfRangeHandling out_of_range_handling,
         ref ulong out_of_range, ref ulong invalid )
     {
-        if ( !DhtHash.isHash(key) )
+        if ( !Hash.isHash(key) )
         {
             log.error("Encountered invalid non-hexadecimal key in channel '{}': "
                 "{} -- ignored", storage.id, key);

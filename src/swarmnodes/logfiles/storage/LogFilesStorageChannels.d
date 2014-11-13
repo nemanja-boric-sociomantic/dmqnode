@@ -23,7 +23,7 @@ module swarmnodes.logfiles.storage.LogFilesStorageChannels;
 
 private import swarm.dht.DhtConst;
 
-private import swarm.dht.DhtHash;
+private import Hash = swarm.core.Hash;
 
 private import swarmnodes.common.kvstore.storage.KVStorageChannels;
 
@@ -210,7 +210,7 @@ public class LogFilesStorageChannels : KVStorageChannels
 
         override typeof(this) putDup ( char[] key, char[] value )
         {
-            this.log_record_put.putDup(DhtHash.straightToHash(key), value);
+            this.log_record_put.putDup(Hash.straightToHash(key), value);
 
             return this;
         }
@@ -553,7 +553,7 @@ public class LogFilesStorageChannels : KVStorageChannels
         }
         body
         {
-            this.reset(DhtHash.straightToHash(min), DhtHash.straightToHash(max));
+            this.reset(Hash.straightToHash(min), Hash.straightToHash(max));
 
             auto no_buckets = LogRecord.getFirstBucketInRange(
                 this.storage.working_dir, this.bucket_path,
@@ -576,7 +576,7 @@ public class LogFilesStorageChannels : KVStorageChannels
             if ( this.read_header && !this.key_buffer.length )
             {
                 this.key_buffer.length = 8;
-                DhtHash.toString(this.current_header.key, this.key_buffer);
+                Hash.toString(this.current_header.key, this.key_buffer);
             }
 
             return this.key_buffer;

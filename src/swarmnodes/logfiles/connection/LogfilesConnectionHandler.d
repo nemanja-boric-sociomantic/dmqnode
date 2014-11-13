@@ -20,7 +20,7 @@ private import swarm.core.node.connection.ConnectionHandler;
 
 private import swarm.core.node.model.INodeInfo;
 
-private import swarm.dht.DhtConst;
+private import swarm.logfiles.LogfilesConst;
 
 private import swarmnodes.common.kvstore.node.IKVNodeInfo;
 
@@ -62,7 +62,7 @@ private import swarmnodes.common.kvstore.storage.KVStorageChannels;
 *******************************************************************************/
 
 public class LogfilesConnectionHandler
-    : ConnectionHandlerTemplate!(DhtConst.Command)
+    : ConnectionHandlerTemplate!(LogfilesConst.Command)
 {
     /***************************************************************************
 
@@ -704,7 +704,7 @@ public class LogfilesConnectionHandler
 
     override protected void handleInvalidCommand_ ( )
     {
-        super.writer.write(DhtConst.Status.E.InvalidRequest);
+        super.writer.write(LogfilesConst.Status.E.InvalidRequest);
     }
 
 

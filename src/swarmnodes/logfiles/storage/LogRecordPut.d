@@ -32,7 +32,7 @@ private import swarmnodes.logfiles.storage.LogRecord;
 
 private import swarmnodes.logfiles.storage.SizeInfoFile;
 
-private import swarm.dht.DhtHash;
+private import Hash = swarm.core.Hash;
 
 private import ocean.core.Array : copy;
 private import ocean.core.Exception: assertEx;
@@ -360,7 +360,7 @@ public class LogRecordPut
 
             // Create slot directory if it doesn't exist
             this.path.file = "";
-            this.path.folder = DhtHash.intToHex(sb.slot, slot_hex);
+            this.path.folder = Hash.intToHex(sb.slot, slot_hex);
             this.path.prepend = this.base_dir;
 
             if (!this.path.exists)
@@ -375,7 +375,7 @@ public class LogRecordPut
             }
 
             // Open bucket file.
-            this.path.file = DhtHash.intToHex(sb.bucket, bucket_hex);
+            this.path.file = Hash.intToHex(sb.bucket, bucket_hex);
             this.file.open(this.path.toString, File.WriteAppending);
 
             this.current_sb = sb;

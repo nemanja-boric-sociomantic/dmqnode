@@ -75,7 +75,7 @@ module swarmnodes.logfiles.storage.LogRecord;
 
 *******************************************************************************/
 
-private import swarm.dht.DhtHash;
+private import Hash = swarm.core.Hash;
 
 private import swarmnodes.logfiles.storage.SizeInfoFile;
 
@@ -574,7 +574,7 @@ public class LogRecord
 
             // Find first bucket file in slot directory within range
             char[SplitBits.slot_digits] slot_name_buf;
-            auto slot_name = DhtHash.intToHex(slot, slot_name_buf);
+            auto slot_name = Hash.intToHex(slot, slot_name_buf);
 
             debug ( LogRecord ) Stderr.formatln("  buckets {:x3}..{:x3}", min_bucket, max_bucket);
 
@@ -587,7 +587,7 @@ public class LogRecord
 
                 // Set output parameters
                 char[SplitBits.bucket_digits] bucket_name_buf;
-                auto bucket_name = DhtHash.intToHex(found_bucket, bucket_name_buf);
+                auto bucket_name = Hash.intToHex(found_bucket, bucket_name_buf);
 
                 path.length = 0;
                 Layout!(char).print(path, "{}/{}/{}", base_dir, slot_name,
@@ -699,7 +699,7 @@ public class LogRecord
             {
                 char[SplitBits.bucket_digits] bucket_name_buf;
 
-                scan_path.file = DhtHash.intToHex(min_bucket, bucket_name_buf);
+                scan_path.file = Hash.intToHex(min_bucket, bucket_name_buf);
 
                 // Check whether bucket file exists
                 if ( scan_path.exists )

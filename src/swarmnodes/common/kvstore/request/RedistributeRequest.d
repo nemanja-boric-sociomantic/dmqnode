@@ -29,7 +29,8 @@ private import swarmnodes.common.kvstore.connection.DhtClient;
 
 private import swarmnodes.common.kvstore.storage.IStepIterator;
 
-private import swarm.dht.DhtHash;
+private import Hash = swarm.core.Hash;
+
 private import swarm.dht.DhtConst : HashRange;
 
 private import swarm.dht.client.connection.model.IDhtNodeConnectionPoolInfo;
@@ -374,11 +375,11 @@ public scope class RedistributeRequest : IRequest
     private HandleRecordResult handleRecord ( DhtClient client, char[] channel,
         char[] key, char[] value )
     {
-        auto hash = DhtHash.straightToHash(key);
+        auto hash = Hash.straightToHash(key);
         foreach ( node; client.nodes )
         {
             auto dht_node = cast(IDhtNodeConnectionPoolInfo)node;
-            if ( DhtHash.isWithinNodeResponsibility(
+            if ( Hash.isWithinNodeResponsibility(
                 hash, dht_node.min_hash, dht_node.max_hash) )
             {
                 return this.forwardRecord(client, channel, hash, value)

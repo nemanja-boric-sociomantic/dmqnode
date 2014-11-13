@@ -37,8 +37,9 @@ private import swarm.core.node.storage.model.IStorageEngine;
 
 private import swarmnodes.common.kvstore.storage.IStepIterator;
 
+private import Hash = swarm.core.Hash;
+
 private import swarm.dht.DhtConst;
-private import swarm.dht.DhtHash;
 
 private import ocean.core.Array : copy, append;
 
@@ -114,8 +115,8 @@ abstract public class KVStorageEngine : IStorageEngine
 
     public bool responsibleForKey ( char[] key )
     {
-        auto hash = DhtHash.straightToHash(key);
-        return DhtHash.isWithinNodeResponsibility(hash, this.hash_range.range.min,
+        auto hash = Hash.straightToHash(key);
+        return Hash.isWithinNodeResponsibility(hash, this.hash_range.range.min,
             this.hash_range.range.max);
     }
 

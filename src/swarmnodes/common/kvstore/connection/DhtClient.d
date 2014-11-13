@@ -37,7 +37,6 @@ private import swarm.dht.client.RequestSetup;
 private import Swarm = swarm.dht.client.registry.DhtNodeRegistry;
 
 private import swarm.dht.DhtConst;
-private import swarm.dht.DhtHash;
 
 private import swarm.dht.client.connection.DhtNodeConnectionPool;
 
@@ -240,6 +239,8 @@ public class DhtClient : IClient
         dht_registry.add(node.Address, node.Port);
         dht_registry.setNodeResponsibleRange(node.Address, node.Port,
             range.min, range.max);
+        dht_registry.setNodeAPIVersion(node.Address, node.Port,
+            DhtConst.ApiVersion);
     }
 
 
