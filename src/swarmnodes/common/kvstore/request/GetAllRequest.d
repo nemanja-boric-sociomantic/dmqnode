@@ -32,8 +32,7 @@ private import swarm.dht.common.RecordBatcher;
 
 *******************************************************************************/
 
-private scope class IGetAllRequest ( bool ChunkedBatcher, DhtConst.Command.E Cmd )
-    : IBulkGetRequest!(ChunkedBatcher)
+private scope class GetAllRequest : IBulkGetRequest
 {
     /***************************************************************************
 
@@ -49,7 +48,7 @@ private scope class IGetAllRequest ( bool ChunkedBatcher, DhtConst.Command.E Cmd
     public this ( FiberSelectReader reader, FiberSelectWriter writer,
         IKVRequestResources resources )
     {
-        super(Cmd, reader, writer, resources);
+        super(DhtConst.Command.E.GetAll, reader, writer, resources);
     }
 
 
@@ -108,7 +107,5 @@ private scope class IGetAllRequest ( bool ChunkedBatcher, DhtConst.Command.E Cmd
     }
 }
 
-public alias IGetAllRequest!(true, DhtConst.Command.E.GetAll) GetAllRequest;
 
-public alias IGetAllRequest!(false, DhtConst.Command.E.GetAll2) GetAllRequest2;
 

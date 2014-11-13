@@ -268,18 +268,6 @@ public class DhtConnectionHandler
 
     /***************************************************************************
 
-        Command code 'GetAll2' handler.
-
-    ***************************************************************************/
-
-    override protected void handleGetAll2 ( )
-    {
-        this.handleCommand!(GetAllRequest2);
-    }
-
-
-    /***************************************************************************
-
         Command code 'GetAllFilter' handler.
 
     ***************************************************************************/
@@ -292,18 +280,6 @@ public class DhtConnectionHandler
 
     /***************************************************************************
 
-        Command code 'GetAllFilter2' handler.
-
-    ***************************************************************************/
-
-    override protected void handleGetAllFilter2 ( )
-    {
-        this.handleCommand!(GetAllFilterRequest2);
-    }
-
-
-    /***************************************************************************
-
         Command code 'GetAllKeys' handler.
 
     ***************************************************************************/
@@ -311,18 +287,6 @@ public class DhtConnectionHandler
     override protected void handleGetAllKeys ( )
     {
         this.handleCommand!(GetAllKeysRequest);
-    }
-
-
-    /***************************************************************************
-
-        Command code 'GetAllKeys2' handler.
-
-    ***************************************************************************/
-
-    override protected void handleGetAllKeys2 ( )
-    {
-        this.handleCommand!(GetAllKeysRequest2);
     }
 
 
@@ -342,39 +306,11 @@ public class DhtConnectionHandler
 
     /***************************************************************************
 
-        Command code 'GetRange2' handler.
-
-    ***************************************************************************/
-
-    override protected void handleGetRange2 ( )
-    {
-        // TODO: remove this method when this command is removed from the list
-        // of codes
-        throw this.invalid_command_exception;
-    }
-
-
-    /***************************************************************************
-
         Command code 'GetRangeFilter' handler.
 
     ***************************************************************************/
 
     override protected void handleGetRangeFilter ( )
-    {
-        // TODO: remove this method when this command is removed from the list
-        // of codes
-        throw this.invalid_command_exception;
-    }
-
-
-    /***************************************************************************
-
-        Command code 'GetRangeFilter2' handler.
-
-    ***************************************************************************/
-
-    override protected void handleGetRangeFilter2 ( )
     {
         // TODO: remove this method when this command is removed from the list
         // of codes

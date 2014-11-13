@@ -92,15 +92,10 @@ public class LogFilesStorageChannels : KVStorageChannels
         {
             supported_commands[PutDup] = true;
             supported_commands[GetRange] = true;
-            supported_commands[GetRange2] = true;
             supported_commands[GetRangeFilter] = true;
-            supported_commands[GetRangeFilter2] = true;
             supported_commands[GetAll] = true;
-            supported_commands[GetAll2] = true;
             supported_commands[GetAllFilter] = true;
-            supported_commands[GetAllFilter2] = true;
             supported_commands[GetAllKeys] = false;
-            supported_commands[GetAllKeys2] = true;
             supported_commands[GetChannels] = true;
             supported_commands[GetChannelSize] = true;
             supported_commands[GetSize] = true;

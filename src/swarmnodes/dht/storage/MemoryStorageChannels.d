@@ -89,11 +89,8 @@ public class MemoryStorageChannels : KVStorageChannels
             supported_commands[Exists] = true;
             supported_commands[Remove] = true;
             supported_commands[GetAll] = true;
-            supported_commands[GetAll2] = true;
             supported_commands[GetAllFilter] = true;
-            supported_commands[GetAllFilter2] = true;
             supported_commands[GetAllKeys] = true;
-            supported_commands[GetAllKeys2] = true;
             supported_commands[GetChannels] = true;
             supported_commands[GetChannelSize] = true;
             supported_commands[GetSize] = true;

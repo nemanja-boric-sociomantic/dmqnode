@@ -39,7 +39,7 @@ public import swarmnodes.common.kvstore.storage.IStepIterator;
 
 public import swarmnodes.common.kvstore.connection.DhtClient;
 
-public import swarm.dht.common.RecordBatcher2;
+public import swarm.dht.common.RecordBatcher;
 
 public import swarmnodes.common.kvstore.request.params.RedistributeNode;
 

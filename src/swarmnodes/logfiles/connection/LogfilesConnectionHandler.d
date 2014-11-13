@@ -262,18 +262,6 @@ public class LogfilesConnectionHandler
 
     /***************************************************************************
 
-        Command code 'GetAll2' handler.
-
-    ***************************************************************************/
-
-    override protected void handleGetAll2 ( )
-    {
-        this.handleCommand!(GetAllRequest2);
-    }
-
-
-    /***************************************************************************
-
         Command code 'GetAllFilter' handler.
 
     ***************************************************************************/
@@ -286,36 +274,11 @@ public class LogfilesConnectionHandler
 
     /***************************************************************************
 
-        Command code 'GetAllFilter2' handler.
-
-    ***************************************************************************/
-
-    override protected void handleGetAllFilter2 ( )
-    {
-        this.handleCommand!(GetAllFilterRequest2);
-    }
-
-
-    /***************************************************************************
-
         Command code 'GetAllKeys' handler.
 
     ***************************************************************************/
 
     override protected void handleGetAllKeys ( )
-    {
-        // TODO: remove this method when this command is removed from the list
-        // of codes
-    }
-
-
-    /***************************************************************************
-
-        Command code 'GetAllKeys2' handler.
-
-    ***************************************************************************/
-
-    override protected void handleGetAllKeys2 ( )
     {
         // TODO: remove this method when this command is removed from the list
         // of codes
@@ -336,18 +299,6 @@ public class LogfilesConnectionHandler
 
     /***************************************************************************
 
-        Command code 'GetRange2' handler.
-
-    ***************************************************************************/
-
-    override protected void handleGetRange2 ( )
-    {
-        this.handleCommand!(GetRangeRequest2);
-    }
-
-
-    /***************************************************************************
-
         Command code 'GetRangeFilter' handler.
 
     ***************************************************************************/
@@ -355,18 +306,6 @@ public class LogfilesConnectionHandler
     override protected void handleGetRangeFilter ( )
     {
         this.handleCommand!(GetRangeFilterRequest);
-    }
-
-
-    /***************************************************************************
-
-        Command code 'GetRangeFilter2' handler.
-
-    ***************************************************************************/
-
-    override protected void handleGetRangeFilter2 ( )
-    {
-        this.handleCommand!(GetRangeFilterRequest2);
     }
 
 

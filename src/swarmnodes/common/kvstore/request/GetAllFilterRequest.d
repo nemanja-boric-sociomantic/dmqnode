@@ -34,8 +34,7 @@ private import tango.text.Search;
 
 *******************************************************************************/
 
-private scope class IGetAllFilterRequest ( bool ChunkedBatcher, DhtConst.Command.E Cmd )
-    : IBulkGetRequest!(ChunkedBatcher)
+private scope class GetAllFilterRequest : IBulkGetRequest
 {
     /***************************************************************************
 
@@ -60,7 +59,7 @@ private scope class IGetAllFilterRequest ( bool ChunkedBatcher, DhtConst.Command
     public this ( FiberSelectReader reader, FiberSelectWriter writer,
         IKVRequestResources resources )
     {
-        super(Cmd, reader, writer, resources);
+        super(DhtConst.Command.E.GetAllFilter, reader, writer, resources);
     }
 
 
@@ -128,7 +127,5 @@ private scope class IGetAllFilterRequest ( bool ChunkedBatcher, DhtConst.Command
     }
 }
 
-public alias IGetAllFilterRequest!(true, DhtConst.Command.E.GetAllFilter) GetAllFilterRequest;
 
-public alias IGetAllFilterRequest!(false, DhtConst.Command.E.GetAllFilter2) GetAllFilterRequest2;
 

@@ -42,13 +42,6 @@ private import ocean.io.select.client.FiberSelectEvent;
 
 private import tango.util.log.Log;
 
-// TODO: wile transitioning from the old to the new bulk get requests, all
-// modules containing classes derived from IBulkGetRequest (i.e. all modules
-// which import this module) need this import, hence making it public for
-// convenience. When the old bulk get requests are removed, this import will no
-// longer be required, and can also be removed.
-public import swarm.dht.DhtConst;
-
 
 
 /*******************************************************************************
@@ -69,20 +62,9 @@ static this ( )
 
     Bulk get request abstract base class
 
-    Template Params:
-        ChunkedBatcher = if true, the old lzo-chunked batcher is used to
-        compress and transfer the record batches. Otherwise the batches are
-        compressed and sent as simple (non-chunked) arrays.
-
-        Note that the support for the two different types of batcher was
-        implemented in this way (as opposed to, say, a base class with two
-        derived classes -- one per type of batcher) in order to minimize the
-        amount of code modification required to the end derived classes (GetAll,
-        GetRange, etc).
-
 *******************************************************************************/
 
-public abstract scope class IBulkGetRequest ( bool ChunkedBatcher ) : IChannelRequest
+public abstract scope class IBulkGetRequest : IChannelRequest
 {
     /***************************************************************************
 
@@ -158,24 +140,11 @@ public abstract scope class IBulkGetRequest ( bool ChunkedBatcher ) : IChannelRe
 
     protected void writeBatch ( )
     {
-        static if ( ChunkedBatcher )
-        {
-            (*this.resources.batch_buffer).length = 0;
-            this.getBatch();
+        this.getBatch();
 
-            if ( (*this.resources.batch_buffer).length )
-            {
-                this.writer.writeChunkedArray(*this.resources.batch_buffer, true); // write as chunked lzo stream
-            }
-        }
-        else
-        {
-            this.getBatch();
-
-            auto compressed = this.resources.batcher.compress(
-                *cast(ubyte[]*)this.resources.batch_buffer);
-            this.writer.writeArray(compressed);
-        }
+        auto compressed = this.resources.batcher.compress(
+            *cast(ubyte[]*)this.resources.batch_buffer);
+        this.writer.writeArray(compressed);
     }
 
 
@@ -362,14 +331,7 @@ public abstract scope class IBulkGetRequest ( bool ChunkedBatcher ) : IChannelRe
 
     protected AddResult addToBatch ( char[] v )
     {
-        static if ( ChunkedBatcher )
-        {
-            return RecordBatcher.add(*this.resources.batch_buffer, v);
-        }
-        else
-        {
-            return this.resources.batcher.add(v);
-        }
+        return this.resources.batcher.add(v);
     }
 
 
@@ -389,14 +351,7 @@ public abstract scope class IBulkGetRequest ( bool ChunkedBatcher ) : IChannelRe
 
     protected AddResult addToBatch ( char[] v1, char[] v2 )
     {
-        static if ( ChunkedBatcher )
-        {
-            return RecordBatcher.add(*this.resources.batch_buffer, v1, v2);
-        }
-        else
-        {
-            return this.resources.batcher.add(v1, v2);
-        }
+        return this.resources.batcher.add(v1, v2);
     }
 }
 
