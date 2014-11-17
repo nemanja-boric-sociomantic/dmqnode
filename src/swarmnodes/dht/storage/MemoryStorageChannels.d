@@ -101,6 +101,7 @@ public class MemoryStorageChannels : KVStorageChannels
             supported_commands[GetVersion] = true;
             supported_commands[Listen] = true;
             supported_commands[Redistribute] = true;
+            supported_commands[PutBatch] = true;
         }
 
         supported_commands.rehash;

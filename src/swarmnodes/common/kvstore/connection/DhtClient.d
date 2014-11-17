@@ -110,6 +110,12 @@ public class DhtNodeRegistry : Swarm.DhtNodeRegistry
 
     override protected NodeConnectionPool getResponsiblePool ( IRequestParams params )
     {
+        if ( params.node.set() )
+        {
+            auto pool = super.inRegistry(params.node.Address, params.node.Port);
+            return pool is null ? null : *pool;
+        }
+
         auto dht_params = cast(RequestParams)params;
         auto hash = dht_params.key.hash();
 
@@ -138,7 +144,7 @@ public class DhtNodeRegistry : Swarm.DhtNodeRegistry
            requests via this client.
         2. addNode() method which sets the new node's hash range responsibility.
         3. clearNodes() method to clear registry.
-        4. Supports only a single command: Put.
+        4. Supports only two commands: Put and PutBatch.
 
 *******************************************************************************/
 
@@ -281,6 +287,45 @@ public class DhtClient : IClient
     {
         return *Put(DhtConst.Command.E.Put, notifier).channel(channel).key(key)
             .io(input).contextFromKey();
+    }
+
+
+    /***************************************************************************
+
+        Creates a PutBatch request, which will send a batch of values to the
+        specified node in the dht. The batch is read from the specified input
+        delegate, which should be of the form:
+
+            NodeRecordBatcher delegate ( RequestContext context )
+
+        Params:
+            addr = address of node to send batch to
+            port = port of node to send batch to
+            channel = database channel
+            input = input delegate which provides record batch to send
+            notifier = notification callback
+
+        Returns:
+            instance allowing optional settings to be set and then to be passed
+            to perform()
+
+    ***************************************************************************/
+
+    private struct PutBatch
+    {
+        mixin RequestBase;
+        mixin IODelegate;       // io(T) method
+        mixin Channel;          // channel(char[]) method
+        mixin Node;             // node(NodeItem) method
+
+        mixin RequestParamsSetup; // private setup() method, used by assign()
+    }
+
+    public PutBatch putBatch ( char[] addr, ushort port, char[] channel,
+        RequestParams.PutBatchDg input, RequestNotification.Callback notifier )
+    {
+        return *PutBatch(DhtConst.Command.E.PutBatch, notifier)
+            .node(NodeItem(addr, port)).channel(channel).io(input);
     }
 
 

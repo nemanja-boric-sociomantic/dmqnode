@@ -276,6 +276,20 @@ template KVRequestResources ( )
 
         /***********************************************************************
 
+            Node record batch newer.
+
+        ***********************************************************************/
+
+        protected NodeRecordBatcherMap new_node_record_batch ( )
+        {
+            const estimated_num_nodes = 5;
+            return new NodeRecordBatcherMap(this.setup.lzo.lzo,
+                estimated_num_nodes);
+        }
+
+
+        /***********************************************************************
+
             Dht client newer.
 
         ***********************************************************************/

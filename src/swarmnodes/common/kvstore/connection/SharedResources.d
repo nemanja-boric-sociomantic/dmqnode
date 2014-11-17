@@ -68,6 +68,7 @@ public struct KVConnectionResources
     IStepIterator iterator;
     RecordBatcher batcher;
     RecordBatch record_batch;
+    NodeRecordBatcherMap node_record_batch;
     RedistributeNode[] redistribute_node_buffer;
     DhtClient dht_client;
 }

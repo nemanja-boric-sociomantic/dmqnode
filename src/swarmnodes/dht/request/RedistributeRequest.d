@@ -33,6 +33,10 @@ private import Hash = swarm.core.Hash;
 
 private import swarm.dht.DhtConst : HashRange;
 
+private import swarm.dht.common.NodeRecordBatcher;
+
+private import swarm.dht.client.registry.model.IDhtNodeRegistryInfo;
+
 private import swarm.dht.client.connection.model.IDhtNodeConnectionPoolInfo;
 
 private import ocean.core.Array : copy;
@@ -77,15 +81,17 @@ public scope class RedistributeRequest : IRequest
 
     /***************************************************************************
 
-        Code indicating the result of handling a record. See handleRecord().
+        Code indicating the result of forwarding a record. See forwardRecord().
 
     ***************************************************************************/
 
-    private enum HandleRecordResult
+    private enum ForwardResult
     {
-        Kept,
-        Forwarded,
-        Error
+        None,
+        Batched,
+        SentBatch,
+        SentSingle,
+        SendError
     }
 
 
@@ -235,6 +241,9 @@ public scope class RedistributeRequest : IRequest
             client.addNode(node.node, node.range);
         }
 
+        this.resources.node_record_batch.reset(
+            cast(IDhtNodeRegistryInfo)client.nodes);
+
         // iterate over channels, redistributing data
         foreach ( channel; this.resources.storage_channels )
         {
@@ -260,37 +269,52 @@ public scope class RedistributeRequest : IRequest
     {
         log.info("Redistributing channel '{}'", channel.id);
 
-        ulong num_records_before = channel.num_records;
-
         this.resources.iterator.setStorage(channel);
 
         bool error_during_iteration;
         do
         {
             error_during_iteration = false;
+            ulong num_records_before = channel.num_records;
             ulong num_records_iterated;
 
             channel.getAll(this.resources.iterator);
 
             while ( !this.resources.iterator.lastKey )
             {
-                auto action = this.handleRecord(client, channel.id,
-                    this.resources.iterator.key, this.resources.iterator.value);
+                bool remove_record;
+                DhtConst.NodeItem node;
 
-                bool forwarded;
-                with ( HandleRecordResult ) switch ( action )
+                if ( this.recordShouldBeForwarded(this.resources.iterator.key,
+                    client, node) )
                 {
-                    case Forwarded:
-                        forwarded = true;
-                        break;
-                    case Error:
-                        error_during_iteration = true;
-                    default:
-                        break;
+                    auto result = this.forwardRecord(client, channel,
+                        this.resources.iterator.key,
+                        this.resources.iterator.value, node);
+                    with ( ForwardResult ) switch ( result )
+                    {
+                        case SentSingle:
+                            remove_record = true;
+                            break;
+                        case Batched:
+                        case SentBatch:
+                            break;
+                        case SendError:
+                            error_during_iteration = true;
+                            break;
+                        default:
+                            assert(false);
+                    }
                 }
 
-                this.advanceIteration(this.resources.iterator, forwarded, channel);
+                this.advanceIteration(this.resources.iterator, remove_record,
+                    channel);
                 num_records_iterated++;
+            }
+
+            if ( !this.flushBatches(client, channel) )
+            {
+                error_during_iteration = true;
             }
 
             if ( error_during_iteration )
@@ -313,81 +337,206 @@ public scope class RedistributeRequest : IRequest
                     channel.num_records);
             }
         }
-        while ( error_during_iteration )
+        while ( error_during_iteration );
     }
 
 
     /***************************************************************************
 
-        Advances the provided iterator to the next record, removing the current
-        record from the storage engine if it has just been forwarded to another
-        node.
-
-        Note that the removal of a record is performed *after* the iterator has
-        been advanced. This is necessary in order to keep the iteration
-        consistent.
+        Determines whether the specified record should be forwarded to another
+        node of whether this node is still responsible for it. If it should be
+        forwarded, the output value node is set to the address/port of the node
+        which should receive it.
 
         Params:
-            iterator = iterator over current storage engine
-            current_forwarded = indicates whether the record pointed at by the
-                iterator has just been forwarded to another node
-            channel = storage engine being iterated
+            key = record key
+            client = dht client instance (for node registry)
+            node = out value which receives the address/port of the node which
+                is responsible for this record, if it should be forwarded
+
+        Returns:
+            true if this record should be forwarded (in which case the address
+            and port of the node to which it should be sent are stored in the
+            out value node), or false if it should be kept by this node
 
     ***************************************************************************/
 
-    private void advanceIteration ( IStepIterator iterator,
-        bool current_forwarded, KVStorageEngine channel )
+    private bool recordShouldBeForwarded ( char[] key, DhtClient client,
+        out DhtConst.NodeItem node )
     {
-        if ( current_forwarded )
+        auto hash = Hash.straightToHash(key);
+        foreach ( n; client.nodes )
         {
-            (*this.resources.key_buffer).copy(iterator.key);
+            auto dht_node = cast(IDhtNodeConnectionPoolInfo)n;
+            if ( Hash.isWithinNodeResponsibility(
+                hash, dht_node.min_hash, dht_node.max_hash) )
+            {
+                node.Address = n.address;
+                node.Port = n.port;
+                return true;
+            }
         }
 
-        iterator.next();
-
-        if ( current_forwarded )
-        {
-            channel.remove(*this.resources.key_buffer);
-        }
+        return false;
     }
 
 
     /***************************************************************************
 
-        Works out whether the given record needs to be relocated or whether this
-        node is still responsible for it. In the latter case, nothing is done.
-        If the record needs to be relocated, then it is forwarded to the
-        appropriate node.
+        Relocates a record by adding it to a batch to be compressed and sent to
+        the specified node. If the current batch of records to that node is
+        full, then sendBatch() is called, sending the whole batch to the node.
+        In the obscure case of a record which is too big to fit inside the batch
+        buffer (even if empty), the individual record is sent uncompressed,
+        using a standard Put request.
 
         Params:
             client = dht client instance to send data to other nodes
             channel = name of storage channel to which the record belongs
             key = record key
             value = record value
+            node = address/port of node to which record should be forwarded
 
         Returns:
-            a code indicating whether the record was kept in this node,
-            forwarded to another node, or whether an error occurred during
-            forwarding
+            enum value indicating whether the record was added to a batch, sent
+            individually, sent as part of a batch, or sent and encountered an
+            I/O error
 
     ***************************************************************************/
 
-    private HandleRecordResult handleRecord ( DhtClient client, char[] channel,
-        char[] key, char[] value )
+    private ForwardResult forwardRecord ( DhtClient client, KVStorageEngine channel,
+        char[] key, char[] value, DhtConst.NodeItem node )
     {
-        auto hash = Hash.straightToHash(key);
+        auto batch = this.resources.node_record_batch[node];
+
+        bool fits, too_big;
+        fits = batch.fits(key, value, too_big);
+
+        if ( too_big )
+        {
+            log.warn("Forwarding large record {} ({} bytes) individually", key,
+                value.length);
+            return this.sendRecord(client, key, value, channel)
+                ? ForwardResult.SentSingle : ForwardResult.SendError;
+        }
+        else
+        {
+            ForwardResult result = ForwardResult.Batched;
+
+            if ( !fits )
+            {
+                result = this.sendBatch(client, batch, channel)
+                    ? ForwardResult.SentBatch : ForwardResult.SendError;
+
+                // The batch is always cleared. If an error occurred, we just
+                // retry the whole iteration.
+                batch.clear();
+
+                assert(batch.fits(key, value));
+            }
+
+            auto add_result = batch.add(key, value);
+            assert(add_result == add_result.Added);
+
+            return result;
+        }
+    }
+
+
+    /***************************************************************************
+
+        Called at the end of an iteration over a channel. Flushes any partially
+        built-up batches of records to the appropriate nodes.
+
+        Params:
+            client = dht client instance to send data to other nodes
+            channel = storage channel to which the records belong
+
+        Returns:
+            true if flushing succeeded, false if an error occurred during the
+            forwarding of a batch
+
+    ***************************************************************************/
+
+    private bool flushBatches ( DhtClient client, KVStorageEngine channel )
+    {
+        bool send_error;
+
         foreach ( node; client.nodes )
         {
-            auto dht_node = cast(IDhtNodeConnectionPoolInfo)node;
-            if ( Hash.isWithinNodeResponsibility(
-                hash, dht_node.min_hash, dht_node.max_hash) )
+            auto node_item = DhtConst.NodeItem(node.address, node.port);
+            auto batch = this.resources.node_record_batch[node_item];
+
+            if ( batch.length )
             {
-                return this.forwardRecord(client, channel, hash, value)
-                    ? HandleRecordResult.Forwarded : HandleRecordResult.Error;
+                if ( !this.sendBatch(client, batch, channel) )
+                {
+                    send_error = true;
+                }
+                batch.clear();
             }
         }
 
-        return HandleRecordResult.Kept;
+        return !send_error;
+    }
+
+
+    /***************************************************************************
+
+        Compresses and forwards the specified batch of records to the node which
+        is now responsible for it.
+
+        If the batch is sent successfully, the records it contained are removed
+        from the storage engine. Upon error, do not attempt to retry sending the
+        records immediately -- the return value indicates that the complete
+        iteration over this channel's data should be repeated (see
+        handleChannel()).
+
+        Params:
+            client = dht client instance to send data to other nodes
+            batch = batch of records to compress and send
+            channel = storage channel to which the records belong
+
+        Returns:
+            true if the batch was successfully forwarded or false if an error
+            occurred
+
+    ***************************************************************************/
+
+    private bool sendBatch ( DhtClient client, NodeRecordBatcher batch,
+        KVStorageEngine channel )
+    {
+        bool error;
+
+        NodeRecordBatcher put_dg ( client.RequestContext )
+        {
+            return batch;
+        }
+
+        void notifier ( client.RequestNotification info )
+        {
+            if ( info.type == info.type.Finished && !info.succeeded )
+            {
+                log.error("Error while sending batch of {} records to channel '{}': {}",
+                    batch.length, channel.id, info.message(client.msg_buf));
+                error = true;
+            }
+        }
+
+        client.perform(this.reader.fiber, client.putBatch(batch.address,
+            batch.port, channel.id, &put_dg, &notifier));
+
+        // Remove successfully sent records from channel
+        if ( !error )
+        {
+            foreach ( hash; batch.batched_hashes )
+            {
+                Hash.toString(hash, *this.resources.key_buffer);
+                channel.remove(*this.resources.key_buffer);
+            }
+        }
+
+        return !error;
     }
 
 
@@ -396,15 +545,17 @@ public scope class RedistributeRequest : IRequest
         Forwards the specified record to the node which is now responsible for
         it.
 
-        Upon error, do not attempt to retry sending the record immediately.
-        The return value indicates that it should not be removed from the
-        storage engine, allowing resending to be retried later.
+        If the record is sent successfully, it will be removed from the storage
+        engine after advancing the iterator (see advanceIteration()). Upon
+        error, do not attempt to retry sending the record immediately -- the
+        return value indicates that the complete iteration over this channel's
+        data should be repeated (see handleChannel()).
 
         Params:
             client = dht client instance to send data to other nodes
-            channel = name of storage channel to which the record belongs
-            hash = hash of record key
+            key = record key
             value = record value
+            channel = storage channel to which the record belongs
 
         Returns:
             true if the record was successfully forwarded or false if an error
@@ -412,30 +563,65 @@ public scope class RedistributeRequest : IRequest
 
     ***************************************************************************/
 
-    private bool forwardRecord ( DhtClient client, char[] channel, hash_t hash,
-        char[] value )
+    private bool sendRecord ( DhtClient client, char[] key, char[] value,
+        KVStorageEngine channel )
     {
+        bool error;
+
         char[] put_dg ( client.RequestContext )
         {
             return value;
         }
 
-        bool error;
-
         void notifier ( client.RequestNotification info )
         {
             if ( info.type == info.type.Finished && !info.succeeded )
             {
-                log.error("Error while sending record '{}'/0x{:x16}: {}",
-                    channel, hash, info.message(client.msg_buf));
+                log.error("Error while sending record {} to channel '{}': {}",
+                    key, channel.id, info.message(client.msg_buf));
                 error = true;
             }
         }
 
-        client.perform(this.reader.fiber, client.put(
-            channel, hash, &put_dg, &notifier));
+        auto hash = Hash.straightToHash(key);
+        client.perform(this.reader.fiber, client.put(channel.id, hash, &put_dg,
+            &notifier));
 
         return !error;
+    }
+
+
+    /***************************************************************************
+
+        Advances the provided iterator to the next record, removing the current
+        record from the storage engine if required.
+
+        Note that the removal of a record is performed *after* the iterator has
+        been advanced. This is necessary in order to keep the iteration
+        consistent.
+
+        Params:
+            iterator = iterator over current storage engine
+            remove_record = indicates that the record pointed at by the
+                iterator should be removed after iteration
+            channel = storage engine being iterated
+
+    ***************************************************************************/
+
+    private void advanceIteration ( IStepIterator iterator,
+        bool remove_record, KVStorageEngine channel )
+    {
+        if ( remove_record )
+        {
+            (*this.resources.key_buffer).copy(iterator.key);
+        }
+
+        iterator.next();
+
+        if ( remove_record )
+        {
+            channel.remove(*this.resources.key_buffer);
+        }
     }
 }
 
