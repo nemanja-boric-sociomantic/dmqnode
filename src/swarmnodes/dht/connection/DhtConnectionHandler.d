@@ -52,6 +52,7 @@ private import swarmnodes.dht.request.RemoveRequest;
 private import swarmnodes.dht.request.ListenRequest;
 private import swarmnodes.dht.request.GetAllKeysRequest;
 private import swarmnodes.dht.request.RedistributeRequest;
+private import swarmnodes.dht.request.PutBatchRequest;
 
 private import swarmnodes.common.kvstore.storage.KVStorageChannels;
 
@@ -225,6 +226,18 @@ public class DhtConnectionHandler
     override protected void handlePut ( )
     {
         this.handleCommand!(PutRequest);
+    }
+
+
+    /***************************************************************************
+
+        Command code 'PutBatch' handler.
+
+    ***************************************************************************/
+
+    override protected void handlePutBatch ( )
+    {
+        this.handleCommand!(PutBatchRequest);
     }
 
 

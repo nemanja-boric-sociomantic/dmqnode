@@ -77,42 +77,59 @@ public scope class IPutSingleRequest : ISingleKeyRequest
 
     protected void handle___ ( )
     {
-        DhtConst.Status.E status;
-
-        if ( (*this.resources.value_buffer).length == 0 )
-        {
-            status = DhtConst.Status.E.EmptyValue;
-        }
-        else if ( !this.resources.storage_channels.responsibleForKey(
-            *this.resources.key_buffer) )
-        {
-            status = DhtConst.Status.E.WrongNode;
-        }
-        else
-        {
-            if ( this.resources.storage_channels.sizeLimitOk(
-                (*this.resources.value_buffer).length) )
-            {
-                auto storage_channel = this.resources.storage_channels.getCreate(
-                    *this.resources.channel_buffer);
-                if ( storage_channel is null )
-                {
-                    status = DhtConst.Status.E.Error;
-                }
-                else
-                {
-                    status = DhtConst.Status.E.Ok;
-                    this.performRequest(storage_channel,
-                        *this.resources.key_buffer, *this.resources.value_buffer);
-                }
-            }
-            else
-            {
-                status = DhtConst.Status.E.OutOfMemory;
-            }
-        }
+        auto status = typeof(this).put(this.resources.storage_channels,
+            *this.resources.channel_buffer, *this.resources.key_buffer,
+            *this.resources.value_buffer, &this.performRequest);
 
         this.writer.write(status);
+    }
+
+
+    /***************************************************************************
+
+        Does a series of checks required to validate putting of a single record.
+        If all checks pass performs the specified action.
+
+        Params:
+            node = storage channels instance
+            channel = name of channel to put to
+            key = key to put
+            value = value to put
+            action = action to be performed if all checks pass
+
+        Returns:
+            status code representing the result of the checks. Ok if all
+            succeeded, or a non-Ok code otherwise
+
+    ***************************************************************************/
+
+    static public DhtConst.Status.E put ( KVStorageChannels node,
+        char[] channel, char[] key, char[] value,
+        void delegate ( KVStorageEngine channel, char[] key, char[] value ) action )
+    {
+        if ( value.length == 0 )
+        {
+            return DhtConst.Status.E.EmptyValue;
+        }
+
+        if ( !node.responsibleForKey(key) )
+        {
+            return DhtConst.Status.E.WrongNode;
+        }
+
+        if ( !node.sizeLimitOk(value.length) )
+        {
+            return DhtConst.Status.E.OutOfMemory;
+        }
+
+        auto storage_channel = node.getCreate(channel);
+        if ( storage_channel is null )
+        {
+            return DhtConst.Status.E.Error;
+        }
+
+        action(storage_channel, key, value);
+        return DhtConst.Status.E.Ok;
     }
 
 

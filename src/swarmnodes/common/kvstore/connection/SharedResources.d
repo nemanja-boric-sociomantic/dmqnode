@@ -40,6 +40,7 @@ public import swarmnodes.common.kvstore.storage.IStepIterator;
 public import swarmnodes.common.kvstore.connection.DhtClient;
 
 public import swarm.dht.common.RecordBatcher;
+public import swarm.dht.common.NodeRecordBatcher : NodeRecordBatcherMap;
 
 public import swarmnodes.common.kvstore.request.params.RedistributeNode;
 
@@ -66,6 +67,7 @@ public struct KVConnectionResources
     LoopCeder loop_ceder;
     IStepIterator iterator;
     RecordBatcher batcher;
+    RecordBatch record_batch;
     RedistributeNode[] redistribute_node_buffer;
     DhtClient dht_client;
 }
