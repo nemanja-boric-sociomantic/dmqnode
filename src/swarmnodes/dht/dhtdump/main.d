@@ -31,9 +31,28 @@ private import ConfigReader = ocean.util.config.ClassFiller;
 
 private import swarm.dht.DhtClient;
 
+private import swarm.dht.client.helper.RetryHandshake;
+
 private import tango.math.random.Random;
 
 private import tango.time.StopWatch;
+
+private import tango.util.log.Log;
+
+
+
+/*******************************************************************************
+
+    Static module logger
+
+*******************************************************************************/
+
+private Logger log;
+
+static this ( )
+{
+    log = Log.lookup("swarmnodes.dht.dhtdump.main");
+}
 
 
 
@@ -198,13 +217,38 @@ public class DhtDump : VersionedLoggedCliApp
     /***************************************************************************
 
         Sets up the dht client for use, adding the config-specified node to the
-        registry.
+        registry and performing the handshake.
 
     ***************************************************************************/
 
     private void initDht ( )
     {
         this.dht.addNode(this.dht_config.address, this.dht_config.port);
+
+        class Handshake : RetryHandshake
+        {
+            private const retry_wait_s = 2;
+
+            public this ( )
+            {
+                super(this.outer.epoll, this.outer.dht, retry_wait_s);
+            }
+
+            override protected void error ( )
+            {
+                log.error("Error during dht handshake, retrying in {}s",
+                    this.retry_wait_s);
+            }
+
+            override protected void success ( )
+            {
+                log.trace("Connected to dht");
+            }
+        }
+
+        new Handshake;
+
+        this.epoll.eventLoop();
     }
 }
 
