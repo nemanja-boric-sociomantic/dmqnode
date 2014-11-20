@@ -29,7 +29,7 @@ private import swarmnodes.common.util.Terminator;
 private import tango.core.Thread;
 
 private import ocean.sys.SignalMask;
-private import tango.stdc.signal: SIGABRT, SIGINT, SIGTERM;
+private import tango.stdc.posix.signal: SIGABRT, SIGINT, SIGTERM, SIGHUP;
 
 private import tango.time.StopWatch;
 
@@ -200,7 +200,7 @@ public class ChannelDumpThread : Thread, IChannelDumpInfo
     private void threadRun ( )
     {
         // Mask signals which must be handled by the main thread.
-        maskSignals([SIGABRT, SIGINT, SIGTERM]);
+        maskSignals([SIGABRT, SIGINT, SIGTERM, SIGHUP]);
 
         log.trace("ChannelDumpThread started");
         scope ( exit ) log.trace("ChannelDumpThread exiting");

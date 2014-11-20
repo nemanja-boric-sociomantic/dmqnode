@@ -51,6 +51,8 @@ private import ConfigReader = ocean.util.config.ClassFiller;
 private import ocean.util.app.LoggedCliApp;
 private import ocean.util.app.ext.VersionArgsExt;
 
+private import ocean.util.log.AppendLogrotate;
+
 private import ocean.io.select.EpollSelectDispatcher;
 
 private import ocean.io.select.client.model.ISelectClient;
@@ -275,6 +277,7 @@ abstract public class IKVNodeApp ( ConnHandler ) : LoggedCliApp
         this.initPeriodics(this.periodics);
         this.periodics.register();
 
+        AppendLogrotate.log_reopener.register(this.epoll);
         this.epoll.register(this.sigint_event);
 
         this.node.register(this.epoll);

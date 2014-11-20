@@ -31,8 +31,9 @@ import ocean.text.convert.Layout: StringLayout;
 
 import ocean.util.log.layout.LayoutStatsLog;
 
+import ocean.util.log.AppendLogrotate;
+
 import tango.util.log.Log;
-import tango.util.log.AppendSyslog;
 
 import tango.stdc.time : time_t;
 
@@ -781,9 +782,7 @@ public abstract class IStatsLog
         Constructor
 
         Params:
-            file_count = maximum number of log files before old logs are
-                over-written
-            max_file_size = size in bytes at which the log files will be rotated
+            config = stats log configuration settings
             file_name = name of the file to write the stats to
 
     ***************************************************************************/
@@ -794,9 +793,8 @@ public abstract class IStatsLog
         this.logger.clear();
         this.logger.additive(false);
 
-        this.logger.add(new AppendSyslog(config.file_name, config.file_count,
-                                         config.max_file_size, "gzip {}", "gz", 4,
-                                         new LayoutStatsLog));
+        this.logger.add(new AppendLogrotate(config.file_name,
+            new LayoutStatsLog));
 
         // Explcitly set the logger to output all levels, to avoid the situation
         // where the root logger is configured to not output level 'info'.

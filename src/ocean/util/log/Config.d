@@ -8,7 +8,7 @@
 
     authors:        Mathias Baumann
 
-    Configures tango loggers, uses the AppendSyslog class to provide logfile
+    Configures tango loggers, uses the AppendLogrotate class to provide logfile
     rotation.
 
     In the config file, a logger can be configured using the following syntax:
@@ -86,9 +86,9 @@ import ocean.util.config.ConfigParser;
 import ocean.text.util.StringSearch;
 
 import tango.util.log.Log;
-import tango.util.log.AppendSyslog;
 import ocean.util.log.InsertConsole;
 import tango.util.log.AppendConsole;
+import ocean.util.log.AppendLogrotate;
 
 // Log layouts
 import ocean.util.log.layout.LayoutMessageOnly;
@@ -367,11 +367,7 @@ public void configureLoggers ( Source = ConfigParser, FileLayout = LayoutDate,
                                          ? newLayout(settings.file_layout)
                                          : new FileLayout;
 
-            log.add(new AppendSyslog(settings.file(),
-                                     m_config.file_count,
-                                     m_config.max_file_size,
-                                     "gzip {}", "gz", m_config.start_compress,
-                                     file_log_layout));
+            log.add(new AppendLogrotate(settings.file(), file_log_layout));
         }
 
         if ( console_enabled )
