@@ -249,7 +249,16 @@ public scope class RedistributeRequest : IRequest
         // iterate over channels, redistributing data
         foreach ( channel; this.resources.storage_channels )
         {
-            this.handleChannel(client, channel);
+            try
+            {
+                this.handleChannel(client, channel);
+            }
+            catch ( Exception e )
+            {
+                log.error("Exception thrown while redistributing channel '{}': "
+                    "'{}' @ {}:{}", channel.id, e.msg, e.file, e.line);
+                throw e;
+            }
         }
     }
 
