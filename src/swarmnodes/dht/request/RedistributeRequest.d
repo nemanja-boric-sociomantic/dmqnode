@@ -54,7 +54,7 @@ private import tango.util.log.Log;
 private Logger log;
 static this ( )
 {
-    log = Log.lookup("swarmnodes.common.kvstore.request.RedistributeRequest");
+    log = Log.lookup("swarmnodes.dht.request.RedistributeRequest");
 }
 
 
