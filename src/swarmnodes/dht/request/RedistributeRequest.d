@@ -286,7 +286,7 @@ public scope class RedistributeRequest : IRequest
         {
             error_during_iteration = false;
             ulong num_records_before = channel.num_records;
-            ulong num_records_iterated;
+            ulong num_records_iterated, num_records_sent;
 
             channel.getAll(this.resources.iterator);
 
@@ -307,6 +307,8 @@ public scope class RedistributeRequest : IRequest
                             remove_record = true;
                             break;
                         case Batched:
+                            num_records_sent++;
+                            break;
                         case SentBatch:
                             break;
                         case SendError:
@@ -328,9 +330,10 @@ public scope class RedistributeRequest : IRequest
                     if ( sec >= next_log_time )
                     {
                         log.trace("Progress redistributing channel '{}': {}/{} "
-                            "records iterated, channel now contains {} records",
+                            "records iterated, {} forwarded, channel now contains "
+                            "{} records",
                             channel.id, num_records_iterated, num_records_before,
-                            channel.num_records);
+                            num_records_sent, channel.num_records);
                         next_log_time = sec + log_interval;
                     }
                 }
