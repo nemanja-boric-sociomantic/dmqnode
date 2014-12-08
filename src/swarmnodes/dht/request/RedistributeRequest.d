@@ -43,6 +43,8 @@ private import ocean.core.Array : copy;
 
 private import tango.util.log.Log;
 
+private import tango.time.StopWatch;
+
 
 
 /*******************************************************************************
@@ -271,6 +273,14 @@ public scope class RedistributeRequest : IRequest
 
         this.resources.iterator.setStorage(channel);
 
+        const ulong log_interval = 5;
+        ulong next_log_time;
+        StopWatch time;
+        if ( log.enabled(log.Trace) )
+        {
+            time.start();
+        }
+
         bool error_during_iteration;
         do
         {
@@ -310,6 +320,20 @@ public scope class RedistributeRequest : IRequest
                 this.advanceIteration(this.resources.iterator, remove_record,
                     channel);
                 num_records_iterated++;
+
+                if ( log.enabled(log.Trace) )
+                {
+                    auto sec = time.microsec / 1_000_000;
+
+                    if ( sec >= next_log_time )
+                    {
+                        log.trace("Progress redistributing channel '{}': {}/{} "
+                            "records iterated, channel now contains {} records",
+                            channel.id, num_records_iterated, num_records_before,
+                            channel.num_records);
+                        next_log_time = sec + log_interval;
+                    }
+                }
             }
 
             if ( !this.flushBatches(client, channel) )
