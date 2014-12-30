@@ -27,8 +27,8 @@ module queuenode.queue.main;
 private import Version;
 
 private import queuenode.queue.app.config.ServerConfig;
-private import queuenode.common.config.PerformanceConfig;
-private import queuenode.common.config.StatsConfig;
+private import queuenode.queue.app.config.PerformanceConfig;
+private import queuenode.queue.app.config.StatsConfig;
 
 private import queuenode.common.util.Terminator;
 

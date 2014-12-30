@@ -11,7 +11,7 @@
 
 *******************************************************************************/
 
-module queuenode.common.config.PerformanceConfig;
+module queuenode.queue.app.config.PerformanceConfig;
 
 
 

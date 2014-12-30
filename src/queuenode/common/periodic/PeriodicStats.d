@@ -21,7 +21,7 @@ module queuenode.common.periodic.PeriodicStats;
 
 private import queuenode.common.periodic.model.IPeriodic;
 
-private import queuenode.common.config.StatsConfig;
+private import queuenode.queue.app.config.StatsConfig;
 
 private import swarm.core.node.storage.model.IStorageEngineInfo;
 

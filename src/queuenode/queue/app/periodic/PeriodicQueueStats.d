@@ -24,7 +24,7 @@ module queuenode.queue.app.periodic.PeriodicQueueStats;
 
 private import queuenode.common.periodic.PeriodicStats;
 
-private import queuenode.common.config.StatsConfig;
+private import queuenode.queue.app.config.StatsConfig;
 
 private import queuenode.queue.node.IQueueNodeInfo;
 

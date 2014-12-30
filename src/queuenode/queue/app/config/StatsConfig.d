@@ -11,7 +11,7 @@
 
 *******************************************************************************/
 
-module queuenode.common.config.StatsConfig;
+module queuenode.queue.app.config.StatsConfig;
 
 
 
