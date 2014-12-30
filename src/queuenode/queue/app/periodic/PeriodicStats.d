@@ -9,7 +9,7 @@
 
 *******************************************************************************/
 
-module queuenode.common.periodic.PeriodicStats;
+module queuenode.queue.app.periodic.PeriodicStats;
 
 
 
@@ -19,7 +19,7 @@ module queuenode.common.periodic.PeriodicStats;
 
 *******************************************************************************/
 
-private import queuenode.common.periodic.model.IPeriodic;
+private import queuenode.queue.app.periodic.model.IPeriodic;
 
 private import queuenode.queue.app.config.StatsConfig;
 

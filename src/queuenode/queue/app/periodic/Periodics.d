@@ -12,7 +12,7 @@
 
 *******************************************************************************/
 
-module queuenode.common.periodic.Periodics;
+module queuenode.queue.app.periodic.Periodics;
 
 
 
@@ -22,7 +22,7 @@ module queuenode.common.periodic.Periodics;
 
 *******************************************************************************/
 
-private import queuenode.common.periodic.model.IPeriodic;
+private import queuenode.queue.app.periodic.model.IPeriodic;
 
 private import ocean.io.select.EpollSelectDispatcher;
 

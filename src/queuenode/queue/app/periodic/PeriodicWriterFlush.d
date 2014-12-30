@@ -12,7 +12,7 @@
 
 *******************************************************************************/
 
-module queuenode.common.periodic.PeriodicWriterFlush;
+module queuenode.queue.app.periodic.PeriodicWriterFlush;
 
 
 
@@ -22,7 +22,7 @@ module queuenode.common.periodic.PeriodicWriterFlush;
 
 *******************************************************************************/
 
-private import queuenode.common.periodic.model.IPeriodic;
+private import queuenode.queue.app.periodic.model.IPeriodic;
 
 
 

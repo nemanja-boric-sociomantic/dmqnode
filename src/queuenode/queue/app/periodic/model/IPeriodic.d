@@ -12,7 +12,7 @@
 
 *******************************************************************************/
 
-module queuenode.common.periodic.model.IPeriodic;
+module queuenode.queue.app.periodic.model.IPeriodic;
 
 
 
@@ -44,7 +44,7 @@ private import tango.util.log.Log;
 private Logger logger;
 static this ( )
 {
-    logger = Log.lookup("queuenode.common.periodic.model.IPeriodic");
+    logger = Log.lookup("queuenode.queue.app.model.IPeriodic");
 }
 
 

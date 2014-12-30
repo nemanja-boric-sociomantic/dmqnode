@@ -32,9 +32,9 @@ private import queuenode.queue.app.config.StatsConfig;
 
 private import queuenode.queue.app.util.Terminator;
 
-private import queuenode.common.periodic.Periodics;
+private import queuenode.queue.app.periodic.Periodics;
 private import queuenode.queue.app.periodic.PeriodicQueueStats;
-private import queuenode.common.periodic.PeriodicWriterFlush;
+private import queuenode.queue.app.periodic.PeriodicWriterFlush;
 
 private import queuenode.queue.storage.Ring;
 private import queuenode.queue.node.QueueNode;
