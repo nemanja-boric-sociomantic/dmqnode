@@ -12,7 +12,7 @@
 
 *******************************************************************************/
 
-module queuenode.common.util.Terminator;
+module queuenode.queue.app.util.Terminator;
 
 
 

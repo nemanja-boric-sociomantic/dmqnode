@@ -30,7 +30,7 @@ private import queuenode.queue.app.config.ServerConfig;
 private import queuenode.queue.app.config.PerformanceConfig;
 private import queuenode.queue.app.config.StatsConfig;
 
-private import queuenode.common.util.Terminator;
+private import queuenode.queue.app.util.Terminator;
 
 private import queuenode.common.periodic.Periodics;
 private import queuenode.queue.app.periodic.PeriodicQueueStats;

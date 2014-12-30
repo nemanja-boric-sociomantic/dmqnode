@@ -26,7 +26,7 @@ private import ocean.io.select.client.TimerEvent;
 
 private import ocean.io.select.EpollSelectDispatcher;
 
-private import queuenode.common.util.Terminator;
+private import queuenode.queue.app.util.Terminator;
 
 private import swarm.core.node.model.INode;
 private import swarm.core.node.model.INodeInfo;
