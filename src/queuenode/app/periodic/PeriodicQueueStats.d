@@ -94,7 +94,7 @@ public class PeriodicQueueStats : PeriodicStats
     {
         auto node_info = cast(IQueueNodeInfo)this.node;
 
-        StaticTrace.format("  {} queue {}: {} conns, {} rec/s, {} recs ({}){}",
+        StaticTrace.format("  {} queue {}: {} conns, {} rec/s, {} recs ({})",
             node_info.storage_type, memory_buf, node_info.num_open_connections,
             rec_per_sec, records_buf, bytes_buf).flush;
     }
