@@ -470,18 +470,6 @@ public class QueueConnectionHandler
 
     /***************************************************************************
 
-        Called when an invalid command code is read from the connection.
-
-    ***************************************************************************/
-
-    override protected void handleInvalidCommand_ ( )
-    {
-        super.writer.write(QueueConst.Status.E.InvalidRequest);
-    }
-
-
-    /***************************************************************************
-
         Command handler method template.
 
         Template params:
