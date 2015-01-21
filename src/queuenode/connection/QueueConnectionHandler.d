@@ -42,6 +42,7 @@ private import queuenode.request.GetSizeLimitRequest;
 private import queuenode.request.GetNumConnectionsRequest;
 private import queuenode.request.ConsumeRequest;
 private import queuenode.request.PushMultiRequest;
+private import queuenode.request.PushMulti2Request;
 private import queuenode.request.RemoveChannelRequest;
 
 private import queuenode.storage.model.QueueStorageChannels;
@@ -416,6 +417,18 @@ public class QueueConnectionHandler
     override protected void handlePushMulti ( )
     {
         this.handleCommand!(PushMultiRequest);
+    }
+
+
+    /***************************************************************************
+
+        Command code 'PushMulti2' handler.
+
+    ***************************************************************************/
+
+    override protected void handlePushMulti2 ( )
+    {
+        this.handleCommand!(PushMulti2Request);
     }
 
 
