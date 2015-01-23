@@ -24,7 +24,7 @@ private import queuenode.request.model.IRequest;
 
 private import swarm.core.Const;
 
-private import ocean.text.convert.Layout;
+private import tango.text.convert.Format;
 
 
 
@@ -75,7 +75,7 @@ public scope class IChannelRequest : IRequest
         super.description(dst);
 
         auto channel = *this.resources.channel_buffer;
-        Layout!(char).print(dst, " on channel '{}'", channel.length ? channel : "?");
+        Format.format(dst, " on channel '{}'", channel.length ? channel : "?");
         return dst;
     }
 

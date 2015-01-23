@@ -31,7 +31,7 @@ private import ocean.math.SlidingAverage;
 
 private import ocean.text.util.DigitGrouping;
 
-private import ocean.text.convert.Layout;
+private import tango.text.convert.Format;
 
 private import ocean.util.log.Stats;
 
@@ -224,12 +224,12 @@ public abstract class PeriodicStats : IPeriodic
                 auto mem_allocated = cast(float)(used + free) / Mb;
                 auto mem_free = cast(float)free / Mb;
 
-                Layout!(char).print(this.memory_buf, " (Used {}Mb/Free {}Mb)",
+                Format.format(this.memory_buf, " (Used {}Mb/Free {}Mb)",
                     mem_allocated, mem_free);
             }
             else
             {
-                Layout!(char).print(this.memory_buf, " (mem usage n/a)");
+                Format.format(this.memory_buf, " (mem usage n/a)");
             }
 
             this.writeConsoleOutput(this.memory_buf, this.records_buf, this.bytes_buf,

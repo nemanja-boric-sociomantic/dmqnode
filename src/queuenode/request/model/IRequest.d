@@ -30,7 +30,7 @@ private import queuenode.storage.model.QueueStorageChannels;
 
 private import queuenode.node.IQueueNodeInfo;
 
-private import ocean.text.convert.Layout;
+private import tango.text.convert.Format;
 
 
 
@@ -116,7 +116,7 @@ public abstract scope class IRequest : Core.IRequest
         auto cmd_str = this.cmd in QueueConst.Command();
 
         dst.length = 0;
-        Layout!(char).print(dst, "{} request", cmd_str ? *cmd_str : "?");
+        Format.format(dst, "{} request", cmd_str ? *cmd_str : "?");
         return dst;
     }
 }

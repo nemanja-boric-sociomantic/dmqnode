@@ -174,5 +174,6 @@ Dependencies
 ============
 
 :Dependency: liblzo2
+:Dependency: tango v1.1
 
 .. _`server layout pages`: https://github.com/sociomantic/backend/wiki/Servers#wiki-server-layout
