@@ -386,6 +386,9 @@ public abstract class PeriodicStats : IPeriodic
 
         Set the out parameter bytes and records to that of the channel.
 
+        This base class implementation only outputs channel fields but may be
+        overridden to extend it.
+
         Params:
             channel = data about a channel
             bytes   = will be set to size the channel have
