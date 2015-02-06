@@ -59,7 +59,7 @@ public class PeriodicWriterFlush : IPeriodic
 
     ***************************************************************************/
 
-    protected void handle_ ( )
+    override protected void run ( )
     {
         this.node.flush();
     }

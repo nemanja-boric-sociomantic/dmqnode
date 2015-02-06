@@ -249,7 +249,7 @@ public abstract class PeriodicStats : IPeriodic
 
     ***************************************************************************/
 
-    protected void handle_ ( )
+    override protected void run ( )
     {
         this.consoleOutput();
         this.logOutput();

@@ -55,7 +55,7 @@ static this ( )
 
 *******************************************************************************/
 
-public abstract class IPeriodic : TimerEvent
+public abstract class IPeriodic : ITimerEvent
 {
     /***************************************************************************
 
@@ -114,8 +114,6 @@ public abstract class IPeriodic : TimerEvent
 
     public this ( EpollSelectDispatcher epoll, uint period_ms, char[] id )
     {
-        super(&this.handle);
-
         auto s = period_ms / 1000;
         auto ms = (period_ms) % 1000;
         this.set(s, ms, s, ms);
@@ -154,16 +152,22 @@ public abstract class IPeriodic : TimerEvent
         requested, then the method does nothing and simply returns false to
         unregister from epoll.
 
+        Params:
+            n =  number of  expirations that have occurred
+
+        Returns:
+            true to stay registered in epoll or false to unregister.
+
     ***************************************************************************/
 
-    private bool handle ( )
+    override protected bool handle_ ( ulong n )
     {
         assert(this.node !is null);
         assert(this.node_info !is null);
 
         if ( !Terminator.terminating )
         {
-            this.handle_();
+            this.run();
         }
 
         return !Terminator.terminating; // unless terminating, always stay registered to fire again periodically
@@ -177,7 +181,7 @@ public abstract class IPeriodic : TimerEvent
 
     ***************************************************************************/
 
-    protected abstract void handle_ ( );
+    protected abstract void run ( );
 
 
     /***************************************************************************
