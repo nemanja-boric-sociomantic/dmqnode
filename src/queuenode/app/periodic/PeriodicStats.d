@@ -165,9 +165,9 @@ public abstract class PeriodicStats : IPeriodic
 
     public this ( StatsConfig stats_config, EpollSelectDispatcher epoll, char[] id )
     {
-        this.stats_config = stats_config;
-
         super(epoll, console_update_time, id);
+
+        this.stats_config = stats_config;
 
         this.records_per_sec = new SlidingAverageTime!(ulong)(5, 1_000, 1_000);
 
