@@ -134,10 +134,12 @@ public class PeriodicQueueStats : PeriodicStats
     protected override void getChannelSize ( IStorageEngineInfo channel,
         out size_t bytes, out size_t records )
     {
+        super.getChannelSize(channel, bytes, records);
+
         bytes = max(this.channel_stats[this.channel_bytes_title[channel.id]],
-                      channel.num_bytes);
+                      bytes);
 
         records =max(this.channel_stats[this.channel_records_title[channel.id]],
-                      channel.num_records);
+                      records);
     }
 }
