@@ -112,9 +112,9 @@ public class PeriodicQueueStats : PeriodicStats
         super.writeLogOutput();
 
         //reset channel stats
-        foreach ( ref num; this.channel_stats )
+        foreach ( ref stats; this.channel_stats )
         {
-            num = 0;
+            stats.reset();
         }
     }
 
@@ -136,10 +136,10 @@ public class PeriodicQueueStats : PeriodicStats
     {
         super.getChannelSize(channel, bytes, records);
 
-        bytes = max(this.channel_stats[this.channel_bytes_title[channel.id]],
-                      bytes);
-
-        records =max(this.channel_stats[this.channel_records_title[channel.id]],
-                      records);
+        if (auto stats = channel.id in this.channel_stats)
+        {
+            bytes   = max(bytes,   stats.bytes.n);
+            records = max(records, stats.records.n);
+        }
     }
 }

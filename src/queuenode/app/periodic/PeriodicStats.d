@@ -27,6 +27,8 @@ private import swarm.core.node.storage.model.IStorageEngineInfo;
 
 private import ocean.core.Array : copy, concat;
 
+private import ocean.core.Traits: FieldName;
+
 private import ocean.math.SlidingAverage;
 
 private import ocean.text.util.DigitGrouping;
@@ -130,19 +132,85 @@ public abstract class PeriodicStats : IPeriodic
 
     ***************************************************************************/
 
-    protected ulong[char[]] channel_stats;
+    struct ChannelStats
+    {
+        struct Item
+        {
+            /*******************************************************************
 
+                Numeric statistical value.
+
+            *******************************************************************/
+
+            ulong n;
+
+            /*******************************************************************
+
+                The title for the value to use for logging.
+
+            *******************************************************************/
+
+            char[] title;
+        }
+
+        /***********************************************************************
+
+            The statistics to log.
+
+        ***********************************************************************/
+
+        Item  bytes, records, percent;
+
+        /***********************************************************************
+
+            Resets all statistical values to 0.
+
+        ***********************************************************************/
+
+        void reset ( )
+        {
+            foreach (i, ref item; this.tupleof)
+            {
+                item.n = 0;
+            }
+        }
+
+        /***********************************************************************
+
+            Initialises a new instance of this struct. Composes the value titles
+            from the channel id and the struct field name and leaves the values
+            at the default value of 0.
+
+            Params:
+                id = channel id
+
+            Returns:
+                A newly initialised instance of this struct.
+
+        ***********************************************************************/
+
+        static typeof(*this) opCall ( char[] id )
+        {
+            typeof(*this) stats;
+
+            foreach (i, ref item; stats.tupleof)
+            {
+                static const suffix = "_" ~ FieldName!(i, typeof(stats));
+
+                item.title = id ~ suffix;
+            }
+
+            return stats;
+        }
+    }
 
     /***************************************************************************
 
-        Titles of per-channel stats written to the log file. (These must be
-        maintained separately as they are composed from the channel's name plus
-        the string "_bytes" or "_records".)
+        Per-channel stats written to log file by channel name.
 
     ***************************************************************************/
 
-    protected char[][char[]] channel_bytes_title;
-    protected char[][char[]] channel_records_title;
+    protected ChannelStats[char[]] channel_stats;
 
 
     /***************************************************************************
@@ -312,7 +380,14 @@ public abstract class PeriodicStats : IPeriodic
         this.log_stats.handling_connections = this.node_info.num_open_connections;
 
         this.log.add(this.log_stats);
-        this.log.add(this.channel_stats);
+
+        foreach (stats; this.channel_stats)
+        {
+            foreach (item; stats.tupleof)
+            {
+                this.log.add(item.title, item.n);
+            }
+        }
 
         this.log.flush();
 
@@ -333,37 +408,30 @@ public abstract class PeriodicStats : IPeriodic
         // Update existing channel stats
         foreach ( channel; this.node_info )
         {
-            size_t bytes, records;
-
             //If channel id is not duplicated when added to channel_*_title and
             //later disappears from node_info(because the channel is removed),
             //channel_*_title[id] would return garbage.
 
-            if ( !(channel.id in this.channel_bytes_title) )
+            if (ChannelStats* stats = channel.id in this.channel_stats)
             {
-                this.channel_bytes_title[channel.id.dup] = channel.id ~ "_bytes";
-                this.channel_stats[this.channel_bytes_title[channel.id]] = 0;
-            }
+                this.getChannelSize(channel, stats.bytes.n, stats.records.n);
 
-            if ( !(channel.id in this.channel_records_title) )
+                // If a channel has a zero capacity, don't divide by it but
+            }
+            else
             {
-                this.channel_records_title[channel.id.dup] = channel.id ~ "_records";
-                this.channel_stats[this.channel_records_title[channel.id]] = 0;
+                this.channel_stats[channel.id] = ChannelStats(channel.id);
             }
-
-            this.getChannelSize(channel, bytes, records);
-            this.channel_stats[this.channel_bytes_title[channel.id]] = bytes;
-            this.channel_stats[this.channel_records_title[channel.id]]= records;
         }
 
-        // Check for dead channels in stats
+        // Check for dead channels in stats. One shouldn't remove elements while
+        // iterating over an associative array so we have to make a list of
+        // removed channels first, then iterate over that list and remove the
+        // channels from this.channel_stats.
         char[][] to_remove; // Note: this will allocate in the case where a
             // channel has been removed. This is very rare.
-        foreach ( id, title; this.channel_bytes_title )
+        foreach ( id, stats; this.channel_stats )
         {
-            // Sanity check that the two lists of titles are the same
-            assert(id in this.channel_records_title, "Records/bytes title mismatch");
-
             if ( !(id in node_info) )
             {
                 to_remove ~= id;
@@ -373,14 +441,9 @@ public abstract class PeriodicStats : IPeriodic
         // Remove dead channels from stats
         foreach ( id; to_remove )
         {
-            this.channel_stats.remove(this.channel_bytes_title[id]);
-            this.channel_stats.remove(this.channel_records_title[id]);
-
-            this.channel_bytes_title.remove(id);
-            this.channel_records_title.remove(id);
+            this.channel_stats.remove(id);
         }
     }
-
 
     /***************************************************************************
 
