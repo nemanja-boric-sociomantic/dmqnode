@@ -33,7 +33,7 @@ private import queuenode.app.config.StatsConfig;
 private import queuenode.app.util.Terminator;
 
 private import queuenode.app.periodic.Periodics;
-private import queuenode.app.periodic.PeriodicQueueStats;
+private import queuenode.app.periodic.PeriodicStats;
 private import queuenode.app.periodic.PeriodicWriterFlush;
 
 private import queuenode.storage.Ring;
@@ -214,7 +214,7 @@ public class QueueNodeServer : LoggedCliApp
             [SIGINT, SIGTERM, SIGQUIT]);
 
         this.periodics = new Periodics(this.node, this.epoll);
-        this.periodics.add(new PeriodicQueueStats(this.stats_config, this.epoll));
+        this.periodics.add(new PeriodicStats(this.stats_config, this.epoll));
         this.periodics.add(new PeriodicWriterFlush(
             this.epoll, this.performance_config.write_flush_ms));
     }

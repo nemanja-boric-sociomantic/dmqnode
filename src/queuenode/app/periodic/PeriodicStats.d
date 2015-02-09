@@ -51,7 +51,7 @@ private import tango.core.Memory;
 
 *******************************************************************************/
 
-public abstract class PeriodicStats : IPeriodic
+public class PeriodicStats : IPeriodic
 {
     /***************************************************************************
 
@@ -228,9 +228,9 @@ public abstract class PeriodicStats : IPeriodic
 
     ***************************************************************************/
 
-    public this ( StatsConfig stats_config, EpollSelectDispatcher epoll, char[] id )
+    public this ( StatsConfig stats_config, EpollSelectDispatcher epoll )
     {
-        super(epoll, console_update_time, id);
+        super(epoll, this.console_update_time, typeof(this).stringof);
 
         this.stats_config = stats_config;
 
@@ -251,12 +251,22 @@ public abstract class PeriodicStats : IPeriodic
 
     override protected void run ( )
     {
-        this.consoleOutput();
+        this.updateChannelStats();
+
+        if (this.stats_config.console_stats_enabled)
+        {
+            this.consoleOutput();
+        }
+
         this.logOutput();
 
         this.node_info.resetCounters();
-    }
 
+        foreach (ref stats; this.channel_stats)
+        {
+            stats.reset();
+        }
+    }
 
     /***************************************************************************
 
@@ -292,29 +302,13 @@ public abstract class PeriodicStats : IPeriodic
                 Format.format(this.memory_buf, " (mem usage n/a)");
             }
 
-            this.writeConsoleOutput(this.memory_buf, this.records_buf, this.bytes_buf,
-                this.recordsPerSecond());
         }
+
+        StaticTrace.format("  {} queue {}: {} conns, {} rec/s, {} recs ({})",
+            this.node_info.storage_type, this.memory_buf,
+            this.node_info.num_open_connections,
+            this.recordsPerSecond(), this.records_buf, this.bytes_buf).flush;
     }
-
-
-    /***************************************************************************
-
-        Writes the provided fields to the console output line, along with any
-        additional information required by the subclass.
-
-        Params:
-            memory_buf = information about the memory usage of the app, or an
-                empty string if not built with -version=CDGC
-            records_buf = the number of records in the node
-            bytes_buf = the number of bytes in the node
-            rec_per_sec = the number of records handled by the node  per second
-
-    ***************************************************************************/
-
-    protected abstract void writeConsoleOutput ( char[] memory_buf,
-        char[] records_buf, char[] bytes_buf, real rec_per_sec );
-
 
     /***************************************************************************
 
@@ -361,39 +355,25 @@ public abstract class PeriodicStats : IPeriodic
         // Output logline and reset counters when period has expired
         if ( this.elapsed_since_last_log_update >= this.log_update_time )
         {
-            this.writeLogOutput();
-        }
-    }
+            this.log_stats.total_bytes = this.node_info.num_bytes;
+            this.log_stats.total_records = this.node_info.num_records;
+            this.log_stats.handling_connections = this.node_info.num_open_connections;
 
+            this.log.add(this.log_stats);
 
-    /***************************************************************************
-
-        Write the metadata of the channel which will be logged.
-
-    ***************************************************************************/
-
-    protected void writeLogOutput ( )
-    {
-        this.updateChannelStats();
-
-        this.log_stats.total_bytes = this.node_info.num_bytes;
-        this.log_stats.total_records = this.node_info.num_records;
-        this.log_stats.handling_connections = this.node_info.num_open_connections;
-
-        this.log.add(this.log_stats);
-
-        foreach (stats; this.channel_stats)
-        {
-            foreach (item; stats.tupleof)
+            foreach (stats; this.channel_stats)
             {
-                this.log.add(item.title, item.n);
+                foreach (item; stats.tupleof)
+                {
+                    this.log.add(item.title, item.n);
+                }
             }
+
+            this.log.flush();
+
+            this.elapsed_since_last_log_update -= this.log_update_time;
+            this.log_stats = LogStats.init;
         }
-
-        this.log.flush();
-
-        this.elapsed_since_last_log_update -= this.log_update_time;
-        this.log_stats = LogStats.init;
     }
 
 
