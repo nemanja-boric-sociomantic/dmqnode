@@ -25,10 +25,6 @@ private import queuenode.app.config.StatsConfig;
 
 private import queuenode.storage.Ring;
 
-private import swarm.core.node.storage.model.IStorageEngineInfo;
-
-private import ocean.core.Array : copy, concat;
-
 private import ocean.core.Traits: FieldName;
 
 private import ocean.math.SlidingAverage;
