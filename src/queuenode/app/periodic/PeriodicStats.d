@@ -397,7 +397,15 @@ public class PeriodicStats : IPeriodic
 
             if (ChannelStats* stats = channel.id in this.channel_stats)
             {
-                this.getChannelSize(channel, stats.bytes.n, stats.records.n);
+                if (stats.bytes.n < channel.num_bytes)
+                {
+                    stats.bytes.n = channel.num_bytes;
+                }
+
+                if (stats.records.n < channel.num_records)
+                {
+                    stats.records.n = channel.num_records;
+                }
 
                 // If a channel has a zero capacity, don't divide by it but
                 // report 100% usage. This is currently not allowed as a
@@ -436,27 +444,6 @@ public class PeriodicStats : IPeriodic
         {
             this.channel_stats.remove(id);
         }
-    }
-
-    /***************************************************************************
-
-        Set the out parameter bytes and records to that of the channel.
-
-        This base class implementation only outputs channel fields but may be
-        overridden to extend it.
-
-        Params:
-            channel = data about a channel
-            bytes   = will be set to size the channel have
-            records = will be set to numer of records the channel have
-
-    ***************************************************************************/
-
-    protected void getChannelSize ( IStorageEngineInfo channel,
-        out size_t bytes, out size_t records )
-    {
-        bytes   = channel.num_bytes;
-        records = channel.num_records;
     }
 }
 
