@@ -29,7 +29,7 @@ private import ocean.io.select.EpollSelectDispatcher;
 private import queuenode.app.util.Terminator;
 
 private import swarm.core.node.model.INode;
-private import swarm.core.node.model.INodeInfo;
+private import swarm.core.node.model.IChannelsNodeInfo;
 
 private import tango.util.log.Log;
 
@@ -65,7 +65,7 @@ public abstract class IPeriodic : TimerEvent
 
     protected alias .INode INode;
 
-    protected alias .INodeInfo INodeInfo;
+    protected alias .IChannelsNodeInfo IChannelsNodeInfo;
 
     protected alias .EpollSelectDispatcher EpollSelectDispatcher;
 
@@ -77,6 +77,7 @@ public abstract class IPeriodic : TimerEvent
     ***************************************************************************/
 
     protected INode node;
+    protected IChannelsNodeInfo node_info;
 
 
     /***************************************************************************
@@ -139,7 +140,9 @@ public abstract class IPeriodic : TimerEvent
 
     public void setNode ( INode node )
     {
-        this.node = node;
+        this.node_info = cast(IChannelsNodeInfo)(this.node = node);
+        assert(this.node);
+        assert(this.node_info);
     }
 
 
@@ -156,6 +159,7 @@ public abstract class IPeriodic : TimerEvent
     private bool handle ( )
     {
         assert(this.node !is null);
+        assert(this.node_info !is null);
 
         if ( !Terminator.terminating )
         {

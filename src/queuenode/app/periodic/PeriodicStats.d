@@ -39,10 +39,6 @@ private import ocean.util.log.StaticTrace;
 
 private import tango.core.Memory;
 
-private import swarm.core.node.model.IChannelsNodeInfo;
-
-
-
 /*******************************************************************************
 
     Periodic stats class. Displays a message line to the console and writes
@@ -189,9 +185,7 @@ public abstract class PeriodicStats : IPeriodic
         this.consoleOutput();
         this.logOutput();
 
-        auto node_info = cast(INodeInfo)this.node;
-
-        node_info.resetCounters();
+        this.node_info.resetCounters();
     }
 
 
@@ -207,11 +201,8 @@ public abstract class PeriodicStats : IPeriodic
 
         if ( this.stats_config.console_stats_enabled )
         {
-            auto node_info = cast(IChannelsNodeInfo)this.node;
-            assert(node_info, "node is not a channels node");
-
-            DigitGrouping.format(node_info.num_records, this.records_buf);
-            BitGrouping.format(node_info.num_bytes, this.bytes_buf, "b");
+            DigitGrouping.format(this.node_info.num_records, this.records_buf);
+            BitGrouping.format(this.node_info.num_bytes, this.bytes_buf, "b");
 
             this.memory_buf.length = 0;
 
@@ -267,12 +258,10 @@ public abstract class PeriodicStats : IPeriodic
 
     private real recordsPerSecond ( )
     {
-        auto node_info = cast(INodeInfo)this.node;
-
         // Update the average of records processed per second
         real rec_per_sec;
 
-        this.records_per_sec = node_info.records_handled;
+        this.records_per_sec = this.node_info.records_handled;
 
         for ( int i; i < this.console_update_time / 1_000; i++ )
         {
@@ -292,13 +281,11 @@ public abstract class PeriodicStats : IPeriodic
 
     protected void logOutput ( )
     {
-        auto node_info = cast(INodeInfo)this.node;
-
         // Update counters with bytes sent & received and records handled
         // since last call to this method
-        this.log_stats.bytes_sent += node_info.bytes_sent;
-        this.log_stats.bytes_received += node_info.bytes_received;
-        this.log_stats.records_handled += node_info.records_handled;
+        this.log_stats.bytes_sent += this.node_info.bytes_sent;
+        this.log_stats.bytes_received += this.node_info.bytes_received;
+        this.log_stats.records_handled += this.node_info.records_handled;
 
         this.elapsed_since_last_log_update += this.console_update_time;
 
@@ -318,14 +305,11 @@ public abstract class PeriodicStats : IPeriodic
 
     protected void writeLogOutput ( )
     {
-        auto node_info = cast(IChannelsNodeInfo) this.node;
-        assert(node_info, "node is not a channels node");
-
         this.updateChannelStats();
 
-        this.log_stats.total_bytes = node_info.num_bytes;
-        this.log_stats.total_records = node_info.num_records;
-        this.log_stats.handling_connections = node_info.num_open_connections;
+        this.log_stats.total_bytes = this.node_info.num_bytes;
+        this.log_stats.total_records = this.node_info.num_records;
+        this.log_stats.handling_connections = this.node_info.num_open_connections;
 
         this.log.add(this.log_stats);
         this.log.add(this.channel_stats);
@@ -346,10 +330,8 @@ public abstract class PeriodicStats : IPeriodic
 
     private void updateChannelStats ( )
     {
-        auto node_info = cast(IChannelsNodeInfo)this.node;
-
         // Update existing channel stats
-        foreach ( channel; node_info )
+        foreach ( channel; this.node_info )
         {
             size_t bytes, records;
 
