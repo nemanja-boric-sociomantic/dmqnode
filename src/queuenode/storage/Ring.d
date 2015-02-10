@@ -319,6 +319,20 @@ public class RingNode : QueueStorageChannels
         {
             return this.queue.used_space;
         }
+
+        /***********************************************************************
+
+           Tells the queue capacity in bytes.
+
+           Returns:
+               the queue capacity in bytes.
+
+        ***********************************************************************/
+
+        public ulong capacity_bytes ( )
+        {
+            return queue.total_space;
+        }
     }
 
 

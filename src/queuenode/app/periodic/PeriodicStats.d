@@ -23,6 +23,8 @@ private import queuenode.app.periodic.model.IPeriodic;
 
 private import queuenode.app.config.StatsConfig;
 
+private import queuenode.storage.Ring;
+
 private import swarm.core.node.storage.model.IStorageEngineInfo;
 
 private import ocean.core.Array : copy, concat;
@@ -124,7 +126,6 @@ public abstract class PeriodicStats : IPeriodic
     ***************************************************************************/
 
     private char[] records_buf, bytes_buf, memory_buf;
-
 
     /***************************************************************************
 
@@ -406,8 +407,10 @@ public abstract class PeriodicStats : IPeriodic
     private void updateChannelStats ( )
     {
         // Update existing channel stats
-        foreach ( channel; this.node_info )
+        foreach ( channel_info; this.node_info )
         {
+            auto channel = cast(RingNode.Ring)channel_info;
+            assert(channel, "channel class " ~ channel.classinfo.name ~ " is not " ~ RingNode.Ring.stringof);
             //If channel id is not duplicated when added to channel_*_title and
             //later disappears from node_info(because the channel is removed),
             //channel_*_title[id] would return garbage.
@@ -417,6 +420,16 @@ public abstract class PeriodicStats : IPeriodic
                 this.getChannelSize(channel, stats.bytes.n, stats.records.n);
 
                 // If a channel has a zero capacity, don't divide by it but
+                // report 100% usage. This is currently not allowed as a
+                // configuration value but making it robust doesn't hurt.
+                if (ulong capacity_bytes = channel.capacity_bytes)
+                {
+                    stats.percent.n = cast(ulong)(stats.bytes.n * 100.f / capacity_bytes);
+                }
+                else
+                {
+                    stats.percent.n = 100;
+                }
             }
             else
             {
