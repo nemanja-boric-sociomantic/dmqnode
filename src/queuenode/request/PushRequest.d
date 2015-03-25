@@ -64,8 +64,6 @@ public scope class PushRequest : IChannelRequest
     protected void readRequestData_ ( )
     {
         this.reader.readArray(*this.resources.value_buffer);
-
-        this.resources.node_info.handledRecord();
     }
 
 

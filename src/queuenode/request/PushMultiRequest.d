@@ -67,8 +67,6 @@ public scope class PushMultiRequest : IMultiChannelRequest
     {
         // Read value
         this.reader.readArray(*this.resources.value_buffer);
-
-        this.resources.node_info.handledRecord();
     }
 
 

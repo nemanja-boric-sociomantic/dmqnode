@@ -205,6 +205,8 @@ public class RingNode : QueueStorageChannels
 
         protected bool push_ ( char[] value )
         {
+            this.outer.handled_record();
+
             return this.queue.push(cast(ubyte[])value);
         }
 
@@ -229,6 +231,8 @@ public class RingNode : QueueStorageChannels
             {
                 value.length = item.length;
                 value[] = (cast (char[]) item)[];
+
+                this.outer.handled_record();
             }
             else
             {
@@ -347,6 +351,17 @@ public class RingNode : QueueStorageChannels
 
     /***************************************************************************
 
+        Delegate which is called when a record is pushed or popped. Note that a
+        failed push (e.g. queue full) will call this delegate, whereas a failed
+        pop (e.g. queue empty) will not.
+
+    ***************************************************************************/
+
+    private const void delegate ( ) handled_record;
+
+
+    /***************************************************************************
+
         Flag indicating whether a scan for dumped ring files is being performed
         (at node startup). The flags is checked by the Ring constructor to make
         sure that dumped files are only loaded during node startup, and not when
@@ -365,6 +380,7 @@ public class RingNode : QueueStorageChannels
 
         Params:
             data_dir = data directory for dumped queue channels
+            handled_record = delegate to call upon pushing or popping
             size_limit = maximum number of bytes allowed in the node (0 = no
                 limit)
             channel_size_limit = maximum number of bytes allowed per channel (0
@@ -372,9 +388,13 @@ public class RingNode : QueueStorageChannels
 
     ***************************************************************************/
 
-    public this ( char[] data_dir, ulong size_limit = 0, ulong channel_size_limit = 0 )
+    public this ( char[] data_dir, void delegate ( ) handled_record,
+        ulong size_limit = 0, ulong channel_size_limit = 0 )
     {
         super(size_limit, channel_size_limit);
+
+        assert(handled_record !is null);
+        this.handled_record = handled_record;
 
         this.data_dir = data_dir;
 

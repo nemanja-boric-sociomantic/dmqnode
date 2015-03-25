@@ -82,8 +82,6 @@ public class ProduceMultiRequest : IMultiChannelRequest
         {
             this.reader.readArray(*this.resources.value_buffer);
 
-            this.resources.node_info.handledRecord();
-
             if ( (*this.resources.value_buffer).length )
             {
                 foreach ( channel; this.channels )

@@ -202,7 +202,7 @@ public class QueueNodeServer : LoggedCliApp
         this.node = new QueueNode(
                 QueueConst.NodeItem(this.server_config.address(),
                     this.server_config.port()),
-                new RingNode(this.server_config.data_dir,
+                new RingNode(this.server_config.data_dir, &this.handledRecord,
                     this.server_config.size_limit,
                     this.server_config.channel_size_limit()),
                 this.epoll, this.server_config.backlog);
@@ -246,6 +246,23 @@ public class QueueNodeServer : LoggedCliApp
         Stdout.formatln("Event loop exited");
 
         return true;
+    }
+
+
+    /***************************************************************************
+
+        Callback when a record is pushed or popped. Updates the stats counter
+        for records handled. Note that this extra delegate (in addition to the
+        QueueNode's handledRecord() method) is necessary, as it's required by
+        the ctor of the RingNode instance which is passed to QueueNode's ctor
+        (see processConfig(), above) -- it's not possible to pass a delegate of
+        an object which does not yet exist.
+
+    ***************************************************************************/
+
+    private void handledRecord ( )
+    {
+        this.node.handledRecord();
     }
 
 

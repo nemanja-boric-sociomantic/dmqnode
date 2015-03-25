@@ -88,8 +88,6 @@ public scope class PopRequest : IChannelRequest
         }
 
         this.writer.writeArray(*this.resources.value_buffer);
-
-        this.resources.node_info.handledRecord();
     }
 }
 
