@@ -21,7 +21,7 @@ module queuenode.connection.SharedResources;
 
     Imports which are required by the QueueConnectionResources struct, below,
     are imported publicly, as they are also needed in
-    queuenode.dht.request.model.IQueueRequestResources (which imports this
+    queuenode.request.model.IQueueRequestResources (which imports this
     module). This is done to simplify the process of modifying the fields of
     QueueConnectionResources --  forgetting to import something into both
     modules is a common source of very confusing compile errors.
