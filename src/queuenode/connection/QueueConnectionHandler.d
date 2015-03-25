@@ -130,7 +130,7 @@ public class QueueConnectionHandler
 
         ***********************************************************************/
 
-        public QueueStorageChannels storage_channels ( )
+        override public QueueStorageChannels storage_channels ( )
         {
             return this.setup.storage_channels;
         }
@@ -142,7 +142,7 @@ public class QueueConnectionHandler
 
         ***********************************************************************/
 
-        public IQueueNodeInfo node_info ( )
+        override public IQueueNodeInfo node_info ( )
         {
             return cast(IQueueNodeInfo)this.setup.node_info;
         }
@@ -154,7 +154,7 @@ public class QueueConnectionHandler
 
         ***********************************************************************/
 
-        protected char[] new_channel_buffer ( )
+        override protected char[] new_channel_buffer ( )
         {
             return new char[10];
         }
@@ -166,7 +166,7 @@ public class QueueConnectionHandler
 
         ***********************************************************************/
 
-        protected bool[] new_channel_flags_buffer ( )
+        override protected bool[] new_channel_flags_buffer ( )
         {
             return new bool[5];
         }
@@ -178,7 +178,7 @@ public class QueueConnectionHandler
 
         ***********************************************************************/
 
-        protected char[] new_value_buffer ( )
+        override protected char[] new_value_buffer ( )
         {
             return new char[50];
         }
@@ -190,7 +190,7 @@ public class QueueConnectionHandler
 
         ***********************************************************************/
 
-        protected FiberSelectEvent new_event ( )
+        override protected FiberSelectEvent new_event ( )
         {
             return new FiberSelectEvent(this.outer.fiber);
         }
@@ -206,7 +206,7 @@ public class QueueConnectionHandler
 
         ***********************************************************************/
 
-        protected StringListReader new_string_list_reader ( )
+        override protected StringListReader new_string_list_reader ( )
         {
             this.channel_buffer();
             return new StringListReader(this.outer.reader,
@@ -220,7 +220,7 @@ public class QueueConnectionHandler
 
         ***********************************************************************/
 
-        protected LoopCeder new_loop_ceder ( )
+        override protected LoopCeder new_loop_ceder ( )
         {
             return new LoopCeder(this.event);
         }
