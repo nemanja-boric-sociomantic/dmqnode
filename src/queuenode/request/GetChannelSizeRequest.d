@@ -14,15 +14,15 @@
 module queuenode.request.GetChannelSizeRequest;
 
 
-
 /*******************************************************************************
 
     Imports
 
 *******************************************************************************/
 
-private import queuenode.request.model.IChannelRequest;
+private import Protocol = queueproto.node.request.GetChannelSize;
 
+private import queuenode.request.model.IQueueRequestResources;
 
 
 /*******************************************************************************
@@ -31,8 +31,16 @@ private import queuenode.request.model.IChannelRequest;
 
 *******************************************************************************/
 
-public scope class GetChannelSizeRequest : IChannelRequest
+public scope class GetChannelSizeRequest : Protocol.GetChannelSize
 {
+    /***************************************************************************
+    
+        Shared resource acquirer
+
+    ***************************************************************************/
+
+    private IQueueRequestResources resources;
+
     /***************************************************************************
 
         Constructor
@@ -47,51 +55,36 @@ public scope class GetChannelSizeRequest : IChannelRequest
     public this ( FiberSelectReader reader, FiberSelectWriter writer,
         IQueueRequestResources resources )
     {
-        super(QueueConst.Command.E.GetChannelSize, reader, writer, resources);
+        super(reader, writer, resources.channel_buffer);
+        this.resources = resources;
     }
-
 
     /***************************************************************************
 
-        Reads any data from the client which is required for the request. If the
-        request is invalid in some way (the channel name is invalid, or the
-        command is not supported) then the command can be simply not executed,
-        and all client data has been read, leaving the read buffer in a clean
-        state ready for the next request.
+        Gets the metadata for specified channel. Overriden in
+        actual implementors of queuenode protocol.
+
+        Params:
+            channel_name = name of channel to be queried
 
     ***************************************************************************/
 
-    protected void readRequestData_ ( )
+    override protected ChannelSizeData getChannelData ( char[] channel_name )
     {
-    }
+        ChannelSizeData data;
 
-
-    /***************************************************************************
-
-        Performs this request. (Fiber method.)
-
-    ***************************************************************************/
-
-    protected void handle__ ( )
-    {
-        this.writer.write(QueueConst.Status.E.Ok);
-
-        // TODO: is there a need to send the addr/port? surely the client knows this anyway?
-        this.writer.writeArray(this.resources.node_info.node_item.Address);
-        this.writer.write(this.resources.node_info.node_item.Port);
-
-        ulong records, bytes;
+        data.address = this.resources.node_info.node_item.Address;
+        data.port = this.resources.node_info.node_item.Port;
 
         auto storage_channel =
             *this.resources.channel_buffer in this.resources.storage_channels;
         if ( storage_channel !is null )
         {
-            records = storage_channel.num_records;
-            bytes = storage_channel.num_bytes;
+            data.records = storage_channel.num_records;
+            data.bytes = storage_channel.num_bytes;
         }
 
-        this.writer.write(records);
-        this.writer.write(bytes);
+        return data;
     }
 }
 

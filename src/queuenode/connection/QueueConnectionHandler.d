@@ -21,14 +21,14 @@ module queuenode.connection.QueueConnectionHandler;
 *******************************************************************************/
 
 private import swarm.core.node.connection.ConnectionHandler;
-
 private import swarm.core.node.model.INodeInfo;
 
 private import swarm.queue.QueueConst;
 
+private import queueproto.node.request.model.QueueCommand;
+
 private import queuenode.connection.SharedResources;
 
-private import queuenode.request.model.IRequest;
 private import queuenode.request.model.IQueueRequestResources;
 
 private import queuenode.request.PopRequest;
@@ -183,6 +183,16 @@ public class QueueConnectionHandler
             return new char[50];
         }
 
+        /***********************************************************************
+
+            Channel list buffer newer
+
+        ***********************************************************************/
+
+        protected char[][] new_channel_list_buffer ( )
+        {
+            return new char[][this.storage_channels.length];
+        }
 
         /***********************************************************************
 
@@ -477,7 +487,7 @@ public class QueueConnectionHandler
 
     ***************************************************************************/
 
-    private void handleCommand ( Handler : IRequest ) ( )
+    private void handleCommand ( Handler : QueueCommand ) ( )
     {
         scope resources = new QueueRequestResources;
         scope handler = new Handler(this.reader, this.writer, resources);

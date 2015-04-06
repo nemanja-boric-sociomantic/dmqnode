@@ -21,9 +21,9 @@ module queuenode.request.ConsumeRequest;
 
 *******************************************************************************/
 
-private import queuenode.request.model.IChannelRequest;
-
 private import queuenode.storage.model.QueueStorageEngine;
+private import queuenode.request.model.IQueueRequestResources;
+private import Protocol = queueproto.node.request.Consume;
 
 private import ocean.core.Array : copy;
 
@@ -35,7 +35,7 @@ private import ocean.core.Array : copy;
 
 *******************************************************************************/
 
-public scope class ConsumeRequest : IChannelRequest, QueueStorageEngine.IConsumer
+public scope class ConsumeRequest : Protocol.Consume, QueueStorageEngine.IConsumer
 {
     /***************************************************************************
 
@@ -46,6 +46,13 @@ public scope class ConsumeRequest : IChannelRequest, QueueStorageEngine.IConsume
 
     private QueueStorageEngine storage_channel;
 
+    /***************************************************************************
+
+        Shared resource acquirer
+
+    ***************************************************************************/
+
+    private const IQueueRequestResources resources;
 
     /***************************************************************************
 
@@ -56,25 +63,14 @@ public scope class ConsumeRequest : IChannelRequest, QueueStorageEngine.IConsume
 
     private bool waiting_for_trigger;
 
-
     /***************************************************************************
 
-        Set to true when a buffer flush is requested.
+        Flags used to communicate event outcomes from even callback to other
+        class methods.
 
     ***************************************************************************/
 
-    private bool flush_trigger;
-
-
-    /***************************************************************************
-
-        Set to true when the request must end (in the case where the channel
-        being listened to is deleted).
-
-    ***************************************************************************/
-
-    private bool finish_trigger;
-
+    private bool finish_trigger, flush_trigger;
 
     /***************************************************************************
 
@@ -90,9 +86,108 @@ public scope class ConsumeRequest : IChannelRequest, QueueStorageEngine.IConsume
     public this ( FiberSelectReader reader, FiberSelectWriter writer,
         IQueueRequestResources resources )
     {
-        super(QueueConst.Command.E.Consume, reader, writer, resources);
+        super(reader, writer, resources.channel_buffer, resources.value_buffer);
+        this.resources = resources;
     }
 
+    /***************************************************************************
+
+        Ensures that requested channel exists and can be read from. 
+
+        Params:
+            channel_name = name of channel to be prepared
+
+        Return:
+            `true` if it is possible to proceed with Consume request
+
+    ***************************************************************************/
+
+    override protected bool prepareChannel ( char[] channel_name )
+    {
+        this.storage_channel = this.resources.storage_channels.getCreate(
+            channel_name);
+
+        if (this.storage_channel is null)
+            return false;
+
+        // unregistered in this.finalizeRequest
+        this.storage_channel.registerConsumer(this);
+
+        return true;
+    }
+
+    /***************************************************************************
+
+        Retrieve next value from the channel if available
+
+        Params:
+            channel_name = channel to get value from
+            value        = array to write value to
+
+        Returns:
+            `true` if there was a value in the channel
+
+    ***************************************************************************/
+
+    override protected bool getNextValue ( char[] channel_name, ref char[] value )
+    {
+        // Consume any records which are ready
+        if (this.storage_channel.num_records > 0)
+        {
+            this.storage_channel.pop(value);
+            this.resources.loop_ceder.handleCeding();
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    /***************************************************************************
+
+        When there are no more elements in the channel this method allows to
+        wait for more to appear or force early termination of the request.
+
+        This method is explicitly designed to do a fiber context switch
+
+        Params:
+            finish = set to true if request needs to be ended
+            flush =  set to true if socket needs to be flushed
+
+    ***************************************************************************/
+
+    override protected void waitEvents ( out bool finish, out bool flush )
+    {
+        scope(exit)
+        {
+            finish = this.finish_trigger;
+            flush  = this.flush_trigger;
+            this.finish_trigger = false;
+            this.flush_trigger = false;
+        }
+
+        // have already recevied some event by that point
+        if ( this.finish_trigger || this.flush_trigger )
+            return;
+
+        this.waiting_for_trigger = true;
+        scope(exit) this.waiting_for_trigger = false;
+
+        this.resources.event.wait();
+    }
+
+    /***************************************************************************
+
+        Called upon termination of the request, any cleanup steps can be put
+        here.
+
+    ***************************************************************************/
+
+    override protected void finalizeRequest ( )
+    {
+        this.storage_channel.unregisterConsumer(this);
+    }
 
     /***************************************************************************
 
@@ -129,104 +224,6 @@ public scope class ConsumeRequest : IChannelRequest, QueueStorageEngine.IConsume
         {
             this.resources.event.trigger;
         }
-    }
-
-
-    /***************************************************************************
-
-        Reads any data from the client which is required for the request. If the
-        request is invalid in some way (the channel name is invalid, or the
-        command is not supported) then the command can be simply not executed,
-        and all client data has been read, leaving the read buffer in a clean
-        state ready for the next request.
-
-    ***************************************************************************/
-
-    protected void readRequestData_ ( )
-    {
-    }
-
-
-    /***************************************************************************
-
-        Performs this request. (Fiber method.)
-
-        TODO: upon failure (presumably in the case where a broken pipe exception
-        is thrown), we now potentially have a write buffer full of queue records
-        which are ready to be sent. At the moment we just discard them. A super
-        friendly queue node might push them back into the appropriate channel.
-
-    ***************************************************************************/
-
-    protected void handle__ ( )
-    {
-        this.storage_channel = this.resources.storage_channels.getCreate(
-            *this.resources.channel_buffer);
-        if ( this.storage_channel is null )
-        {
-            this.writer.write(QueueConst.Status.E.Error);
-            return;
-        }
-
-        this.storage_channel.registerConsumer(this);
-        scope ( exit )
-        {
-            this.storage_channel.unregisterConsumer(this);
-        }
-
-        this.writer.write(QueueConst.Status.E.Ok);
-
-        // Note: the Finish code is only received when the storage channel being
-        // consumed is recycled.
-        while ( !this.finish_trigger )
-        {
-            // Consume any records which are ready
-            while ( this.storage_channel.num_records > 0 )
-            {
-                this.storage_channel.pop(*this.resources.value_buffer);
-
-                this.writer.writeArray(*this.resources.value_buffer);
-
-                this.resources.loop_ceder.handleCeding();
-            }
-
-            // Wait until a trigger occurs (may exit immediately if a trigger
-            // has already happened)
-            this.waitForTrigger();
-
-            // Handle flushing
-            if ( this.flush_trigger || this.finish_trigger )
-            {
-                this.writer.flush();
-                this.flush_trigger = false;
-            }
-        }
-
-        // Write empty value, informing the client that the request has
-        // finished
-        this.writer.writeArray("");
-    }
-
-
-    /***************************************************************************
-
-        Waits for the select event to fire (see the trigger() method, above).
-        Will return immediately without waiting if a flush or finish trigger has
-        already happened.
-
-    ***************************************************************************/
-
-    private void waitForTrigger ( )
-    {
-        if ( this.finish_trigger || this.flush_trigger )
-        {
-            return;
-        }
-
-        this.waiting_for_trigger = true;
-        scope ( exit ) this.waiting_for_trigger = false;
-
-        this.resources.event.wait();
     }
 }
 

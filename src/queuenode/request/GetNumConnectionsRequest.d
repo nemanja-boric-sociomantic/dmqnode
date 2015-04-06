@@ -21,9 +21,9 @@ module queuenode.request.GetNumConnectionsRequest;
 
 *******************************************************************************/
 
-private import queuenode.request.model.IRequest;
+private import queuenode.request.model.IQueueRequestResources;
 
-
+private import Protocol = queueproto.node.request.GetNumConnections;
 
 /*******************************************************************************
 
@@ -31,8 +31,16 @@ private import queuenode.request.model.IRequest;
 
 *******************************************************************************/
 
-public scope class GetNumConnectionsRequest : IRequest
+public scope class GetNumConnectionsRequest : Protocol.GetNumConnections
 {
+    /***************************************************************************
+    
+        Shared resource acquirer
+
+    ***************************************************************************/
+
+    private const IQueueRequestResources resources;
+
     /***************************************************************************
 
         Constructor
@@ -47,40 +55,25 @@ public scope class GetNumConnectionsRequest : IRequest
     public this ( FiberSelectReader reader, FiberSelectWriter writer,
         IQueueRequestResources resources )
     {
-        super(QueueConst.Command.E.GetNumConnections, reader, writer, resources);
+        super(reader, writer);
+        this.resources = resources;
     }
-
 
     /***************************************************************************
 
-        Reads any data from the client which is required for the request. If the
-        request is invalid in some way (the channel name is invalid, or the
-        command is not supported) then the command can be simply not executed,
-        and all client data has been read, leaving the read buffer in a clean
-        state ready for the next request.
+        To be overriden by derivatives
+
+        Returns:
+            metadata that includes amount of established connections
 
     ***************************************************************************/
 
-    protected void readRequestData ( )
+    override protected NumConnectionsData getConnectionsData ( )
     {
-    }
-
-
-    /***************************************************************************
-
-        Performs this request. (Fiber method.)
-
-    ***************************************************************************/
-
-    protected void handle_ ( )
-    {
-        this.writer.write(QueueConst.Status.E.Ok);
-
-        // TODO: is there a need to send the addr/port? surely the client knows this anyway?
-        this.writer.writeArray(this.resources.node_info.node_item.Address);
-        this.writer.write(this.resources.node_info.node_item.Port);
-
-        this.writer.write(this.resources.node_info.num_open_connections);
+        NumConnectionsData data;
+        data.address   = this.resources.node_info.node_item.Address;
+        data.port      = this.resources.node_info.node_item.Port;
+        data.num_conns = this.resources.node_info.num_open_connections;
+        return data;
     }
 }
-

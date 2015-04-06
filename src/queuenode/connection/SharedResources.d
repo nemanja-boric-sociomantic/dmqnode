@@ -50,6 +50,7 @@ public struct QueueConnectionResources
     char[] channel_buffer;
     bool[] channel_flags_buffer;
     char[] value_buffer;
+    char[][] channel_list_buffer;
     FiberSelectEvent event;
     StringListReader string_list_reader;
     LoopCeder loop_ceder;

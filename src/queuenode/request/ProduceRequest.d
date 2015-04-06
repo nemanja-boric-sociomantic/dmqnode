@@ -21,7 +21,9 @@ module queuenode.request.ProduceRequest;
 
 *******************************************************************************/
 
-private import queuenode.request.model.IChannelRequest;
+private import queuenode.request.model.IQueueRequestResources;
+private import queuenode.storage.model.QueueStorageEngine;
+private import Protocol = queueproto.node.request.Produce;
 
 private import swarm.core.common.request.helper.LoopCeder;
 
@@ -33,8 +35,25 @@ private import swarm.core.common.request.helper.LoopCeder;
 
 *******************************************************************************/
 
-public scope class ProduceRequest : IChannelRequest
+public scope class ProduceRequest : Protocol.Produce
 {
+    /***************************************************************************
+
+        Set upon starting valid Produce request, reused when pushing records
+        for that request (so that it won't be fetched for each record)
+
+    ***************************************************************************/
+
+    private QueueStorageEngine storage_channel;
+
+    /***************************************************************************
+
+        Shared resource acquirer
+
+    ***************************************************************************/
+
+    private const IQueueRequestResources resources;
+
     /***************************************************************************
 
         Constructor
@@ -49,61 +68,51 @@ public scope class ProduceRequest : IChannelRequest
     public this ( FiberSelectReader reader, FiberSelectWriter writer,
             IQueueRequestResources resources )
     {
-        super(QueueConst.Command.E.Produce, reader, writer, resources);
+        super(reader, writer, resources.channel_buffer, resources.value_buffer);
+        this.resources = resources;
+        this.storage_channel = null;
     }
-
 
     /***************************************************************************
 
-        Reads any data from the client which is required for the request. If the
-        request is invalid in some way (the channel name is invalid, or the
-        command is not supported) then the command can be simply not executed,
-        and all client data has been read, leaving the read buffer in a clean
-        state ready for the next request.
+        Ensures that requested channel exists or can be created
+
+        Params:
+            channel_name = name of channel to be prepared
+
+        Return:
+            `true` if it is possible to proceed with Produce request
 
     ***************************************************************************/
 
-    protected void readRequestData_ ( )
+    override protected bool prepareChannel ( char[] channel_name )
     {
-    }
-
-
-    /***************************************************************************
-
-        Performs this request. (Fiber method.)
-
-    ***************************************************************************/
-
-    protected void handle__ ( )
-    {
-        auto storage_channel = this.resources.storage_channels.getCreate(
+        this.storage_channel = this.resources.storage_channels.getCreate(
             *this.resources.channel_buffer);
-        if ( storage_channel is null )
+        return this.storage_channel !is null;
+    }
+
+    /***************************************************************************
+
+        Pushes a received record to the queue.
+
+        Params:
+            channel_name = name of channel to push to
+            value = record value to push
+
+    ***************************************************************************/
+
+    override protected void pushRecord ( char[] channel_name, char[] value )
+    {
+        assert (this.storage_channel !is null);
+
+        if ( this.resources.storage_channels.sizeLimitOk(channel_name,
+                value.length) )
         {
-            this.writer.write(QueueConst.Status.E.Error);
-            return;
+            this.storage_channel.push(value);
+            this.resources.loop_ceder.handleCeding();
         }
 
-        this.writer.write(QueueConst.Status.E.Ok);
-        this.writer.flush; // flush write buffer, so client can start sending
-
-        do
-        {
-            this.reader.readArray(*this.resources.value_buffer);
-
-            if ( (*this.resources.value_buffer).length )
-            {
-                if ( this.resources.storage_channels.sizeLimitOk(
-                    *this.resources.channel_buffer,
-                    (*this.resources.value_buffer).length) )
-                {
-                    storage_channel.push(*this.resources.value_buffer);
-                }
-
-                this.resources.loop_ceder.handleCeding();
-            }
-        }
-        while ( (*this.resources.value_buffer).length );
+        this.resources.loop_ceder.handleCeding();
     }
 }
-

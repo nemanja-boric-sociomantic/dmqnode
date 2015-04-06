@@ -20,9 +20,9 @@ module queuenode.request.RemoveChannelRequest;
 
 *******************************************************************************/
 
-private import queuenode.request.model.IChannelRequest;
+private import queuenode.request.model.IQueueRequestResources;
 
-
+private import Protocol = queueproto.node.request.RemoveChannel;
 
 /*******************************************************************************
 
@@ -30,8 +30,16 @@ private import queuenode.request.model.IChannelRequest;
 
 *******************************************************************************/
 
-public scope class RemoveChannelRequest : IChannelRequest
+public scope class RemoveChannelRequest : Protocol.RemoveChannel
 {
+    /***************************************************************************
+    
+        Shared resource acquirer
+
+    ***************************************************************************/
+
+    private const IQueueRequestResources resources;
+
     /***************************************************************************
 
         Constructor
@@ -46,37 +54,18 @@ public scope class RemoveChannelRequest : IChannelRequest
     public this ( FiberSelectReader reader, FiberSelectWriter writer,
         IQueueRequestResources resources )
     {
-        super(QueueConst.Command.E.RemoveChannel, reader, writer, resources);
+        super(reader, writer, resources.channel_buffer);
+        this.resources = resources;
     }
-
 
     /***************************************************************************
 
-        Reads any data from the client which is required for the request. If the
-        request is invalid in some way (the channel name is invalid, or the
-        command is not supported) then the command can be simply not executed,
-        and all client data has been read, leaving the read buffer in a clean
-        state ready for the next request.
+        Removes the specified channel from the storage engine
 
     ***************************************************************************/
 
-    protected void readRequestData_ ( )
+    override protected void removeChannel ( char[] channel )
     {
-    }
-
-
-    /***************************************************************************
-
-        Performs this request. (Fiber method, after command and channel validity
-        have been confirmed.)
-
-    ***************************************************************************/
-
-    protected void handle__ ( )
-    {
-        this.writer.write(QueueConst.Status.E.Ok);
-
-        this.resources.storage_channels.remove(*this.resources.channel_buffer);
+        this.resources.storage_channels.remove(channel);
     }
 }
-

@@ -12,19 +12,17 @@
 
 module queuenode.request.ProduceMultiRequest;
 
-
-
 /*******************************************************************************
 
     Imports
 
 *******************************************************************************/
 
-private import queuenode.request.model.IMultiChannelRequest;
+private import Protocol = queueproto.node.request.ProduceMulti;
+
+private import queuenode.request.model.IQueueRequestResources;
 
 private import swarm.core.common.request.helper.LoopCeder;
-
-
 
 /*******************************************************************************
 
@@ -32,8 +30,16 @@ private import swarm.core.common.request.helper.LoopCeder;
 
 *******************************************************************************/
 
-public class ProduceMultiRequest : IMultiChannelRequest
+public class ProduceMultiRequest : Protocol.ProduceMulti
 {
+    /***************************************************************************
+
+        Shared resource acquirer
+
+    ***************************************************************************/
+
+    private IQueueRequestResources resources;
+    
     /***************************************************************************
 
         Constructor
@@ -48,60 +54,37 @@ public class ProduceMultiRequest : IMultiChannelRequest
     public this ( FiberSelectReader reader, FiberSelectWriter writer,
         IQueueRequestResources resources )
     {
-        super(QueueConst.Command.E.ProduceMulti, reader, writer, resources);
+        super(reader, writer, resources.string_list_reader, resources.value_buffer);
+        this.resources = resources;
     }
-
 
     /***************************************************************************
 
-        Reads any data from the client which is required for the request. If the
-        request is invalid in some way (the channel name is invalid, or the
-        command is not supported) then the command can be simply not executed,
-        and all client data has been read, leaving the read buffer in a clean
-        state ready for the next request.
+        Pushes a received record to one or more queues. To be overriden by
+        an actual implementors of queuenode protocol.
+
+        Params:
+            channel_names = names of channels to push to
+            value = record value to push
 
     ***************************************************************************/
 
-    protected void readRequestData_ ( )
+    override protected void pushRecord ( char[][] channel_names, char[] value )
     {
-    }
-
-
-    /***************************************************************************
-
-        Performs this request. (Fiber method.)
-
-    ***************************************************************************/
-
-    protected void handle_ ( )
-    {
-        this.writer.write(QueueConst.Status.E.Ok);
-        this.writer.flush; // flush write buffer, so client can start sending
-
-        do
+        foreach ( channel; channel_names )
         {
-            this.reader.readArray(*this.resources.value_buffer);
-
-            if ( (*this.resources.value_buffer).length )
+            if ( this.resources.storage_channels.sizeLimitOk(
+                    channel, value.length) )
             {
-                foreach ( channel; this.channels )
+                auto storage_channel =
+                    this.resources.storage_channels.getCreate(channel);
+                if ( storage_channel !is null )
                 {
-                    if ( this.resources.storage_channels.sizeLimitOk(
-                            channel, (*this.resources.value_buffer).length) )
-                    {
-                        auto storage_channel =
-                            this.resources.storage_channels.getCreate(channel);
-                        if ( storage_channel !is null )
-                        {
-                            storage_channel.push(*this.resources.value_buffer);
-                        }
-                    }
+                    storage_channel.push(value);
                 }
-
-                this.resources.loop_ceder.handleCeding();
             }
         }
-        while ( (*this.resources.value_buffer).length );
+
+        this.resources.loop_ceder.handleCeding();
     }
 }
-

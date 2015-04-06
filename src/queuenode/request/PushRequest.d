@@ -21,9 +21,10 @@ module queuenode.request.PushRequest;
 
 *******************************************************************************/
 
-private import queuenode.request.model.IChannelRequest;
+private import queuenode.storage.model.QueueStorageEngine;
+private import queuenode.request.model.IQueueRequestResources;
 
-
+private import Protocol = queueproto.node.request.Push;
 
 /*******************************************************************************
 
@@ -31,8 +32,24 @@ private import queuenode.request.model.IChannelRequest;
 
 *******************************************************************************/
 
-public scope class PushRequest : IChannelRequest
+public scope class PushRequest : Protocol.Push
 {
+    /***************************************************************************
+
+        Channel storage cache, to avoid re-fetching it from different methods
+
+    ***************************************************************************/
+
+    private QueueStorageEngine storage_channel;
+
+    /***************************************************************************
+
+        Shared resource acquirer
+
+    ***************************************************************************/
+
+    private const IQueueRequestResources resources;
+
     /***************************************************************************
 
         Constructor
@@ -47,67 +64,53 @@ public scope class PushRequest : IChannelRequest
     public this ( FiberSelectReader reader, FiberSelectWriter writer,
         IQueueRequestResources resources )
     {
-        super(QueueConst.Command.E.Push, reader, writer, resources);
+        super(reader, writer, resources.channel_buffer, resources.value_buffer);
+        this.resources = resources;
     }
-
 
     /***************************************************************************
 
-        Reads any data from the client which is required for the request. If the
-        request is invalid in some way (the channel name is invalid, or the
-        command is not supported) then the command can be simply not executed,
-        and all client data has been read, leaving the read buffer in a clean
-        state ready for the next request.
+        Ensures that requested channel exists or can be created
+
+        Params:
+            channel_name = name of channel to be prepared
+
+        Return:
+            `true` if it is possible to proceed with Push request
 
     ***************************************************************************/
 
-    protected void readRequestData_ ( )
+    override protected bool prepareChannel ( char[] channel_name )
     {
-        this.reader.readArray(*this.resources.value_buffer);
+        this.storage_channel = this.resources.storage_channels.getCreate(
+            channel_name);
+        return this.storage_channel !is null;
     }
-
 
     /***************************************************************************
 
-        Performs this request. (Fiber method.)
+        Push the value to the channel.
+
+        Params:
+            channel_name = name of channel to be writter to
+            value        = value to write
+
+        Returns:
+            "true" if writing the value was possible
+            "false" if there wasn't enough space
 
     ***************************************************************************/
 
-    protected void handle__ ( )
+    override protected bool pushValue ( char[] channel_name, void[] value )
     {
-        QueueConst.Status.E status;
-
-        if ( (*this.resources.value_buffer).length )
+        if (!this.resources.storage_channels.sizeLimitOk(channel_name,
+            value.length))
         {
-            if ( this.resources.storage_channels.sizeLimitOk(
-                *this.resources.channel_buffer,
-                (*this.resources.value_buffer).length) )
-            {
-                auto storage_channel =
-                    this.resources.storage_channels.getCreate(
-                    *this.resources.channel_buffer);
-                if ( storage_channel is null )
-                {
-                    status = QueueConst.Status.E.Error;
-                }
-                else
-                {
-                    status = storage_channel.push(*this.resources.value_buffer)
-                           ? QueueConst.Status.E.Ok
-                           : QueueConst.Status.E.OutOfMemory;
-                }
-            }
-            else
-            {
-                status = QueueConst.Status.E.OutOfMemory;
-            }
-        }
-        else
-        {
-            status = QueueConst.Status.E.EmptyValue;
+            return false;
         }
 
-        this.writer.write(status);
+        assert (this.storage_channel);
+        // legacy char[] values :(
+        return this.storage_channel.push(cast(char[]) value);
     }
 }
-

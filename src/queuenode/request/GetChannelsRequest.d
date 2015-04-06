@@ -21,8 +21,11 @@ module queuenode.request.GetChannelsRequest;
 
 *******************************************************************************/
 
-private import queuenode.request.model.IRequest;
+private import Protocol = queueproto.node.request.GetChannels;
 
+private import queuenode.request.model.IQueueRequestResources;
+
+private import tango.transition;
 
 
 /*******************************************************************************
@@ -31,8 +34,16 @@ private import queuenode.request.model.IRequest;
 
 *******************************************************************************/
 
-public scope class GetChannelsRequest : IRequest
+public scope class GetChannelsRequest : Protocol.GetChannels
 {
+    /***************************************************************************
+    
+        Shared resource acquirer
+
+    ***************************************************************************/
+
+    private const IQueueRequestResources resources;
+
     /***************************************************************************
 
         Constructor
@@ -47,24 +58,9 @@ public scope class GetChannelsRequest : IRequest
     public this ( FiberSelectReader reader, FiberSelectWriter writer,
         IQueueRequestResources resources )
     {
-        super(QueueConst.Command.E.GetChannels, reader, writer, resources);
+        super(reader, writer);
+        this.resources = resources;
     }
-
-
-    /***************************************************************************
-
-        Reads any data from the client which is required for the request. If the
-        request is invalid in some way (the channel name is invalid, or the
-        command is not supported) then the command can be simply not executed,
-        and all client data has been read, leaving the read buffer in a clean
-        state ready for the next request.
-
-    ***************************************************************************/
-
-    protected void readRequestData ( )
-    {
-    }
-
 
     /***************************************************************************
 
@@ -72,16 +68,12 @@ public scope class GetChannelsRequest : IRequest
 
     ***************************************************************************/
 
-    protected void handle_ ( )
+    override protected char[][] getChannelsIds ( )
     {
-        this.writer.write(QueueConst.Status.E.Ok);
+        auto list = *this.resources.channel_list_buffer;
 
-        foreach ( channel; this.resources.storage_channels )
-        {
-            this.writer.writeArray(channel.id);
-        }
-
-        this.writer.writeArray(""); // End of list
+        foreach (channel; this.resources.storage_channels)
+            list ~= channel.id;
+        return list;
     }
 }
-

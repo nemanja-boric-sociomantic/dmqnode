@@ -21,9 +21,9 @@ module queuenode.request.PopRequest;
 
 *******************************************************************************/
 
-private import queuenode.request.model.IChannelRequest;
-
-
+private import queuenode.storage.model.QueueStorageEngine;
+private import queuenode.request.model.IQueueRequestResources;
+private import Protocol = queueproto.node.request.Pop;
 
 /*******************************************************************************
 
@@ -31,8 +31,16 @@ private import queuenode.request.model.IChannelRequest;
 
 *******************************************************************************/
 
-public scope class PopRequest : IChannelRequest
+public scope class PopRequest : Protocol.Pop
 {
+    /***************************************************************************
+
+        Shared resource acquirer
+
+    ***************************************************************************/
+
+    private const IQueueRequestResources resources;
+
     /***************************************************************************
 
         Constructor
@@ -47,37 +55,27 @@ public scope class PopRequest : IChannelRequest
     public this ( FiberSelectReader reader, FiberSelectWriter writer,
         IQueueRequestResources resources )
     {
-        super(QueueConst.Command.E.Pop, reader, writer, resources);
+        super(reader, writer, resources.channel_buffer, resources.value_buffer);
+        this.resources = resources;
     }
-
 
     /***************************************************************************
 
-        Reads any data from the client which is required for the request. If the
-        request is invalid in some way (the channel name is invalid, or the
-        command is not supported) then the command can be simply not executed,
-        and all client data has been read, leaving the read buffer in a clean
-        state ready for the next request.
+        Pops the last value from the channel.
+
+        Params:
+            channel_name = name of channel to be queried
+
+        Returns:
+            popped value, empty array if channel is empty
 
     ***************************************************************************/
 
-    protected void readRequestData_ ( )
+    override protected void[] getNextValue ( char[] channel_name )
     {
-    }
-
-
-    /***************************************************************************
-
-        Performs this request. (Fiber method.)
-
-    ***************************************************************************/
-
-    protected void handle__ ( )
-    {
-        this.writer.write(QueueConst.Status.E.Ok);
-
         auto storage_channel =
             *this.resources.channel_buffer in this.resources.storage_channels;
+
         if ( storage_channel !is null )
         {
             storage_channel.pop(*this.resources.value_buffer);
@@ -87,7 +85,7 @@ public scope class PopRequest : IChannelRequest
             (*this.resources.value_buffer).length = 0;
         }
 
-        this.writer.writeArray(*this.resources.value_buffer);
+        return *this.resources.value_buffer;
     }
 }
 

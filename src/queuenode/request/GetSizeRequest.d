@@ -21,9 +21,9 @@ module queuenode.request.GetSizeRequest;
 
 *******************************************************************************/
 
-private import queuenode.request.model.IRequest;
+private import queuenode.request.model.IQueueRequestResources;
 
-
+private import Protocol = queueproto.node.request.GetSize;
 
 /*******************************************************************************
 
@@ -31,8 +31,16 @@ private import queuenode.request.model.IRequest;
 
 *******************************************************************************/
 
-public scope class GetSizeRequest : IRequest
+public scope class GetSizeRequest : Protocol.GetSize
 {
+    /***************************************************************************
+    
+        Shared resource acquirer
+
+    ***************************************************************************/
+
+    private const IQueueRequestResources resources;
+
     /***************************************************************************
 
         Constructor
@@ -47,49 +55,32 @@ public scope class GetSizeRequest : IRequest
     public this ( FiberSelectReader reader, FiberSelectWriter writer,
         IQueueRequestResources resources )
     {
-        super(QueueConst.Command.E.GetSize, reader, writer, resources);
+        super(reader, writer);
+        this.resources = resources;
     }
-
 
     /***************************************************************************
 
-        Reads any data from the client which is required for the request. If the
-        request is invalid in some way (the channel name is invalid, or the
-        command is not supported) then the command can be simply not executed,
-        and all client data has been read, leaving the read buffer in a clean
-        state ready for the next request.
+        Calculates and return aggregated record count and total size for all
+        channels
+
+        Returns:
+            metadata that includes aggregated size of all channels
 
     ***************************************************************************/
 
-    protected void readRequestData ( )
+    override protected SizeData getSizeData ( )
     {
-    }
-
-
-    /***************************************************************************
-
-        Performs this request. (Fiber method.)
-
-    ***************************************************************************/
-
-    protected void handle_ ( )
-    {
-        this.writer.write(QueueConst.Status.E.Ok);
-
-        // TODO: is there a need to send the addr/port? surely the client knows this anyway?
-        this.writer.writeArray(this.resources.node_info.node_item.Address);
-        this.writer.write(this.resources.node_info.node_item.Port);
-
-        ulong records, bytes;
+        SizeData data;
+        data.address = this.resources.node_info.node_item.Address;
+        data.port = this.resources.node_info.node_item.Port;
 
         foreach ( channel; this.resources.storage_channels )
         {
-            records += channel.num_records;
-            bytes += channel.num_bytes;
+            data.records += channel.num_records;
+            data.bytes += channel.num_bytes;
         }
 
-        this.writer.write(records);
-        this.writer.write(bytes);
+        return data;
     }
 }
-
