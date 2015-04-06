@@ -40,6 +40,7 @@ private import queuenode.storage.Ring;
 private import queuenode.node.QueueNode;
 
 private import swarm.queue.QueueConst;
+private import swarm.core.node.model.ISwarmConnectionHandlerInfo;
 
 private import ocean.core.MessageFiber;
 
@@ -278,7 +279,8 @@ public class QueueNodeServer : LoggedCliApp
 
     ***************************************************************************/
 
-    private void nodeError ( Exception exception, IAdvancedSelectClient.Event event_info )
+    private void nodeError ( Exception exception, IAdvancedSelectClient.Event event_info,
+        ISwarmConnectionHandlerInfo.IConnectionHandlerInfo conn )
     {
         if ( cast(MessageFiber.KilledException)exception ||
              cast(IOWarning)exception )
