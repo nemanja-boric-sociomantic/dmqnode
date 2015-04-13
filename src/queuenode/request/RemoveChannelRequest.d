@@ -54,7 +54,7 @@ public scope class RemoveChannelRequest : Protocol.RemoveChannel
     public this ( FiberSelectReader reader, FiberSelectWriter writer,
         IQueueRequestResources resources )
     {
-        super(reader, writer, resources.channel_buffer);
+        super(reader, writer, resources);
         this.resources = resources;
     }
 

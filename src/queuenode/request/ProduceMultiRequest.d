@@ -54,7 +54,7 @@ public class ProduceMultiRequest : Protocol.ProduceMulti
     public this ( FiberSelectReader reader, FiberSelectWriter writer,
         IQueueRequestResources resources )
     {
-        super(reader, writer, resources.string_list_reader, resources.value_buffer);
+        super(reader, writer, resources);
         this.resources = resources;
     }
 

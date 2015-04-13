@@ -68,7 +68,7 @@ public scope class ProduceRequest : Protocol.Produce
     public this ( FiberSelectReader reader, FiberSelectWriter writer,
             IQueueRequestResources resources )
     {
-        super(reader, writer, resources.channel_buffer, resources.value_buffer);
+        super(reader, writer, resources);
         this.resources = resources;
         this.storage_channel = null;
     }

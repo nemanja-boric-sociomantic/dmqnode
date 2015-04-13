@@ -28,12 +28,10 @@ module queuenode.request.model.IQueueRequestResources;
 private import swarm.core.common.request.model.IRequestResources;
 
 private import queuenode.connection.SharedResources;
-
 private import queuenode.storage.model.QueueStorageChannels;
-
 private import queuenode.node.IQueueNodeInfo;
 
-
+private import queueproto.node.request.model.QueueCommand;
 
 /*******************************************************************************
 
@@ -54,7 +52,7 @@ mixin IRequestResources_T!(SharedResources);
 
 *******************************************************************************/
 
-public interface IQueueRequestResources : IRequestResources
+public interface IQueueRequestResources : IRequestResources, QueueCommand.Resources
 {
     /***************************************************************************
 

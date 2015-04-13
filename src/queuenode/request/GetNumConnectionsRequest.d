@@ -55,7 +55,7 @@ public scope class GetNumConnectionsRequest : Protocol.GetNumConnections
     public this ( FiberSelectReader reader, FiberSelectWriter writer,
         IQueueRequestResources resources )
     {
-        super(reader, writer);
+        super(reader, writer, resources);
         this.resources = resources;
     }
 

@@ -97,8 +97,9 @@ public class QueueConnectionHandler
 {
     /***************************************************************************
 
-        Helper class to acquire and relinquish resources required by a request
-        while it is handled. The resources are acquired from the shared
+        Helper class adding a couple of queue-specific getters as well as the
+        resource acquiring getters required by the QueueCommand protocol base
+        class. The resources are acquired from the shared
         resources instance which is passed to QueueConnectionHandler's
         constructor (in the QueueConnectionSetupParams instance). Acquired
         resources are automatically relinquished in the destructor.
@@ -110,7 +111,7 @@ public class QueueConnectionHandler
     ***************************************************************************/
 
     private scope class QueueRequestResources
-        : RequestResources, IQueueRequestResources
+        : RequestResources, IQueueRequestResources, QueueCommand.Resources
     {
         /***********************************************************************
 
@@ -123,6 +124,26 @@ public class QueueConnectionHandler
             super(this.setup.shared_resources);
         }
 
+        /***********************************************************************
+
+            Forwarding QueueCommand.Resources methods
+
+        ***********************************************************************/
+
+        override public char[]* getChannelBuffer ( )
+        {
+            return this.channel_buffer;
+        }
+
+        override public char[]* getValueBuffer ( )
+        {
+            return this.value_buffer;
+        }
+
+        override public StringListReader getChannelListReader ( )
+        {
+            return this.string_list_reader;
+        }
 
         /***********************************************************************
 

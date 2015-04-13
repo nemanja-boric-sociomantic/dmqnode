@@ -83,7 +83,7 @@ public scope class PushMulti2Request : Protocol.PushMulti2
     public this ( FiberSelectReader reader, FiberSelectWriter writer,
             IQueueRequestResources resources )
     {
-        super(reader, writer, resources.string_list_reader, resources.value_buffer);
+        super(reader, writer, resources);
         this.resources = resources;
     }
 

@@ -58,7 +58,7 @@ public scope class GetChannelsRequest : Protocol.GetChannels
     public this ( FiberSelectReader reader, FiberSelectWriter writer,
         IQueueRequestResources resources )
     {
-        super(reader, writer);
+        super(reader, writer, resources);
         this.resources = resources;
     }
 
