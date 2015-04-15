@@ -274,25 +274,32 @@ public class RingNode : StorageChannels
 
         public typeof(this) close ( )
         {
+            if ( this.file_path.exists )
+            {
+                log.warn("Closing channel '{}' -- will {} existing dump file '{}'",
+                         this.id,
+                         this.queue.length? "overwrite" : "delete",
+                         this.file_path.toString());
+            }
+            else
+            {
+                if ( this.queue.length )
+                {
+                    log.info("Closing channel '{}' -- saving in file '{}'",
+                             this.id, this.file_path.toString());
+                }
+                else
+                {
+                    log.info("Closing channel '{}' -- channel is empty, not saving", this.id);
+                }
+            }
+
             if ( this.queue.length )
             {
                 scope file = new File(this.file_path.toString(), File.WriteCreate);
                 scope ( exit ) file.close();
 
                 this.queue.serialize(file);
-            }
-            else
-            {
-                if ( this.file_path.exists )
-                {
-                    log.warn("Closing channel '{}' -- channel is empty, " ~
-                             "found file '{}', though.", this.file_path.toString());
-                }
-                else
-                {
-                    log.info("Closing channel '{}' -- channel is empty, not saving",
-                        this.id);
-                }
             }
 
             return this;
