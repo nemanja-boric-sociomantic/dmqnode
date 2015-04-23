@@ -110,7 +110,6 @@ public scope class ProduceRequest : Protocol.Produce
                 value.length) )
         {
             this.storage_channel.push(value);
-            this.resources.loop_ceder.handleCeding();
         }
 
         this.resources.loop_ceder.handleCeding();
