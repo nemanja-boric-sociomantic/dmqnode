@@ -30,7 +30,7 @@ private import ocean.util.container.queue.FlexibleRingQueue;
 
 private import ocean.util.container.mem.MemManager;
 
-private import ocean.core.Exception: assertEx;
+private import ocean.core.Exception: enforce;
 
 private import tango.io.FilePath;
 
@@ -128,6 +128,11 @@ public class RingNode : StorageChannels
         ***********************************************************************/
 
         public this ( char[] id, char[] dir, uint queue_bytes )
+        in
+        {
+            assert(!this.outer.shutting_down, "Attempted to create channel '{}' during shutdown");
+        }
+        body
         {
             super(id);
 
@@ -374,6 +379,17 @@ public class RingNode : StorageChannels
 
     /***************************************************************************
 
+        Flag indicating whether the node is currently shut down to prevent
+        creating a new channel if a Produce request sends a record during
+        shutdown.
+
+    ***************************************************************************/
+
+    private bool shutting_down = false;
+
+
+    /***************************************************************************
+
         Constructor. If the specified data directory exists, it is scanned for
         dumped queue channels, which are loaded. Otherwise the data directory is
         created.
@@ -422,10 +438,15 @@ public class RingNode : StorageChannels
         Returns:
             new storage engine
 
+        Throws:
+            Exception if the node is shutting down.
+
     ***************************************************************************/
 
     protected StorageEngine create_ ( char[] id )
     {
+        enforce(!this.shutting_down, "Cannot create channel '" ~ id ~
+                                     "' while shutting down");
         return new Ring(id, this.data_dir, super.channelSizeLimit);
     }
 
@@ -459,6 +480,19 @@ public class RingNode : StorageChannels
     public char[] type ( )
     {
         return Ring.stringof;
+    }
+
+
+    /***************************************************************************
+
+        Shuts the disk overflow down and prevents creating a new channel from
+        this point.
+
+    ***************************************************************************/
+
+    protected override void shutdown_ ( )
+    {
+        this.shutting_down = true;
     }
 
 
