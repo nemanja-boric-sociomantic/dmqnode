@@ -105,13 +105,7 @@ public scope class ProduceRequest : Protocol.Produce
     override protected void pushRecord ( char[] channel_name, char[] value )
     {
         assert (this.storage_channel !is null);
-
-        if ( this.resources.storage_channels.sizeLimitOk(channel_name,
-                value.length) )
-        {
-            this.storage_channel.push(value);
-        }
-
+        this.storage_channel.push(value);
         this.resources.loop_ceder.handleCeding();
     }
 }

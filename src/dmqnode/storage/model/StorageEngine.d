@@ -115,21 +115,6 @@ public abstract class StorageEngine : IStorageEngine
 
     /***************************************************************************
 
-        Tells whether a record will fit in this queue.
-
-        Params:
-            value = record value
-
-        Returns:
-            true if the record could be pushed
-
-     **************************************************************************/
-
-    abstract public bool willFit ( char[] value );
-
-
-    /***************************************************************************
-
         Pushes a record into queue, notifying any waiting consumers that data is
         ready.
 
@@ -141,21 +126,10 @@ public abstract class StorageEngine : IStorageEngine
 
      **************************************************************************/
 
-    public bool push ( char[] value )
+    public void push ( char[] value )
     {
-        bool pushed;
-
-        if ( this.willFit(value) )
-        {
-            pushed = this.push_(value);
-
-            if ( pushed )
-            {
-                this.consumers.trigger(Consumers.ListenerCode.DataReady);
-            }
-        }
-
-        return pushed;
+        this.push_(value);
+        this.consumers.trigger(Consumers.ListenerCode.DataReady);
     }
 
 
@@ -198,7 +172,7 @@ public abstract class StorageEngine : IStorageEngine
 
      **************************************************************************/
 
-    abstract protected bool push_ ( char[] value );
+    abstract protected void push_ ( char[] value );
 
 
     /***************************************************************************

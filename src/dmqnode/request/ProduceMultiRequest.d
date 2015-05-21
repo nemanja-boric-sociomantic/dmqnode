@@ -73,15 +73,10 @@ public class ProduceMultiRequest : Protocol.ProduceMulti
     {
         foreach ( channel; channel_names )
         {
-            if ( this.resources.storage_channels.sizeLimitOk(
-                    channel, value.length) )
+            if ( auto storage_channel =
+                 this.resources.storage_channels.getCreate(channel) )
             {
-                auto storage_channel =
-                    this.resources.storage_channels.getCreate(channel);
-                if ( storage_channel !is null )
-                {
-                    storage_channel.push(value);
-                }
+                storage_channel.push(value);
             }
         }
 

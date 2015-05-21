@@ -191,24 +191,6 @@ public class RingNode : StorageChannels
 
         /***********************************************************************
 
-            Tells whether a record will fit in this queue.
-
-            Params:
-                value = record value
-
-            Returns:
-                true if the record could be pushed
-
-        ***********************************************************************/
-
-        public bool willFit ( char[] value )
-        {
-            return this.queue.willFit(cast(ubyte[])value);
-        }
-
-
-        /***********************************************************************
-
             Pushes a record into queue.
 
             Params:
@@ -216,7 +198,7 @@ public class RingNode : StorageChannels
 
         ***********************************************************************/
 
-        protected bool push_ ( char[] value )
+        override protected void push_ ( char[] value )
         {
             this.outer.handled_record();
 
@@ -224,8 +206,6 @@ public class RingNode : StorageChannels
             {
                 this.overflow.push(value);
             }
-
-            return true;
         }
 
 

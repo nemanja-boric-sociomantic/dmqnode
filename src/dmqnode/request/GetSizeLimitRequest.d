@@ -29,18 +29,15 @@ private import Protocol = dmqproto.node.request.GetSizeLimit;
 
     GetSizeLimit request
 
+    With the queue node disk overflow there is no size
+    limit any more so the GetSizeLimit command is obsolete, and
+    GetSizeLimitRequest is a no-op request class that will be deleted when the
+    GetSizeLimit command is removed from the queue protocol.
+
 *******************************************************************************/
 
 public scope class GetSizeLimitRequest : Protocol.GetSizeLimit
 {
-    /***************************************************************************
-    
-        Shared resource acquirer
-
-    ***************************************************************************/
-
-    private const IDmqRequestResources resources;
-
     /***************************************************************************
 
         Constructor
@@ -56,25 +53,6 @@ public scope class GetSizeLimitRequest : Protocol.GetSizeLimit
         IDmqRequestResources resources )
     {
         super(reader, writer, resources);
-        this.resources = resources;
-    }
-
-    /***************************************************************************
-
-        Get channel size limit as defined by storage_channels
-
-        Returns:
-            metadata that includes amount of established connections
-
-    ***************************************************************************/
-
-    override protected SizeLimitData getSizeLimitData ( )
-    {
-        SizeLimitData data;
-        data.address = this.resources.node_info.node_item.Address;
-        data.port = this.resources.node_info.node_item.Port;
-        data.limit = this.resources.storage_channels.channelSizeLimit;
-        return data;
     }
 }
 

@@ -114,21 +114,6 @@ public scope class PushMulti2Request : Protocol.PushMulti2
 
     /***************************************************************************
 
-        Ensure there is OK to store value of specific size according to global
-        channel limits
-
-        Params:
-            value        = value to write
-
-    ***************************************************************************/
-
-    override protected bool canStoreValue ( size_t value_size )
-    {
-        return this.resources.storage_channels.sizeLimitOk(value_size);
-    }
-
-    /***************************************************************************
-
         PushMulti the value to the channel.
 
         Params:
@@ -141,22 +126,10 @@ public scope class PushMulti2Request : Protocol.PushMulti2
 
     ***************************************************************************/
 
-    override protected bool pushValue ( char[] channel_name, void[] value )
+    override protected void pushValue ( char[] channel_name, void[] value )
     {
         auto channel = this.resources.storage_channels.getCreate(channel_name);
         assert (channel); // must be already verified in this.prepareChannels
-
-        bool limit_ok = this.resources.storage_channels.sizeLimitOk(
-            channel_name, value.length);
-
-        if (limit_ok && channel.willFit(cast(char[]) value))
-        {
-            channel.push(cast(char[]) value);
-            return true;
-        }
-        else
-        {
-            return false;
-        }
+        channel.push(cast(char[]) value);
     }
 }

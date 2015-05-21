@@ -68,18 +68,6 @@ public scope class PushRequest : Protocol.Push
         this.resources = resources;
     }
 
-    /***************************************************************************
-
-        Ensures that requested channel exists or can be created
-
-        Params:
-            channel_name = name of channel to be prepared
-
-        Return:
-            `true` if it is possible to proceed with Push request
-
-    ***************************************************************************/
-
     override protected bool prepareChannel ( char[] channel_name )
     {
         this.storage_channel = this.resources.storage_channels.getCreate(
@@ -95,22 +83,12 @@ public scope class PushRequest : Protocol.Push
             channel_name = name of channel to be writter to
             value        = value to write
 
-        Returns:
-            "true" if writing the value was possible
-            "false" if there wasn't enough space
-
     ***************************************************************************/
 
-    override protected bool pushValue ( char[] channel_name, void[] value )
+    override protected void pushValue ( char[] channel_name, void[] value )
     {
-        if (!this.resources.storage_channels.sizeLimitOk(channel_name,
-            value.length))
-        {
-            return false;
-        }
-
         assert (this.storage_channel);
         // legacy char[] values :(
-        return this.storage_channel.push(cast(char[]) value);
+        this.storage_channel.push(cast(char[]) value);
     }
 }
