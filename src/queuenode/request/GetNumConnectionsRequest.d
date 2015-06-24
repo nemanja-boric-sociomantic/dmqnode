@@ -23,7 +23,7 @@ module queuenode.request.GetNumConnectionsRequest;
 
 private import queuenode.request.model.IQueueRequestResources;
 
-private import Protocol = queueproto.node.request.GetNumConnections;
+private import Protocol = dmqproto.node.request.GetNumConnections;
 
 /*******************************************************************************
 

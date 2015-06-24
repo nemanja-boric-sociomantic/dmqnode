@@ -24,7 +24,7 @@ module queuenode.request.PushRequest;
 private import queuenode.storage.model.QueueStorageEngine;
 private import queuenode.request.model.IQueueRequestResources;
 
-private import Protocol = queueproto.node.request.Push;
+private import Protocol = dmqproto.node.request.Push;
 
 /*******************************************************************************
 

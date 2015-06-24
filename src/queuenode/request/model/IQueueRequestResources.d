@@ -31,7 +31,7 @@ private import queuenode.connection.SharedResources;
 private import queuenode.storage.model.QueueStorageChannels;
 private import queuenode.node.IQueueNodeInfo;
 
-private import queueproto.node.request.model.QueueCommand;
+private import dmqproto.node.request.model.DmqCommand;
 
 /*******************************************************************************
 
@@ -52,7 +52,7 @@ mixin IRequestResources_T!(SharedResources);
 
 *******************************************************************************/
 
-public interface IQueueRequestResources : IRequestResources, QueueCommand.Resources
+public interface IQueueRequestResources : IRequestResources, DmqCommand.Resources
 {
     /***************************************************************************
 

@@ -22,7 +22,7 @@ module queuenode.request.RemoveChannelRequest;
 
 private import queuenode.request.model.IQueueRequestResources;
 
-private import Protocol = queueproto.node.request.RemoveChannel;
+private import Protocol = dmqproto.node.request.RemoveChannel;
 
 /*******************************************************************************
 

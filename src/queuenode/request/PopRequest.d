@@ -23,7 +23,7 @@ module queuenode.request.PopRequest;
 
 private import queuenode.storage.model.QueueStorageEngine;
 private import queuenode.request.model.IQueueRequestResources;
-private import Protocol = queueproto.node.request.Pop;
+private import Protocol = dmqproto.node.request.Pop;
 
 /*******************************************************************************
 

@@ -23,7 +23,7 @@ module queuenode.request.ProduceRequest;
 
 private import queuenode.request.model.IQueueRequestResources;
 private import queuenode.storage.model.QueueStorageEngine;
-private import Protocol = queueproto.node.request.Produce;
+private import Protocol = dmqproto.node.request.Produce;
 
 private import swarm.core.common.request.helper.LoopCeder;
 

@@ -23,7 +23,7 @@ module queuenode.request.GetSizeRequest;
 
 private import queuenode.request.model.IQueueRequestResources;
 
-private import Protocol = queueproto.node.request.GetSize;
+private import Protocol = dmqproto.node.request.GetSize;
 
 /*******************************************************************************
 

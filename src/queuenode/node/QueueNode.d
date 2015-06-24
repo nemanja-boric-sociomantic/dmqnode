@@ -30,7 +30,7 @@ private import queuenode.connection.QueueConnectionHandler;
 private import queuenode.storage.model.QueueStorageEngine;
 private import queuenode.storage.model.QueueStorageChannels;
 
-private import swarm.queue.QueueConst;
+private import swarm.dmq.DmqConst;
 
 private import queuenode.connection.SharedResources;
 
@@ -59,7 +59,7 @@ public class QueueNode
 
     ***************************************************************************/
 
-    public this ( QueueConst.NodeItem node_item, QueueStorageChannels channels,
+    public this ( DmqConst.NodeItem node_item, QueueStorageChannels channels,
         EpollSelectDispatcher epoll, int backlog )
     {
         auto conn_setup_params = new QueueConnectionSetupParams;

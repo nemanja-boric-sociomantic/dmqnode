@@ -18,7 +18,7 @@ module queuenode.request.ProduceMultiRequest;
 
 *******************************************************************************/
 
-private import Protocol = queueproto.node.request.ProduceMulti;
+private import Protocol = dmqproto.node.request.ProduceMulti;
 
 private import queuenode.request.model.IQueueRequestResources;
 

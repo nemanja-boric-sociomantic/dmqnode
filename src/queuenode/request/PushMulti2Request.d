@@ -51,7 +51,7 @@ private import swarm.core.Const;
 
 private import queuenode.request.model.IQueueRequestResources;
 
-private import Protocol = queueproto.node.request.PushMulti2;
+private import Protocol = dmqproto.node.request.PushMulti2;
 
 /*******************************************************************************
 

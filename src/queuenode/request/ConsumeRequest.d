@@ -23,7 +23,7 @@ module queuenode.request.ConsumeRequest;
 
 private import queuenode.storage.model.QueueStorageEngine;
 private import queuenode.request.model.IQueueRequestResources;
-private import Protocol = queueproto.node.request.Consume;
+private import Protocol = dmqproto.node.request.Consume;
 
 private import ocean.core.Array : copy;
 

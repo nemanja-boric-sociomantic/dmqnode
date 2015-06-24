@@ -23,9 +23,9 @@ module queuenode.connection.QueueConnectionHandler;
 private import swarm.core.node.connection.ConnectionHandler;
 private import swarm.core.node.model.INodeInfo;
 
-private import swarm.queue.QueueConst;
+private import swarm.dmq.DmqConst;
 
-private import queueproto.node.request.model.QueueCommand;
+private import dmqproto.node.request.model.DmqCommand;
 
 private import queuenode.connection.SharedResources;
 
@@ -93,12 +93,12 @@ public class QueueConnectionSetupParams : ConnectionSetupParams
 *******************************************************************************/
 
 public class QueueConnectionHandler
-    : ConnectionHandlerTemplate!(QueueConst.Command)
+    : ConnectionHandlerTemplate!(DmqConst.Command)
 {
     /***************************************************************************
 
         Helper class adding a couple of queue-specific getters as well as the
-        resource acquiring getters required by the QueueCommand protocol base
+        resource acquiring getters required by the DmqCommand protocol base
         class. The resources are acquired from the shared
         resources instance which is passed to QueueConnectionHandler's
         constructor (in the QueueConnectionSetupParams instance). Acquired
@@ -111,7 +111,7 @@ public class QueueConnectionHandler
     ***************************************************************************/
 
     private scope class QueueRequestResources
-        : RequestResources, IQueueRequestResources, QueueCommand.Resources
+        : RequestResources, IQueueRequestResources, DmqCommand.Resources
     {
         /***********************************************************************
 
@@ -126,7 +126,7 @@ public class QueueConnectionHandler
 
         /***********************************************************************
 
-            Forwarding QueueCommand.Resources methods
+            Forwarding DmqCommand.Resources methods
 
         ***********************************************************************/
 
@@ -508,7 +508,7 @@ public class QueueConnectionHandler
 
     ***************************************************************************/
 
-    private void handleCommand ( Handler : QueueCommand ) ( )
+    private void handleCommand ( Handler : DmqCommand ) ( )
     {
         scope resources = new QueueRequestResources;
         scope handler = new Handler(this.reader, this.writer, resources);

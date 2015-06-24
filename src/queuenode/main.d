@@ -39,7 +39,7 @@ private import queuenode.app.periodic.PeriodicWriterFlush;
 private import queuenode.storage.Ring;
 private import queuenode.node.QueueNode;
 
-private import swarm.queue.QueueConst;
+private import swarm.dmq.DmqConst;
 private import swarm.core.node.model.ISwarmConnectionHandlerInfo;
 
 private import ocean.core.MessageFiber;
@@ -201,7 +201,7 @@ public class QueueNodeServer : LoggedCliApp
         ConfigReader.fill("Performance", this.performance_config, config);
 
         this.node = new QueueNode(
-                QueueConst.NodeItem(this.server_config.address(),
+                DmqConst.NodeItem(this.server_config.address(),
                     this.server_config.port()),
                 new RingNode(this.server_config.data_dir, &this.handledRecord,
                     this.server_config.size_limit,

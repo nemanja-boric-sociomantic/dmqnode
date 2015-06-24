@@ -21,7 +21,7 @@ module queuenode.request.GetChannelsRequest;
 
 *******************************************************************************/
 
-private import Protocol = queueproto.node.request.GetChannels;
+private import Protocol = dmqproto.node.request.GetChannels;
 
 private import queuenode.request.model.IQueueRequestResources;
 

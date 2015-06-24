@@ -20,7 +20,7 @@ module queuenode.request.GetChannelSizeRequest;
 
 *******************************************************************************/
 
-private import Protocol = queueproto.node.request.GetChannelSize;
+private import Protocol = dmqproto.node.request.GetChannelSize;
 
 private import queuenode.request.model.IQueueRequestResources;
 

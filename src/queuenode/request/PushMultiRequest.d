@@ -21,7 +21,7 @@ module queuenode.request.PushMultiRequest;
 
 private import queuenode.request.model.IQueueRequestResources;
 
-private import Protocol = queueproto.node.request.PushMulti;
+private import Protocol = dmqproto.node.request.PushMulti;
 
 /*******************************************************************************
 

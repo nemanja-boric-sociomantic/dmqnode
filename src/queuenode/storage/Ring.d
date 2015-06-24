@@ -24,7 +24,7 @@ private import queuenode.storage.model.QueueStorageChannels;
 
 private import queuenode.storage.model.QueueStorageEngine;
 
-private import swarm.queue.QueueConst;
+private import swarm.dmq.DmqConst;
 
 private import ocean.util.container.queue.FlexibleRingQueue;
 
