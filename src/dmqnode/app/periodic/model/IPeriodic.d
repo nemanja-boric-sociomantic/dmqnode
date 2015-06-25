@@ -28,8 +28,8 @@ private import ocean.io.select.EpollSelectDispatcher;
 
 private import dmqnode.app.util.Terminator;
 
-private import swarm.core.node.model.INode;
-private import swarm.core.node.model.IChannelsNodeInfo;
+private import dmqnode.node.DmqNode,
+               dmqnode.node.IDmqNodeInfo;
 
 private import tango.util.log.Log;
 
@@ -63,9 +63,9 @@ public abstract class IPeriodic : ITimerEvent
 
     ***************************************************************************/
 
-    protected alias .INode INode;
+    protected alias .DmqNode DmqNode;
 
-    protected alias .IChannelsNodeInfo IChannelsNodeInfo;
+    protected alias .IDmqNodeInfo IDmqNodeInfo;
 
     protected alias .EpollSelectDispatcher EpollSelectDispatcher;
 
@@ -76,8 +76,8 @@ public abstract class IPeriodic : ITimerEvent
 
     ***************************************************************************/
 
-    protected INode node;
-    protected IChannelsNodeInfo node_info;
+    protected DmqNode node;
+    protected IDmqNodeInfo node_info;
 
 
     /***************************************************************************
@@ -136,11 +136,9 @@ public abstract class IPeriodic : ITimerEvent
 
     ***************************************************************************/
 
-    public void setNode ( INode node )
+    public void setNode ( DmqNode node )
     {
-        this.node_info = cast(IChannelsNodeInfo)(this.node = node);
-        assert(this.node);
-        assert(this.node_info);
+        this.node_info = this.node = node;
     }
 
 

@@ -52,7 +52,7 @@ public class Periodics
 
     ***************************************************************************/
 
-    private const IPeriodic.INode node;
+    private const IPeriodic.DmqNode node;
 
 
     /***************************************************************************
@@ -74,7 +74,7 @@ public class Periodics
 
     ***************************************************************************/
 
-    public this ( IPeriodic.INode node, EpollSelectDispatcher epoll )
+    public this ( IPeriodic.DmqNode node, EpollSelectDispatcher epoll )
     {
         this.node  = node;
         this.epoll = epoll;
