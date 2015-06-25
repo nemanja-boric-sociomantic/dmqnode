@@ -2,8 +2,8 @@ override LDFLAGS += -llzo2
 
 # Modules to exclude from testing
 TEST_FILTER_OUT += \
-	$T/src/queuenode/main.d
+	$T/src/dmqnode/main.d
 
-$B/queuenode: src/queuenode/main.d
-queuenode: $B/queuenode
-all += queuenode
+$B/dmqnode: src/dmqnode/main.d
+dmqnode: $B/dmqnode
+all += dmqnode
