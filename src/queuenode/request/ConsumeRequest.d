@@ -21,8 +21,8 @@ module queuenode.request.ConsumeRequest;
 
 *******************************************************************************/
 
-private import queuenode.storage.model.QueueStorageEngine;
-private import queuenode.request.model.IQueueRequestResources;
+private import queuenode.storage.model.StorageEngine;
+private import queuenode.request.model.IDmqRequestResources;
 private import Protocol = dmqproto.node.request.Consume;
 
 private import ocean.core.Array : copy;
@@ -35,7 +35,7 @@ private import ocean.core.Array : copy;
 
 *******************************************************************************/
 
-public scope class ConsumeRequest : Protocol.Consume, QueueStorageEngine.IConsumer
+public scope class ConsumeRequest : Protocol.Consume, StorageEngine.IConsumer
 {
     /***************************************************************************
 
@@ -44,7 +44,7 @@ public scope class ConsumeRequest : Protocol.Consume, QueueStorageEngine.IConsum
 
     ***************************************************************************/
 
-    private QueueStorageEngine storage_channel;
+    private StorageEngine storage_channel;
 
     /***************************************************************************
 
@@ -52,7 +52,7 @@ public scope class ConsumeRequest : Protocol.Consume, QueueStorageEngine.IConsum
 
     ***************************************************************************/
 
-    private const IQueueRequestResources resources;
+    private const IDmqRequestResources resources;
 
     /***************************************************************************
 
@@ -84,7 +84,7 @@ public scope class ConsumeRequest : Protocol.Consume, QueueStorageEngine.IConsum
     ***************************************************************************/
 
     public this ( FiberSelectReader reader, FiberSelectWriter writer,
-        IQueueRequestResources resources )
+        IDmqRequestResources resources )
     {
         super(reader, writer, resources);
         this.resources = resources;

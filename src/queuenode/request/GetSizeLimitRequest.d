@@ -21,7 +21,7 @@ module queuenode.request.GetSizeLimitRequest;
 
 *******************************************************************************/
 
-private import queuenode.request.model.IQueueRequestResources;
+private import queuenode.request.model.IDmqRequestResources;
 
 private import Protocol = dmqproto.node.request.GetSizeLimit;
 
@@ -39,7 +39,7 @@ public scope class GetSizeLimitRequest : Protocol.GetSizeLimit
 
     ***************************************************************************/
 
-    private const IQueueRequestResources resources;
+    private const IDmqRequestResources resources;
 
     /***************************************************************************
 
@@ -53,7 +53,7 @@ public scope class GetSizeLimitRequest : Protocol.GetSizeLimit
     ***************************************************************************/
 
     public this ( FiberSelectReader reader, FiberSelectWriter writer,
-        IQueueRequestResources resources )
+        IDmqRequestResources resources )
     {
         super(reader, writer, resources);
         this.resources = resources;

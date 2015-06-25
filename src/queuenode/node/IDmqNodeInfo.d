@@ -1,6 +1,6 @@
 /*******************************************************************************
 
-    Information interface for Queue Node
+    Information interface for the Distributed Message Queue Node
 
     copyright:      Copyright (c) 2011 sociomantic labs. All rights reserved
 
@@ -10,7 +10,7 @@
 
 *******************************************************************************/
 
-module queuenode.node.IQueueNodeInfo;
+module queuenode.node.IDmqNodeInfo;
 
 
 
@@ -24,7 +24,7 @@ private import swarm.core.node.model.IChannelsNodeInfo;
 
 
 
-interface IQueueNodeInfo : IChannelsNodeInfo
+interface IDmqNodeInfo : IChannelsNodeInfo
 {
     /***************************************************************************
 

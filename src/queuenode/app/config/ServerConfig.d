@@ -3,7 +3,7 @@
     copyright:      Copyright (c) 2012 sociomantic labs. All rights reserved
 
     version:        04/06/2012: Initial release
-                    30/05/2013: Combined dht and queue project
+                    30/05/2013: Combined dht and dmq project
 
     authors:        Gavin Norman, Hans Bjerkander
 

@@ -19,7 +19,7 @@ module queuenode.request.PushMultiRequest;
 
 *******************************************************************************/
 
-private import queuenode.request.model.IQueueRequestResources;
+private import queuenode.request.model.IDmqRequestResources;
 
 private import Protocol = dmqproto.node.request.PushMulti;
 
@@ -37,7 +37,7 @@ public scope class PushMultiRequest : Protocol.PushMulti
 
     ***************************************************************************/
 
-    private const IQueueRequestResources resources;
+    private const IDmqRequestResources resources;
 
     /***************************************************************************
 
@@ -51,7 +51,7 @@ public scope class PushMultiRequest : Protocol.PushMulti
     ***************************************************************************/
 
     public this ( FiberSelectReader reader, FiberSelectWriter writer,
-            IQueueRequestResources resources )
+            IDmqRequestResources resources )
     {
         super(reader, writer, resources);
         this.resources = resources;

@@ -20,7 +20,7 @@ module queuenode.request.ProduceMultiRequest;
 
 private import Protocol = dmqproto.node.request.ProduceMulti;
 
-private import queuenode.request.model.IQueueRequestResources;
+private import queuenode.request.model.IDmqRequestResources;
 
 private import swarm.core.common.request.helper.LoopCeder;
 
@@ -38,7 +38,7 @@ public class ProduceMultiRequest : Protocol.ProduceMulti
 
     ***************************************************************************/
 
-    private IQueueRequestResources resources;
+    private IDmqRequestResources resources;
     
     /***************************************************************************
 
@@ -52,7 +52,7 @@ public class ProduceMultiRequest : Protocol.ProduceMulti
     ***************************************************************************/
 
     public this ( FiberSelectReader reader, FiberSelectWriter writer,
-        IQueueRequestResources resources )
+        IDmqRequestResources resources )
     {
         super(reader, writer, resources);
         this.resources = resources;

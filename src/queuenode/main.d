@@ -1,11 +1,11 @@
 /*******************************************************************************
 
-    Queue Node Server
+    Distributed Message Queue Node Server
 
     copyright:  Copyright (c) 2011 sociomantic labs. All rights reserved
 
     version:    October 2010: Initial release
-                May 2013: Combined dht and queue project
+                May 2013: Combined dht and dmq project
 
     authors:    David Eckardt, Gavin Norman
                 Thomas Nicolai, Lars Kirchhoff
@@ -37,7 +37,7 @@ private import queuenode.app.periodic.PeriodicStats;
 private import queuenode.app.periodic.PeriodicWriterFlush;
 
 private import queuenode.storage.Ring;
-private import queuenode.node.QueueNode;
+private import queuenode.node.DmqNode;
 
 private import swarm.dmq.DmqConst;
 private import swarm.core.node.model.ISwarmConnectionHandlerInfo;
@@ -81,7 +81,7 @@ static this ( )
 /*******************************************************************************
 
     Main function. Parses command line arguments and either displays help or
-    starts queue node.
+    starts the DMQ node.
 
     Params:
         cl_args = array with raw command line arguments
@@ -90,7 +90,7 @@ static this ( )
 
 private int main ( char[][] cl_args )
 {
-    auto app = new QueueNodeServer;
+    auto app = new DmqNodeServer;
     return app.main(cl_args);
 }
 
@@ -98,11 +98,11 @@ private int main ( char[][] cl_args )
 
 /*******************************************************************************
 
-    QueueServer
+    DMQ Node Server
 
 *******************************************************************************/
 
-public class QueueNodeServer : LoggedCliApp
+public class DmqNodeServer : LoggedCliApp
 {
     /***************************************************************************
 
@@ -124,11 +124,11 @@ public class QueueNodeServer : LoggedCliApp
 
     /***************************************************************************
 
-        Queue node instance
+        DMQ node instance
 
      **************************************************************************/
 
-    private QueueNode node;
+    private DmqNode node;
 
 
     /***************************************************************************
@@ -168,8 +168,8 @@ public class QueueNodeServer : LoggedCliApp
 
     public this ( )
     {
-        const app_name = "queuenode";
-        const app_desc = "queuenode: distributed queue server node.";
+        const app_name = "dmqnode";
+        const app_desc = "dmqnode: distributed message queue server node.";
         const usage = null;
         const help = null;
         const use_insert_appender = false;
@@ -200,7 +200,7 @@ public class QueueNodeServer : LoggedCliApp
         ConfigReader.fill("Server", this.server_config, config);
         ConfigReader.fill("Performance", this.performance_config, config);
 
-        this.node = new QueueNode(
+        this.node = new DmqNode(
                 DmqConst.NodeItem(this.server_config.address(),
                     this.server_config.port()),
                 new RingNode(this.server_config.data_dir, &this.handledRecord,
@@ -254,8 +254,8 @@ public class QueueNodeServer : LoggedCliApp
 
         Callback when a record is pushed or popped. Updates the stats counter
         for records handled. Note that this extra delegate (in addition to the
-        QueueNode's handledRecord() method) is necessary, as it's required by
-        the ctor of the RingNode instance which is passed to QueueNode's ctor
+        DmqNode's handledRecord() method) is necessary, as it's required by
+        the ctor of the RingNode instance which is passed to DmqNode's ctor
         (see processConfig(), above) -- it's not possible to pass a delegate of
         an object which does not yet exist.
 

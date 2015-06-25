@@ -21,8 +21,8 @@ module queuenode.request.PushRequest;
 
 *******************************************************************************/
 
-private import queuenode.storage.model.QueueStorageEngine;
-private import queuenode.request.model.IQueueRequestResources;
+private import queuenode.storage.model.StorageEngine;
+private import queuenode.request.model.IDmqRequestResources;
 
 private import Protocol = dmqproto.node.request.Push;
 
@@ -40,7 +40,7 @@ public scope class PushRequest : Protocol.Push
 
     ***************************************************************************/
 
-    private QueueStorageEngine storage_channel;
+    private StorageEngine storage_channel;
 
     /***************************************************************************
 
@@ -48,7 +48,7 @@ public scope class PushRequest : Protocol.Push
 
     ***************************************************************************/
 
-    private const IQueueRequestResources resources;
+    private const IDmqRequestResources resources;
 
     /***************************************************************************
 
@@ -62,7 +62,7 @@ public scope class PushRequest : Protocol.Push
     ***************************************************************************/
 
     public this ( FiberSelectReader reader, FiberSelectWriter writer,
-        IQueueRequestResources resources )
+        IDmqRequestResources resources )
     {
         super(reader, writer, resources);
         this.resources = resources;

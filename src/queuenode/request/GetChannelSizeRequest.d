@@ -22,7 +22,7 @@ module queuenode.request.GetChannelSizeRequest;
 
 private import Protocol = dmqproto.node.request.GetChannelSize;
 
-private import queuenode.request.model.IQueueRequestResources;
+private import queuenode.request.model.IDmqRequestResources;
 
 
 /*******************************************************************************
@@ -39,7 +39,7 @@ public scope class GetChannelSizeRequest : Protocol.GetChannelSize
 
     ***************************************************************************/
 
-    private IQueueRequestResources resources;
+    private IDmqRequestResources resources;
 
     /***************************************************************************
 
@@ -53,7 +53,7 @@ public scope class GetChannelSizeRequest : Protocol.GetChannelSize
     ***************************************************************************/
 
     public this ( FiberSelectReader reader, FiberSelectWriter writer,
-        IQueueRequestResources resources )
+        IDmqRequestResources resources )
     {
         super(reader, writer, resources);
         this.resources = resources;

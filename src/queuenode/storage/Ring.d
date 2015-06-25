@@ -20,9 +20,9 @@ module queuenode.storage.Ring;
 
 *******************************************************************************/
 
-private import queuenode.storage.model.QueueStorageChannels;
+private import queuenode.storage.model.StorageChannels;
 
-private import queuenode.storage.model.QueueStorageEngine;
+private import queuenode.storage.model.StorageEngine;
 
 private import swarm.dmq.DmqConst;
 
@@ -67,7 +67,7 @@ static this ( )
 
 *******************************************************************************/
 
-public class RingNode : QueueStorageChannels
+public class RingNode : StorageChannels
 {
     /***************************************************************************
 
@@ -84,7 +84,7 @@ public class RingNode : QueueStorageChannels
 
     ***************************************************************************/
 
-    private class Ring : QueueStorageEngine
+    private class Ring : StorageEngine
     {
         /***********************************************************************
 
@@ -424,7 +424,7 @@ public class RingNode : QueueStorageChannels
 
     ***************************************************************************/
 
-    protected QueueStorageEngine create_ ( char[] id )
+    protected StorageEngine create_ ( char[] id )
     {
         return new Ring(id, this.data_dir, super.channelSizeLimit);
     }

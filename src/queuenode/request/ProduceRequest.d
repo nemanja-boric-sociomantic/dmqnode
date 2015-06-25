@@ -21,8 +21,8 @@ module queuenode.request.ProduceRequest;
 
 *******************************************************************************/
 
-private import queuenode.request.model.IQueueRequestResources;
-private import queuenode.storage.model.QueueStorageEngine;
+private import queuenode.request.model.IDmqRequestResources;
+private import queuenode.storage.model.StorageEngine;
 private import Protocol = dmqproto.node.request.Produce;
 
 private import swarm.core.common.request.helper.LoopCeder;
@@ -44,7 +44,7 @@ public scope class ProduceRequest : Protocol.Produce
 
     ***************************************************************************/
 
-    private QueueStorageEngine storage_channel;
+    private StorageEngine storage_channel;
 
     /***************************************************************************
 
@@ -52,7 +52,7 @@ public scope class ProduceRequest : Protocol.Produce
 
     ***************************************************************************/
 
-    private const IQueueRequestResources resources;
+    private const IDmqRequestResources resources;
 
     /***************************************************************************
 
@@ -66,7 +66,7 @@ public scope class ProduceRequest : Protocol.Produce
     ***************************************************************************/
 
     public this ( FiberSelectReader reader, FiberSelectWriter writer,
-            IQueueRequestResources resources )
+            IDmqRequestResources resources )
     {
         super(reader, writer, resources);
         this.resources = resources;

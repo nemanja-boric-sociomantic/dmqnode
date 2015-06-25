@@ -7,7 +7,7 @@
     authors:        Gavin Norman
 
     Interface and base scope class containing getter methods to acquire
-    resources needed by a queue node request. Multiple calls to the same getter
+    resources needed by a DMQ node request. Multiple calls to the same getter
     only result in the acquiring of a single resource of that type, so that the
     same resource is used over the life time of a request. When a request
     resource instance goes out of scope all required resources are automatically
@@ -15,7 +15,7 @@
 
 *******************************************************************************/
 
-module queuenode.request.model.IQueueRequestResources;
+module queuenode.request.model.IDmqRequestResources;
 
 
 
@@ -28,8 +28,8 @@ module queuenode.request.model.IQueueRequestResources;
 private import swarm.core.common.request.model.IRequestResources;
 
 private import queuenode.connection.SharedResources;
-private import queuenode.storage.model.QueueStorageChannels;
-private import queuenode.node.IQueueNodeInfo;
+private import queuenode.storage.model.StorageChannels;
+private import queuenode.node.IDmqNodeInfo;
 
 private import dmqproto.node.request.model.DmqCommand;
 
@@ -48,11 +48,11 @@ mixin IRequestResources_T!(SharedResources);
 /*******************************************************************************
 
     Interface which extends the base IRequestResources, adding a couple of
-    queue-specific getters.
+    DMQ-specific getters.
 
 *******************************************************************************/
 
-public interface IQueueRequestResources : IRequestResources, DmqCommand.Resources
+public interface IDmqRequestResources : IRequestResources, DmqCommand.Resources
 {
     /***************************************************************************
 
@@ -63,8 +63,8 @@ public interface IQueueRequestResources : IRequestResources, DmqCommand.Resource
     alias .FiberSelectEvent FiberSelectEvent;
     alias .StringListReader StringListReader;
     alias .LoopCeder LoopCeder;
-    alias .QueueStorageChannels QueueStorageChannels;
-    alias .IQueueNodeInfo IQueueNodeInfo;
+    alias .StorageChannels StorageChannels;
+    alias .IDmqNodeInfo IDmqNodeInfo;
 
 
     /***************************************************************************
@@ -73,7 +73,7 @@ public interface IQueueRequestResources : IRequestResources, DmqCommand.Resource
 
     ***************************************************************************/
 
-    QueueStorageChannels storage_channels ( );
+    StorageChannels storage_channels ( );
 
 
     /***************************************************************************
@@ -82,7 +82,7 @@ public interface IQueueRequestResources : IRequestResources, DmqCommand.Resource
 
     ***************************************************************************/
 
-    IQueueNodeInfo node_info ( );
+    IDmqNodeInfo node_info ( );
 }
 
 
@@ -91,8 +91,8 @@ public interface IQueueRequestResources : IRequestResources, DmqCommand.Resource
 
     Mix in a scope class called RequestResources which implements
     IRequestResources. Note that this class does not implement the additional
-    methods required by IQueueRequestResources -- this is done in
-     queuenode.connection.QueueConnectionHandler.
+    methods required by IDmqRequestResources -- this is done in
+     dmqnode.connection.ConnectionHandler.
 
 *******************************************************************************/
 

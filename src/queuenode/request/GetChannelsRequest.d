@@ -23,7 +23,7 @@ module queuenode.request.GetChannelsRequest;
 
 private import Protocol = dmqproto.node.request.GetChannels;
 
-private import queuenode.request.model.IQueueRequestResources;
+private import queuenode.request.model.IDmqRequestResources;
 
 private import tango.transition;
 
@@ -42,7 +42,7 @@ public scope class GetChannelsRequest : Protocol.GetChannels
 
     ***************************************************************************/
 
-    private const IQueueRequestResources resources;
+    private const IDmqRequestResources resources;
 
     /***************************************************************************
 
@@ -56,7 +56,7 @@ public scope class GetChannelsRequest : Protocol.GetChannels
     ***************************************************************************/
 
     public this ( FiberSelectReader reader, FiberSelectWriter writer,
-        IQueueRequestResources resources )
+        IDmqRequestResources resources )
     {
         super(reader, writer, resources);
         this.resources = resources;

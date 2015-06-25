@@ -1,6 +1,6 @@
 /*******************************************************************************
 
-    Queue Node Implementation
+    Distributed Message Queue Node Implementation
 
     copyright:      Copyright (c) 2011 sociomantic labs. All rights reserved
 
@@ -11,7 +11,7 @@
 
 *******************************************************************************/
 
-module queuenode.node.QueueNode;
+module queuenode.node.DmqNode;
 
 
 
@@ -23,12 +23,12 @@ module queuenode.node.QueueNode;
 
 private import swarm.core.node.model.ChannelsNode : ChannelsNodeBase;
 
-private import queuenode.node.IQueueNodeInfo;
+private import queuenode.node.IDmqNodeInfo;
 
-private import queuenode.connection.QueueConnectionHandler;
+private import queuenode.connection.ConnectionHandler;
 
-private import queuenode.storage.model.QueueStorageEngine;
-private import queuenode.storage.model.QueueStorageChannels;
+private import queuenode.storage.model.StorageEngine;
+private import queuenode.storage.model.StorageChannels;
 
 private import swarm.dmq.DmqConst;
 
@@ -40,12 +40,12 @@ private import ocean.io.select.EpollSelectDispatcher;
 
 /*******************************************************************************
 
-    QueueNode
+    DmqNode
 
 *******************************************************************************/
 
-public class QueueNode
-    : ChannelsNodeBase!(QueueStorageEngine, QueueConnectionHandler), IQueueNodeInfo
+public class DmqNode
+    : ChannelsNodeBase!(StorageEngine, ConnectionHandler), IDmqNodeInfo
 {
     /***************************************************************************
 
@@ -59,10 +59,10 @@ public class QueueNode
 
     ***************************************************************************/
 
-    public this ( DmqConst.NodeItem node_item, QueueStorageChannels channels,
+    public this ( DmqConst.NodeItem node_item, StorageChannels channels,
         EpollSelectDispatcher epoll, int backlog )
     {
-        auto conn_setup_params = new QueueConnectionSetupParams;
+        auto conn_setup_params = new ConnectionSetupParams;
         conn_setup_params.node_info = this;
         conn_setup_params.epoll = epoll;
         conn_setup_params.storage_channels = channels;
@@ -79,7 +79,7 @@ public class QueueNode
 
     ***************************************************************************/
 
-    public IQueueNodeInfo node_info ( )
+    public IDmqNodeInfo node_info ( )
     {
         return this;
     }
@@ -94,7 +94,7 @@ public class QueueNode
 
     public ulong channelSizeLimit ( )
     {
-        return (cast(QueueStorageChannels)super.channels).channelSizeLimit;
+        return (cast(StorageChannels)super.channels).channelSizeLimit;
     }
 
 

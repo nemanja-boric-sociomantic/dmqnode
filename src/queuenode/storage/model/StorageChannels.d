@@ -15,7 +15,7 @@
 
 *******************************************************************************/
 
-module queuenode.storage.model.QueueStorageChannels;
+module queuenode.storage.model.StorageChannels;
 
 
 
@@ -27,18 +27,18 @@ module queuenode.storage.model.QueueStorageChannels;
 
 private import swarm.core.node.storage.model.IStorageChannels;
 
-private import queuenode.storage.model.QueueStorageEngine;
+private import queuenode.storage.model.StorageEngine;
 
 
 
 /*******************************************************************************
 
-    QueueStorageChannels base class
+    StorageChannels base class
 
 *******************************************************************************/
 
-public abstract class QueueStorageChannels :
-    IStorageChannelsTemplate!(QueueStorageEngine)
+public abstract class StorageChannels :
+    IStorageChannelsTemplate!(StorageEngine)
 {
     /***************************************************************************
 

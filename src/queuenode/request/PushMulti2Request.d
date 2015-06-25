@@ -49,7 +49,7 @@ module queuenode.request.PushMulti2Request;
 
 private import swarm.core.Const;
 
-private import queuenode.request.model.IQueueRequestResources;
+private import queuenode.request.model.IDmqRequestResources;
 
 private import Protocol = dmqproto.node.request.PushMulti2;
 
@@ -67,7 +67,7 @@ public scope class PushMulti2Request : Protocol.PushMulti2
 
     ***************************************************************************/
 
-    private const IQueueRequestResources resources;
+    private const IDmqRequestResources resources;
 
     /***************************************************************************
 
@@ -81,7 +81,7 @@ public scope class PushMulti2Request : Protocol.PushMulti2
     ***************************************************************************/
 
     public this ( FiberSelectReader reader, FiberSelectWriter writer,
-            IQueueRequestResources resources )
+            IDmqRequestResources resources )
     {
         super(reader, writer, resources);
         this.resources = resources;

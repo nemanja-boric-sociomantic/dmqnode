@@ -10,7 +10,7 @@
 
     Description:
 
-    The QueueStorageEngine abstract class is the base class for the storage engines
+    The StorageEngine abstract class is the base class for the storage engines
     used in the Queue Node.
 
     The queue storage engine extends the base storage engine with the following
@@ -21,7 +21,7 @@
 
 *******************************************************************************/
 
-module queuenode.storage.model.QueueStorageEngine;
+module queuenode.storage.model.StorageEngine;
 
 
 
@@ -47,7 +47,7 @@ private import tango.sys.Environment;
 
 
 
-public abstract class QueueStorageEngine : IStorageEngine
+public abstract class StorageEngine : IStorageEngine
 {
     /***************************************************************************
 

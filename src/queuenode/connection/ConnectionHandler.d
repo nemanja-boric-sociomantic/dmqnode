@@ -1,6 +1,6 @@
 /*******************************************************************************
 
-    Queue Node Connection Handler
+    Distributed Message Queue Node Connection Handler
 
     copyright:      Copyright (c) 2011 sociomantic labs. All rights reserved
 
@@ -10,7 +10,7 @@
 
 *******************************************************************************/
 
-module queuenode.connection.QueueConnectionHandler;
+module queuenode.connection.ConnectionHandler;
 
 
 
@@ -20,7 +20,7 @@ module queuenode.connection.QueueConnectionHandler;
 
 *******************************************************************************/
 
-private import swarm.core.node.connection.ConnectionHandler;
+private import Swarm = swarm.core.node.connection.ConnectionHandler;
 private import swarm.core.node.model.INodeInfo;
 
 private import swarm.dmq.DmqConst;
@@ -29,7 +29,7 @@ private import dmqproto.node.request.model.DmqCommand;
 
 private import queuenode.connection.SharedResources;
 
-private import queuenode.request.model.IQueueRequestResources;
+private import queuenode.request.model.IDmqRequestResources;
 
 private import queuenode.request.PopRequest;
 private import queuenode.request.PushRequest;
@@ -45,20 +45,20 @@ private import queuenode.request.PushMultiRequest;
 private import queuenode.request.PushMulti2Request;
 private import queuenode.request.RemoveChannelRequest;
 
-private import queuenode.storage.model.QueueStorageChannels;
+private import queuenode.storage.model.StorageChannels;
 
 
 
 /*******************************************************************************
 
-    Queue node connection handler setup class. Passed to the queue connection
+    DMQ node connection handler setup class. Passed to the DMQ connection
     handler constructor.
 
     TODO: enable HMAC authentication by deriving from HmacAuthConnectionSetupParams
 
 *******************************************************************************/
 
-public class QueueConnectionSetupParams : ConnectionSetupParams
+public class ConnectionSetupParams : Swarm.ConnectionSetupParams
 {
     /***************************************************************************
 
@@ -66,7 +66,7 @@ public class QueueConnectionSetupParams : ConnectionSetupParams
 
     ***************************************************************************/
 
-    public QueueStorageChannels storage_channels;
+    public StorageChannels storage_channels;
 
 
     /***************************************************************************
@@ -83,25 +83,25 @@ public class QueueConnectionSetupParams : ConnectionSetupParams
 
 /*******************************************************************************
 
-    Queue node connection handler class.
+    DMQ node connection handler class.
 
     An object pool of these connection handlers is contained in the
-    SelectListener which is instantiated inside the QueueNode.
+    SelectListener which is instantiated inside the DmqNode.
 
     TODO: enable HMAC authentication by deriving from HmacAuthConnectionHandler
 
 *******************************************************************************/
 
-public class QueueConnectionHandler
-    : ConnectionHandlerTemplate!(DmqConst.Command)
+public class ConnectionHandler
+    : Swarm.ConnectionHandlerTemplate!(DmqConst.Command)
 {
     /***************************************************************************
 
-        Helper class adding a couple of queue-specific getters as well as the
+        Helper class adding a couple of DMQ-specific getters as well as the
         resource acquiring getters required by the DmqCommand protocol base
         class. The resources are acquired from the shared
-        resources instance which is passed to QueueConnectionHandler's
-        constructor (in the QueueConnectionSetupParams instance). Acquired
+        resources instance which is passed to ConnectionHandler's
+        constructor (in the ConnectionSetupParams instance). Acquired
         resources are automatically relinquished in the destructor.
 
         Note that it is assumed that each request will own at most one of each
@@ -110,8 +110,8 @@ public class QueueConnectionHandler
 
     ***************************************************************************/
 
-    private scope class QueueRequestResources
-        : RequestResources, IQueueRequestResources, DmqCommand.Resources
+    private scope class DmqRequestResources
+        : RequestResources, IDmqRequestResources, DmqCommand.Resources
     {
         /***********************************************************************
 
@@ -151,7 +151,7 @@ public class QueueConnectionHandler
 
         ***********************************************************************/
 
-        override public QueueStorageChannels storage_channels ( )
+        override public StorageChannels storage_channels ( )
         {
             return this.setup.storage_channels;
         }
@@ -163,9 +163,9 @@ public class QueueConnectionHandler
 
         ***********************************************************************/
 
-        override public IQueueNodeInfo node_info ( )
+        override public IDmqNodeInfo node_info ( )
         {
-            return cast(IQueueNodeInfo)this.setup.node_info;
+            return cast(IDmqNodeInfo)this.setup.node_info;
         }
 
 
@@ -307,9 +307,9 @@ public class QueueConnectionHandler
 
         ***********************************************************************/
 
-        private QueueConnectionSetupParams setup ( )
+        private ConnectionSetupParams setup ( )
         {
-            return cast(QueueConnectionSetupParams)this.outer.setup;
+            return cast(ConnectionSetupParams)this.outer.setup;
         }
     }
 
@@ -325,7 +325,7 @@ public class QueueConnectionHandler
 
     ***************************************************************************/
 
-    public this ( FinalizeDg finalize_dg, ConnectionSetupParams setup )
+    public this ( FinalizeDg finalize_dg, Swarm.ConnectionSetupParams setup )
     {
         super(finalize_dg, setup);
     }
@@ -510,12 +510,12 @@ public class QueueConnectionHandler
 
     private void handleCommand ( Handler : DmqCommand ) ( )
     {
-        scope resources = new QueueRequestResources;
+        scope resources = new DmqRequestResources;
         scope handler = new Handler(this.reader, this.writer, resources);
 
         // calls handler.handle() and checks memory and buffer allocation after
         // request finishes
-        this.handleRequest!(QueueConnectionResources)(handler, resources);
+        this.handleRequest!(ConnectionResources)(handler, resources);
     }
 }
 

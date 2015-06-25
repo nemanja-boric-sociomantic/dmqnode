@@ -6,7 +6,7 @@
 
     authors:        Gavin Norman
 
-    Queue shared resource manager. Handles acquiring / relinquishing of global
+    DMQ shared resource manager. Handles acquiring / relinquishing of global
     resources by active request handlers.
 
 *******************************************************************************/
@@ -19,11 +19,11 @@ module queuenode.connection.SharedResources;
 
     Imports
 
-    Imports which are required by the QueueConnectionResources struct, below,
+    Imports which are required by the ConnectionResources struct, below,
     are imported publicly, as they are also needed in
-    queuenode.request.model.IQueueRequestResources (which imports this
+    queuenode.request.model.IDmqRequestResources (which imports this
     module). This is done to simplify the process of modifying the fields of
-    QueueConnectionResources --  forgetting to import something into both
+    ConnectionResources --  forgetting to import something into both
     modules is a common source of very confusing compile errors.
 
 *******************************************************************************/
@@ -45,7 +45,7 @@ public import ocean.io.select.client.FiberSelectEvent;
 
 *******************************************************************************/
 
-public struct QueueConnectionResources
+public struct ConnectionResources
 {
     char[] channel_buffer;
     bool[] channel_flags_buffer;
@@ -61,11 +61,11 @@ public struct QueueConnectionResources
 /*******************************************************************************
 
     Mix in a class called SharedResources which contains a free list for each of
-    the fields of QueueConnectionResources. The free lists are used by
+    the fields of DmqConnectionResources. The free lists are used by
     individual requests to acquire and relinquish resources required for
     handling.
 
 *******************************************************************************/
 
-mixin SharedResources_T!(QueueConnectionResources);
+mixin SharedResources_T!(ConnectionResources);
 

@@ -21,8 +21,8 @@ module queuenode.request.PopRequest;
 
 *******************************************************************************/
 
-private import queuenode.storage.model.QueueStorageEngine;
-private import queuenode.request.model.IQueueRequestResources;
+private import queuenode.storage.model.StorageEngine;
+private import queuenode.request.model.IDmqRequestResources;
 private import Protocol = dmqproto.node.request.Pop;
 
 /*******************************************************************************
@@ -39,7 +39,7 @@ public scope class PopRequest : Protocol.Pop
 
     ***************************************************************************/
 
-    private const IQueueRequestResources resources;
+    private const IDmqRequestResources resources;
 
     /***************************************************************************
 
@@ -53,7 +53,7 @@ public scope class PopRequest : Protocol.Pop
     ***************************************************************************/
 
     public this ( FiberSelectReader reader, FiberSelectWriter writer,
-        IQueueRequestResources resources )
+        IDmqRequestResources resources )
     {
         super(reader, writer, resources);
         this.resources = resources;
