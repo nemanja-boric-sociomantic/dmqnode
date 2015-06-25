@@ -101,6 +101,19 @@ public class DmqNode
     /***************************************************************************
 
         Returns:
+            maximum number of bytes per channel
+
+    ***************************************************************************/
+
+    public void writeDiskOverflowIndex ( )
+    {
+        (cast(StorageChannels)this.channels).writeDiskOverflowIndex();
+    }
+
+
+    /***************************************************************************
+
+        Returns:
             identifier string for this node
 
     ***************************************************************************/

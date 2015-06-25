@@ -173,5 +173,13 @@ public abstract class StorageChannels :
             return false;
         }
     }
+
+    /***************************************************************************
+
+        Writes disk overflow index.
+
+    ***************************************************************************/
+
+    abstract public void writeDiskOverflowIndex ( );
 }
 

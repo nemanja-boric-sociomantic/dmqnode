@@ -26,6 +26,8 @@ private import dmqnode.storage.model.StorageEngine;
 
 private import swarm.dmq.DmqConst;
 
+private import dmqnode.storage.engine.DiskOverflow: DiskOverflow;
+
 private import ocean.util.container.queue.FlexibleRingQueue;
 
 private import ocean.util.container.mem.MemManager;
@@ -75,7 +77,7 @@ public class RingNode : StorageChannels
 
     ***************************************************************************/
 
-    static private const DumpFileSuffix = ".rq";
+    static private const char[] DumpFileSuffix = ".rq"; // Must be char[] because of DMD bug 12634.
 
 
     /***************************************************************************
@@ -94,6 +96,13 @@ public class RingNode : StorageChannels
 
         private FlexibleByteRingQueue queue;
 
+        /***********************************************************************
+
+            Disk overflow channel
+
+        ***********************************************************************/
+
+        private DiskOverflow.Channel overflow;
 
         /***********************************************************************
 
@@ -139,6 +148,8 @@ public class RingNode : StorageChannels
             this.file_path = new FilePath;
 
             this.filename = FilePath.join(dir, id ~ this.outer.DumpFileSuffix);
+
+            this.overflow = this.outer.overflow.new Channel(id);
 
             this.queue = new FlexibleByteRingQueue(noScanMallocMemManager,
                 queue_bytes);
@@ -203,16 +214,18 @@ public class RingNode : StorageChannels
             Params:
                 value = record value
 
-            Returns:
-                true if record was pushed
-
         ***********************************************************************/
 
         protected bool push_ ( char[] value )
         {
             this.outer.handled_record();
 
-            return this.queue.push(cast(ubyte[])value);
+            if (!this.queue.push(cast(ubyte[])value))
+            {
+                this.overflow.push(value);
+            }
+
+            return true;
         }
 
 
@@ -230,13 +243,19 @@ public class RingNode : StorageChannels
 
         public typeof(this) pop ( ref char[] value )
         {
-            void[] item = this.queue.pop();
-
-            if (item)
+            void[] allocValue ( size_t n )
             {
-                value.length = item.length;
-                value[] = (cast (char[]) item)[];
+                value.length = n;
+                return value;
+            }
 
+            if (void[] item = this.queue.pop())
+            {
+                 allocValue(item.length)[] = item[];
+                 this.outer.handled_record();
+            }
+            else if (this.overflow.pop(&allocValue))
+            {
                 this.outer.handled_record();
             }
             else
@@ -260,6 +279,7 @@ public class RingNode : StorageChannels
         public typeof(this) clear ( )
         {
             this.queue.clear;
+            this.overflow.clear;
 
             return this;
         }
@@ -313,7 +333,7 @@ public class RingNode : StorageChannels
 
         public ulong num_records ( )
         {
-            return this.queue.length;
+            return this.queue.length + this.overflow.num_records;
         }
 
 
@@ -326,7 +346,7 @@ public class RingNode : StorageChannels
 
         public ulong num_bytes ( )
         {
-            return this.queue.used_space;
+            return this.queue.used_space + this.overflow.num_bytes;
         }
 
         /***********************************************************************
@@ -343,6 +363,14 @@ public class RingNode : StorageChannels
             return queue.total_space;
         }
     }
+
+    /***************************************************************************
+
+        Disk overflow.
+
+    ***************************************************************************/
+
+    private DiskOverflow overflow;
 
 
     /***************************************************************************
@@ -417,6 +445,8 @@ public class RingNode : StorageChannels
         scope path = new FilePath;
         this.setWorkingPath(path, this.data_dir);
 
+        this.overflow = new DiskOverflow(data_dir);
+
         if ( path.exists() )
         {
             this.loadDumpedChannels(path);
@@ -427,6 +457,16 @@ public class RingNode : StorageChannels
         }
     }
 
+    /***************************************************************************
+
+        Writes disk overflow index.
+
+    ***************************************************************************/
+
+    override public void writeDiskOverflowIndex ( )
+    {
+        this.overflow.writeIndex();
+    }
 
     /***************************************************************************
 
@@ -493,6 +533,7 @@ public class RingNode : StorageChannels
     protected override void shutdown_ ( )
     {
         this.shutting_down = true;
+        this.overflow.close();
     }
 
 
@@ -544,7 +585,6 @@ public class RingNode : StorageChannels
         }
     }
 
-
     /***************************************************************************
 
         Searches dir for files with DumpFileSuffix suffix and retrieves the file
@@ -568,20 +608,22 @@ public class RingNode : StorageChannels
         {
             if ( !info.folder )
             {
-                if ( filename.set(info.name).suffix() == this.DumpFileSuffix )
+                switch (filename.set(info.name).suffix())
                 {
-                    auto id = filename.name.dup;
+                    case DumpFileSuffix:
+                        auto id = filename.name.dup;
+                        debug Stderr.formatln("    Loading queue file '{}'", id);
+                        this.create(id);
+                        break;
 
-                    debug Stderr.formatln("    Loading queue file '{}'", id);
+                    case this.overflow.Const.datafile_suffix,
+                         this.overflow.Const.indexfile_suffix:
+                        break;
 
-                    this.create(id);
-                }
-                else
-                {
-                    log.warn(typeof(this).stringof ~ ": ignoring file '" ~
-                        info.name ~ "' in data directory '" ~
-                        this.getFullPathString(path) ~ "' (no '" ~
-                        this.DumpFileSuffix ~ "' suffix)");
+                    default:
+                        log.warn(typeof(this).stringof ~ ": ignoring file '" ~
+                            info.name ~ "' in data directory '" ~
+                            this.getFullPathString(path) ~ "' (unknown suffix)");
                 }
             }
             else

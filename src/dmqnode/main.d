@@ -29,12 +29,14 @@ private import Version;
 private import dmqnode.app.config.ServerConfig;
 private import dmqnode.app.config.PerformanceConfig;
 private import dmqnode.app.config.StatsConfig;
+private import dmqnode.app.config.OverflowConfig;
 
 private import dmqnode.app.util.Terminator;
 
 private import dmqnode.app.periodic.Periodics;
 private import dmqnode.app.periodic.PeriodicStats;
 private import dmqnode.app.periodic.PeriodicWriterFlush;
+private import dmqnode.app.periodic.PeriodicDiskOverflowIndexWriter;
 
 private import dmqnode.storage.Ring;
 private import dmqnode.node.DmqNode;
@@ -158,6 +160,7 @@ public class DmqNodeServer : LoggedCliApp
     private ServerConfig server_config;
     private PerformanceConfig performance_config;
     private StatsConfig stats_config;
+    private OverflowConfig overflow_config;
 
 
     /***************************************************************************
@@ -199,6 +202,7 @@ public class DmqNodeServer : LoggedCliApp
         ConfigReader.fill("Stats", this.stats_config, config);
         ConfigReader.fill("Server", this.server_config, config);
         ConfigReader.fill("Performance", this.performance_config, config);
+        ConfigReader.fill("Overflow", this.overflow_config, config);
 
         this.node = new DmqNode(
                 DmqConst.NodeItem(this.server_config.address(),
@@ -218,6 +222,8 @@ public class DmqNodeServer : LoggedCliApp
         this.periodics.add(new PeriodicStats(this.stats_config, this.epoll));
         this.periodics.add(new PeriodicWriterFlush(
             this.epoll, this.performance_config.write_flush_ms));
+        this.periodics.add(new PeriodicDiskOverflowIndexWriter(
+            this.epoll, this.overflow_config.write_index_ms));
     }
 
 
