@@ -145,9 +145,9 @@ public class RingNode : StorageChannels
         {
             super(id);
 
-            this.file_path = new FilePath;
-
             this.filename = FilePath.join(dir, id ~ this.outer.DumpFileSuffix);
+
+            this.file_path = new FilePath(this.filename);
 
             this.overflow = this.outer.overflow.new Channel(id);
 
@@ -170,8 +170,6 @@ public class RingNode : StorageChannels
         private void loadDumpedChannel ( )
         {
             debug Stderr.formatln("Loading from file {}", this.filename);
-
-            this.file_path.set(this.filename);
 
             if ( this.file_path.exists() )
             {
@@ -276,8 +274,6 @@ public class RingNode : StorageChannels
 
         public typeof(this) close ( )
         {
-            this.file_path.set(this.filename);
-
             if ( this.queue.length )
             {
                 scope file = new File(this.file_path.toString(), File.WriteCreate);
