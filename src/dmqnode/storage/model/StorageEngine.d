@@ -35,8 +35,6 @@ private import swarm.core.node.storage.model.IStorageEngine;
 
 private import swarm.core.node.storage.listeners.Listeners;
 
-private import ocean.util.OceanException;
-
 private import tango.io.FilePath;
 
 private import tango.core.Array;
