@@ -285,9 +285,8 @@ public class RingNode : StorageChannels
             {
                 if ( this.file_path.exists )
                 {
-                    log.info("Closing channel '{}' -- channel is empty, not "
-                        "saving. Removing existing channel file.", this.id);
-                    this.file_path.remove();
+                    log.warn("Closing channel '{}' -- channel is empty, " ~
+                             "found file '{}', though.", this.file_path.toString());
                 }
                 else
                 {
@@ -299,6 +298,16 @@ public class RingNode : StorageChannels
             return this;
         }
 
+        /***********************************************************************
+
+            Deletes the channel dump file.
+
+        ***********************************************************************/
+
+        public void deleteDumpFile ( )
+        {
+            this.file_path.remove();
+        }
 
         /***********************************************************************
 
@@ -577,40 +586,51 @@ public class RingNode : StorageChannels
 
         debug Stderr.formatln("Scanning {} for queue files", path.toString);
 
-        this.channels_scan = true;
-        scope ( exit ) this.channels_scan = false;
-
-        foreach ( info; path )
         {
-            if ( !info.folder )
+            this.channels_scan = true;
+            scope ( exit ) this.channels_scan = false;
+
+            foreach ( info; path )
             {
-                switch (filename.set(info.name).suffix())
+                if ( !info.folder )
                 {
-                    case DumpFileSuffix:
-                        auto id = filename.name.dup;
-                        debug Stderr.formatln("    Loading queue file '{}'", id);
-                        this.create(id);
-                        break;
+                    switch (filename.set(info.name).suffix())
+                    {
+                        case DumpFileSuffix:
+                            auto id = filename.name.dup;
+                            debug Stderr.formatln("    Loading queue file '{}'", id);
+                            this.create(id);
+                            break;
 
-                    case this.overflow.Const.datafile_suffix,
-                         this.overflow.Const.indexfile_suffix:
-                        break;
+                        case this.overflow.Const.datafile_suffix,
+                             this.overflow.Const.indexfile_suffix:
+                            break;
 
-                    default:
-                        log.warn(typeof(this).stringof ~ ": ignoring file '" ~
-                            info.name ~ "' in data directory '" ~
-                            this.getFullPathString(path) ~ "' (unknown suffix)");
+                        default:
+                            log.warn(typeof(this).stringof ~ ": ignoring file '" ~
+                                info.name ~ "' in data directory '" ~
+                                this.getFullPathString(path) ~ "' (unknown suffix)");
+                    }
                 }
-            }
-            else
-            {
-                log.warn(typeof(this).stringof ~ ": found "
-                    "subdirectory '" ~ info.name ~ "' in data "
-                    "directory '" ~ this.getFullPathString(path) ~ '\'');
+                else
+                {
+                    log.warn(typeof(this).stringof ~ ": found "
+                        "subdirectory '" ~ info.name ~ "' in data "
+                        "directory '" ~ this.getFullPathString(path) ~ '\'');
+                }
+
             }
         }
-    }
 
+        // Delete the dump files after successful deserialisation.
+
+        foreach (channel_; this)
+        {
+            auto channel = cast(Ring)channel_;
+            assert(channel);
+            channel.deleteDumpFile();
+        }
+    }
 
     /***************************************************************************
 
