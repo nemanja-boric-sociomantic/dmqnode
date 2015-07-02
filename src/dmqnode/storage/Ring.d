@@ -28,6 +28,8 @@ private import swarm.dmq.DmqConst;
 
 private import dmqnode.storage.engine.DiskOverflow: DiskOverflow;
 
+private import dmqnode.node.IDmqNodeInfo;
+
 private import ocean.util.container.queue.FlexibleRingQueue;
 
 private import ocean.util.container.mem.MemManager;
@@ -198,7 +200,7 @@ public class RingNode : StorageChannels
 
         override protected void push_ ( char[] value )
         {
-            this.outer.handled_record();
+            this.outer.dmqnode.handledRecord();
 
             if (!this.queue.push(cast(ubyte[])value))
             {
@@ -230,11 +232,11 @@ public class RingNode : StorageChannels
             if (void[] item = this.queue.pop())
             {
                  allocValue(item.length)[] = item[];
-                 this.outer.handled_record();
+                 this.outer.dmqnode.handledRecord();
             }
             else if (this.overflow.pop(&allocValue))
             {
-                this.outer.handled_record();
+                this.outer.dmqnode.handledRecord();
             }
             else
             {
@@ -382,7 +384,7 @@ public class RingNode : StorageChannels
 
     ***************************************************************************/
 
-    private const void delegate ( ) handled_record;
+    private const IDmqNodeInfo dmqnode;
 
 
     /***************************************************************************
@@ -424,13 +426,17 @@ public class RingNode : StorageChannels
 
     ***************************************************************************/
 
-    public this ( char[] data_dir, void delegate ( ) handled_record,
+    public this ( char[] data_dir, IDmqNodeInfo dmqnode,
         ulong size_limit = 0, ulong channel_size_limit = 0 )
+    in
+    {
+        assert(dmqnode);
+    }
+    body
     {
         super(size_limit, channel_size_limit);
 
-        assert(handled_record !is null);
-        this.handled_record = handled_record;
+        this.dmqnode = dmqnode;
 
         this.data_dir = data_dir;
 

@@ -204,13 +204,7 @@ public class DmqNodeServer : LoggedCliApp
         ConfigReader.fill("Performance", this.performance_config, config);
         ConfigReader.fill("Overflow", this.overflow_config, config);
 
-        this.node = new DmqNode(
-                DmqConst.NodeItem(this.server_config.address(),
-                    this.server_config.port()),
-                new RingNode(this.server_config.data_dir, &this.handledRecord,
-                    this.server_config.size_limit,
-                    this.server_config.channel_size_limit()),
-                this.epoll, this.server_config.backlog);
+        this.node = new DmqNode(this.server_config, this.epoll);
 
         this.node.error_callback = &this.nodeError;
         this.node.connection_limit = this.server_config.connection_limit;

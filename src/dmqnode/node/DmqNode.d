@@ -27,8 +27,11 @@ private import dmqnode.node.IDmqNodeInfo;
 
 private import dmqnode.connection.ConnectionHandler;
 
+private import dmqnode.storage.Ring;
 private import dmqnode.storage.model.StorageEngine;
 private import dmqnode.storage.model.StorageChannels;
+
+private import dmqnode.app.config.ServerConfig;
 
 private import swarm.dmq.DmqConst;
 
@@ -52,23 +55,24 @@ public class DmqNode
         Constructor
 
         Params:
-            node_item = node address & port
-            channels = storage channels instance
+            config = server configuration
             epoll = epoll select dispatcher to be used internally
-            backlog = (see ISelectListener ctor)
 
     ***************************************************************************/
 
-    public this ( DmqConst.NodeItem node_item, StorageChannels channels,
-        EpollSelectDispatcher epoll, int backlog )
+    public this ( ServerConfig config, EpollSelectDispatcher epoll )
     {
+        auto ringnode = new RingNode(config.data_dir, this, config.size_limit,
+                                     config.channel_size_limit());
+
         auto conn_setup_params = new ConnectionSetupParams;
         conn_setup_params.node_info = this;
         conn_setup_params.epoll = epoll;
-        conn_setup_params.storage_channels = channels;
+        conn_setup_params.storage_channels = ringnode;
         conn_setup_params.shared_resources = new SharedResources;
 
-        super(node_item, channels, conn_setup_params, backlog);
+        super(DmqConst.NodeItem(config.address(), config.port()),
+              ringnode, conn_setup_params, config.backlog);
     }
 
 
