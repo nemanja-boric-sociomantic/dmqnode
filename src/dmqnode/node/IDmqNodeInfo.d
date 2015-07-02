@@ -22,6 +22,7 @@ module dmqnode.node.IDmqNodeInfo;
 
 private import swarm.core.node.model.IChannelsNodeInfo;
 
+private import dmqnode.storage.Ring;
 
 
 interface IDmqNodeInfo : IChannelsNodeInfo
@@ -34,5 +35,12 @@ interface IDmqNodeInfo : IChannelsNodeInfo
     ***************************************************************************/
 
     public ulong channelSizeLimit ( );
-}
 
+    /***************************************************************************
+
+        'foreach' iteration over the channels.
+
+    ***************************************************************************/
+
+    public int opApply ( int delegate ( ref RingNode.Ring channel ) dg );
+}

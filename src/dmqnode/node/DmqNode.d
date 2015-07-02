@@ -33,6 +33,8 @@ private import dmqnode.storage.model.StorageChannels;
 
 private import dmqnode.app.config.ServerConfig;
 
+private import swarm.core.node.storage.model.IStorageEngineInfo;
+
 private import swarm.dmq.DmqConst;
 
 private import dmqnode.connection.SharedResources;
@@ -125,6 +127,21 @@ public class DmqNode
     override protected char[] id ( )
     {
         return typeof(this).stringof;
+    }
+    /***************************************************************************
+
+        'foreach' iteration over the channels.
+
+    ***************************************************************************/
+
+    public int opApply ( int delegate ( ref RingNode.Ring channel ) dg )
+    {
+        return super.opApply((ref IStorageEngineInfo channel_)
+        {
+            auto channel = cast(RingNode.Ring)channel_;
+            assert(channel);
+            return dg(channel);
+        });
     }
 }
 
