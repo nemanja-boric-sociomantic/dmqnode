@@ -128,6 +128,7 @@ public class DmqNode
     {
         return typeof(this).stringof;
     }
+
     /***************************************************************************
 
         'foreach' iteration over the channels.
@@ -142,6 +143,20 @@ public class DmqNode
             assert(channel);
             return dg(channel);
         });
+    }
+
+    /**************************************************************************
+
+        Makes the super class create record action counters.
+
+        Returns:
+            the identifier for the record action counters to create.
+
+     **************************************************************************/
+
+    override protected char[][] record_action_counter_ids ( )
+    {
+        return ["pushed", "popped"];
     }
 }
 

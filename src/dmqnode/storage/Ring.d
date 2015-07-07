@@ -26,11 +26,12 @@ private import dmqnode.storage.model.StorageEngine;
 
 private import swarm.dmq.DmqConst;
 
-private import dmqnode.storage.engine.DiskOverflow: DiskOverflow;
+private import dmqnode.storage.engine.DiskOverflow;
 
 private import dmqnode.node.IDmqNodeInfo;
 
 private import ocean.util.container.queue.FlexibleRingQueue;
+private import ocean.util.container.queue.model.IQueueInfo;
 
 private import ocean.util.container.mem.MemManager;
 
@@ -92,6 +93,22 @@ public class RingNode : StorageChannels
     {
         /***********************************************************************
 
+            Memory queue status information
+
+        ***********************************************************************/
+
+        public const IQueueInfo memory_info;
+
+        /***********************************************************************
+
+            Disk overflow status information
+
+        ***********************************************************************/
+
+        public const DiskOverflowInfo overflow_info;
+
+        /***********************************************************************
+
             RingQueue instance
 
         ***********************************************************************/
@@ -122,7 +139,6 @@ public class RingNode : StorageChannels
         ***********************************************************************/
 
         private const FilePath file_path;
-
 
         /***********************************************************************
 
@@ -155,6 +171,9 @@ public class RingNode : StorageChannels
 
             this.queue = new FlexibleByteRingQueue(noScanMallocMemManager,
                 queue_bytes);
+
+            this.memory_info = this.queue;
+            this.overflow_info = this.overflow;
 
             if ( this.outer.channels_scan )
             {
@@ -200,7 +219,7 @@ public class RingNode : StorageChannels
 
         override protected void push_ ( char[] value )
         {
-            this.outer.dmqnode.handledRecord();
+            this.outer.dmqnode.record_action_counters.increment("pushed", value.length);
 
             if (!this.queue.push(cast(ubyte[])value))
             {
@@ -232,11 +251,11 @@ public class RingNode : StorageChannels
             if (void[] item = this.queue.pop())
             {
                  allocValue(item.length)[] = item[];
-                 this.outer.dmqnode.handledRecord();
+                 this.outer.dmqnode.record_action_counters.increment("popped", value.length);
             }
             else if (this.overflow.pop(&allocValue))
             {
-                this.outer.dmqnode.handledRecord();
+                 this.outer.dmqnode.record_action_counters.increment("popped", value.length);
             }
             else
             {
@@ -342,6 +361,7 @@ public class RingNode : StorageChannels
         {
             return this.queue.used_space + this.overflow.num_bytes;
         }
+
 
         /***********************************************************************
 

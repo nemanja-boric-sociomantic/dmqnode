@@ -15,7 +15,7 @@ import dmqnode.storage.engine.DiskOverflow;
 import dmqnode.storage.engine.overflow.ChannelMetadata,
        dmqnode.storage.engine.overflow.RecordHeader;
 
-package class OverflowChannel
+package class OverflowChannel: DiskOverflowInfo
 {
     /***************************************************************************
 
