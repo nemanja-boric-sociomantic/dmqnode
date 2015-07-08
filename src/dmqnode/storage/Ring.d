@@ -142,6 +142,21 @@ public class RingNode : StorageChannels
 
         /***********************************************************************
 
+            For the temporary console log only.
+
+            Counters for the number of records and bytes of payload pushed
+            to and popped from this channel.
+
+        ***********************************************************************/
+
+        public uint records_pushed = 0,
+                    records_popped = 0;
+
+        public ulong bytes_pushed = 0,
+                     bytes_popped = 0;
+
+        /***********************************************************************
+
             Constructor. Creates the ring queue. Also attempts to deserialize
             its contents from the specified path if the RingNode is being
             constructed (the loading of a dumped channel does not happen once
@@ -252,10 +267,18 @@ public class RingNode : StorageChannels
             {
                  allocValue(item.length)[] = item[];
                  this.outer.dmqnode.record_action_counters.increment("popped", value.length);
+
+                 // For the temporary console log only:
+                 this.records_popped++;
+                 this.bytes_popped += value.length;
             }
             else if (this.overflow.pop(&allocValue))
             {
                  this.outer.dmqnode.record_action_counters.increment("popped", value.length);
+
+                 // For the temporary console log only:
+                 this.records_popped++;
+                 this.bytes_popped += value.length;
             }
             else
             {

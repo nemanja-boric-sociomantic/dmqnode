@@ -194,6 +194,17 @@ public class PeriodicStats : IPeriodic
 
     /***************************************************************************
 
+        The number of seconds since the log was written the last time.
+
+        This member is for console output only, remove it  when making the
+        application a demon.
+
+    ***************************************************************************/
+
+    private uint seconds = 0;
+
+    /***************************************************************************
+
         Constructor.
 
         Params:
@@ -207,7 +218,9 @@ public class PeriodicStats : IPeriodic
 
     public this ( StatsConfig stats_config, EpollSelectDispatcher epoll )
     {
-        super(epoll, this.log.default_period * 1000, typeof(this).stringof);
+        // When removing the console log output, multiply the 1000 with
+        // this.log.default_period.
+        super(epoll, 1000, typeof(this).stringof);
 
         this.stats_config = stats_config;
 
@@ -225,6 +238,25 @@ public class PeriodicStats : IPeriodic
 
     override protected void run ( )
     {
+        this.consoleLog();
+
+        if (++this.seconds >= this.log.default_period)
+        {
+            this.seconds = 0;
+            this.writeStatsLog();
+        }
+    }
+
+    /***************************************************************************
+
+        Writes the stats log.
+
+        When removing the console log, replace run() with this method.
+
+    ***************************************************************************/
+
+    private void writeStatsLog ( )
+    {
         this.log.add(NodeStats.set(this.node_info));
 
         foreach (action_name, action_stats; this.node_info.record_action_counters)
@@ -238,6 +270,129 @@ public class PeriodicStats : IPeriodic
         }
 
         this.log.flush();
+    }
+
+    /***************************************************************************
+
+        Temporary, will be removed when making this application a demon.
+
+    ***************************************************************************/
+
+    import tango.stdc.stdio;
+
+    void consoleLog ( )
+    {
+        if (this.stats_config.console_stats_enabled)
+        {
+            uint i = 0;
+
+            foreach (channel; this.node_info)
+            {
+                char[] id = channel.id;
+                fwrite(id.ptr, id[0].sizeof, id.length, stderr);
+                fputs(" records: ", stderr);
+                this,printRecords(channel.memory_info.length);
+                fputs(" mem ", stderr);
+                this.printRecords(channel.overflow_info.num_records);
+                fputs(" ovf", stderr);
+                if (auto n = channel.records_pushed)
+                {
+                    fputs(" +", stderr);
+                    this.printRecords(n);
+                    channel.records_pushed = 0;
+                }
+
+                if (auto n = channel.records_popped)
+                {
+                    fputs(" -", stderr);
+                    this.printRecords(n);
+                    channel.records_popped = 0;
+                }
+
+                fputs("; bytes: ", stderr);
+                this,printRecords(channel.memory_info.used_space);
+                fputs(" mem ", stderr);
+                this.printRecords(channel.overflow_info.num_bytes);
+                fputs(" ovf", stderr);
+                if (auto n = channel.bytes_pushed)
+                {
+                    fputs(" +", stderr);
+                    this.printBytes(n);
+                    channel.bytes_pushed = 0;
+                }
+
+                if (auto n = channel.bytes_popped)
+                {
+                    fputs(" -", stderr);
+                    this.printBytes(n);
+                    channel.bytes_popped = 0;
+                }
+
+                fputs("\x1B[K\n", stderr);
+
+                i++;
+            }
+
+            if (i) fprintf(stderr, "\x1B[%uA\r", i);
+        }
+    }
+
+    /// Prints b to stderr using 1024 based digit grouping.
+
+    static void printBytes ( size_t b )
+    {
+        if (b)
+        {
+            ushort[7] d;
+
+            uint n = 0;
+
+            while (b)
+            {
+                d[n++] = b & ((1 << 10) - 1);
+                b >>= 10;
+            }
+
+            fprintf(stderr, "%hu", d[--n]);
+
+            foreach_reverse (digit; d[0 .. n])
+            {
+                fprintf(stderr, ",%03hu", digit);
+            }
+        }
+        else
+        {
+            fputc('0', stderr);
+        }
+    }
+
+    /// Prints b to stderr using 1000 based digit grouping.
+
+    static void printRecords ( uint r )
+    {
+        if (r)
+        {
+            ushort[10] d;
+
+            uint n = 0;
+
+            while (r)
+            {
+                d[n++] = r % 1000;
+                r /= 1000;
+            }
+
+            fprintf(stderr, "%hu", d[--n]);
+
+            foreach_reverse (digit; d[0 .. n])
+            {
+                fprintf(stderr, ",%03hu", digit);
+            }
+        }
+        else
+        {
+            fputc('0', stderr);
+        }
     }
 }
 
