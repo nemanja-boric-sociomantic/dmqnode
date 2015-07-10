@@ -252,23 +252,6 @@ public class DmqNodeServer : LoggedCliApp
 
     /***************************************************************************
 
-        Callback when a record is pushed or popped. Updates the stats counter
-        for records handled. Note that this extra delegate (in addition to the
-        DmqNode's handledRecord() method) is necessary, as it's required by
-        the ctor of the RingNode instance which is passed to DmqNode's ctor
-        (see processConfig(), above) -- it's not possible to pass a delegate of
-        an object which does not yet exist.
-
-    ***************************************************************************/
-
-    private void handledRecord ( )
-    {
-        this.node.handledRecord();
-    }
-
-
-    /***************************************************************************
-
         Callback for exceptions inside the node's event loop. Writes errors to
         the error.log file, and optionally to the console (if the
         Log/console_echo_errors config parameter is true).
