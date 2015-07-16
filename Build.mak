@@ -7,3 +7,8 @@ TEST_FILTER_OUT += \
 $B/dmqnode: src/dmqnode/main.d
 dmqnode: $B/dmqnode
 all += dmqnode
+
+$B/dmqperformance: override LDFLAGS += -lebtree
+$B/dmqperformance: src/dmqperformance/main.d
+dmqperformance: $B/dmqperformance
+all += dmqperformance
