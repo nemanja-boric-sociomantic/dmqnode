@@ -4,6 +4,6 @@
 [submodule "ocean"]
 	path = submodules/ocean
 	url = git@github.com:sociomantic/ocean.git
-[submodule "queueproto"]
-	path = submodules/queueproto
-	url = git@github.com:sociomantic/queueproto.git
+[submodule "submodules/dmqproto"]
+	path = submodules/dmqproto
+	url = git@github.com:sociomantic/dmqproto.git
