@@ -270,6 +270,7 @@ public class PeriodicStats : IPeriodic
         }
 
         this.log.flush();
+        this.node_info.resetCounters();
     }
 
     /***************************************************************************
