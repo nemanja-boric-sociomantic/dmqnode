@@ -1,6 +1,6 @@
 /*******************************************************************************
 
-    Queue performance tester
+    DMQ performance tester
 
     copyright:      Copyright (c) 2011 sociomantic labs. All rights reserved
 
@@ -13,7 +13,7 @@
     pop requests is measured.
 
     Command line args:
-        -S = path of queue nodes ini file
+        -S = path of DMQ nodes file
         -c = the number of pushes / pops to perform sequentially before
              switching from pushing to popping or vice versa (default is 1000)
         -p = the number of parallel pushes / pops to perform (default is 1)
@@ -62,18 +62,18 @@ private import tango.time.StopWatch;
 
 void main ( char[][] cl_args )
 {
-    auto app = new QueuePerformance;
+    auto app = new DmqPerformance;
     return app.main(cl_args);
 }
 
 
 /*******************************************************************************
 
-    Queue performance tester class
+    DMQ performance tester class
 
 *******************************************************************************/
 
-public class QueuePerformance : VersionedCliApp
+public class DmqPerformance : VersionedCliApp
 {
     /***************************************************************************
 
@@ -90,7 +90,7 @@ public class QueuePerformance : VersionedCliApp
 
     ***************************************************************************/
 
-    private DmqClient queue;
+    private DmqClient dmq;
 
 
     /***************************************************************************
@@ -141,7 +141,7 @@ public class QueuePerformance : VersionedCliApp
 
     /***************************************************************************
 
-        Buffer for record being sent to the queue.
+        Buffer for record being sent to the DMQ.
 
     ***************************************************************************/
 
@@ -150,7 +150,7 @@ public class QueuePerformance : VersionedCliApp
 
     /***************************************************************************
 
-        Queue client message formatting buffer.
+        DMQ client message formatting buffer.
 
     ***************************************************************************/
 
@@ -165,7 +165,7 @@ public class QueuePerformance : VersionedCliApp
 
     public this ( )
     {
-        const char[] name = "Queue performance tester";
+        const char[] name = "DMQ performance tester";
         const char[] desc = "performing (-c) pushes then (-c) pops each cycle,"
                             " with up to (-p) requests in parallel";
         const char[] usage;
@@ -188,7 +188,7 @@ public class QueuePerformance : VersionedCliApp
     public void setupArgs( IApplication app, Arguments args )
     {
         args("source").required.params(1).aliased('S').
-          help("config file listing queue nodes to connect to");
+          help("config file listing DMQ nodes to connect to");
         args("count").aliased('c').params(1).defaults("1000").
           help("the number of pushes / pops to perform sequentially before"
           " switching from pushing to popping or vice versa (default is 1000)");
@@ -235,7 +235,7 @@ public class QueuePerformance : VersionedCliApp
 
     /***************************************************************************
 
-        Initialises a queue client and connects to the nodes specified in the
+        Initialises a DMQ client and connects to the nodes specified in the
         command line arguments.
 
         Params:
@@ -256,11 +256,11 @@ public class QueuePerformance : VersionedCliApp
 
         this.epoll = new EpollSelectDispatcher;
 
-        this.queue = new DmqClient(this.epoll, parallel);
+        this.dmq = new DmqClient(this.epoll, parallel);
 
-        this.queue.addNodes(args.getString("source"));
+        this.dmq.addNodes(args.getString("source"));
 
-        Stdout.formatln("Queue performance tester:");
+        Stdout.formatln("DMQ performance tester:");
         Stdout.formatln("    performing {} pushes then {} pops each cycle, "
             "with up to {} requests in parallel", count, count, parallel);
         Stdout.formatln("    pushing records of {} bytes", this.record.length);
@@ -299,7 +299,7 @@ public class QueuePerformance : VersionedCliApp
             this.batch_timer.start;
             for ( uint i; i < count; i++ )
             {
-                this.queue.assign(this.queue.push("test", &pushCallback, &notifier));
+                this.dmq.assign(this.dmq.push("test", &pushCallback, &notifier));
                 flush();
             }
             flush(true);
@@ -309,7 +309,7 @@ public class QueuePerformance : VersionedCliApp
             this.batch_timer.start;
             for ( uint i; i < count; i++ )
             {
-                this.queue.assign(this.queue.pop("test", &popCallback, &notifier));
+                this.dmq.assign(this.dmq.pop("test", &popCallback, &notifier));
                 flush();
             }
             flush(true);
@@ -323,7 +323,7 @@ public class QueuePerformance : VersionedCliApp
 
     /***************************************************************************
 
-        Queue push callback.
+        DMQ push callback.
 
         Params:
             context = request context (unused)
@@ -341,7 +341,7 @@ public class QueuePerformance : VersionedCliApp
 
     /***************************************************************************
 
-        Queue pop callback.
+        DMQ pop callback.
 
         Params:
             context = request context (unused)
@@ -356,7 +356,7 @@ public class QueuePerformance : VersionedCliApp
 
     /***************************************************************************
 
-        Queue notification callback. Updates the timers with the time taken to
+        DMQ notification callback. Updates the timers with the time taken to
         complete this request.
 
         Params:
@@ -388,7 +388,7 @@ public class QueuePerformance : VersionedCliApp
             }
             else
             {
-                Stderr.formatln("Error in queue request: {}",
+                Stderr.formatln("Error in DMQ request: {}",
                     info.message(this.message_buffer));
             }
         }
