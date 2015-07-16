@@ -185,7 +185,7 @@ public class DmqPerformance : VersionedCliApp
 
     ***************************************************************************/
 
-    public void setupArgs( IApplication app, Arguments args )
+    override public void setupArgs( IApplication app, Arguments args )
     {
         args("source").required.params(1).aliased('S').
           help("config file listing DMQ nodes to connect to");
@@ -196,40 +196,6 @@ public class DmqPerformance : VersionedCliApp
          help("the number of parallel pushes / pops to perform (default is 1)");
         args("size").aliased('s').params(1).defaults("1024").
           help("size of record to push / pop (in bytes, default is 1024)");
-    }
-
-
-    /***************************************************************************
-
-        Should validate the commandline arguments here.
-
-        Params:
-            app = application instance
-            argument = arguments
-
-        Returns:
-            null, which means the arguments are valid
-
-    ***************************************************************************/
-
-    public char[] validateArgs( IApplication app, Arguments args )
-    {
-        return null;
-    }
-
-
-    /***************************************************************************
-
-        Process the arguments here
-
-        Params:
-            app = application instance
-            argument = arguments
-
-    ***************************************************************************/
-
-    public void processArgs( IApplication app, Arguments args )
-    {
     }
 
 
@@ -246,7 +212,7 @@ public class DmqPerformance : VersionedCliApp
 
     ***************************************************************************/
 
-    public int run ( Arguments args )
+    override public int run ( Arguments args )
     {
         auto count = args.getInt!(uint)("count");
 
