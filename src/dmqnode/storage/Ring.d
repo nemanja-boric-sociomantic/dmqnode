@@ -236,6 +236,10 @@ public class RingNode : StorageChannels
         {
             this.outer.dmqnode.record_action_counters.increment("pushed", value.length);
 
+            // For the temporary console log only:
+            this.records_pushed++;
+            this.bytes_pushed += value.length;
+
             if (!this.queue.push(cast(ubyte[])value))
             {
                 this.overflow.push(value);
