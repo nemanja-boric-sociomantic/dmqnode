@@ -291,7 +291,7 @@ public class PeriodicStats : IPeriodic
                 char[] id = channel.id;
                 fwrite(id.ptr, id[0].sizeof, id.length, stderr);
                 fputs(" records: ", stderr);
-                this,printRecords(channel.memory_info.length);
+                this.printRecords(channel.memory_info.length);
                 fputs(" mem ", stderr);
                 this.printRecords(channel.overflow_info.num_records);
                 fputs(" ovf", stderr);
