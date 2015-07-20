@@ -9,7 +9,7 @@
 
 module dmqnode.storage.engine.overflow.PosixFile;
 
-import ocean.core.ErrnoIOException;
+import ocean.sys.ErrnoException;
 
 class PosixFile
 {
@@ -122,7 +122,7 @@ class PosixFile
          */
         if (this.fd < 0)
         {
-            throw (new FileException(this.name))("unable to open");
+            throw (new FileException(this.name)).useGlobalErrno("unable to open");
         }
 
         this.log.info("File opened with file descriptor {}.", this.fd);
@@ -233,7 +233,7 @@ class PosixFile
     {
         if (!ok)
         {
-            throw this.e()(msg, file, line);
+            throw this.e.useGlobalErrno(msg, file, line);
         }
     }
 
@@ -452,9 +452,9 @@ class PosixFile
 
 /******************************************************************************/
 
-class FileException: ErrnoIOException
+class FileException: ErrnoException
 {
-    import ocean.core.Exception: enforce, enforceImpl;
+    import tango.stdc.string: memmove;
 
     /***************************************************************************
 
@@ -480,14 +480,38 @@ class FileException: ErrnoIOException
         this.filename = filename;
     }
 
-    override public typeof (this) opCall ( char[] msg, char[] file = __FILE__, long line = __LINE__ )
+    /**************************************************************************
+
+        Calls super.set() to render the error message, then prepends
+        this.filename ~ " - " to it.
+
+        Params:
+            err_num = error number with same value set as in errno
+            name = extern function name that is expected to set errno, optional
+
+        Returns:
+            this
+
+     **************************************************************************/
+
+    override public typeof(this) set ( int err_num, char[] name,
+                                       istring file = __FILE__, int line = __LINE__ )
     {
-        char[][3] namemsg;
-        namemsg[0] = this.filename;
-        namemsg[1] = ": ";
-        namemsg[2] = msg;
-        return cast(typeof(this))super.opCall(namemsg, file, line);
+        super.set(err_num, name, file, line);
+
+        if (size_t n = this.filename.length)
+        {
+            static const sep = " - ";
+            size_t msg_length = this.reused_msg.length;
+            this.reused_msg.length = msg_length + n + sep.length;
+            memmove(&this.reused_msg[n + sep.length], &this.reused_msg[0], msg_length);
+            this.reused_msg[0 .. n] = this.filename[];
+            this.reused_msg[n .. n + sep.length] = sep[];
+        }
+
+        return this;
     }
+
 }
 
 /*******************************************************************************
