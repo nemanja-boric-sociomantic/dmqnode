@@ -282,7 +282,7 @@ class PosixFile
                 }
                 else
                 {
-                    throw this.e(errmsg, __FILE__, line);
+                    throw this.e(errmsg, file, line);
                 }
             }
             else // end of file for pread(); pwrite() should
@@ -341,7 +341,7 @@ class PosixFile
                 }
                 else
                 {
-                    throw this.e(errmsg, __FILE__, line);
+                    throw this.e(errmsg, file, line);
                 }
             }
             else // end of file for read(); write() should
@@ -397,7 +397,7 @@ class PosixFile
                 }
                 else
                 {
-                    throw this.e(errmsg, __FILE__, line);
+                    throw this.e(errmsg, file, line);
                 }
             }
             else // end of file for read(); write() should
