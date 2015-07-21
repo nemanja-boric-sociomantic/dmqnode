@@ -55,7 +55,7 @@ class PosixFile
 
     ***************************************************************************/
 
-    protected const FileException e;
+    private FileException e_;
 
     /***************************************************************************
 
@@ -91,6 +91,9 @@ class PosixFile
 
         Constructor.
 
+        Note: A subclass constructor may call public class methods only after
+        this constructor has returned or the class invariant will fail.
+
         Params:
             dir  = working directory
             name = file name
@@ -111,11 +114,16 @@ class PosixFile
         this.namec = this.name.ptr;
         this.name = this.name[0 .. $ - 1];
 
-        this.e = new FileException;
-        this.e.filename = this.name;
-
         this.fd = this.restartInterrupted(open(this.namec, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH));
-        this.e.enforce(this.fd >= 0, "unable to open");
+
+        /*
+         * Not calling this.enforce() or this.e() at this point, as doing so
+         * would call the invariant, which would fail, as this.fd < 0.
+         */
+        if (this.fd < 0)
+        {
+            throw (new FileException(this.name))("unable to open");
+        }
 
         this.log.info("File opened with file descriptor {}.", this.fd);
     }
@@ -136,7 +144,7 @@ class PosixFile
     {
         offset = lseek(this.fd, offset, whence);
 
-        this.e.enforce(offset >= 0, errmsg, file, line);
+        this.enforce(offset >= 0, errmsg, file, line);
 
         return offset;
     }
@@ -154,7 +162,7 @@ class PosixFile
          * position.
          */
         this.seek(0, SEEK_SET, "unable to seek back when resetting");
-        this.e.enforce(this.restartInterrupted(ftruncate(this.fd, 0)) >= 0, "unable to truncate when resetting");
+        this.enforce(this.restartInterrupted(ftruncate(this.fd, 0)) >= 0, "unable to truncate when resetting");
     }
 
     /***************************************************************************
@@ -165,7 +173,7 @@ class PosixFile
 
     public void flush ( )
     {
-        this.e.enforce(!fdatasync(this.fd), "flush: unable to synchronise");
+        this.enforce(!fdatasync(this.fd), "flush: unable to synchronise");
     }
 
     /***************************************************************************
@@ -182,7 +190,7 @@ class PosixFile
     }
     body
     {
-        this.e.enforce(!this.restartInterrupted(unistd.close(this.fd)), "unable to close");
+        this.enforce(!this.restartInterrupted(unistd.close(this.fd)), "unable to close");
         this.log.info("File closed.");
     }
 
@@ -200,7 +208,7 @@ class PosixFile
     }
     body
     {
-        this.e.enforce(!unistd.unlink(this.namec), "unable to delete");
+        this.enforce(!unistd.unlink(this.namec), "unable to delete");
         this.log.info("File deleted.");
     }
 
@@ -214,7 +222,7 @@ class PosixFile
             ok   = condition to check
             msg  = exception message
             file = source code file where the condition is mentioned
-            file = source code line where the condition is mentioned
+            line = source code line where the condition is mentioned
 
         Throws:
             this.e (IOException) if ok is false/0/null.
@@ -223,7 +231,29 @@ class PosixFile
 
     public void enforce ( T ) ( T ok, char[] msg, char[] file = __FILE__, long line = __LINE__ )
     {
-        this.e.enforce(ok, msg, file, line);
+        if (!ok)
+        {
+            throw this.e()(msg, file, line);
+        }
+    }
+
+    /***************************************************************************
+
+        Returns the FileException object, creating it if needed.
+
+        Returns:
+            the FileException instance.
+
+    ***************************************************************************/
+
+    public FileException e ( )
+    {
+        if (this.e_ is null)
+        {
+            this.e_ = new FileException(this.name);
+        }
+
+        return this.e_;
     }
 
     /***************************************************************************
@@ -275,15 +305,9 @@ class PosixFile
         {
             if (ssize_t n = this.restartInterrupted(op(this.fd, data.ptr, data.length, pos)))
             {
-                if (n > 0)
-                {
-                    left = left[n .. $];
-                    pos += n;
-                }
-                else
-                {
-                    throw this.e(errmsg, file, line);
-                }
+                this.enforce(n > 0, errmsg, file, line);
+                left = left[n .. $];
+                pos += n;
             }
             else // end of file for pread(); pwrite() should
             {    // return 0 iff data.length is 0
@@ -335,14 +359,8 @@ class PosixFile
         {
             if (ssize_t n = this.restartInterrupted(op(this.fd, left.ptr, left.length)))
             {
-                if (n > 0)
-                {
-                    left = left[n .. $];
-                }
-                else
-                {
-                    throw this.e(errmsg, file, line);
-                }
+                this.enforce(n > 0, errmsg, file, line);
+                left = left[n .. $];
             }
             else // end of file for read(); write() should
             {    // return 0 iff data.length is 0
@@ -391,14 +409,8 @@ class PosixFile
         {
             if (ssize_t n = this.restartInterrupted(op(this.fd, data.chunks.ptr, data.chunks.length)))
             {
-                if (n > 0)
-                {
-                    data.advance(n);
-                }
-                else
-                {
-                    throw this.e(errmsg, file, line);
-                }
+                this.enforce(n > 0, errmsg, file, line);
+                data.advance(n);
             }
             else // end of file for read(); write() should
             {    // return 0 iff data.length is 0
@@ -444,11 +456,28 @@ class FileException: ErrnoIOException
 {
     import ocean.core.Exception: enforce, enforceImpl;
 
-    public char[] filename = null;
+    /***************************************************************************
 
-    public void enforce ( T ) ( T ok, char[] msg, char[] file = __FILE__, long line = __LINE__ )
+        The name of the file where a failed operation resulted in throwing this
+        instance.
+
+    ***************************************************************************/
+
+    public const char[] filename;
+
+    /***************************************************************************
+
+        Constructor.
+
+        Params:
+            filename = the name of the file where a failed operation resulted in
+                       throwing this instance.
+
+    ***************************************************************************/
+
+    public this ( char[] filename )
     {
-        enforceImpl(this.opCall(msg), ok, msg.init, file, line);
+        this.filename = filename;
     }
 
     override public typeof (this) opCall ( char[] msg, char[] file = __FILE__, long line = __LINE__ )

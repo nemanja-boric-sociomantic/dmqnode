@@ -90,7 +90,7 @@ class IndexFile: PosixFile
     {
         super(dir, name);
         this.stream = fdopen(this.fd, "w+");
-        this.e.enforce(this.stream, "unable to fdopen");
+        this.enforce(this.stream, "unable to fdopen");
     }
 
     /***************************************************************************
