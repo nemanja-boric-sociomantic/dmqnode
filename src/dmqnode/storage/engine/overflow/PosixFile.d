@@ -499,14 +499,9 @@ class FileException: ErrnoException
     {
         super.set(err_num, name, file, line);
 
-        if (size_t n = this.filename.length)
+        if (this.filename.length)
         {
-            static const sep = " - ";
-            size_t msg_length = this.reused_msg.length;
-            this.reused_msg.length = msg_length + n + sep.length;
-            memmove(&this.reused_msg[n + sep.length], &this.reused_msg[0], msg_length);
-            this.reused_msg[0 .. n] = this.filename[];
-            this.reused_msg[n .. n + sep.length] = sep[];
+            this.append(" - ").append(this.filename);
         }
 
         return this;
