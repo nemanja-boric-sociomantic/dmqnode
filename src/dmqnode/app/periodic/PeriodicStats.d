@@ -208,19 +208,20 @@ public class PeriodicStats : IPeriodic
         Constructor.
 
         Params:
-            stats_config = class containing configuration settings for stats
+            node = DMQ node
             epoll = epoll select dispatcher to register this periodic with (the
                 registration of periodics is usually dealt with by the Periodics
                 class, but an individual periodic can also reregister itself
                 with epoll in the situation where an error occurs)
+            stats_config = class containing configuration settings for stats
 
     ***************************************************************************/
 
-    public this ( StatsConfig stats_config, EpollSelectDispatcher epoll )
+    public this ( DmqNode node, EpollSelectDispatcher epoll, StatsConfig stats_config )
     {
         // When removing the console log output, multiply the 1000 with
         // this.log.default_period.
-        super(epoll, 1000, typeof(this).stringof);
+        super(node, epoll, 1000, typeof(this).stringof);
 
         this.stats_config = stats_config;
 

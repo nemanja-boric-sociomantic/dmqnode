@@ -33,6 +33,7 @@ public class PeriodicDiskOverflowIndexWriter : IPeriodic
         Constructor.
 
         Params:
+            node = DMQ node
             epoll = epoll select dispatcher to register this periodic with (the
                 registration of periodics is usually dealt with by the Periodics
                 class, but an individual periodic can also reregister itself
@@ -41,9 +42,9 @@ public class PeriodicDiskOverflowIndexWriter : IPeriodic
 
     ***************************************************************************/
 
-    public this ( EpollSelectDispatcher epoll, uint period_ms )
+    public this ( DmqNode node, EpollSelectDispatcher epoll, uint period_ms )
     {
-        super(epoll, period_ms, typeof(this).stringof);
+        super(node, epoll, period_ms, typeof(this).stringof);
     }
 
 

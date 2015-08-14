@@ -213,11 +213,9 @@ public class DmqNodeServer : LoggedCliApp
             [SIGINT, SIGTERM, SIGQUIT]);
 
         this.periodics = new Periodics(this.node, this.epoll);
-        this.periodics.add(new PeriodicStats(this.stats_config, this.epoll));
-        this.periodics.add(new PeriodicWriterFlush(
-            this.epoll, this.performance_config.write_flush_ms));
-        this.periodics.add(new PeriodicDiskOverflowIndexWriter(
-            this.epoll, this.overflow_config.write_index_ms));
+        this.periodics.add!(PeriodicStats)(this.stats_config);
+        this.periodics.add!(PeriodicWriterFlush)(this.performance_config.write_flush_ms);
+        this.periodics.add!(PeriodicDiskOverflowIndexWriter)(this.overflow_config.write_index_ms);
     }
 
 

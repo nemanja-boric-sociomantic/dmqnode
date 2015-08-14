@@ -83,17 +83,20 @@ public class Periodics
 
     /***************************************************************************
 
-        Adds a periodic to the set.
+        Adds a new Periodic instance to the set. The Periodic constructor is
+        expected to accept the following argument list:
+        ---
+          (DmqNode node, EpollSelectDispatcher epoll, ctor_args)
+        ---
 
         Params:
-            periodic = new periodic to add
+            ctor_args = additional Periodic constructor arguments
 
     ***************************************************************************/
 
-    public void add ( IPeriodic periodic )
+    public void add ( Periodic: IPeriodic, CtorArgs ...  ) ( CtorArgs ctor_args )
     {
-        periodic.setNode(this.node);
-        this.periodics ~= periodic;
+        this.periodics ~= new Periodic(this.node, this.epoll, ctor_args);
     }
 
 

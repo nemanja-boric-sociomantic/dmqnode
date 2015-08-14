@@ -103,6 +103,7 @@ public abstract class IPeriodic : ITimerEvent
         Constructor.
 
         Params:
+            node = DMQ node
             epoll = epoll select dispatcher to register this periodic with (the
                 registration of periodics is usually dealt with by the Periodics
                 class, but an individual periodic can also reregister itself
@@ -112,33 +113,16 @@ public abstract class IPeriodic : ITimerEvent
 
     ***************************************************************************/
 
-    public this ( EpollSelectDispatcher epoll, uint period_ms, char[] id )
+    public this ( DmqNode node, EpollSelectDispatcher epoll, uint period_ms, char[] id )
     {
+        this.node_info = this.node = node;
+
         auto s = period_ms / 1000;
         auto ms = (period_ms) % 1000;
         this.set(s, ms, s, ms);
 
         this.id = id;
         this.epoll = epoll;
-    }
-
-
-    /***************************************************************************
-
-        Passes a swarm node interface to the periodic. The interface is passed via
-        this method rather than the constructor so that a single instance of the
-        class Periodics can be instantiated and passed a swarm node interface
-        which it will in turn pass through to all IPeriodic instances which it
-        owns.
-
-        Params:
-            node = swarm node interface to use
-
-    ***************************************************************************/
-
-    public void setNode ( DmqNode node )
-    {
-        this.node_info = this.node = node;
     }
 
 
