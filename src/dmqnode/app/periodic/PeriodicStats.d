@@ -27,6 +27,9 @@ private import dmqnode.storage.Ring;
 
 private import ocean.util.log.Stats;
 
+private import swarm.util.node.log.Stats;
+
+
 /*******************************************************************************
 
     Periodic stats class. Displays a message line to the console and writes
@@ -39,61 +42,8 @@ public class PeriodicStats : IPeriodic
 {
     /***************************************************************************
 
-        Definition of the global statistics to log.
-
-    ***************************************************************************/
-
-    struct NodeStats
-    {
-        /***********************************************************************
-
-            The number of open socket connections to clients.
-
-        ***********************************************************************/
-
-        uint handling_connections;
-
-        /***********************************************************************
-
-            The total number of bytes received through the client connections.
-
-        ***********************************************************************/
-
-        ulong bytes_received;
-
-        /***********************************************************************
-
-            The total number of bytes sent through the client connections.
-
-        ***********************************************************************/
-
-        ulong bytes_sent;
-
-        /***********************************************************************
-
-            Creates a new instance of this struct, populated with the
-            corresponding stats counter values from node.
-
-            Params:
-                node = node to get statistics from
-
-            Returns:
-                an instance of this struct populated with the correspondent
-                values in node.
-
-        ***********************************************************************/
-
-        static typeof(*this) set ( IDmqNodeInfo node )
-        {
-            return typeof(*this)(node.num_open_connections,
-                                 node.bytes_received,
-                                 node.bytes_sent);
-        }
-    }
-
-    /***************************************************************************
-
-        Definition of the per-channel statistics to log.
+        Definition of the per-channel statistics to log in addition to those
+        automatically written by ChannelsNodeStats.
 
     ***************************************************************************/
 
@@ -194,6 +144,15 @@ public class PeriodicStats : IPeriodic
 
     /***************************************************************************
 
+        Logger for the node and basic per-channel stats. The additional
+        per-channel stats in ChannelStats are logged separately.
+
+    ***************************************************************************/
+
+    private ChannelsNodeStats basic_channel_stats;
+
+    /***************************************************************************
+
         The number of seconds since the log was written the last time.
 
         This member is for console output only, remove it  when making the
@@ -227,6 +186,8 @@ public class PeriodicStats : IPeriodic
 
         this.log = new StatsLog(this.stats_config.file_count,
             this.stats_config.max_file_size, this.stats_config.logfile);
+
+        this.basic_channel_stats = new ChannelsNodeStats(node, this.log);
     }
 
     /***************************************************************************
@@ -258,12 +219,7 @@ public class PeriodicStats : IPeriodic
 
     private void writeStatsLog ( )
     {
-        this.log.add(NodeStats.set(this.node_info));
-
-        foreach (action_name, action_stats; this.node_info.record_action_counters)
-        {
-            this.log.addObject!("action")(action_name, action_stats);
-        }
+        this.basic_channel_stats.log();
 
         foreach (channel; this.node_info)
         {
