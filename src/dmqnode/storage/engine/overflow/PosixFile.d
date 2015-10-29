@@ -104,6 +104,9 @@ class PosixFile
     {
         this.log = Log.lookup(name);
 
+        auto path = FilePath(dir);
+        path.create();
+
         this.name = FilePath.join(dir, name) ~ '\0';
         this.namec = this.name.ptr;
         this.name = this.name[0 .. $ - 1];
