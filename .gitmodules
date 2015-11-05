@@ -7,6 +7,9 @@
 [submodule "submodules/dmqproto"]
 	path = submodules/dmqproto
 	url = git@github.com:sociomantic/dmqproto.git
+[submodule "submodules/turtle"]
+	path = submodules/turtle
+	url = git@github.com:sociomantic/turtle.git
 [submodule "submodules/makd"]
 	path = submodules/makd
 	url = git@github.com:sociomantic/makd.git

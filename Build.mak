@@ -13,5 +13,8 @@ $B/dmqperformance: src/dmqperformance/main.d
 dmqperformance: $B/dmqperformance
 all += dmqperformance
 
+$O/test-dmqtest: dmqnode
+$O/test-dmqtest: override LDFLAGS += -lebtree -lrt
+
 # Additional flags needed when unittesting
 $O/%unittests: override LDFLAGS += -lrt
