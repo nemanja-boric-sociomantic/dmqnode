@@ -1,3 +1,4 @@
+override DFLAGS += -wi -version=TangoImportTransition
 override LDFLAGS += -llzo2
 
 # Modules to exclude from testing
