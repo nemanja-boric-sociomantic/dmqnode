@@ -31,11 +31,8 @@ private import ocean.util.log.Stats;
 
 *******************************************************************************/
 
-public class StatsConfig
+public class StatsConfig: StatsLog.Config
 {
-    char[] logfile = IStatsLog.default_file_name;
-    size_t file_count = IStatsLog.default_file_count;
-    size_t max_file_size = IStatsLog.default_max_file_size;
     bool console_stats_enabled = false;
 }
 

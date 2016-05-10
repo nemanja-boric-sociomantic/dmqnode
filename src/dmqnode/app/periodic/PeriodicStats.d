@@ -184,8 +184,7 @@ public class PeriodicStats : IPeriodic
 
         this.stats_config = stats_config;
 
-        this.log = new StatsLog(this.stats_config.file_count,
-            this.stats_config.max_file_size, this.stats_config.logfile);
+        this.log = new StatsLog(stats_config);
 
         this.basic_channel_stats = new ChannelsNodeStats(node, this.log);
     }
