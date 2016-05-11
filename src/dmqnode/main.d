@@ -50,11 +50,9 @@ private import ocean.io.Stdout;
 
 private import ocean.io.select.EpollSelectDispatcher;
 private import ocean.io.select.protocol.generic.ErrnoIOException : IOWarning;
-private import ocean.io.select.client.SignalEvent;
 private import ocean.io.select.client.model.ISelectClient;
 
-private import ocean.util.app.LoggedCliApp;
-private import ocean.util.app.ext.VersionArgsExt;
+private import ocean.util.app.DaemonApp;
 
 private import ConfigReader = ocean.util.config.ClassFiller;
 
@@ -104,17 +102,8 @@ private int main ( char[][] cl_args )
 
 *******************************************************************************/
 
-public class DmqNodeServer : LoggedCliApp
+public class DmqNodeServer : DaemonApp
 {
-    /***************************************************************************
-
-        Version information extension.
-
-    ***************************************************************************/
-
-    public VersionArgsExt ver_ext;
-
-
     /***************************************************************************
 
         Epoll selector instance
@@ -131,15 +120,6 @@ public class DmqNodeServer : LoggedCliApp
      **************************************************************************/
 
     private DmqNode node;
-
-
-    /***************************************************************************
-
-        SIGINT handler event
-
-    ***************************************************************************/
-
-    private SignalEvent sigint_event;
 
 
     /***************************************************************************
@@ -173,21 +153,12 @@ public class DmqNodeServer : LoggedCliApp
     {
         const app_name = "dmqnode";
         const app_desc = "dmqnode: distributed message queue server node.";
-        const usage = null;
-        const help = null;
-        const use_insert_appender = false;
-        const loose_config_parsing = false;
-        const char[][] default_configs = [ "etc/config.ini" ];
 
-        super(app_name, app_desc, usage, help, use_insert_appender,
-                loose_config_parsing, default_configs, config);
+        DaemonApp.OptionalSettings settings;
+        settings.signals = [SIGINT, SIGTERM, SIGQUIT];
 
-        this.ver_ext = new VersionArgsExt(Version);
-        this.args_ext.registerExtension(this.ver_ext);
-        this.log_ext.registerExtension(this.ver_ext);
-        this.registerExtension(this.ver_ext);
-
-        this.epoll = new EpollSelectDispatcher;
+        super(this.epoll = new EpollSelectDispatcher,
+              app_name, app_desc, versionInfo, settings);
     }
 
 
@@ -208,9 +179,6 @@ public class DmqNodeServer : LoggedCliApp
 
         this.node.error_callback = &this.nodeError;
         this.node.connection_limit = this.server_config.connection_limit;
-
-        this.sigint_event = new SignalEvent(&this.sigintHandler,
-            [SIGINT, SIGTERM, SIGQUIT]);
 
         this.periodics = new Periodics(this.node, this.epoll);
         this.periodics.add!(PeriodicStats)(this.stats_config);
@@ -234,7 +202,7 @@ public class DmqNodeServer : LoggedCliApp
 
     protected int run ( Arguments args, ConfigParser config )
     {
-        this.epoll.register(this.sigint_event);
+        this.startEventHandling();
 
         this.periodics.register();
 
@@ -244,7 +212,7 @@ public class DmqNodeServer : LoggedCliApp
         this.epoll.eventLoop();
         Stdout.formatln("Event loop exited");
 
-        return true;
+        return 0;
     }
 
 
@@ -301,7 +269,7 @@ public class DmqNodeServer : LoggedCliApp
 
     ***************************************************************************/
 
-    private void sigintHandler ( SignalEvent.SignalInfo siginfo )
+    override public void onSignal ( int signal )
     {
         // Due to this delegate being called from epoll, we know that none of
         // the periodics are currently active. (The dump periodic may have

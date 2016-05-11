@@ -6,6 +6,7 @@ TEST_FILTER_OUT += \
 	$T/src/dmqnode/main.d
 
 $B/dmqnode: src/dmqnode/main.d
+$B/dmqnode: override LDFLAGS += -lebtree
 dmqnode: $B/dmqnode
 all += dmqnode
 
