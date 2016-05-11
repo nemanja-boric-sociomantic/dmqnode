@@ -164,12 +164,10 @@ public class RingNode : StorageChannels
 
             Params:
                 id  = queue (channel) identifier string
-                dir = working directory
-                queue_bytes = maximum queue size
 
         ***********************************************************************/
 
-        public this ( char[] id, char[] dir, ulong queue_bytes )
+        public this ( char[] id )
         in
         {
             assert(!this.outer.shutting_down, "Attempted to create channel '{}' during shutdown");
@@ -178,14 +176,16 @@ public class RingNode : StorageChannels
         {
             super(id);
 
-            this.filename = FilePath.join(dir, id ~ this.outer.DumpFileSuffix);
+            this.filename = FilePath.join(
+                this.outer.data_dir, id ~ this.outer.DumpFileSuffix
+            );
 
             this.file_path = new FilePath(this.filename);
 
             this.overflow = this.outer.overflow.new Channel(id);
 
             this.queue = new FlexibleByteRingQueue(noScanMallocMemManager,
-                queue_bytes);
+                this.outer.channel_size_limit);
 
             this.memory_info = this.queue;
             this.overflow_info = this.overflow;
@@ -532,7 +532,7 @@ public class RingNode : StorageChannels
     {
         enforce(!this.shutting_down, "Cannot create channel '" ~ id ~
                                      "' while shutting down");
-        return new Ring(id, this.data_dir, this.channel_size_limit);
+        return this.new Ring(id);
     }
 
 
