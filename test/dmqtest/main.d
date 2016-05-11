@@ -16,6 +16,7 @@ module dmqtest.main;
 
 *******************************************************************************/
 
+import ocean.transition;
 import dmqtest.TestRunner;
 
 /*******************************************************************************
@@ -40,10 +41,10 @@ private class RealDmqTestRunner : DmqTestRunner
 
     ***************************************************************************/
 
-    override public void configure ( )
+    override public CopyFileEntry[] copyFiles ( )
     {
-        this.config_files ~= [
-            this.top_dir ~ "/test/dmqtest/etc/config.ini"
+        return [
+            CopyFileEntry("test/dmqtest/etc/config.ini", "etc/config.ini")
         ];
     }
 }

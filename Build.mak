@@ -1,4 +1,4 @@
-override DFLAGS += -wi -version=TangoImportTransition
+override DFLAGS += -wi
 override LDFLAGS += -llzo2
 
 # Modules to exclude from testing
@@ -15,7 +15,7 @@ dmqperformance: $B/dmqperformance
 all += dmqperformance
 
 $O/test-dmqtest: dmqnode
-$O/test-dmqtest: override LDFLAGS += -lebtree -lrt
+$O/test-dmqtest: override LDFLAGS += -lebtree -lrt -lpcre
 
 # Additional flags needed when unittesting
-$O/%unittests: override LDFLAGS += -lrt
+$O/%unittests: override LDFLAGS += -lebtree -lrt -lglib-2.0 -lpcre

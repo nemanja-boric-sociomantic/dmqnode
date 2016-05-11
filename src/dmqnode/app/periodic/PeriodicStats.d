@@ -158,7 +158,7 @@ public class PeriodicStats : IPeriodic
         {
             auto stats = typeof(*this)(channel.memory_info.used_space,
                                        channel.overflow_info.num_bytes,
-                                       channel.memory_info.length,
+                                       cast(uint)channel.memory_info.length,
                                        channel.overflow_info.num_records,
                                        100);
             if (auto mem_capacity = channel.memory_info.total_space)
@@ -291,50 +291,50 @@ public class PeriodicStats : IPeriodic
             {
                 char[] id = channel.id;
                 fwrite(id.ptr, id[0].sizeof, id.length, stderr);
-                fputs(" records: ", stderr);
-                this.printRecords(channel.memory_info.length);
-                fputs(" mem ", stderr);
+                fputs(" records: ".ptr, stderr);
+                this.printRecords(cast(uint)channel.memory_info.length);
+                fputs(" mem ".ptr, stderr);
                 this.printRecords(channel.overflow_info.num_records);
-                fputs(" ovf", stderr);
+                fputs(" ovf".ptr, stderr);
                 if (auto n = channel.records_pushed)
                 {
-                    fputs(" +", stderr);
+                    fputs(" +".ptr, stderr);
                     this.printRecords(n);
                     channel.records_pushed = 0;
                 }
 
                 if (auto n = channel.records_popped)
                 {
-                    fputs(" -", stderr);
+                    fputs(" -".ptr, stderr);
                     this.printRecords(n);
                     channel.records_popped = 0;
                 }
 
-                fputs("; bytes: ", stderr);
-                this,printRecords(channel.memory_info.used_space);
-                fputs(" mem ", stderr);
-                this.printRecords(channel.overflow_info.num_bytes);
-                fputs(" ovf", stderr);
+                fputs("; bytes: ".ptr, stderr);
+                this.printBytes(channel.memory_info.used_space);
+                fputs(" mem ".ptr, stderr);
+                this.printBytes(channel.overflow_info.num_bytes);
+                fputs(" ovf".ptr, stderr);
                 if (auto n = channel.bytes_pushed)
                 {
-                    fputs(" +", stderr);
+                    fputs(" +".ptr, stderr);
                     this.printBytes(n);
                     channel.bytes_pushed = 0;
                 }
 
                 if (auto n = channel.bytes_popped)
                 {
-                    fputs(" -", stderr);
+                    fputs(" -".ptr, stderr);
                     this.printBytes(n);
                     channel.bytes_popped = 0;
                 }
 
-                fputs("\x1B[K\n", stderr);
+                fputs("\x1B[K\n".ptr, stderr);
 
                 i++;
             }
 
-            if (i) fprintf(stderr, "\x1B[%uA\r", i);
+            if (i) fprintf(stderr, "\x1B[%uA\r".ptr, i);
         }
     }
 
@@ -350,15 +350,15 @@ public class PeriodicStats : IPeriodic
 
             while (b)
             {
-                d[n++] = b & ((1 << 10) - 1);
+                d[n++] = cast(ubyte)(b & ((1 << 10) - 1));
                 b >>= 10;
             }
 
-            fprintf(stderr, "%hu", d[--n]);
+            fprintf(stderr, "%hu".ptr, d[--n]);
 
             foreach_reverse (digit; d[0 .. n])
             {
-                fprintf(stderr, ",%03hu", digit);
+                fprintf(stderr, ",%03hu".ptr, digit);
             }
         }
         else
@@ -379,15 +379,15 @@ public class PeriodicStats : IPeriodic
 
             while (r)
             {
-                d[n++] = r % 1000;
+                d[n++] = cast(ushort)(r % 1000);
                 r /= 1000;
             }
 
-            fprintf(stderr, "%hu", d[--n]);
+            fprintf(stderr, "%hu".ptr, d[--n]);
 
             foreach_reverse (digit; d[0 .. n])
             {
-                fprintf(stderr, ",%03hu", digit);
+                fprintf(stderr, ",%03hu".ptr, digit);
             }
         }
         else

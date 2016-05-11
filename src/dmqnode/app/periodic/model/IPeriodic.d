@@ -31,7 +31,7 @@ private import dmqnode.app.util.Terminator;
 private import dmqnode.node.DmqNode,
                dmqnode.node.IDmqNodeInfo;
 
-private import tango.util.log.Log;
+private import ocean.util.log.Log;
 
 
 

@@ -30,7 +30,7 @@ class IndexFile: PosixFile
     import ocean.sys.SignalMask;
     import tango.stdc.posix.signal: SIGABRT, SIGSEGV, SIGILL, SIGBUS;
 
-    import ocean.core.Exception: enforceImpl;
+    import ocean.core.Enforce: enforceImpl;
 
     /***************************************************************************
 
@@ -89,7 +89,7 @@ class IndexFile: PosixFile
     public this ( char[] dir, char[] name )
     {
         super(dir, name);
-        this.stream = fdopen(this.fd, "w+");
+        this.stream = fdopen(this.fd, "w+".ptr);
         this.enforce(this.stream, "unable to fdopen");
     }
 
@@ -147,7 +147,7 @@ class IndexFile: PosixFile
                  *     which ensures the string is a valid queue channel name.
                  */
                 n = fscanf(this.stream,
-                           " %n%m[_0-9a-zA-Z-]%n %lu %llu %lld %lld",
+                           " %n%m[_0-9a-zA-Z-]%n %lu %llu %lld %lld".ptr,
                            &name_start, &channel_name, &name_end,
                            &channel.records, &channel.bytes, &channel.first_offset,
                            &channel.last_offset)
@@ -216,7 +216,7 @@ class IndexFile: PosixFile
         this.fmt_io_signal_blocker.callBlocked({
             iterate((char[] name, ChannelMetadata channel)
             {
-                int n = fprintf(this.stream, "%.*s %lu %llu %lld %lld\n",
+                int n = fprintf(this.stream, "%.*s %lu %llu %lld %lld\n".ptr,
                                 name.length, name.ptr,
                                 channel.records, channel.bytes,
                                 channel.first_offset, channel.last_offset);

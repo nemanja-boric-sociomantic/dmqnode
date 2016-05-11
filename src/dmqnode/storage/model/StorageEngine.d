@@ -35,13 +35,13 @@ private import swarm.core.node.storage.model.IStorageEngine;
 
 private import swarm.core.node.storage.listeners.Listeners;
 
-private import tango.io.FilePath;
+private import ocean.io.FilePath;
 
-private import tango.core.Array;
+private import ocean.core.Array;
 
-private import tango.io.Path : normalize, PathParser;
+private import ocean.io.Path : normalize, PathParser;
 
-private import tango.sys.Environment;
+private import ocean.sys.Environment;
 
 
 
@@ -78,6 +78,9 @@ public abstract class StorageEngine : IStorageEngine
                 case code.Finish:
                     super.trigger_(code);
                     break;
+
+                default:
+                    assert(false);
             }
         }
     }

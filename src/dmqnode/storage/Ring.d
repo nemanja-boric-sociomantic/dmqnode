@@ -35,19 +35,19 @@ private import ocean.util.container.queue.model.IQueueInfo;
 
 private import ocean.util.container.mem.MemManager;
 
-private import ocean.core.Exception: enforce;
+private import ocean.core.Enforce: enforce;
 
-private import tango.io.FilePath;
+private import ocean.io.FilePath;
 
-private import tango.io.device.File;
+private import ocean.io.device.File;
 
-private import tango.io.Path : normalize, PathParser;
+private import ocean.io.Path : normalize, PathParser;
 
-private import tango.sys.Environment;
+private import ocean.sys.Environment;
 
-debug private import tango.io.Stdout : Stderr;
+debug private import ocean.io.Stdout : Stderr;
 
-private import tango.util.log.Log;
+private import ocean.util.log.Log;
 
 
 
@@ -214,7 +214,7 @@ public class RingNode : StorageChannels
                 scope file = new File(this.file_path.toString(), File.ReadExisting);
                 scope ( exit ) file.close();
 
-                this.queue.deserialize(file);
+                this.queue.load(file);
             }
             else
             {
@@ -347,7 +347,7 @@ public class RingNode : StorageChannels
                 scope file = new File(this.file_path.toString(), File.WriteCreate);
                 scope ( exit ) file.close();
 
-                this.queue.serialize(file);
+                this.queue.save(file);
             }
 
             return this;
@@ -532,7 +532,7 @@ public class RingNode : StorageChannels
     {
         enforce(!this.shutting_down, "Cannot create channel '" ~ id ~
                                      "' while shutting down");
-        return new Ring(id, this.data_dir, super.channelSizeLimit);
+        return new Ring(id, this.data_dir, cast(uint)super.channelSizeLimit);
     }
 
 

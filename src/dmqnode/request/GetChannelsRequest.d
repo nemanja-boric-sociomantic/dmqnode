@@ -25,7 +25,7 @@ private import Protocol = dmqproto.node.request.GetChannels;
 
 private import dmqnode.request.model.IDmqRequestResources;
 
-private import tango.transition;
+private import ocean.transition;
 
 
 /*******************************************************************************

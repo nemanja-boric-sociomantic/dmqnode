@@ -233,7 +233,7 @@ class PosixFile
     {
         if (!ok)
         {
-            throw this.e.useGlobalErrno(msg, file, line);
+            throw this.e.useGlobalErrno(msg, file, cast(int)line);
         }
     }
 
@@ -407,7 +407,7 @@ class PosixFile
     {
         while (data.length)
         {
-            if (ssize_t n = this.restartInterrupted(op(this.fd, data.chunks.ptr, data.chunks.length)))
+            if (ssize_t n = this.restartInterrupted(op(this.fd, data.chunks.ptr, cast(int)data.chunks.length)))
             {
                 this.enforce(n > 0, errmsg, file, line);
                 data.advance(n);

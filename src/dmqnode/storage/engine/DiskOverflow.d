@@ -174,7 +174,7 @@ import dmqnode.storage.engine.overflow.ChannelMetadata,
        dmqnode.storage.engine.overflow.PosixFile,
        dmqnode.storage.engine.overflow.IndexFile;
 
-import tango.util.log.Log;
+import ocean.util.log.Log;
 
 /******************************************************************************/
 
@@ -211,7 +211,7 @@ class DiskOverflow: DiskOverflowInfo
     import tango.stdc.stdio: SEEK_CUR, SEEK_END;
     import tango.stdc.errno: errno;
 
-    import ocean.core.Exception: enforce;
+    import ocean.core.Enforce: enforce;
 
     /***************************************************************************
 

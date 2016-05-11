@@ -58,11 +58,11 @@ private import ocean.util.app.ext.VersionArgsExt;
 
 private import ConfigReader = ocean.util.config.ClassFiller;
 
-private import tango.core.Exception : IllegalArgumentException, OutOfMemoryException;
+private import ocean.core.Exception_tango : IllegalArgumentException, OutOfMemoryException;
 
-private import tango.stdc.posix.signal: SIGINT, SIGTERM, SIGQUIT;
+private import ocean.stdc.posix.signal: SIGINT, SIGTERM, SIGQUIT;
 
-private import tango.util.log.Log;
+private import ocean.util.log.Log;
 
 
 

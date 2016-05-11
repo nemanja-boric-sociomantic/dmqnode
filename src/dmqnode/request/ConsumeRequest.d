@@ -218,6 +218,9 @@ public scope class ConsumeRequest : Protocol.Consume, StorageEngine.IConsumer
             case Finish:
                 this.finish_trigger = true;
                 break;
+
+            default:
+                assert(false);
         }
 
         if ( this.waiting_for_trigger )
