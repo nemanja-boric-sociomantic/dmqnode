@@ -46,7 +46,7 @@ public abstract class StorageChannels :
 
     ***************************************************************************/
 
-    private ulong channel_size_limit;
+    protected ulong channel_size_limit;
 
 
     /***************************************************************************

@@ -532,7 +532,7 @@ public class RingNode : StorageChannels
     {
         enforce(!this.shutting_down, "Cannot create channel '" ~ id ~
                                      "' while shutting down");
-        return new Ring(id, this.data_dir, cast(uint)super.channelSizeLimit);
+        return new Ring(id, this.data_dir, cast(uint)this.channel_size_limit);
     }
 
 
