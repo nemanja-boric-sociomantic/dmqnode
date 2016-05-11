@@ -169,7 +169,7 @@ public class RingNode : StorageChannels
 
         ***********************************************************************/
 
-        public this ( char[] id, char[] dir, uint queue_bytes )
+        public this ( char[] id, char[] dir, ulong queue_bytes )
         in
         {
             assert(!this.outer.shutting_down, "Attempted to create channel '{}' during shutdown");
@@ -532,7 +532,7 @@ public class RingNode : StorageChannels
     {
         enforce(!this.shutting_down, "Cannot create channel '" ~ id ~
                                      "' while shutting down");
-        return new Ring(id, this.data_dir, cast(uint)this.channel_size_limit);
+        return new Ring(id, this.data_dir, this.channel_size_limit);
     }
 
 
