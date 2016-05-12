@@ -465,7 +465,7 @@ public class RingNode : StorageChannels
 
         Params:
             data_dir = data directory for dumped queue channels
-            handled_record = delegate to call upon pushing or popping
+            dmqnode = the hosting node for push/pop counting
             size_limit = maximum number of bytes allowed in the node (0 = no
                 limit)
             channel_size_limit = maximum number of bytes allowed per channel (0
