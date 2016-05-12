@@ -53,6 +53,7 @@ private import ocean.io.select.protocol.generic.ErrnoIOException : IOWarning;
 private import ocean.io.select.client.model.ISelectClient;
 
 private import ocean.util.app.DaemonApp;
+private import ocean.sys.CpuAffinity;
 
 private import ConfigReader = ocean.util.config.ClassFiller;
 
@@ -174,6 +175,13 @@ public class DmqNodeServer : DaemonApp
         ConfigReader.fill("Server", this.server_config, config);
         ConfigReader.fill("Performance", this.performance_config, config);
         ConfigReader.fill("Overflow", this.overflow_config, config);
+
+        auto cpu = server_config.cpu();
+
+        if (cpu >= 0)
+        {
+            CpuAffinity.set(cast(uint)cpu);
+        }
 
         this.node = new DmqNode(this.server_config, this.epoll);
 

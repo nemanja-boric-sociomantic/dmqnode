@@ -37,6 +37,9 @@ public class ServerConfig
 
     ConfigReader.Required!(ushort) port;
 
+    // CPU index counting from 0; negative: use any CPU
+    ConfigReader.Min!(int, -1) cpu;
+
     ulong size_limit = 0; // 0 := no global size limit
 
     ConfigReader.Required!(ConfigReader.Min!(ulong, 1)) channel_size_limit;
