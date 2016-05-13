@@ -231,6 +231,24 @@ public class DmqPerformance : CliApp
         this.pushes = new TimeDistribution;
         this.pops = new TimeDistribution;
 
+        this.mainLoop(parallel, count);
+
+        return 0;
+    }
+
+    /***************************************************************************
+
+        Infinite loop which performs the sequence of requests specified by the
+        CLI arguments.
+
+        Params:
+            parallel = number of requests to perform in parallel
+            count = total number of pushes/pops per cycle
+
+    ***************************************************************************/
+
+    private void mainLoop ( int parallel, int count )
+    {
         while ( true )
         {
             double total_push_time, total_pop_time;
@@ -279,10 +297,7 @@ public class DmqPerformance : CliApp
 
             Stdout.formatln("");
         }
-
-        return 0;
     }
-
 
     /***************************************************************************
 
