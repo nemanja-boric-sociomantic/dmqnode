@@ -38,7 +38,7 @@ private import ocean.util.log.StaticTrace;
 
 private import ocean.math.SlidingAverage;
 
-private import ocean.util.app.VersionedCliApp;
+private import ocean.util.app.CliApp;
 
 private import Version;
 
@@ -73,7 +73,7 @@ void main ( char[][] cl_args )
 
 *******************************************************************************/
 
-public class DmqPerformance : VersionedCliApp
+public class DmqPerformance : CliApp
 {
     /***************************************************************************
 
@@ -168,10 +168,7 @@ public class DmqPerformance : VersionedCliApp
         const char[] name = "DMQ performance tester";
         const char[] desc = "performing (-c) pushes then (-c) pops each cycle,"
                             " with up to (-p) requests in parallel";
-        const char[] usage;
-        const char[] help;
-
-        super ( name, desc, Version, usage, help);
+        super(name, desc, versionInfo);
     }
 
 
