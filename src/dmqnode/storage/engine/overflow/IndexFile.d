@@ -23,12 +23,12 @@ import dmqnode.storage.engine.overflow.PosixFile,
 
 class IndexFile: PosixFile
 {
-    import tango.stdc.posix.stdio: fdopen;
-    import tango.stdc.stdio: FILE, EOF, fscanf, fprintf, feof, rewind, clearerr, fflush;
-    import tango.stdc.stdlib: free;
+    import ocean.stdc.posix.stdio: fdopen;
+    import ocean.stdc.stdio: FILE, EOF, fscanf, fprintf, feof, rewind, clearerr, fflush;
+    import ocean.stdc.stdlib: free;
 
     import ocean.sys.SignalMask;
-    import tango.stdc.posix.signal: SIGABRT, SIGSEGV, SIGILL, SIGBUS;
+    import ocean.stdc.posix.signal: SIGABRT, SIGSEGV, SIGILL, SIGBUS;
 
     import ocean.core.Enforce: enforceImpl;
 

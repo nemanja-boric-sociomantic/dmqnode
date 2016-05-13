@@ -13,17 +13,17 @@ import ocean.sys.ErrnoException;
 
 class PosixFile
 {
-    import tango.stdc.posix.fcntl: open, O_RDWR, O_APPEND, O_CREAT, S_IRUSR, S_IWUSR, S_IRGRP, S_IROTH;
-    import tango.stdc.posix.unistd: write, pwrite, lseek, ftruncate, fdatasync;
-    import unistd = tango.stdc.posix.unistd: close, unlink;
-    import tango.stdc.posix.sys.uio: writev;
-    import tango.stdc.posix.sys.types: off_t, ssize_t;
-    import tango.stdc.stdio: SEEK_SET;
-    import tango.stdc.errno: EINTR, errno;
+    import ocean.stdc.posix.fcntl: open, O_RDWR, O_APPEND, O_CREAT, S_IRUSR, S_IWUSR, S_IRGRP, S_IROTH;
+    import ocean.stdc.posix.unistd: write, pwrite, lseek, ftruncate, fdatasync;
+    import unistd = ocean.stdc.posix.unistd: close, unlink;
+    import ocean.stdc.posix.sys.uio: writev;
+    import ocean.stdc.posix.sys.types: off_t, ssize_t;
+    import ocean.stdc.stdio: SEEK_SET;
+    import ocean.stdc.errno: EINTR, errno;
 
-    import tango.io.FilePath;
+    import ocean.io.FilePath;
 
-    import tango.util.log.Log;
+    import ocean.util.log.Log;
 
     /***************************************************************************
 
@@ -454,7 +454,7 @@ class PosixFile
 
 class FileException: ErrnoException
 {
-    import tango.stdc.string: memmove;
+    import ocean.stdc.string: memmove;
 
     /***************************************************************************
 
@@ -518,8 +518,8 @@ class FileException: ErrnoException
 
 struct IoVec
 {
-    import tango.stdc.posix.sys.uio: writev, iovec;
-    import tango.core.Exception: onArrayBoundsError;
+    import ocean.stdc.posix.sys.uio: writev, iovec;
+    import ocean.core.Exception_tango: onArrayBoundsError;
 
     /***************************************************************************
 

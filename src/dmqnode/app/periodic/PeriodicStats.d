@@ -235,7 +235,7 @@ public class PeriodicStats : IPeriodic
 
     ***************************************************************************/
 
-    import tango.stdc.stdio;
+    import ocean.stdc.stdio;
 
     void consoleLog ( )
     {

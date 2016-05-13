@@ -46,9 +46,9 @@ private import swarm.dmq.DmqClient;
 
 private import swarm.dmq.DmqConst;
 
-private import tango.io.Stdout;
+private import ocean.io.Stdout;
 
-private import tango.time.StopWatch;
+private import ocean.time.StopWatch;
 
 
 /*******************************************************************************

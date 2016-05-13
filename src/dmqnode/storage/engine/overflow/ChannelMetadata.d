@@ -14,7 +14,7 @@ struct ChannelMetadata
 {
     import dmqnode.storage.engine.overflow.Const;
 
-    import tango.stdc.posix.sys.types: off_t;
+    import ocean.stdc.posix.sys.types: off_t;
     import ocean.core.Enforce: enforce;
 
     /***************************************************************************

@@ -13,7 +13,7 @@ module dmqnode.storage.engine.overflow.RecordHeader;
 
 struct RecordHeader
 {
-    import tango.stdc.posix.sys.types: off_t;
+    import ocean.stdc.posix.sys.types: off_t;
 
     /***************************************************************************
 

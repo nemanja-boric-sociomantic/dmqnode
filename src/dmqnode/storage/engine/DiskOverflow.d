@@ -205,11 +205,11 @@ class DiskOverflow: DiskOverflowInfo
 {
     import QConst = dmqnode.storage.engine.overflow.Const;
 
-    import tango.stdc.posix.unistd: read, pread, write, pwrite;
-    import tango.stdc.posix.sys.uio: iovec, writev;
-    import tango.stdc.posix.sys.types: off_t;
-    import tango.stdc.stdio: SEEK_CUR, SEEK_END;
-    import tango.stdc.errno: errno;
+    import ocean.stdc.posix.unistd: read, pread, write, pwrite;
+    import ocean.stdc.posix.sys.uio: iovec, writev;
+    import ocean.stdc.posix.sys.types: off_t;
+    import ocean.stdc.stdio: SEEK_CUR, SEEK_END;
+    import ocean.stdc.errno: errno;
 
     import ocean.core.Enforce: enforce;
 
