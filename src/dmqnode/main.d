@@ -30,6 +30,7 @@ private import dmqnode.app.config.ServerConfig;
 private import dmqnode.app.config.PerformanceConfig;
 private import dmqnode.app.config.StatsConfig;
 private import dmqnode.app.config.OverflowConfig;
+private import dmqnode.app.config.ChannelSizeConfig;
 
 private import dmqnode.app.util.Terminator;
 
@@ -142,6 +143,7 @@ public class DmqNodeServer : DaemonApp
     private PerformanceConfig performance_config;
     private StatsConfig stats_config;
     private OverflowConfig overflow_config;
+    private ChannelSizeConfig channel_size_config;
 
 
     /***************************************************************************
@@ -183,7 +185,14 @@ public class DmqNodeServer : DaemonApp
             CpuAffinity.set(cast(uint)cpu);
         }
 
-        this.node = new DmqNode(this.server_config, this.epoll);
+        this.channel_size_config.default_size_limit = this.server_config.channel_size_limit();
+
+        foreach (key; config.iterateCategory("ChannelSizeById"))
+        {
+            this.channel_size_config.add(key, config.getStrict!(ulong)("ChannelSizeById", key));
+        }
+
+        this.node = new DmqNode(this.server_config, this.channel_size_config, epoll);
 
         this.node.error_callback = &this.nodeError;
         this.node.connection_limit = this.server_config.connection_limit;

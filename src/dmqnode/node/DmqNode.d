@@ -32,6 +32,7 @@ private import dmqnode.storage.model.StorageEngine;
 private import dmqnode.storage.model.StorageChannels;
 
 private import dmqnode.app.config.ServerConfig;
+private import dmqnode.app.config.ChannelSizeConfig;
 
 private import swarm.core.node.storage.model.IStorageEngineInfo;
 
@@ -58,14 +59,18 @@ public class DmqNode
 
         Params:
             config = server configuration
+            channel_size_config = channel size configuration
             epoll = epoll select dispatcher to be used internally
 
     ***************************************************************************/
 
-    public this ( ServerConfig config, EpollSelectDispatcher epoll )
+    public this ( ServerConfig server_config,
+                  ChannelSizeConfig channel_size_config,
+                  EpollSelectDispatcher epoll )
     {
-        auto ringnode = new RingNode(config.data_dir, this, config.size_limit,
-                                     config.channel_size_limit());
+        auto ringnode = new RingNode(server_config.data_dir, this,
+                                     server_config.size_limit,
+                                     channel_size_config);
 
         auto conn_setup_params = new ConnectionSetupParams;
         conn_setup_params.node_info = this;
@@ -73,8 +78,8 @@ public class DmqNode
         conn_setup_params.storage_channels = ringnode;
         conn_setup_params.shared_resources = new SharedResources;
 
-        super(DmqConst.NodeItem(config.address(), config.port()),
-              ringnode, conn_setup_params, config.backlog);
+        super(DmqConst.NodeItem(server_config.address(), server_config.port()),
+              ringnode, conn_setup_params, server_config.backlog);
     }
 
 

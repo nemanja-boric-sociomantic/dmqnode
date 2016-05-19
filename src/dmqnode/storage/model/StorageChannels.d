@@ -42,15 +42,6 @@ public abstract class StorageChannels :
 {
     /***************************************************************************
 
-        Per-channel size limit
-
-    ***************************************************************************/
-
-    protected ulong channel_size_limit;
-
-
-    /***************************************************************************
-
         Calculates the size (in bytes) an item would take if it were pushed
         to the queue.
 
@@ -71,29 +62,23 @@ public abstract class StorageChannels :
 
         Params:
             size_limit = maximum number of bytes allowed in the node
-            channel_size_limit = maximum number of bytes allowed per channel
 
     ***************************************************************************/
 
-    public this ( ulong size_limit, ulong channel_size_limit )
+    public this ( ulong size_limit )
     {
         super(size_limit);
-
-        this.channel_size_limit = channel_size_limit;
     }
 
 
     /***************************************************************************
 
         Returns:
-            per channel size limit in bytes
+            the default size limit per channel in bytes.
 
     ***************************************************************************/
 
-    public ulong channelSizeLimit ( )
-    {
-        return this.channel_size_limit;
-    }
+    abstract public ulong channelSizeLimit ( );
 
     /***************************************************************************
 

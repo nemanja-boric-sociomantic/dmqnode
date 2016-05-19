@@ -30,6 +30,8 @@ private import dmqnode.storage.engine.DiskOverflow;
 
 private import dmqnode.node.IDmqNodeInfo;
 
+private import dmqnode.app.config.ChannelSizeConfig;
+
 private import ocean.util.container.queue.FlexibleRingQueue;
 private import ocean.util.container.queue.model.IQueueInfo;
 
@@ -185,7 +187,7 @@ public class RingNode : StorageChannels
             this.overflow = this.outer.overflow.new Channel(id);
 
             this.queue = new FlexibleByteRingQueue(noScanMallocMemManager,
-                this.outer.channel_size_limit);
+                this.outer.channel_size_config.getChannelSize(id));
 
             this.memory_info = this.queue;
             this.overflow_info = this.overflow;
@@ -195,7 +197,6 @@ public class RingNode : StorageChannels
                 this.loadDumpedChannel();
             }
         }
-
 
         /***********************************************************************
 
@@ -425,6 +426,15 @@ public class RingNode : StorageChannels
 
     /***************************************************************************
 
+        Channel size configuration.
+
+    ***************************************************************************/
+
+    private ChannelSizeConfig channel_size_config;
+
+
+    /***************************************************************************
+
         Delegate which is called when a record is pushed or popped. Note that a
         failed push (e.g. queue full) will call this delegate, whereas a failed
         pop (e.g. queue empty) will not.
@@ -467,19 +477,21 @@ public class RingNode : StorageChannels
             data_dir = data directory for dumped queue channels
             dmqnode = the hosting node for push/pop counting
             size_limit = maximum number of bytes allowed in the node
-            channel_size_limit = maximum number of bytes allowed per channel
+            channel_size_config = channel size configuration
 
     ***************************************************************************/
 
-    public this ( char[] data_dir, IDmqNodeInfo dmqnode,
-        ulong size_limit, ulong channel_size_limit )
+    public this ( char[] data_dir, IDmqNodeInfo dmqnode, ulong size_limit,
+                  ChannelSizeConfig channel_size_config )
     in
     {
         assert(dmqnode);
     }
     body
     {
-        super(size_limit, channel_size_limit);
+        super(size_limit);
+
+        this.channel_size_config = channel_size_config;
 
         this.dmqnode = dmqnode;
 
@@ -510,6 +522,20 @@ public class RingNode : StorageChannels
     {
         this.overflow.writeIndex();
     }
+
+
+    /***************************************************************************
+
+        Returns:
+            the default size limit per channel in bytes
+
+    ***************************************************************************/
+
+    override public ulong channelSizeLimit ( )
+    {
+        return this.channel_size_config.default_size_limit;
+    }
+
 
     /***************************************************************************
 
