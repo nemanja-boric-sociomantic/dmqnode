@@ -466,15 +466,13 @@ public class RingNode : StorageChannels
         Params:
             data_dir = data directory for dumped queue channels
             dmqnode = the hosting node for push/pop counting
-            size_limit = maximum number of bytes allowed in the node (0 = no
-                limit)
-            channel_size_limit = maximum number of bytes allowed per channel (0
-                = no limit)
+            size_limit = maximum number of bytes allowed in the node
+            channel_size_limit = maximum number of bytes allowed per channel
 
     ***************************************************************************/
 
     public this ( char[] data_dir, IDmqNodeInfo dmqnode,
-        ulong size_limit = 0, ulong channel_size_limit = 0 )
+        ulong size_limit, ulong channel_size_limit )
     in
     {
         assert(dmqnode);

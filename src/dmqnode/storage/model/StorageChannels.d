@@ -42,7 +42,7 @@ public abstract class StorageChannels :
 {
     /***************************************************************************
 
-        Per-channel size limit (0 = no per-channel size limit)
+        Per-channel size limit
 
     ***************************************************************************/
 
@@ -70,14 +70,12 @@ public abstract class StorageChannels :
         Constructor
 
         Params:
-            size_limit = maximum number of bytes allowed in the node (0 = no
-                limit)
-            channel_size_limit = maximum number of bytes allowed per channel (0
-                = no limit)
+            size_limit = maximum number of bytes allowed in the node
+            channel_size_limit = maximum number of bytes allowed per channel
 
     ***************************************************************************/
 
-    public this ( ulong size_limit = 0, ulong channel_size_limit = 0 )
+    public this ( ulong size_limit, ulong channel_size_limit )
     {
         super(size_limit);
 
@@ -88,7 +86,7 @@ public abstract class StorageChannels :
     /***************************************************************************
 
         Returns:
-            per channel size limit in bytes (0 = no size limit)
+            per channel size limit in bytes
 
     ***************************************************************************/
 
