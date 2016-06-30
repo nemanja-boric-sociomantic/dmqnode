@@ -779,10 +779,10 @@ class DiskOverflow: DiskOverflowInfo
     {
         if (!channel.records) return;
 
-        channel.reset(channel); // Looks odd but see ChannelMetadata.reset().
-
         this.records -= channel.records;
         this.bytes -= channel.bytes;
+
+        channel.reset(channel); // Looks odd but see ChannelMetadata.reset().
 
         if (!this.records)
         {
