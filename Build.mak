@@ -1,5 +1,5 @@
 override DFLAGS += -w
-override LDFLAGS += -llzo2
+override LDFLAGS += -llzo2 -lgpg-error -lgcrypt
 
 # Modules to exclude from testing
 TEST_FILTER_OUT += \
