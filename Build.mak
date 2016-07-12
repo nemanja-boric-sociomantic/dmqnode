@@ -1,4 +1,4 @@
-override DFLAGS += -wi
+override DFLAGS += -w
 override LDFLAGS += -llzo2
 
 # Modules to exclude from testing
