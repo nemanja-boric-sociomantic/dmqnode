@@ -44,7 +44,8 @@ private class RealDmqTestRunner : DmqTestRunner
     override public CopyFileEntry[] copyFiles ( )
     {
         return [
-            CopyFileEntry("test/dmqtest/etc/config.ini", "etc/config.ini")
+            CopyFileEntry("test/dmqtest/etc/config.ini", "etc/config.ini"),
+            CopyFileEntry("test/dmqtest/etc/credentials", "etc/credentials")
         ];
     }
 }

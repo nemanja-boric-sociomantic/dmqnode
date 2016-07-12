@@ -21,11 +21,12 @@ module dmqnode.node.DmqNode;
 
 *******************************************************************************/
 
-private import swarm.core.node.model.ChannelsNode : ChannelsNodeBase;
+private import swarm.core.node.model.NeoChannelsNode : ChannelsNodeBase;
 
 private import dmqnode.node.IDmqNodeInfo;
 
 private import dmqnode.connection.ConnectionHandler;
+private import dmqnode.node.RequestHandlers;
 
 private import dmqnode.storage.Ring;
 private import dmqnode.storage.model.StorageEngine;
@@ -38,11 +39,12 @@ private import swarm.core.node.storage.model.IStorageEngineInfo;
 
 private import swarm.dmq.DmqConst;
 
+private import dmqnode.connection.neo.SharedResources;
 private import dmqnode.connection.SharedResources;
 
 private import ocean.io.select.EpollSelectDispatcher;
 
-
+import swarm.core.neo.authentication.HmacDef: Key;
 
 /*******************************************************************************
 
@@ -60,12 +62,14 @@ public class DmqNode
         Params:
             config = server configuration
             channel_size_config = channel size configuration
+            client_credentials = the client authentication keys by client names
             epoll = epoll select dispatcher to be used internally
 
     ***************************************************************************/
 
     public this ( ServerConfig server_config,
                   ChannelSizeConfig channel_size_config,
+                  Key[char[]] client_credentials,
                   EpollSelectDispatcher epoll )
     {
         auto ringnode = new RingNode(server_config.data_dir, this,
@@ -78,8 +82,12 @@ public class DmqNode
         conn_setup_params.storage_channels = ringnode;
         conn_setup_params.shared_resources = new SharedResources;
 
-        super(DmqConst.NodeItem(server_config.address(), server_config.port()),
-              ringnode, conn_setup_params, server_config.backlog);
+        auto neo_conn_setup_params = new NeoConnectionSetupParams(
+            epoll, ringnode, request_handlers, client_credentials
+        );
+
+        super(DmqConst.NodeItem(server_config.address(), server_config.port()), server_config.port() + 1,
+              ringnode, conn_setup_params, neo_conn_setup_params, server_config.backlog);
     }
 
 
