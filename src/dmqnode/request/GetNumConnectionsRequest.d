@@ -34,14 +34,6 @@ private import Protocol = dmqproto.node.request.GetNumConnections;
 public scope class GetNumConnectionsRequest : Protocol.GetNumConnections
 {
     /***************************************************************************
-    
-        Shared resource acquirer
-
-    ***************************************************************************/
-
-    private const IDmqRequestResources resources;
-
-    /***************************************************************************
 
         Constructor
 
@@ -56,24 +48,5 @@ public scope class GetNumConnectionsRequest : Protocol.GetNumConnections
         IDmqRequestResources resources )
     {
         super(reader, writer, resources);
-        this.resources = resources;
-    }
-
-    /***************************************************************************
-
-        To be overriden by derivatives
-
-        Returns:
-            metadata that includes amount of established connections
-
-    ***************************************************************************/
-
-    override protected NumConnectionsData getConnectionsData ( )
-    {
-        NumConnectionsData data;
-        data.address   = this.resources.node_info.node_item.Address;
-        data.port      = this.resources.node_info.node_item.Port;
-        data.num_conns = this.resources.node_info.num_open_connections;
-        return data;
     }
 }

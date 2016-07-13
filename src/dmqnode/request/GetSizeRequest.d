@@ -34,14 +34,6 @@ private import Protocol = dmqproto.node.request.GetSize;
 public scope class GetSizeRequest : Protocol.GetSize
 {
     /***************************************************************************
-    
-        Shared resource acquirer
-
-    ***************************************************************************/
-
-    private const IDmqRequestResources resources;
-
-    /***************************************************************************
 
         Constructor
 
@@ -56,31 +48,5 @@ public scope class GetSizeRequest : Protocol.GetSize
         IDmqRequestResources resources )
     {
         super(reader, writer, resources);
-        this.resources = resources;
-    }
-
-    /***************************************************************************
-
-        Calculates and return aggregated record count and total size for all
-        channels
-
-        Returns:
-            metadata that includes aggregated size of all channels
-
-    ***************************************************************************/
-
-    override protected SizeData getSizeData ( )
-    {
-        SizeData data;
-        data.address = this.resources.node_info.node_item.Address;
-        data.port = this.resources.node_info.node_item.Port;
-
-        foreach ( channel; this.resources.storage_channels )
-        {
-            data.records += channel.num_records;
-            data.bytes += channel.num_bytes;
-        }
-
-        return data;
     }
 }

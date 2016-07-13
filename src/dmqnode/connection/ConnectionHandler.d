@@ -38,11 +38,9 @@ private import dmqnode.request.ProduceMultiRequest;
 private import dmqnode.request.GetChannelsRequest;
 private import dmqnode.request.GetChannelSizeRequest;
 private import dmqnode.request.GetSizeRequest;
-private import dmqnode.request.GetSizeLimitRequest;
 private import dmqnode.request.GetNumConnectionsRequest;
 private import dmqnode.request.ConsumeRequest;
 private import dmqnode.request.PushMultiRequest;
-private import dmqnode.request.PushMulti2Request;
 private import dmqnode.request.RemoveChannelRequest;
 
 private import dmqnode.storage.model.StorageChannels;
@@ -423,7 +421,7 @@ public class ConnectionHandler
 
     override protected void handleGetSizeLimit ( )
     {
-        this.handleCommand!(GetSizeLimitRequest);
+        this.handleInvalidCommand();
     }
 
 
@@ -459,7 +457,7 @@ public class ConnectionHandler
 
     override protected void handlePushMulti2 ( )
     {
-        this.handleCommand!(PushMulti2Request);
+        this.handleInvalidCommand();
     }
 
 

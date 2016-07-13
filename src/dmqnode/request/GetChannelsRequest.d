@@ -37,14 +37,6 @@ private import ocean.transition;
 public scope class GetChannelsRequest : Protocol.GetChannels
 {
     /***************************************************************************
-    
-        Shared resource acquirer
-
-    ***************************************************************************/
-
-    private const IDmqRequestResources resources;
-
-    /***************************************************************************
 
         Constructor
 
@@ -59,21 +51,5 @@ public scope class GetChannelsRequest : Protocol.GetChannels
         IDmqRequestResources resources )
     {
         super(reader, writer, resources);
-        this.resources = resources;
-    }
-
-    /***************************************************************************
-
-        Performs this request. (Fiber method.)
-
-    ***************************************************************************/
-
-    override protected char[][] getChannelsIds ( )
-    {
-        auto list = *this.resources.channel_list_buffer;
-
-        foreach (channel; this.resources.storage_channels)
-            list ~= channel.id;
-        return list;
     }
 }

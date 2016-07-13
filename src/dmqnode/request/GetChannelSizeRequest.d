@@ -34,14 +34,6 @@ private import dmqnode.request.model.IDmqRequestResources;
 public scope class GetChannelSizeRequest : Protocol.GetChannelSize
 {
     /***************************************************************************
-    
-        Shared resource acquirer
-
-    ***************************************************************************/
-
-    private IDmqRequestResources resources;
-
-    /***************************************************************************
 
         Constructor
 
@@ -56,35 +48,6 @@ public scope class GetChannelSizeRequest : Protocol.GetChannelSize
         IDmqRequestResources resources )
     {
         super(reader, writer, resources);
-        this.resources = resources;
-    }
-
-    /***************************************************************************
-
-        Gets the metadata for specified channel. Overriden in
-        actual implementors of dmqnode protocol.
-
-        Params:
-            channel_name = name of channel to be queried
-
-    ***************************************************************************/
-
-    override protected ChannelSizeData getChannelData ( char[] channel_name )
-    {
-        ChannelSizeData data;
-
-        data.address = this.resources.node_info.node_item.Address;
-        data.port = this.resources.node_info.node_item.Port;
-
-        auto storage_channel =
-            *this.resources.channel_buffer in this.resources.storage_channels;
-        if ( storage_channel !is null )
-        {
-            data.records = storage_channel.num_records;
-            data.bytes = storage_channel.num_bytes;
-        }
-
-        return data;
     }
 }
 
