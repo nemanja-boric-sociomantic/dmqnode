@@ -52,8 +52,6 @@ public scope class Consume : StorageEngine.IConsumer
     import swarm.core.neo.node.RequestOnConn;
     import swarm.core.neo.connection.RequestOnConnBase;
 
-    import ocean.io.Stdout; // TODO: temp
-
     import ocean.transition;
     import ocean.core.TypeConvert : castFrom;
 
@@ -218,8 +216,6 @@ public scope class Consume : StorageEngine.IConsumer
         for (this.storage_engine.pop(*value); value.length;
             this.storage_engine.pop(*value))
         {
-            Stdout.yellow.formatln("Popped {}", *value).default_colour;
-
             bool received_msg;
             MessageType msg_type;
 
@@ -241,7 +237,6 @@ public scope class Consume : StorageEngine.IConsumer
                 scope (success)
                 {
                     this.ed.sendT(MessageType.Record, *value);
-                    Stdout.yellow.formatln("Sent {}", *value).default_colour;
                     this.ed.sendT(MessageType.Ack);
                 }
 
@@ -262,8 +257,6 @@ public scope class Consume : StorageEngine.IConsumer
                             "Consume: invalid message from client");
                 }
             }
-
-            Stdout.yellow.formatln("Sent {}", *value).default_colour;
         }
 
         return State.WaitingForData;
@@ -397,7 +390,6 @@ public scope class Consume : StorageEngine.IConsumer
             case code.DataReady:
                 if (this.resume_fiber_on_push)
                     this.connection.resumeFiber(NodeFiberResumeCode.Pushed);
-                Stdout.yellow.formatln("Record pushed to channel").default_colour;
                 break;
 
             case code.Flush:
@@ -412,16 +404,5 @@ public scope class Consume : StorageEngine.IConsumer
             default:
                 assert(false);
         }
-    }
-
-    /***************************************************************************
-
-        Print debug information
-
-    ***************************************************************************/
-
-    private void beforeState ( )
-    {
-        Stdout.green.formatln("Consume state = {}", this.state).default_colour;
     }
 }
