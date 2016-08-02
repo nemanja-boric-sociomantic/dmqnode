@@ -86,7 +86,7 @@ public class DmqNode
             epoll, ringnode, request_handlers, client_credentials
         );
 
-        super(DmqConst.NodeItem(server_config.address(), server_config.port()), server_config.port() + 1,
+        super(DmqConst.NodeItem(server_config.address(), server_config.port()), server_config.neoport(),
               ringnode, conn_setup_params, neo_conn_setup_params, server_config.backlog);
     }
 

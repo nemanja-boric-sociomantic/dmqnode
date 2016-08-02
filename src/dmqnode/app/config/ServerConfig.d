@@ -36,6 +36,7 @@ public class ServerConfig
     ConfigReader.Required!(char[]) address;
 
     ConfigReader.Required!(ushort) port;
+    ConfigReader.Required!(ushort) neoport;
 
     // CPU index counting from 0; negative: use any CPU
     ConfigReader.Min!(int, -1) cpu;
