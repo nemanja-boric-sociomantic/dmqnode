@@ -27,8 +27,6 @@ import dmqtest.TestRunner;
 
 private class RealDmqTestRunner : DmqTestRunner
 {
-    import tango.sys.Environment;
-
     this ( )
     {
         super("dmqnode");
