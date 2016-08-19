@@ -39,7 +39,7 @@ private import swarm.core.node.storage.model.IStorageEngineInfo;
 
 private import swarm.dmq.DmqConst;
 
-private import dmqnode.connection.neo.SharedResources;
+private import Neo = dmqnode.connection.neo.ConnectionSetupParams;
 private import dmqnode.connection.SharedResources;
 
 private import ocean.io.select.EpollSelectDispatcher;
@@ -64,13 +64,15 @@ public class DmqNode
             channel_size_config = channel size configuration
             client_credentials = the client authentication keys by client names
             epoll = epoll select dispatcher to be used internally
+            no_delay = toggle Nagle's algorithm (true = disabled, false =
+                enabled) on the connection sockets
 
     ***************************************************************************/
 
     public this ( ServerConfig server_config,
                   ChannelSizeConfig channel_size_config,
                   Key[char[]] client_credentials,
-                  EpollSelectDispatcher epoll )
+                  EpollSelectDispatcher epoll, bool no_delay )
     {
         auto ringnode = new RingNode(server_config.data_dir, this,
                                      server_config.size_limit,
@@ -82,8 +84,8 @@ public class DmqNode
         conn_setup_params.storage_channels = ringnode;
         conn_setup_params.shared_resources = new SharedResources;
 
-        auto neo_conn_setup_params = new NeoConnectionSetupParams(
-            epoll, ringnode, request_handlers, client_credentials
+        auto neo_conn_setup_params = new Neo.ConnectionSetupParams(
+            epoll, ringnode, request_handlers, client_credentials, no_delay
         );
 
         super(DmqConst.NodeItem(server_config.address(), server_config.port()), server_config.neoport(),

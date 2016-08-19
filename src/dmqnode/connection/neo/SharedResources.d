@@ -5,12 +5,6 @@
     DMQ shared resource manager. Handles acquiring / relinquishing of global
     resources by active request handlers.
 
-    The structure of this module is currently based on the old
-    ConnectionHandler/SetupParams using a SetupParams class hierarchy. With the
-    Neo structure the request shared resources can be separated from the
-    connection setup parameters, see
-    https://github.com/sociomantic/swarm/issues/605
-
 *******************************************************************************/
 
 module dmqnode.connection.neo.SharedResources;
@@ -21,22 +15,26 @@ module dmqnode.connection.neo.SharedResources;
 
 *******************************************************************************/
 
-private import swarm.core.neo.node.ConnectionHandler;
+import ocean.transition;
 
 /*******************************************************************************
 
-    DMQ node neo connection handler setup class. Passed to the DMQ neo
-    connection handler constructor and to each request handler function.
+    Resources owned by the node which are needed by the request handlers.
 
 *******************************************************************************/
 
-public class NeoConnectionSetupParams : ConnectionHandler.SetupParams
+public final class SharedResources
 {
-    private import dmqnode.storage.model.StorageChannels;
-    private import ocean.io.select.EpollSelectDispatcher;
+    import ocean.util.container.pool.FreeList;
+    import dmqnode.storage.model.StorageChannels;
 
-    private import swarm.core.common.request.model.IRequestResources;
-    private import swarm.core.common.connection.ISharedResources;
+    /***************************************************************************
+
+        Pool of buffers to store record values in.
+
+    ***************************************************************************/
+
+    private FreeList!(void[]) value_buffers;
 
     /***************************************************************************
 
@@ -48,116 +46,74 @@ public class NeoConnectionSetupParams : ConnectionHandler.SetupParams
 
     /***************************************************************************
 
-        Struct whose fields define the set of shared resources which can be
-        acquired by a request. Each request can acquire a single instance of
-        each field.
-
-    ***************************************************************************/
-
-    private static struct ConnectionResources
-    {
-        char[] value_buffer;
-    }
-
-    /***************************************************************************
-
-        Mix in a class called SharedResources which contains a free list for
-        each of the fields of DmqConnectionResources. The free lists are used by
-        individual requests to acquire and relinquish resources required for
-        handling.
-
-    ***************************************************************************/
-
-    static mixin SharedResources_T!(ConnectionResources);
-
-    /***************************************************************************
-
-        Mix in an interface called IRequestResources which contains a getter
-        method for each type of acquirable resource, as defined by the
-        SharedResources class (dmqnode.connection.SharedResources).
-
-    ***************************************************************************/
-
-    static mixin IRequestResources_T!(SharedResources);
-
-    /***************************************************************************
-
-        Mix in a scope class called RequestResources which implements
-        IRequestResources. Note that this class does not implement the
-        additional methods required by IDmqRequestResources -- this is done in
-        dmqnode.connection.ConnectionHandler.
-
-    ***************************************************************************/
-
-    static mixin RequestResources_T!(SharedResources);
-
-    /***************************************************************************
-
-        Reference to the request resources pool shared between all connection
-        handlers.
-
-    ***************************************************************************/
-
-    private SharedResources shared_resources;
-
-    /***************************************************************************
-
         Constructor.
 
         Params:
-            epoll = epoll instance (currently unused)
-            storage_channels = storage channels (currently unused)
-            cmd_handlers = table of handler functions by request codes
-            credentials  = authentication keys by client name
+            storage_channels = storage channels which the requests are operating
+                on
 
     ***************************************************************************/
 
-    public this ( EpollSelectDispatcher epoll, StorageChannels storage_channels,
-                  CmdHandlers cmd_handlers, Key[char[]] credentials )
+    public this ( StorageChannels storage_channels )
     {
-        super(cmd_handlers, credentials);
-        this.epoll = epoll;
         this.storage_channels = storage_channels;
-        this.shared_resources = new SharedResources;
+
+        this.value_buffers = new FreeList!(void[]);
     }
 
     /***************************************************************************
 
-        Helper class adding a couple of DMQ-specific getters as well as the
-        resource acquiring getters required by the DmqCommand protocol base
-        class. The resources are acquired from the shared
-        resources instance which is passed to ConnectionHandler's
-        constructor (in the ConnectionSetupParams instance). Acquired
-        resources are automatically relinquished in the destructor.
-
-        Note that it is assumed that each request will own at most one of each
-        resource type (it is not possible, for example, to acquire two value
-        buffers).
+        Scope class which may be newed inside request handlers to get access to
+        the shared pools of resources. Any acquired resources are relinquished
+        in the destructor.
 
     ***************************************************************************/
 
-    public /*scope*/ class DmqRequestResources: RequestResources
+    public scope class RequestResources
     {
         /***********************************************************************
 
-            Constructor.
+            Acquired value buffer. null if not acquired.
 
         ***********************************************************************/
 
-        public this ( )
+        private void[] acquired_value_buffer;
+
+        /***********************************************************************
+
+            Destructor. Relinquishes any acquired resources back to the shared
+            resource pools.
+
+        ***********************************************************************/
+
+        ~this ( )
         {
-            super(this.outer.shared_resources);
+            if ( this.acquired_value_buffer )
+                this.outer.value_buffers.recycle(this.acquired_value_buffer);
         }
 
         /***********************************************************************
 
-            Value buffer newer.
+            Gets a record value buffer to be used by the request.
+
+            Returns:
+                a new value buffer or the already acquired one, if this method
+                has been called before in the lifetime of this object
 
         ***********************************************************************/
 
-        override protected char[] new_value_buffer ( )
+        public void[]* getValueBuffer ( )
         {
-            return new char[50];
+            // Acquire new buffer, if not already done
+            if ( this.acquired_value_buffer is null )
+                this.acquired_value_buffer =
+                    this.outer.value_buffers.get(new void[16]);
+
+            // (Re-)initialise the buffer for use
+            this.acquired_value_buffer.length = 0;
+            enableStomping(this.acquired_value_buffer);
+
+            return &this.acquired_value_buffer;
         }
     }
 }

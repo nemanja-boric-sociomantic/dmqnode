@@ -210,7 +210,8 @@ public class DmqNodeServer : DaemonApp
             this.channel_size_config.add(key, config.getStrict!(ulong)("ChannelSizeById", key));
         }
 
-        this.node = new DmqNode(this.server_config, this.channel_size_config, client_credentials, epoll);
+        this.node = new DmqNode(this.server_config, this.channel_size_config,
+            client_credentials, epoll, this.performance_config.no_delay);
 
         this.node.error_callback = &this.nodeError;
         this.node.connection_limit = this.server_config.connection_limit;

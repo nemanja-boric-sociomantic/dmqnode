@@ -11,6 +11,7 @@ module dmqnode.request.neo.Consume;
 import dmqnode.connection.neo.SharedResources;
 import swarm.core.neo.node.ConnectionHandler;
 import dmqnode.storage.model.StorageEngine;
+import ocean.core.TypeConvert : downcast;
 
 /*******************************************************************************
 
@@ -18,7 +19,8 @@ import dmqnode.storage.model.StorageEngine;
     that can be controlled via `connection`.
 
     Params:
-        setup       = global parameters and shared resources
+        shared_resources = an opaque object containing resources owned by the
+            node which are required by the request
         connection  = performs connection socket I/O and manages the fiber
         cmdver      = the version number of the Consume command as specified by
                       the client
@@ -27,14 +29,16 @@ import dmqnode.storage.model.StorageEngine;
 *******************************************************************************/
 
 void handle (
-    ConnectionHandler.SetupParams setup,
+    Object shared_resources,
     ConnectionHandler.RequestOnConn connection,
     ConnectionHandler.Command.Version cmdver,
     void[] msg_payload
 )
 {
-    scope c = new Consume(connection, msg_payload,
-        (cast(NeoConnectionSetupParams)setup));
+    auto dmq_shared_resources = downcast!(SharedResources)(shared_resources);
+    assert(dmq_shared_resources);
+
+    scope c = new Consume(connection, msg_payload, dmq_shared_resources);
 }
 
 /******************************************************************************/
@@ -51,6 +55,7 @@ public scope class Consume : StorageEngine.IConsumer
     import ocean.io.Stdout; // TODO: temp
 
     import ocean.transition;
+    import ocean.core.TypeConvert : castFrom;
 
     mixin(genStateMachine([
         "Sending",
@@ -111,7 +116,7 @@ public scope class Consume : StorageEngine.IConsumer
 
     ***************************************************************************/
 
-    private NeoConnectionSetupParams setup;
+    private SharedResources shared_resources;
 
     /***************************************************************************
 
@@ -136,15 +141,15 @@ public scope class Consume : StorageEngine.IConsumer
         Params:
             connection  = the request-on-conn managing this request
             msg_payload = the payload of the first message for this request
-            setup       = global parameters and shared resources
+            shared_resources = global shared resources
 
     ***************************************************************************/
 
     this ( RequestOnConn connection, void[] msg_payload,
-           NeoConnectionSetupParams setup )
+           SharedResources shared_resources )
     in
     {
-        assert(setup);
+        assert(shared_resources);
     }
     body
     {
@@ -169,7 +174,9 @@ public scope class Consume : StorageEngine.IConsumer
                 this.ed.shutdownWithProtocolError("invalid start state");
         }
 
-        this.storage_engine = setup.storage_channels.getCreate(channel_name);
+        this.shared_resources = shared_resources;
+        this.storage_engine =
+            this.shared_resources.storage_channels.getCreate(channel_name);
         if ( !this.storage_engine )
         {
             this.ed.sendT(DmqConst.Status.E.Error);
@@ -177,8 +184,6 @@ public scope class Consume : StorageEngine.IConsumer
         }
 
         this.ed.sendT(DmqConst.Status.E.Ok);
-
-        this.setup = setup;
 
         try
         {
@@ -207,8 +212,8 @@ public scope class Consume : StorageEngine.IConsumer
 
     private State stateSending ( )
     {
-        scope resources = this.setup.new DmqRequestResources;
-        char[]* value = resources.value_buffer();
+        scope resources = this.shared_resources.new RequestResources;
+        char[]* value = castFrom!(void[]*).to!(char[]*)(resources.getValueBuffer());
 
         for (this.storage_engine.pop(*value); value.length;
             this.storage_engine.pop(*value))

@@ -23,7 +23,7 @@ import Push    = dmqnode.request.neo.Push;
 
 *******************************************************************************/
 
-public ConnectionHandler.SetupParams.CmdHandlers request_handlers;
+public ConnectionHandler.CmdHandlers request_handlers;
 
 static this ( )
 {

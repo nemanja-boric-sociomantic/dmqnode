@@ -23,6 +23,11 @@ module dmqnode.app.config.PerformanceConfig;
 
 public class PerformanceConfig
 {
+    /// For non-neo requests: flush write buffers with this period.
     uint write_flush_ms = 250;
+
+    /// For neo connections: toggles Nagle's algorithm (true = disabled, false =
+    /// enabled) on the underlying socket.
+    bool no_delay;
 }
 

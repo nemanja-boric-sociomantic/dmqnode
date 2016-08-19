@@ -11,6 +11,7 @@ module dmqnode.request.neo.Push;
 import dmqnode.connection.neo.SharedResources;
 import swarm.core.neo.node.ConnectionHandler;
 import swarm.dmq.DmqConst;
+import ocean.core.TypeConvert : downcast;
 
 /*******************************************************************************
 
@@ -18,7 +19,8 @@ import swarm.dmq.DmqConst;
     that can be controlled via `connection`.
 
     Params:
-        setup       = global parameters and shared resources
+        shared_resources = an opaque object containing resources owned by the
+            node which are required by the request
         connection  = performs connection socket I/O and manages the fiber
         cmdver      = the version number of the Consume command as specified by
                       the client
@@ -27,22 +29,25 @@ import swarm.dmq.DmqConst;
 *******************************************************************************/
 
 void handle (
-    ConnectionHandler.SetupParams setup_,
+    Object shared_resources,
     ConnectionHandler.RequestOnConn connection,
     ConnectionHandler.Command.Version cmdver,
     void[] msg_payload
 )
 {
+    auto dmq_shared_resources = downcast!(SharedResources)(shared_resources);
+    assert(dmq_shared_resources);
+
     auto ed     = connection.event_dispatcher,
-         parser = ed.message_parser,
-         setup  = cast(NeoConnectionSetupParams)setup_;
+         parser = ed.message_parser;
 
     char[] channel_name;
     void[] value;
 
     parser.parseBody(msg_payload, channel_name, value);
 
-    if (auto storage_channel = setup.storage_channels.getCreate(channel_name))
+    if (auto storage_channel =
+        dmq_shared_resources.storage_channels.getCreate(channel_name))
     {
         storage_channel.push(cast(char[])value);
         ed.sendT(DmqConst.Status.E.Ok);
