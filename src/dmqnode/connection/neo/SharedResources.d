@@ -27,14 +27,17 @@ public final class SharedResources
 {
     import ocean.util.container.pool.FreeList;
     import dmqnode.storage.model.StorageChannels;
+    import dmqproto.node.neo.request.core.IRequestResources;
 
     /***************************************************************************
 
-        Pool of buffers to store record values in.
+        Pool of buffers to store record values in. (We store ubyte[] buffers
+        internally, as a workaround for ambiguities in ocean.core.Buffer because
+        void[][] can be implicitly cast to void[].)
 
     ***************************************************************************/
 
-    private FreeList!(void[]) value_buffers;
+    private FreeList!(ubyte[]) value_buffers;
 
     /***************************************************************************
 
@@ -58,7 +61,7 @@ public final class SharedResources
     {
         this.storage_channels = storage_channels;
 
-        this.value_buffers = new FreeList!(void[]);
+        this.value_buffers = new FreeList!(ubyte[]);
     }
 
     /***************************************************************************
@@ -67,17 +70,29 @@ public final class SharedResources
         the shared pools of resources. Any acquired resources are relinquished
         in the destructor.
 
+        The class should always be newed as scope, but cannot be declared as
+        such because the request handler classes need to store a reference to it
+        as a member, which is disallowed for scope instances.
+
     ***************************************************************************/
 
-    public scope class RequestResources
+    public /*scope*/ class RequestResources : IRequestResources
     {
         /***********************************************************************
 
-            Acquired value buffer. null if not acquired.
+            Buffer of acquired buffers. The getVoidBuffer() method may be called
+            multiple times by the request handler to acquire multiple buffers.
+            But this class may not allocate, so we cannot simple have a void[][]
+            as a member and append acquired buffers to it (doing so would
+            allocate). Thus, in order to avoid any heap allocations in this
+            class, we also acquire the buffer (in which the set of acquired
+            buffers are stored) from the pool maintained by the outer instance.
+
+            This field will be null, if the main buffer has not been acquired.
 
         ***********************************************************************/
 
-        private void[] acquired_value_buffer;
+        private void[][] acquired_values_buffer;
 
         /***********************************************************************
 
@@ -88,32 +103,59 @@ public final class SharedResources
 
         ~this ( )
         {
-            if ( this.acquired_value_buffer )
-                this.outer.value_buffers.recycle(this.acquired_value_buffer);
+            if ( this.acquired_values_buffer )
+            {
+                foreach ( ref buffer; this.acquired_values_buffer )
+                    this.outer.value_buffers.recycle(cast(ubyte[])buffer);
+
+                this.outer.value_buffers.recycle(
+                    cast(ubyte[])this.acquired_values_buffer);
+            }
         }
 
         /***********************************************************************
 
-            Gets a record value buffer to be used by the request.
-
             Returns:
-                a new value buffer or the already acquired one, if this method
-                has been called before in the lifetime of this object
+                the node's storage channels
 
         ***********************************************************************/
 
-        public void[]* getValueBuffer ( )
+        public StorageChannels storage_channels ( )
         {
-            // Acquire new buffer, if not already done
-            if ( this.acquired_value_buffer is null )
-                this.acquired_value_buffer =
-                    this.outer.value_buffers.get(new void[16]);
+            return this.outer.storage_channels;
+        }
 
-            // (Re-)initialise the buffer for use
-            this.acquired_value_buffer.length = 0;
-            enableStomping(this.acquired_value_buffer);
+        /***********************************************************************
 
-            return &this.acquired_value_buffer;
+            Returns:
+                a pointer to a new chunk of memory (a void[]) to use during the
+                request's lifetime
+
+        ***********************************************************************/
+
+        override public void[]* getVoidBuffer ( )
+        {
+            void[] newBuffer ( size_t len )
+            {
+                auto buffer = this.outer.value_buffers.get(new ubyte[len]);
+                buffer.length = 0;
+                enableStomping(buffer);
+
+                return buffer;
+            }
+
+            // Acquire main buffer, if not already done
+            if ( this.acquired_values_buffer is null )
+            {
+                this.acquired_values_buffer =
+                    cast(void[][])newBuffer((void[]).sizeof * 4);
+            }
+
+            // Acquire and re-initialise new buffer to return to the user. Store
+            // it in the array of acquired buffers
+            this.acquired_values_buffer ~= newBuffer(16);
+
+            return &this.acquired_values_buffer[$-1];
         }
     }
 }

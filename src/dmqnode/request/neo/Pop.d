@@ -1,22 +1,24 @@
 /*******************************************************************************
 
-    copyright: Copyright (c) 2016 sociomantic labs. All rights reserved
+    Pop request implementation.
 
-    Consume request implementation.
+    copyright: Copyright (c) 2016 sociomantic labs. All rights reserved
 
 *******************************************************************************/
 
-module dmqnode.request.neo.Consume;
+module dmqnode.request.neo.Pop;
 
-import dmqproto.node.neo.request.Consume;
+import dmqproto.node.neo.request.Pop;
 
 import dmqnode.connection.neo.SharedResources;
+import dmqnode.storage.model.StorageEngine;
 
-import swarm.core.neo.node.RequestOnConn;
+import swarm.core.neo.node.ConnectionHandler;
+import swarm.dmq.neo.protocol.Pop;
 import swarm.core.neo.request.Command;
 
-import dmqnode.storage.model.StorageEngine;
-import ocean.core.TypeConvert : castFrom, downcast;
+import ocean.transition;
+import ocean.core.TypeConvert : downcast;
 
 /*******************************************************************************
 
@@ -33,17 +35,21 @@ import ocean.core.TypeConvert : castFrom, downcast;
 
 *******************************************************************************/
 
-public void handle ( Object shared_resources, RequestOnConn connection,
-    Command.Version cmdver, void[] msg_payload )
+void handle (
+    Object shared_resources,
+    ConnectionHandler.RequestOnConn connection,
+    ConnectionHandler.Command.Version cmdver,
+    void[] msg_payload
+)
 {
     auto dmq_shared_resources = downcast!(SharedResources)(shared_resources);
     assert(dmq_shared_resources);
 
     switch ( cmdver )
     {
-        case 1:
+        case 0:
             scope rq_resources = dmq_shared_resources.new RequestResources;
-            scope rq = new ConsumeImpl_v1(rq_resources);
+            scope rq = new PopImpl_v0(rq_resources);
             rq.handle(connection, msg_payload);
             break;
 
@@ -61,17 +67,25 @@ public void handle ( Object shared_resources, RequestOnConn connection,
 
 /*******************************************************************************
 
-    DMQ node implementation of the v0 Consume request protocol.
+    DMQ node implementation of the v0 Pop request protocol.
 
 *******************************************************************************/
 
-public scope class ConsumeImpl_v1 : ConsumeProtocol_v1, StorageEngine.IConsumer
+private scope class PopImpl_v0 : PopProtocol_v0
 {
+    import ocean.core.TypeConvert : castFrom, downcast;
+
+    /***************************************************************************
+
+        Shared resources acquirer passed to the constructor.
+
+    ***************************************************************************/
+
     private SharedResources.RequestResources resources;
 
     /***************************************************************************
 
-        Storage engine being consumed from.
+        Storage engine being popped from.
 
     ***************************************************************************/
 
@@ -82,7 +96,7 @@ public scope class ConsumeImpl_v1 : ConsumeProtocol_v1, StorageEngine.IConsumer
         Constructor.
 
         Params:
-            resources = shared resource acquirer
+            resources = shared resources acquirer for the request
 
     ***************************************************************************/
 
@@ -95,11 +109,10 @@ public scope class ConsumeImpl_v1 : ConsumeProtocol_v1, StorageEngine.IConsumer
 
     /***************************************************************************
 
-        Performs any logic needed to start consuming from the channel of the
-        given name.
+        Performs any logic needed to pop from the channel of the given name.
 
         Params:
-            channel_name = channel to consume from
+            channel_name = channel to pop from
 
         Returns:
             `true` if the channel may be used
@@ -111,33 +124,12 @@ public scope class ConsumeImpl_v1 : ConsumeProtocol_v1, StorageEngine.IConsumer
         this.storage_engine =
             this.resources.storage_channels.getCreate(channel_name);
 
-        if ( this.storage_engine is null )
-            return false;
-        else
-        {
-            this.storage_engine.registerConsumer(this);
-            return true;
-        }
+        return this.storage_engine !is null;
     }
 
     /***************************************************************************
 
-        Performs any logic needed to stop consuming from the channel of the
-        given name.
-
-        Params:
-            channel_name = channel to stop consuming from
-
-    ***************************************************************************/
-
-    override protected void stopConsumingChannel ( cstring channel_name )
-    {
-        this.storage_engine.unregisterConsumer(this);
-    }
-
-    /***************************************************************************
-
-        Retrieve the next value from the channel, if available.
+        Pop the next value from the channel, if available.
 
         Params:
             value = buffer to write the value into
@@ -154,30 +146,5 @@ public scope class ConsumeImpl_v1 : ConsumeProtocol_v1, StorageEngine.IConsumer
         this.storage_engine.pop(*mstring_value);
 
         return value.length > 0;
-    }
-
-    /***************************************************************************
-
-        StorageEngine.IConsumer method, called when new data arrives or the
-        channel is deleted.
-
-        Params:
-            code = trigger event code
-
-    ***************************************************************************/
-
-    override public void trigger ( Code code )
-    {
-        with ( Code ) switch ( code )
-        {
-            case DataReady:
-                this.dataReady();
-                break;
-            case Finish:
-                this.channelRemoved();
-                break;
-            default:
-                break;
-        }
     }
 }

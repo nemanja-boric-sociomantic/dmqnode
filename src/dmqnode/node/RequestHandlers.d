@@ -14,6 +14,7 @@ import swarm.dmq.DmqConst;
 
 import Consume = dmqnode.request.neo.Consume;
 import Push    = dmqnode.request.neo.Push;
+import Pop     = dmqnode.request.neo.Pop;
 
 /*******************************************************************************
 
@@ -29,4 +30,5 @@ static this ( )
 {
     request_handlers[DmqConst.Command.E.Consume] = &Consume.handle;
     request_handlers[DmqConst.Command.E.Push]    = &Push.handle;
+    request_handlers[DmqConst.Command.E.Pop]     = &Pop.handle;
 }

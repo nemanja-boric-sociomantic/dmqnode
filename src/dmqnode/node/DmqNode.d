@@ -39,7 +39,8 @@ private import swarm.core.node.storage.model.IStorageEngineInfo;
 
 private import swarm.dmq.DmqConst;
 
-private import Neo = dmqnode.connection.neo.ConnectionSetupParams;
+private import Neo = dmqnode.connection.neo.SharedResources;
+
 private import dmqnode.connection.SharedResources;
 
 private import ocean.io.select.EpollSelectDispatcher;
@@ -71,25 +72,31 @@ public class DmqNode
 
     public this ( ServerConfig server_config,
                   ChannelSizeConfig channel_size_config,
-                  Key[char[]] client_credentials,
                   EpollSelectDispatcher epoll, bool no_delay )
     {
         auto ringnode = new RingNode(server_config.data_dir, this,
                                      server_config.size_limit,
                                      channel_size_config);
 
+        // Classic connection handler settings
         auto conn_setup_params = new ConnectionSetupParams;
         conn_setup_params.node_info = this;
         conn_setup_params.epoll = epoll;
         conn_setup_params.storage_channels = ringnode;
         conn_setup_params.shared_resources = new SharedResources;
 
-        auto neo_conn_setup_params = new Neo.ConnectionSetupParams(
-            epoll, ringnode, request_handlers, client_credentials, no_delay
-        );
+        // Neo node / connection handler settings
+        Options options;
+        options.epoll = epoll;
+        options.cmd_handlers = request_handlers;
+        options.shared_resources = new Neo.SharedResources(ringnode);
+        options.no_delay = no_delay;
+        options.unix_socket_path = null; // not supported for now.
+        options.credentials_filename = "etc/credentials";
 
-        super(DmqConst.NodeItem(server_config.address(), server_config.port()), server_config.neoport(),
-              ringnode, conn_setup_params, neo_conn_setup_params, server_config.backlog);
+        super(DmqConst.NodeItem(server_config.address(), server_config.port()),
+            server_config.neoport(), ringnode, conn_setup_params, options,
+            server_config.backlog);
     }
 
 

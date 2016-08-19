@@ -106,7 +106,6 @@ private int main ( char[][] cl_args )
 
 public class DmqNodeServer : DaemonApp
 {
-    import HmacRegistryFile = swarm.core.neo.authentication.HmacRegistryFile;
     import swarm.core.neo.authentication.Credentials;
     import ocean.io.Stdout: Stderr;
 
@@ -181,20 +180,6 @@ public class DmqNodeServer : DaemonApp
         ConfigReader.fill("Server", this.server_config, config);
         ConfigReader.fill("Performance", this.performance_config, config);
         ConfigReader.fill("Overflow", this.overflow_config, config);
-        Credentials.Key[char[]] client_credentials;
-
-        try
-        {
-            client_credentials = HmacRegistryFile.parseFile("etc/credentials");
-        }
-        catch (HmacRegistryFile.ParseError e)
-        {
-            // Print the message here because when the runtime terminates with
-            // this exception, it won't print the file and line.
-            Stderr.formatln("Error parsing client credentials: {} " ~
-                            "(file '{}', line {})", e.msg, e.file, e.line);
-            throw e;
-        }
 
         auto cpu = server_config.cpu();
 
@@ -211,7 +196,7 @@ public class DmqNodeServer : DaemonApp
         }
 
         this.node = new DmqNode(this.server_config, this.channel_size_config,
-            client_credentials, epoll, this.performance_config.no_delay);
+            epoll, this.performance_config.no_delay);
 
         this.node.error_callback = &this.nodeError;
         this.node.connection_limit = this.server_config.connection_limit;

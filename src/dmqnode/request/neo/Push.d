@@ -8,9 +8,14 @@
 
 module dmqnode.request.neo.Push;
 
+import dmqproto.node.neo.request.Push;
+
 import dmqnode.connection.neo.SharedResources;
-import swarm.core.neo.node.ConnectionHandler;
-import swarm.dmq.DmqConst;
+
+import swarm.core.neo.node.RequestOnConn;
+import swarm.core.neo.request.Command;
+
+import ocean.transition;
 import ocean.core.TypeConvert : downcast;
 
 /*******************************************************************************
@@ -28,32 +33,86 @@ import ocean.core.TypeConvert : downcast;
 
 *******************************************************************************/
 
-void handle (
-    Object shared_resources,
-    ConnectionHandler.RequestOnConn connection,
-    ConnectionHandler.Command.Version cmdver,
-    void[] msg_payload
-)
+public void handle ( Object shared_resources, RequestOnConn connection,
+    Command.Version cmdver, void[] msg_payload )
 {
     auto dmq_shared_resources = downcast!(SharedResources)(shared_resources);
     assert(dmq_shared_resources);
 
-    auto ed     = connection.event_dispatcher,
-         parser = ed.message_parser;
-
-    char[] channel_name;
-    void[] value;
-
-    parser.parseBody(msg_payload, channel_name, value);
-
-    if (auto storage_channel =
-        dmq_shared_resources.storage_channels.getCreate(channel_name))
+    switch ( cmdver )
     {
-        storage_channel.push(cast(char[])value);
-        ed.sendT(DmqConst.Status.E.Ok);
+        case 2:
+            scope rq_resources = dmq_shared_resources.new RequestResources;
+            scope rq = new PushImpl_v2(rq_resources);
+            rq.handle(connection, msg_payload);
+            break;
+
+        default:
+            auto ed = connection.event_dispatcher;
+            ed.send(
+                ( ed.Payload payload )
+                {
+                    payload.addConstant(GlobalStatusCode.RequestVersionNotSupported);
+                }
+            );
+            break;
     }
-    else
+}
+
+/*******************************************************************************
+
+    DMQ node implementation of the v0 Push request protocol.
+
+*******************************************************************************/
+
+private scope class PushImpl_v2 : PushProtocol_v2
+{
+    import ocean.core.TypeConvert : castFrom, downcast;
+
+    private SharedResources.RequestResources resources;
+
+    public this ( SharedResources.RequestResources resources )
     {
-        ed.sendT(DmqConst.Status.E.Error);
+        super(resources);
+
+        this.resources = resources;
+    }
+
+    /***************************************************************************
+
+        Ensures that requested channels exist / can be created and can be
+        written to.
+
+        Params:
+            channel_names = list of channel names to check
+
+        Returns:
+            "true" if all requested channels are available
+            "false" otherwise
+
+    ***************************************************************************/
+
+    override protected bool prepareChannels ( in cstring[] channel_names )
+    {
+        foreach ( channel; channel_names )
+        {
+            if ( !this.resources.storage_channels.getCreate(channel) )
+                return false;
+        }
+
+        return true;
+    }
+
+    override protected bool pushToStorage ( cstring channel_name,
+        in void[] value )
+    {
+        if ( auto storage_channel =
+            this.resources.storage_channels.getCreate(channel_name) )
+        {
+            storage_channel.push(castFrom!(Const!(void)[]).to!(cstring)(value));
+            return true;
+        }
+
+        return false;
     }
 }
