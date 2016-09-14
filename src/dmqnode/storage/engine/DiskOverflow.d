@@ -861,8 +861,8 @@ class DiskOverflow: DiskOverflowInfo
         else
         {
             this.log.info("Shutting down, empty.");
-            logFileException(this.index.unlink(), this.index.log);
-            logFileException(this.data.unlink(), this.data.log);
+            logFileException(this.index.remove(), this.index.log);
+            logFileException(this.data.remove(), this.data.log);
 
         }
     }

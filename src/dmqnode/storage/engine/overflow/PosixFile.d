@@ -196,12 +196,12 @@ class PosixFile
 
     /***************************************************************************
 
-        Deletes the file. Do not call any public method after this method
-        returned.
+        Closes and deletes the file. Do not call any public method after this
+        method returned.
 
     ***************************************************************************/
 
-    public void unlink ( )
+    public void remove ( )
     out
     {
         this.closed = 1;
@@ -209,6 +209,7 @@ class PosixFile
     body
     {
         this.enforce(!unistd.unlink(this.namec), "unable to delete");
+        this.enforce(!this.restartInterrupted(unistd.close(this.fd)), "unable to close");
         this.log.info("File deleted.");
     }
 
