@@ -50,4 +50,6 @@ public class ServerConfig
     uint connection_limit = 5000;
 
     uint backlog = 2048;
+
+    ConfigReader.Required!(char[]) unix_socket_path;
 }
