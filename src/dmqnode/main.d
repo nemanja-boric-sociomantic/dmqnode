@@ -301,6 +301,7 @@ public class DmqNodeServer : DaemonApp
 
         this.periodics.shutdown();
 
+        this.node.stopListener(this.epoll);
         this.node.shutdown;
 
         this.epoll.shutdown;
