@@ -962,6 +962,23 @@ class DiskOverflow: DiskOverflowInfo
 
     /***************************************************************************
 
+        `foreach`-style iteration over the channel names.
+
+    ***************************************************************************/
+
+    public int iterateChannelNames ( int delegate ( ref char[] name ) dg )
+    {
+        foreach (name, metadata; this.channels)
+        {
+            if (int x = dg(name))
+                return x;
+        }
+
+        return 0;
+    }
+
+    /***************************************************************************
+
         Verifies the data file ID.
         Assumes the file position is at the beginning; upon return it is at the
         end.

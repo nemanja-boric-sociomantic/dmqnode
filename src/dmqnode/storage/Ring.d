@@ -706,6 +706,21 @@ public class RingNode : StorageChannels
             }
         }
 
+        /*
+         * Create all channels that are present in the disk overflow but didn't
+         * have a memory dump file because their memory queue was empty. We
+         * iterate over all channels in the disk overflow here; `getCreate()`
+         * will do nothing for channels that already exist because a dump file
+         * was found for them.
+         */
+        this.overflow.iterateChannelNames(
+            (ref char[] channel_name)
+            {
+                this.getCreate(channel_name);
+                return 0;
+            }
+        );
+
         // Delete the dump files after successful deserialisation.
 
         foreach (channel_; this)
