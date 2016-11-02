@@ -34,14 +34,6 @@ class PosixFile
 
     /***************************************************************************
 
-        Logger.
-
-    ***************************************************************************/
-
-    public const Logger log;
-
-    /***************************************************************************
-
         File name as NUL terminated C style string.
 
     ***************************************************************************/
@@ -64,6 +56,14 @@ class PosixFile
     ***************************************************************************/
 
     public const int fd;
+
+    /***************************************************************************
+
+        Logger.
+
+    ***************************************************************************/
+
+    public const Logger log;
 
     /***************************************************************************
 
@@ -134,7 +134,8 @@ class PosixFile
 
     ***************************************************************************/
 
-    public ulong seek ( off_t offset, int whence, char[] errmsg, char[] file = __FILE__, long line = __LINE__ )
+    public ulong seek ( off_t offset, int whence, char[] errmsg,
+                        char[] file = __FILE__, long line = __LINE__ )
     out (pos)
     {
         assert(pos <= off_t.max);
@@ -161,7 +162,10 @@ class PosixFile
          * position.
          */
         this.seek(0, SEEK_SET, "unable to seek back when resetting");
-        this.enforce(this.restartInterrupted(ftruncate(this.fd, 0)) >= 0, "unable to truncate when resetting");
+        this.enforce(
+            this.restartInterrupted(ftruncate(this.fd, 0)) >= 0,
+            "unable to truncate when resetting"
+        );
     }
 
     /***************************************************************************
@@ -189,7 +193,10 @@ class PosixFile
     }
     body
     {
-        this.enforce(!this.restartInterrupted(unistd.close(this.fd)), "unable to close");
+        this.enforce(
+            !this.restartInterrupted(unistd.close(this.fd)),
+            "unable to close"
+        );
         this.log.info("File closed.");
     }
 
@@ -208,7 +215,10 @@ class PosixFile
     body
     {
         this.enforce(!unistd.unlink(this.namec), "unable to delete");
-        this.enforce(!this.restartInterrupted(unistd.close(this.fd)), "unable to close");
+        this.enforce(
+            !this.restartInterrupted(unistd.close(this.fd)),
+            "unable to close"
+        );
         this.log.info("File deleted.");
     }
 
@@ -229,7 +239,8 @@ class PosixFile
 
     ***************************************************************************/
 
-    public void enforce ( T ) ( T ok, char[] msg, char[] file = __FILE__, long line = __LINE__ )
+    public void enforce ( T ) ( T ok, char[] msg,
+                                char[] file = __FILE__, long line = __LINE__ )
     {
         if (!ok)
         {

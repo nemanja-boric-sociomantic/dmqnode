@@ -161,22 +161,6 @@
 
 module dmqnode.storage.engine.DiskOverflow;
 
-/*******************************************************************************
-
-    Imports
-
-*******************************************************************************/
-
-import dmqnode.storage.engine.OverflowChannel;
-
-import dmqnode.storage.engine.overflow.ChannelMetadata,
-       dmqnode.storage.engine.overflow.RecordHeader,
-       dmqnode.storage.engine.overflow.file.DataFile,
-       dmqnode.storage.engine.overflow.file.IndexFile,
-       dmqnode.storage.engine.overflow.file.FileException;
-
-import ocean.util.log.Log;
-
 /******************************************************************************/
 
 interface DiskOverflowInfo
@@ -204,6 +188,16 @@ interface DiskOverflowInfo
 
 class DiskOverflow: DiskOverflowInfo
 {
+    import dmqnode.storage.engine.OverflowChannel;
+
+    import dmqnode.storage.engine.overflow.ChannelMetadata;
+    import dmqnode.storage.engine.overflow.RecordHeader;
+    import dmqnode.storage.engine.overflow.file.DataFile;
+    import dmqnode.storage.engine.overflow.file.IndexFile;
+    import dmqnode.storage.engine.overflow.file.FileException;
+
+    import ocean.util.log.Log;
+
     import QConst = dmqnode.storage.engine.overflow.Const;
 
     import ocean.stdc.posix.unistd: read, pread, write, pwrite;
@@ -394,7 +388,7 @@ class DiskOverflow: DiskOverflowInfo
 
     static this ( )
     {
-        this.log = Log.lookup("diskoverflow");
+        log = Log.lookup("diskoverflow");
     }
 
     /***************************************************************************
@@ -840,15 +834,15 @@ class DiskOverflow: DiskOverflowInfo
             {
                 if (channel.records)
                 {
-                    this.log.info("Closing channel {} '{}': {} records/{} bytes.", channel.id, name, channel.records, channel.bytes);
+                    log.info("Closing channel {} '{}': {} records/{} bytes.", channel.id, name, channel.records, channel.bytes);
                 }
                 else
                 {
-                    this.log.info("Closing channel {} '{}': Empty.", channel.id, name);
+                    log.info("Closing channel {} '{}': Empty.", channel.id, name);
                 }
             }
 
-            this.log.info("Shutting down with {} records/{} bytes in total.", this.records, this.bytes);
+            log.info("Shutting down with {} records/{} bytes in total.", this.records, this.bytes);
 
             if (this.index.fd >= 0)
             {
@@ -861,7 +855,7 @@ class DiskOverflow: DiskOverflowInfo
         }
         else
         {
-            this.log.info("Shutting down, empty.");
+            log.info("Shutting down, empty.");
             logFileException(this.index.remove(), this.index.log);
             logFileException(this.data.remove(), this.data.log);
 
@@ -943,7 +937,7 @@ class DiskOverflow: DiskOverflowInfo
     {
         if (ChannelMetadata* channel = channel_name in this.channels)
         {
-            this.log.info("Handing over existing channel {} '{}'.", channel.id, channel_name);
+            log.info("Handing over existing channel {} '{}'.", channel.id, channel_name);
             return channel;
         }
         else
@@ -956,7 +950,7 @@ class DiskOverflow: DiskOverflowInfo
              * Return a pointer to this.channels[channel_name.dup].
              */
             ChannelMetadata* channel = channel_name in this.channels;
-            this.log.info("Creating new channel {} '{}'", channel.id, channel_name);
+            log.info("Creating new channel {} '{}'", channel.id, channel_name);
             return channel;
         }
     }
@@ -1102,7 +1096,7 @@ class DiskOverflow: DiskOverflowInfo
                 this.highest_channel_id = channel.id;
             }
 
-            this.log.info(
+            log.info(
                 "Opened channel {} '{}': {} records/{} bytes, first record at file position {}.",
                 channel.id, channel_name, channel.records, channel.bytes, channel.first_offset
             );
@@ -1114,11 +1108,11 @@ class DiskOverflow: DiskOverflowInfo
 
         if (this.records)
         {
-            this.log.info("Started with {} records/{} bytes in total.", this.records, this.bytes);
+            log.info("Started with {} records/{} bytes in total.", this.records, this.bytes);
         }
         else
         {
-            this.log.info("Started, empty.");
+            log.info("Started, empty.");
         }
     }
 
