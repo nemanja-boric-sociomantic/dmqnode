@@ -10,11 +10,54 @@ module dmqnode.storage.engine.overflow.file.DataFile;
 
 import dmqnode.storage.engine.overflow.file.PosixFile;
 
+/*******************************************************************************
+
+    Linux `fallocate()` with the modes relevant for `DataFile`. See the manual
+    page for details. Note that `FALLOC_FL.COLLAPSE_RANGE` and
+    `FALLOC_FL.ZERO_RANGE` are supported only on Linux 3.15 or later for certain
+    file systems.
+
+*******************************************************************************/
+
+private
+{
+    enum FALLOC_FL
+    {
+        /// Default mode, unnamed in the C API
+        ALLOCATE       = 0,
+        /// FALLOC_FL_COLLAPSE_RANGE
+        COLLAPSE_RANGE = 0x08,
+        /// FALLOC_FL_ZERO_RANGE
+        ZERO_RANGE     = 0x10
+    }
+
+    extern (C) int fallocate(
+        int fd, FALLOC_FL mode, DataFile.off_t offset, DataFile.off_t len
+    );
+}
+
+
 class DataFile: PosixFile
 {
     import ocean.stdc.posix.unistd: write, pwrite;
     import ocean.stdc.posix.sys.uio: writev;
     import ocean.stdc.posix.sys.types: off_t, ssize_t;
+
+    /***************************************************************************
+
+        The chunk size for file head truncation: `truncateHead()` removes
+        integer multiples of this amount of bytes from the head of the file.
+        The operating system only allows removing whole logical file system
+        blocks so this value needs to be a multiple of the logical file system
+        block size, which is usually a power of 2.
+        If the logical file system block size is not a power of 2 then the run-
+        time file truncation test using `HeadTruncationTestFile` will fail, and
+        file head truncation will not be supported. (This is, however, much less
+        likely than the OS or file system not supporting file head truncation.)
+
+    ***************************************************************************/
+
+    public static const head_truncation_chunk_size = 1 << 20;
 
     /***************************************************************************
 
@@ -198,6 +241,100 @@ class DataFile: PosixFile
         }
 
         return 0;
+    }
+
+    /***************************************************************************
+
+        Rounds `n` down to an integer multiple of `head_truncation_chunk_size`,
+        and removes that many bytes from the beginning of the file.
+
+        This is supported only by Linux 3.15 and later for certain file systems,
+        see the description of the `FALLOC_FL_COLLAPSE_RANGE` mode in the
+        `fallocate` manual for details. The `HeadTruncationTestFile` class in
+        the same package provides a run-time test if this feature is supported.
+
+        Params:
+            n = the maximum number of bytes to remove from the beginning of the
+                file
+
+        Returns:
+            the actual number of bytes removed from the file, i.e. `n` rounded
+            down to an integer multiple of `head_truncation_chunk_size`.
+
+        Throws:
+            FileException on error.
+
+    ***************************************************************************/
+
+    public ulong truncateHead ( ulong n,
+                                char[] file = __FILE__, long line = __LINE__ )
+    {
+        if (n < this.head_truncation_chunk_size)
+            return 0;
+
+        n /= this.head_truncation_chunk_size;
+        assert(n);
+        n *= this.head_truncation_chunk_size;
+
+        this.allocate(
+            FALLOC_FL.COLLAPSE_RANGE, 0, n,
+            "Unable to truncate the file from the beginning", file, line
+        );
+
+        return n;
+    }
+
+    /***************************************************************************
+
+        Sets the `len` bytes in the file starting with `offset` to zero.
+
+        This is supported only by Linux 3.15 and later for certain file systems,
+        see the description of the `FALLOC_FL_ZERO_RANGE` mode in the
+        `fallocate` manual for details. At the time of writing the manual
+        implies that the requirements for `truncateHead()` also satisfy this
+        feature.
+
+        Params:
+            start = the start offset of the bytes in the file to set to zero
+            len   = the number of bytes in the file to set to zero
+
+        Throws:
+            FileException on error.
+
+    ***************************************************************************/
+
+    public void zeroRange ( off_t start, off_t len,
+                            char[] file = __FILE__, long line = __LINE__ )
+    {
+        this.allocate(
+                FALLOC_FL.ZERO_RANGE, start, len,
+                "Unable to set a file range to zero", file, line
+        );
+    }
+
+    /***************************************************************************
+
+        Calls `fallocate()` with `this.fd`, restarting if interrupted and
+        throwing on error.
+
+        Params:
+            mode   = `fallocate()` mode
+            offset = file range start offset
+            len    = file range length
+
+        Throws:
+            FileException if `fallocate()` indicates an error.
+
+    ***************************************************************************/
+
+    protected void allocate ( FALLOC_FL mode, off_t offset, off_t len,
+                              char[] errmsg,
+                              char[] file = __FILE__, long line = __LINE__ )
+    {
+        this.enforce(
+            !this.restartInterrupted(.fallocate(this.fd, mode, offset, len)),
+            errmsg, file, line
+        );
     }
 }
 
