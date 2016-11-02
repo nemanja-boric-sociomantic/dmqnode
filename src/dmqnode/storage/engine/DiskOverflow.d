@@ -194,11 +194,13 @@ class DiskOverflow: DiskOverflowInfo
     import dmqnode.storage.engine.overflow.RecordHeader;
     import dmqnode.storage.engine.overflow.file.DataFile;
     import dmqnode.storage.engine.overflow.file.IndexFile;
+    import dmqnode.storage.engine.overflow.file.HeadTruncationTestFile;
     import dmqnode.storage.engine.overflow.file.FileException;
 
     import ocean.util.log.Log;
 
     import QConst = dmqnode.storage.engine.overflow.Const;
+    import dmqnode.storage.engine.overflow.FirstOffsetTracker;
 
     import ocean.stdc.posix.unistd: read, pread, write, pwrite;
     import ocean.stdc.posix.sys.uio: iovec, writev;
@@ -209,6 +211,8 @@ class DiskOverflow: DiskOverflowInfo
     import ocean.io.FilePath;
 
     import ocean.core.Enforce: enforce;
+
+    import ocean.transition;
 
     /***************************************************************************
 
@@ -257,6 +261,16 @@ class DiskOverflow: DiskOverflowInfo
 
     /***************************************************************************
 
+        Keeps track of the `first_offset` of the channels that contain records,
+        allowing for iterating over the channels in ascending order of their
+        `first_offset` value.
+
+    ***************************************************************************/
+
+    private ChannelMetadata.FirstOffsetTracker first_offset_tracker;
+
+    /***************************************************************************
+
         The highest channel ID at present. This value plus 1 is used when
         creating a new channel. Must be greater than 0 if there are channels or
         0 otherwise.
@@ -297,6 +311,16 @@ class DiskOverflow: DiskOverflowInfo
     ***************************************************************************/
 
     private ulong bytes = 0;
+
+    /***************************************************************************
+
+        `true` if the run-time test for truncating a file in the beginning
+        succeeded in the constructor or false if it failed. Minimizing the data
+        file size is supported only if this member is `true`.
+
+    ***************************************************************************/
+
+    private bool data_file_size_mimimizing_supported;
 
     /***************************************************************************
 
@@ -358,16 +382,39 @@ class DiskOverflow: DiskOverflowInfo
             uint records = 0;
             ulong bytes = 0;
 
-            foreach (ref channel; this.channels)
+            auto first_offsets = new off_t[this.channels.length];
+
             {
-                assert(channel.id, "zero channel id");
-                assert(&channel); // call channel invariant
-                records += channel.records;
-                bytes += channel.bytes;
+                size_t i = 0;
+                foreach (ref channel; this.channels)
+                {
+                    assert(channel.id, "zero channel id");
+                    assert(&channel); // call channel invariant
+                    records += channel.records;
+                    bytes += channel.bytes;
+
+                    if (channel.bytes)
+                        first_offsets[i++] = channel.first_offset;
+                }
+                first_offsets.length = i;
             }
 
             assert(records == this.records, "numbers of records mismatch");
             assert(bytes == this.bytes, "numbers of bytes mismatch");
+
+            auto channel = this.first_offset_tracker.first;
+            foreach (i, n; first_offsets.sort)
+            {
+                assert(channel !is null,
+                       "less tracked channels than channels with records");
+                assert(channel.first_offset == n,
+                       "channel.first_offset mismatch");
+                channel = channel.next;
+            }
+            assert(channel is null,
+                   "more tracked channels than channels with records");
+
+            delete first_offsets;
         }
     }
 
@@ -424,6 +471,27 @@ class DiskOverflow: DiskOverflowInfo
     public this ( char[] dir )
     {
         FilePath(dir).create();
+
+        try
+        {
+            this.data_file_size_mimimizing_supported = false;
+            scope testfile = new HeadTruncationTestFile(dir);
+            this.data_file_size_mimimizing_supported = testfile.head_truncation_supported;
+
+            if (this.data_file_size_mimimizing_supported)
+                log.info(
+                    "Minimizing the disk overflow data file size is supported."
+                );
+            else
+                log.warn(
+                    "Minimizing the disk overflow data file size is not " ~
+                    "supported."
+                );
+        }
+        catch (FileException e)
+        {
+            log.error("Error testing file truncation: {}", getMsg(e));
+        }
 
         this.e     = new Exception;
         this.data  = new DataFile(dir, Const.datafile_name);
@@ -525,7 +593,10 @@ class DiskOverflow: DiskOverflowInfo
             this.updateLastHeader(pos, channel.last_offset, channel.last_header);
         }
 
-        channel.updatePush(this.writeRecord(channel.id, data), pos, data.length);
+        channel.updatePush(
+            this.writeRecord(channel.id, data), pos, data.length,
+            this.first_offset_tracker
+        );
 
         this.bytes += data.length;
         this.records++;
@@ -713,7 +784,7 @@ class DiskOverflow: DiskOverflowInfo
             "Unexpected end of file reading record data."
         );
 
-        channel.updatePop(header.next_offset, data.length, this.e);
+        channel.updatePop(header.next_offset, data.length, this.first_offset_tracker, this.e);
 
         assert(this.records); // should be consistent with the above assertion
         assert(this.bytes >= data.length); // channel.updatePop() should otherwise have thrown
@@ -792,12 +863,14 @@ class DiskOverflow: DiskOverflowInfo
 
     /***************************************************************************
 
-        Flushes write buffers and writes the index file.
+        Flushes write buffers, minimizes the data file size and writes the index
+        file.
 
     ***************************************************************************/
 
     public void flush ( )
     {
+        this.minimizeDataFileSize();
         this.writeIndex();
         this.data.flush();
     }
@@ -1021,6 +1094,227 @@ class DiskOverflow: DiskOverflowInfo
 
     /***************************************************************************
 
+        Miminizes the size of the data file by truncating the beginning of the
+        file, as follows:
+        The data file starts with an 8-byte identifier string,
+        `Const.datafile_id`, and the records follow that string. After records
+        have been popped, there may be a contiguous range of already popped
+        records between the identifier string and the first record in the data
+        file that hasn't been popped yet. If such a range exists then this
+        method will
+         - truncate the data file from the beginning, removing the largest
+           integer multiple of `DataFile.head_truncation_chunk_size` (1 MiB)
+           that is less than the size of the range and
+         - fill the range remaining after the truncation with a dummy record
+           with channel id = 0 and bytes of zero value as the record data,
+         - adjust the `first_offset` of all channels to reference the new
+           position of the next record to pop.
+
+        For example, suppose there is a range of 2.5 MiB of already popped
+        records between the data file ID and the first not yet popped record, so
+        the file layout looks like this:
+
+                        |<-- 2.5 MiB  -->|
+            datafile_id popped_records... first_not_yet_popped_record
+
+        Then this method will do the following:
+
+        1. Truncate the data file from the beginning, removing 2 MiB, which is
+           the largest integer multiple of 1 MiB that is less than 2.5 MiB,
+           leaving `datafile_id.length` + 0.5 MiB of junk at the beginning of
+           the file:
+
+            |<- datafile_id.length ->|<- 0.5 MiB ->|
+            junk                     junk           first_not_yet_popped_record
+
+        2. Write the data file ID to the new beginning of the data file:
+
+                        |<-- 0.5 MiB -->|
+            datafile_id junk             first_not_yet_popped_record
+
+        3. Fill the remaining junk with a dummy record:
+
+                        |<-- 0.5 MiB -->|
+            datafile_id dummy_record     first_not_yet_popped_record
+
+        The essential file operations are done using Linux `fallocate()`
+          - in `FALLOC_FL_COLLAPSE_RANGE` mode to truncate the data file from
+            the beginning,
+          - in `FALLOC_FL_ZERO_RANGE` mode to write bytes of zero value as dummy
+            record data.
+
+        This is supported only by Linux 3.15 or higher and only for certain file
+        systems including ext4 and XFS. See the `fallocate()` manual page for
+        details. The constructor of this class does a run-time test if
+        `fallocate()` supports these modes, and this method does nothing if that
+        test failed.
+
+        Returns:
+            the number of bytes removed from the data file, which is 0 if
+            nothing was done.
+
+    ***************************************************************************/
+
+    private ulong minimizeDataFileSize ( )
+    {
+        if (!this.data_file_size_mimimizing_supported)
+            return 0;
+
+        auto channel = this.first_offset_tracker.first;
+        if (channel is null)
+            return 0;
+
+        /*
+         * Set bytes_cutoff to the offset of the first record. The data file
+         * starts with datafile_id, followed by header and data of the first
+         * record. Consequently the lowest offset is either datafile_id.length,
+         * if the very first record hasn't been popped yet, or at least
+         * datafile_id.length + RecordHeader.sizeof otherwise.
+         */
+        auto bytes_cutoff = cast(ulong)channel.first_offset;
+        if (bytes_cutoff == Const.datafile_id.length)
+            return 0;
+
+        assert(bytes_cutoff >= (Const.datafile_id.length + RecordHeader.sizeof));
+
+        /*
+         * Subtract (datafile_id.length + RecordHeader.sizeof), the extra space
+         * needed at the beginning if truncating the file.
+         */
+        bytes_cutoff -= (Const.datafile_id.length + RecordHeader.sizeof);
+
+        /*
+         * Now bytes_cutoff is the maximum number of bytes that can be
+         * truncated. Do the truncation, truncateHead() will round bytes_cutoff
+         * down to an integer multiple of the truncation chunk size, cut that
+         * many bytes off and return that amount.
+         */
+        bytes_cutoff = this.data.truncateHead(bytes_cutoff);
+
+        if (!bytes_cutoff)
+            return 0;
+
+        /*
+         * Trials show that fallocate(FALLOC_FL_COLLAPSE_RANGE) messes with the
+         * file position in the following way: The data file position -- that
+         * is, the return value of lseek(0, SEEK_CUR) and the offset used by
+         * write()/writev() -- is always at the end, so it should decrease if
+         * we truncate the file from the beginning. However, the current file
+         * position does in fact _not_ change!  The manual doesn't say what the
+         * intended effect of fallocate(FALLOC_FL_COLLAPSE_RANGE) for the
+         * current file position is.
+         * So we have to seek to the end of the data file in order to get to
+         * the right file position.
+         */
+        this.data.seek(0, SEEK_END, "unable to seek to the end of the file " ~
+                                    "after truncating");
+
+        /*
+         * Subtract the number of bytes removed from the first offset of all
+         * tracked channels (i.e. channels with records).
+         */
+        this.first_offset_tracker.updateCutoff(bytes_cutoff);
+
+        /*
+         * Write the datafile_id string to the beginning of the file.
+         */
+        off_t pos = 0;
+
+        this.data.transmit(
+            Const.datafile_id, pos, &pwrite,
+            "unable to write the file ID after data file truncation"
+        );
+
+        /*
+         * Overwrite the remaining junk data between the datafile_id string and
+         * the now first record with a spare record. The spare record has
+         * channel 0, which is not used for real records, and its data are zero
+         * bytes.
+         */
+        auto first_offset = this.first_offset_tracker.first.first_offset;
+
+        RecordHeader header;
+        header.length = first_offset - header.sizeof - pos;
+        header.setParity();
+
+        this.data.transmit(
+            this.dump(header), pos, &pwrite,
+            "unable to write the spare record header"
+        );
+
+        this.data.zeroRange(pos, header.length);
+
+        debug (Full) this.verifyMinimizedDataFile();
+
+        return bytes_cutoff;
+    }
+
+    /***************************************************************************
+
+        Verifies the beginning of the data file after `minimizeDataFileSize()`
+        has removed a range from the data file (that is, it returned a non-zero
+        value).
+
+    ***************************************************************************/
+
+    debug (Full) private void verifyMinimizedDataFile ( )
+    {
+        off_t pos = 0;
+
+        /*
+         * Check the data file id.
+         */
+        char[Const.datafile_id.length] datafile_id;
+        this.data.enforce(
+            !this.data.transmit(
+                datafile_id, pos, &pread, "unable to read the data file id"
+            ),
+            "Unexpected end of file reading the data file id."
+        );
+
+        /*
+         * Check the header of the dummy record.
+         */
+        RecordHeader dummy_record_header;
+        this.data.enforce(
+            !this.data.transmit(
+                this.dump(dummy_record_header), pos, &pread,
+                "unable to read the dummy record header"
+            ),
+            "Unexpected end of file reading the dummy record header."
+        );
+        enforce(
+            this.e, !dummy_record_header.calcParity,
+            "invalid dummy record header (parity check failed)"
+        );
+
+        /*
+         * Check the header of the first real record in the data file:
+         *   - It should follow the dummy record data immediately.
+         *   - Its channel id should match the first channel in the first offset
+         *     tracker.
+         */
+        pos += dummy_record_header.length;
+
+        auto first_channel = this.first_offset_tracker.first;
+        assert(first_channel);
+        enforce(
+            this.e, pos == first_channel.first_offset,
+            "The first record in the data file does not immediately follow " ~
+            "the dummy record data"
+        );
+
+        RecordHeader first_record_header;
+        this.readHeader(first_record_header, pos);
+        enforce(
+            this.e, first_record_header.channel == first_channel.id,
+            "The channel id in the first record in the data file does not " ~
+            "match the id of the channel with the lowest first offset."
+        );
+    }
+
+    /***************************************************************************
+
         Reads the index file, creates the channels listed in it and verifies
         consistency between the channel states and the contents of the data
         file.
@@ -1087,11 +1381,31 @@ class DiskOverflow: DiskOverflowInfo
             this.index.enforce(!channel.last_header.next_offset, "Last record in channel points to a next record", this.index.name, nline);
             this.index.enforce(channel.last_header.channel == channel.id, "Last record in channel has the wrong channel ID", this.index.name, nline);
 
-            assert(&channel); // invariant
             /*
              * Add the channel to the registry.
              */
             this.channels[channel_name.dup] = channel;
+
+            /*
+             * Add the channel to the tracker, storing a pointer to the
+             * associative array element.
+             */
+            {
+                ChannelMetadata* channel_ptr = channel_name in this.channels;
+                scope (failure)
+                    this.channels.remove(channel_name);
+
+                assert(channel_ptr !is null);
+
+                this.index.enforce(
+                    this.first_offset_tracker.track(*channel_ptr),
+                    "Multiple channels have the same first offset",
+                    this.index.name, nline
+                );
+
+                assert(channel_ptr); // invariant
+            }
+
             this.records += channel.records;
             this.bytes += channel.bytes;
 

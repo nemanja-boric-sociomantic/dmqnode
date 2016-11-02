@@ -10,12 +10,23 @@ module dmqnode.storage.engine.overflow.ChannelMetadata;
 
 import dmqnode.storage.engine.overflow.RecordHeader;
 
+import ocean.transition;
+
 struct ChannelMetadata
 {
     import dmqnode.storage.engine.overflow.Const;
+    import Tracker = dmqnode.storage.engine.overflow.FirstOffsetTracker;
 
     import ocean.stdc.posix.sys.types: off_t;
     import ocean.core.Enforce: enforce;
+
+    /***************************************************************************
+
+        `FirstOffsetTracker` struct definition.
+
+    ***************************************************************************/
+
+    alias Tracker.FirstOffsetTracker!(typeof(*this)) FirstOffsetTracker;
 
     /***************************************************************************
 
@@ -93,16 +104,30 @@ struct ChannelMetadata
 
     /***************************************************************************
 
+        The entry of this channel in the first offset tracker.
+        This member is `null` if and only if this channel is not tracked, which
+        is the case if and only if this channel is empty. Except for checking if
+        this member is `null` or not, it should be used only in
+        `FirstOffsetTracker`.
+
+    ***************************************************************************/
+
+    package Tracker.FirstOffsetTrackerEntry* tracker_entry;
+
+    /***************************************************************************
+
         Updates this instance after pushing a record.
 
         Params:
             header         = the header of the pushed record
             new_rec_offset = the file offset of the pushed record
             data_length    = the length of the payload data of the pushed record
+            first_offset_tracker = the first offset tracker
 
     ***************************************************************************/
 
-    void updatePush ( RecordHeader header, off_t new_rec_offset, size_t data_length )
+    void updatePush ( RecordHeader header, off_t new_rec_offset, size_t data_length,
+                      ref FirstOffsetTracker first_offset_tracker )
     {
         if (!this.records++)
         {
@@ -111,6 +136,7 @@ struct ChannelMetadata
              * to a new channel and have to initialise channel.first_offset.
              */
             this.first_offset = new_rec_offset;
+            first_offset_tracker.track(*this);
         }
         /*
          * Update channel.last_offset: The record we just pushed is now the
@@ -130,6 +156,7 @@ struct ChannelMetadata
             next_offset    = the offset of the next record after the popped one
                              as reported in the record header
             data_length    = the length of the payload data of the popped record
+            first_offset_tracker = the first offset tracker
             e              = exception to throw on inconsistent parameters
 
         In:
@@ -137,7 +164,9 @@ struct ChannelMetadata
 
     ***************************************************************************/
 
-    void updatePop ( off_t next_offset, size_t data_length, lazy Exception e )
+    void updatePop ( off_t next_offset, size_t data_length,
+                     ref FirstOffsetTracker first_offset_tracker,
+                     lazy Exception e )
     in
     {
         assert(this.records);
@@ -177,7 +206,25 @@ struct ChannelMetadata
                  * record in the channel, which will be the next record to pop.
                  */
                 this.first_offset += next_offset;
+                first_offset_tracker.track(*this);
         }
+    }
+
+
+    /***************************************************************************
+
+        Obtains the next channel in ascending order of `first_offset`. This
+        channel is expected to contain records (i.e. not be empty).
+
+        Returns:
+            the next channel in ascending order of `first_offset` or `null` if
+            this channel has the highest `first_offset` of all channels.
+
+    ***************************************************************************/
+
+    public typeof(this) next ( )
+    {
+        return FirstOffsetTracker.next(*this);
     }
 
     /***************************************************************************
@@ -242,10 +289,14 @@ struct ChannelMetadata
         if (this.records)
         {
             assert(this.last_header.channel == this.id, "wrong channel ID of last header");
+            assert(this.tracker_entry !is null,
+                   "not registered in the first offset tracker with records");
         }
         else
         {
             assert(this.last_header == this.last_header.init, "last header expected to be blank with no records");
+            assert(this.tracker_entry is null,
+                   "registered in the first offset tracker with no records");
         }
 
         assert(!this.last_header.next_offset, "last_header.next expected to be 0");
@@ -275,6 +326,7 @@ struct ChannelMetadata
     }
     body
     {
+        FirstOffsetTracker.remove(*this);
         auto id = this.id;
         *this = (*this).init;
         this.id = id;
