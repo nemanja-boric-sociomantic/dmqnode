@@ -172,9 +172,8 @@ import dmqnode.storage.engine.OverflowChannel;
 import dmqnode.storage.engine.overflow.ChannelMetadata,
        dmqnode.storage.engine.overflow.RecordHeader,
        dmqnode.storage.engine.overflow.file.DataFile,
-       dmqnode.storage.engine.overflow.file.IndexFile;
-
-import dmqnode.storage.engine.overflow.file.PosixFile: FileException;
+       dmqnode.storage.engine.overflow.file.IndexFile,
+       dmqnode.storage.engine.overflow.file.FileException;
 
 import ocean.util.log.Log;
 

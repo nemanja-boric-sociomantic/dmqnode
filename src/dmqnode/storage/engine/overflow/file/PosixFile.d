@@ -9,8 +9,6 @@
 
 module dmqnode.storage.engine.overflow.file.PosixFile;
 
-import ocean.sys.ErrnoException;
-
 class PosixFile
 {
     import ocean.stdc.posix.fcntl: open, O_RDWR, O_APPEND, O_CREAT, S_IRUSR, S_IWUSR, S_IRGRP, S_IROTH;
@@ -19,6 +17,8 @@ class PosixFile
     import ocean.stdc.posix.sys.types: off_t;
     import ocean.stdc.stdio: SEEK_SET;
     import ocean.stdc.errno: EINTR, errno;
+
+    import dmqnode.storage.engine.overflow.file.FileException;
 
     import ocean.io.FilePath;
 
@@ -283,63 +283,4 @@ class PosixFile
 
         return x;
     }
-}
-
-/******************************************************************************/
-
-class FileException: ErrnoException
-{
-    import ocean.stdc.string: memmove;
-
-    /***************************************************************************
-
-        The name of the file where a failed operation resulted in throwing this
-        instance.
-
-    ***************************************************************************/
-
-    public const char[] filename;
-
-    /***************************************************************************
-
-        Constructor.
-
-        Params:
-            filename = the name of the file where a failed operation resulted in
-                       throwing this instance.
-
-    ***************************************************************************/
-
-    public this ( char[] filename )
-    {
-        this.filename = filename;
-    }
-
-    /**************************************************************************
-
-        Calls super.set() to render the error message, then prepends
-        this.filename ~ " - " to it.
-
-        Params:
-            err_num = error number with same value set as in errno
-            name = extern function name that is expected to set errno, optional
-
-        Returns:
-            this
-
-     **************************************************************************/
-
-    override public typeof(this) set ( int err_num, char[] name,
-                                       istring file = __FILE__, int line = __LINE__ )
-    {
-        super.set(err_num, name, file, line);
-
-        if (this.filename.length)
-        {
-            this.append(" - ").append(this.filename);
-        }
-
-        return this;
-    }
-
 }
