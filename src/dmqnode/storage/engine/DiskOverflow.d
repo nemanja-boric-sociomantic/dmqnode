@@ -171,8 +171,10 @@ import dmqnode.storage.engine.OverflowChannel;
 
 import dmqnode.storage.engine.overflow.ChannelMetadata,
        dmqnode.storage.engine.overflow.RecordHeader,
-       dmqnode.storage.engine.overflow.file.PosixFile,
+       dmqnode.storage.engine.overflow.file.DataFile,
        dmqnode.storage.engine.overflow.file.IndexFile;
+
+import dmqnode.storage.engine.overflow.file.PosixFile: FileException;
 
 import ocean.util.log.Log;
 
@@ -402,7 +404,7 @@ class DiskOverflow: DiskOverflowInfo
 
     ***************************************************************************/
 
-    private const PosixFile data;
+    private const DataFile data;
 
     /***************************************************************************
 
@@ -427,7 +429,7 @@ class DiskOverflow: DiskOverflowInfo
     public this ( char[] dir )
     {
         this.e     = new Exception;
-        this.data  = new PosixFile(dir, Const.datafile_name);
+        this.data  = new DataFile(dir, Const.datafile_name);
         this.index = new IndexFile(dir, Const.indexfile_name);
 
         this.initChannels(this.verifyDataFileId());
