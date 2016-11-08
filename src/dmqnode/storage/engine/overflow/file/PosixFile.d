@@ -11,7 +11,9 @@ module dmqnode.storage.engine.overflow.file.PosixFile;
 
 class PosixFile
 {
-    import ocean.stdc.posix.fcntl: open, O_RDWR, O_APPEND, O_CREAT, S_IRUSR, S_IWUSR, S_IRGRP, S_IROTH;
+    import ocean.stdc.posix.fcntl: O_RDWR, O_APPEND, O_CREAT, S_IRUSR, S_IWUSR,
+                                   S_IRGRP, S_IROTH;
+    import fcntl = ocean.stdc.posix.fcntl: open;
     import ocean.stdc.posix.unistd: lseek, ftruncate, fdatasync;
     import unistd = ocean.stdc.posix.unistd: close, unlink;
     import ocean.stdc.posix.sys.types: off_t;
@@ -88,32 +90,24 @@ class PosixFile
 
     /***************************************************************************
 
-        Constructor.
-
-        Note: A subclass constructor may call public class methods only after
-        this constructor has returned or the class invariant will fail.
+        Constructor, opens or creates the file using `name` as the file name and
+        `dir` as the file directory. `dir` is expected to exist.
 
         Params:
-            dir  = working directory
-            name = file name
+            dir  = the directory for the file, expected to exist
+            name = the file name without directory path
 
         Throws:
-            FileException on file I/O error.
+            FileException on error creating or opening the file.
 
     ***************************************************************************/
 
     public this ( char[] dir, char[] name )
     {
-        this.log = Log.lookup(name);
-
-        auto path = FilePath(dir);
-        path.create();
-
-        this.name = FilePath.join(dir, name) ~ '\0';
-        this.namec = this.name.ptr;
-        this.name = this.name[0 .. $ - 1];
-
-        this.fd = this.restartInterrupted(open(this.namec, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH));
+        char[] fullname = FilePath.join(dir, name) ~ '\0';
+        this.fd = this.open(fullname.ptr);
+        this.namec = fullname.ptr;
+        this.name = fullname[0 .. $ - 1];
 
         /*
          * Not calling this.enforce() or this.e() at this point, as doing so
@@ -124,7 +118,29 @@ class PosixFile
             throw (new FileException(this.name)).useGlobalErrno("unable to open");
         }
 
+        this.log = Log.lookup(this.name);
         this.log.info("File opened with file descriptor {}.", this.fd);
+    }
+
+    /***************************************************************************
+
+        Opens the file or creates it if not existing. Can be overridden by a
+        subclass.
+
+        Params:
+            path = the full file path as a NUL-terminated string
+
+        Returns:
+            the non-negative file descriptor on success or a negative value on
+            error; on error `errno` is set appropriately.
+
+    ***************************************************************************/
+
+    protected int open ( char* path )
+    {
+        return restartInterrupted(fcntl.open(
+            path, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH
+        ));
     }
 
     /***************************************************************************

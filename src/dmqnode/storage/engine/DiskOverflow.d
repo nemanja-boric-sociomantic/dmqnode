@@ -206,6 +206,8 @@ class DiskOverflow: DiskOverflowInfo
     import ocean.stdc.stdio: SEEK_CUR, SEEK_END;
     import ocean.stdc.errno: errno;
 
+    import ocean.io.FilePath;
+
     import ocean.core.Enforce: enforce;
 
     /***************************************************************************
@@ -421,6 +423,8 @@ class DiskOverflow: DiskOverflowInfo
 
     public this ( char[] dir )
     {
+        FilePath(dir).create();
+
         this.e     = new Exception;
         this.data  = new DataFile(dir, Const.datafile_name);
         this.index = new IndexFile(dir, Const.indexfile_name);
