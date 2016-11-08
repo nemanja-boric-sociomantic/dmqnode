@@ -1,13 +1,13 @@
 /*******************************************************************************
 
-    Copyright (c) 2015 sociomantic labs. All rights reserved
-
-    A thin wrapper around POSIX file I/O functionality with convenience
+    A thin wrapper around basic POSIX file functionality with convenience
     extensions.
+
+    copyright: Copyright (c) 2016 sociomantic labs. All rights reserved
 
 *******************************************************************************/
 
-module dmqnode.storage.engine.overflow.PosixFile;
+module dmqnode.storage.engine.overflow.file.PosixFile;
 
 import ocean.sys.ErrnoException;
 

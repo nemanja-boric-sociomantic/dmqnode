@@ -171,8 +171,8 @@ import dmqnode.storage.engine.OverflowChannel;
 
 import dmqnode.storage.engine.overflow.ChannelMetadata,
        dmqnode.storage.engine.overflow.RecordHeader,
-       dmqnode.storage.engine.overflow.PosixFile,
-       dmqnode.storage.engine.overflow.IndexFile;
+       dmqnode.storage.engine.overflow.file.PosixFile,
+       dmqnode.storage.engine.overflow.file.IndexFile;
 
 import ocean.util.log.Log;
 

@@ -1,7 +1,5 @@
 /*******************************************************************************
 
-    Copyright (c) 2015 sociomantic labs. All rights reserved
-
     The index file of the queue disk overflow.
 
     This is a text file where each line corresponds to one queue channel and
@@ -14,11 +12,13 @@
     The index file is a text file for the sake of easy inspection. It should be
     written only by the IndexFile.writeLines() method.
 
+    copyright: Copyright (c) 2016 sociomantic labs. All rights reserved
+
 *******************************************************************************/
 
-module dmqnode.storage.engine.overflow.IndexFile;
+module dmqnode.storage.engine.overflow.file.IndexFile;
 
-import dmqnode.storage.engine.overflow.PosixFile,
+import dmqnode.storage.engine.overflow.file.PosixFile,
        dmqnode.storage.engine.overflow.ChannelMetadata;
 
 class IndexFile: PosixFile
