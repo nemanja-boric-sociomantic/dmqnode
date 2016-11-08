@@ -320,7 +320,8 @@ class DiskOverflow: DiskOverflowInfo
 
     ***************************************************************************/
 
-    private bool data_file_size_mimimizing_supported;
+    debug (OvfMinimizeTest) public  bool data_file_size_mimimizing_supported;
+    else                    private bool data_file_size_mimimizing_supported;
 
     /***************************************************************************
 
@@ -446,7 +447,8 @@ class DiskOverflow: DiskOverflowInfo
 
     ***************************************************************************/
 
-    private const DataFile data;
+    debug (OvfMinimizeTest) public  const DataFile data;
+    else                    private const DataFile data;
 
     /***************************************************************************
 
