@@ -63,7 +63,7 @@ public scope class PopRequest : Protocol.Pop
     override protected void[] getNextValue ( char[] channel_name )
     {
         auto storage_channel =
-            *this.resources.channel_buffer in this.resources.storage_channels;
+            channel_name in this.resources.storage_channels;
 
         if ( storage_channel !is null )
         {
