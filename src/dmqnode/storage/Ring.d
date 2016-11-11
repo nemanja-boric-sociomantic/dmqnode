@@ -170,11 +170,6 @@ public class RingNode : StorageChannels
 
             this.memory_info = this.queue;
             this.overflow_info = this.overflow;
-
-            if ( this.outer.channels_scan )
-            {
-                this.loadDumpedChannel();
-            }
         }
 
         /***********************************************************************
@@ -426,9 +421,9 @@ public class RingNode : StorageChannels
     /***************************************************************************
 
         Flag indicating whether a scan for dumped ring files is being performed
-        (at node startup). The flags is checked by the Ring constructor to make
-        sure that dumped files are only loaded during node startup, and not when
-        a new channel is created when the node is running.
+        (at node startup). The flags is checked by `create_()` to make sure that
+        dumped files are only loaded during node startup, and not when a new
+        channel is created when the node is running.
 
     ***************************************************************************/
 
@@ -535,7 +530,11 @@ public class RingNode : StorageChannels
     {
         enforce(!this.shutting_down, "Cannot create channel '" ~ id ~
                                      "' while shutting down");
-        return this.new Ring(id);
+
+        auto storage = this.new Ring(id);
+        if ( this.channels_scan )
+            storage.loadDumpedChannel();
+        return storage;
     }
 
 
