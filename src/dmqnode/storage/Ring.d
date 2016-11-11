@@ -420,14 +420,21 @@ public class RingNode : StorageChannels
 
     /***************************************************************************
 
-        Flag indicating whether a scan for dumped ring files is being performed
-        (at node startup). The flags is checked by `create_()` to make sure that
-        dumped files are only loaded during node startup, and not when a new
-        channel is created when the node is running.
+        Flag indicating whether a scan for dumped ring files or disk overflow
+        channels is being performed (at node startup). The flags is checked by
+        `create_()` to make sure that dumped files are only loaded during node
+        startup, and not when a new channel is created when the node is running.
 
     ***************************************************************************/
 
-    private bool channels_scan;
+    enum ScanStatus: uint
+    {
+        NotScanning,
+        DumpFiles,
+        OverflowChannels
+    }
+
+    private ScanStatus channels_scan;
 
 
     /***************************************************************************
@@ -532,7 +539,7 @@ public class RingNode : StorageChannels
                                      "' while shutting down");
 
         auto storage = this.new Ring(id);
-        if ( this.channels_scan )
+        if ( this.channels_scan == channels_scan.DumpFiles )
             storage.loadDumpedChannel();
         return storage;
     }
@@ -648,9 +655,9 @@ public class RingNode : StorageChannels
 
         debug Stderr.formatln("Scanning {} for queue files", path.toString);
 
-        {
-            this.channels_scan = true;
-            scope ( exit ) this.channels_scan = false;
+       {
+            this.channels_scan = channels_scan.DumpFiles;
+            scope ( exit ) this.channels_scan = channels_scan.NotScanning;
 
             foreach ( info; path )
             {
@@ -682,22 +689,24 @@ public class RingNode : StorageChannels
                 }
 
             }
-        }
 
-        /*
-         * Create all channels that are present in the disk overflow but didn't
-         * have a memory dump file because their memory queue was empty. We
-         * iterate over all channels in the disk overflow here; `getCreate()`
-         * will do nothing for channels that already exist because a dump file
-         * was found for them.
-         */
-        this.overflow.iterateChannelNames(
-            (ref char[] channel_name)
-            {
-                this.getCreate(channel_name);
-                return 0;
-            }
-        );
+            this.channels_scan = channels_scan.OverflowChannels;
+
+            /*
+             * Create all channels that are present in the disk overflow but didn't
+             * have a memory dump file because their memory queue was empty. We
+             * iterate over all channels in the disk overflow here; `getCreate()`
+             * will do nothing for channels that already exist because a dump file
+             * was found for them.
+             */
+            this.overflow.iterateChannelNames(
+                (ref char[] channel_name)
+                {
+                    this.getCreate(channel_name);
+                    return 0;
+                }
+            );
+       }
 
         // Delete the dump files after successful deserialisation.
 
