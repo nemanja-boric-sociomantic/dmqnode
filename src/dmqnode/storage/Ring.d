@@ -30,6 +30,7 @@ import ocean.util.container.mem.MemManager;
 import ocean.util.container.queue.FlexibleRingQueue;
 import ocean.util.container.queue.model.IQueueInfo;
 import ocean.util.log.Log;
+import ocean.transition;
 
 
 /*******************************************************************************
@@ -163,7 +164,7 @@ public class RingNode : StorageChannels
 
             this.file_path = new FilePath(this.filename);
 
-            this.overflow = this.outer.overflow.new Channel(id);
+            this.overflow = this.outer.overflow.new Channel(idup(id));
 
             this.queue = new FlexibleByteRingQueue(noScanMallocMemManager,
                 this.outer.channel_size_config.getChannelSize(id));

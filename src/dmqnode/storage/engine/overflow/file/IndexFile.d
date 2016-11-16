@@ -21,6 +21,8 @@ module dmqnode.storage.engine.overflow.file.IndexFile;
 import dmqnode.storage.engine.overflow.ChannelMetadata;
 import dmqnode.storage.engine.overflow.file.PosixFile;
 
+import ocean.transition;
+
 class IndexFile: PosixFile
 {
     import ocean.core.Enforce: enforceImpl;
@@ -108,7 +110,7 @@ class IndexFile: PosixFile
 
     ***************************************************************************/
 
-    public void readLines ( void delegate ( char[] channel_name,
+    public void readLines ( void delegate ( cstring channel_name,
                                             ChannelMetadata channel,
                                             uint nline ) got_channel )
     {
@@ -209,12 +211,12 @@ class IndexFile: PosixFile
 
     ***************************************************************************/
 
-    public void writeLines ( void delegate ( void delegate ( char[] name, ChannelMetadata channel ) writeln ) iterate )
+    public void writeLines ( void delegate ( void delegate ( cstring name, ChannelMetadata channel ) writeln ) iterate )
     {
         this.reset();
 
         this.fmt_io_signal_blocker.callBlocked({
-            iterate((char[] name, ChannelMetadata channel)
+            iterate((cstring name, ChannelMetadata channel)
             {
                 int n = fprintf(this.stream, "%.*s %lu %llu %lld %lld\n".ptr,
                                 name.length, name.ptr,

@@ -227,7 +227,7 @@ class DiskOverflow: DiskOverflowInfo
 
         ***********************************************************************/
 
-        public this ( char[] channel_name )
+        public this ( istring channel_name )
         {
             super(this.outer, channel_name);
         }
@@ -251,7 +251,7 @@ class DiskOverflow: DiskOverflowInfo
 
     ***************************************************************************/
 
-    private ChannelMetadata[char[]] channels;
+    private ChannelMetadata[istring] channels;
 
     /***************************************************************************
 
@@ -523,7 +523,7 @@ class DiskOverflow: DiskOverflowInfo
         if (this.records)
         {
             this.index.writeLines(
-            ( void delegate ( char[] name, ChannelMetadata channel ) writeln )
+            ( void delegate ( cstring name, ChannelMetadata channel ) writeln )
             {
                 foreach (name, channel; this.channels)
                 {
@@ -982,7 +982,7 @@ class DiskOverflow: DiskOverflowInfo
 
     ***************************************************************************/
 
-    package ChannelMetadata* getChannel ( char[] channel_name )
+    package ChannelMetadata* getChannel ( istring channel_name )
     out (channel)
     {
         assert(channel);
@@ -999,9 +999,9 @@ class DiskOverflow: DiskOverflowInfo
             enforce(this.e, this.highest_channel_id < this.highest_channel_id.max,
                                  "Unable to add a new channel: ChannelMetadata IDs exhausted");
 
-            this.channels[channel_name.dup] = ChannelMetadata(++this.highest_channel_id);
+            this.channels[channel_name] = ChannelMetadata(++this.highest_channel_id);
             /*
-             * Return a pointer to this.channels[channel_name.dup].
+             * Return a pointer to this.channels[channel_name].
              */
             ChannelMetadata* channel = channel_name in this.channels;
             log.info("Creating new channel {} '{}'", channel.id, channel_name);
@@ -1015,7 +1015,7 @@ class DiskOverflow: DiskOverflowInfo
 
     ***************************************************************************/
 
-    public int iterateChannelNames ( int delegate ( ref char[] name ) dg )
+    public int iterateChannelNames ( int delegate ( ref istring name ) dg )
     {
         foreach (name, metadata; this.channels)
         {
@@ -1324,7 +1324,7 @@ class DiskOverflow: DiskOverflowInfo
     }
     body
     {
-        this.index.readLines((char[] channel_name, ChannelMetadata channel, uint nline)
+        this.index.readLines((cstring channel_name, ChannelMetadata channel, uint nline)
         {
             this.index.enforce(filesize, "No data");
             this.index.enforce(!(channel_name in this.channels),
@@ -1368,7 +1368,7 @@ class DiskOverflow: DiskOverflowInfo
             /*
              * Add the channel to the registry.
              */
-            this.channels[channel_name.dup] = channel;
+            this.channels[idup(channel_name)] = channel;
 
             /*
              * Add the channel to the tracker, storing a pointer to the

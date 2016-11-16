@@ -13,6 +13,8 @@ import dmqnode.storage.engine.DiskOverflow;
 import dmqnode.storage.engine.overflow.ChannelMetadata;
 import dmqnode.storage.engine.overflow.RecordHeader;
 
+import ocean.transition;
+
 package class OverflowChannel: DiskOverflowInfo
 {
     /***************************************************************************
@@ -53,7 +55,7 @@ package class OverflowChannel: DiskOverflowInfo
 
     ***********************************************************************/
 
-    package this ( DiskOverflow host, char[] channel_name )
+    package this ( DiskOverflow host, istring channel_name )
     in
     {
         assert(host);
