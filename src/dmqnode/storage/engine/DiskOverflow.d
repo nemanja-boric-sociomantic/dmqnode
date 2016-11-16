@@ -845,6 +845,53 @@ class DiskOverflow: DiskOverflowInfo
 
     /***************************************************************************
 
+        Re-registers the channel metadata is currently registered under
+        `old_name` under `new_name`. Does not change anything if
+        `old_name == new_name`.
+
+        Params:
+            old_name = current channel name
+            new_name = new channel name
+
+        Returns:
+            a pointer to the `ChannelMetadata` object for the channel, which may
+            have been moved to a different location. If this method throws
+            rather than returning then the object `ChannelMetadata` has not been
+            moved.
+
+        Throws:
+            Exception if
+                - `old_name` was not found or
+                - another channel `new_name` already exists, i.e. `new_name` was
+                  found and is different from `old_name`.
+
+    ***************************************************************************/
+
+    package ChannelMetadata* renameChannel ( cstring old_name, istring new_name )
+    out (channel_metadata)
+    {
+        assert(channel_metadata);
+    }
+    body
+    {
+        ChannelMetadata* channel = old_name in this.channels;
+        enforce(this.e, channel !is null, "Unable to rename a channel: " ~
+                "Channel not found");
+
+        if (ChannelMetadata* new_channel = new_name in this.channels)
+        {
+            enforce(this.e, new_channel is channel, "Unable to rename a " ~
+                    "channel: A channel with the new name already exists");
+            return new_channel;
+        }
+
+        this.channels[new_name] = *channel;
+        this.channels.remove(old_name);
+        return new_name in this.channels;
+    }
+
+    /***************************************************************************
+
         Flushes write buffers, minimizes the data file size and writes the index
         file.
 

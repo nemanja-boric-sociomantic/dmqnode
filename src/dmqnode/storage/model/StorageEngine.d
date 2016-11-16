@@ -22,6 +22,7 @@ import ocean.core.Array;
 import ocean.io.FilePath;
 import ocean.io.Path : normalize, PathParser;
 import ocean.sys.Environment;
+import ocean.transition;
 
 import swarm.core.node.storage.listeners.Listeners;
 import swarm.core.node.storage.model.IStorageEngine;
@@ -171,7 +172,6 @@ public abstract class StorageEngine : IStorageEngine
 
     abstract public typeof(this) pop ( ref char[] value );
 
-
     /***************************************************************************
 
         Registers a consumer with the channel. The dataReady() method of the
@@ -201,4 +201,12 @@ public abstract class StorageEngine : IStorageEngine
     {
         this.consumers.unregister(consumer);
     }
+
+    /***************************************************************************
+
+        Sets the subscriber name for this instance.
+
+    ***************************************************************************/
+
+    abstract public void rename ( cstring channel_name );
 }

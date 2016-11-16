@@ -176,6 +176,25 @@ public class RingNode : StorageChannels
 
         /***********************************************************************
 
+            Changes the name of this storage.
+
+            Params:
+                storage_name = the new storage name
+
+        ***********************************************************************/
+
+        override public void rename ( cstring storage_name )
+        {
+            this.overflow.rename(idup(storage_name));
+            this.filename = FilePath.join(
+                this.outer.data_dir, this.id ~ this.outer.DumpFileSuffix
+            );
+            this.file_path.set(this.filename);
+            this.initialise(storage_name);
+        }
+
+        /***********************************************************************
+
             Looks for and loads a saved dump of the channel's contents.
 
         ***********************************************************************/

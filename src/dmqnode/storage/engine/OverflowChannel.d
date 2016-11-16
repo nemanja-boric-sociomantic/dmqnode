@@ -19,6 +19,14 @@ package class OverflowChannel: DiskOverflowInfo
 {
     /***************************************************************************
 
+        The channel name.
+
+    ***************************************************************************/
+
+    private istring name;
+
+    /***************************************************************************
+
         The host of the disk queue; queue access methods of this instance
         forward the calls to the host.
 
@@ -57,6 +65,7 @@ package class OverflowChannel: DiskOverflowInfo
 
     package this ( DiskOverflow host, istring channel_name )
     {
+        this.name     = channel_name;
         this.host     = host;
         this.metadata = host.getChannel(channel_name);
     }
@@ -117,6 +126,23 @@ package class OverflowChannel: DiskOverflowInfo
     public void clear ( )
     {
         this.host.clearChannel(*this.metadata);
+    }
+
+
+    /***************************************************************************
+
+        Renames this channel.
+
+        Params:
+            `new_name` = new channel name
+
+    ***************************************************************************/
+
+    public void rename ( istring new_name )
+    {
+        auto old_name = this.name;
+        this.name = new_name;
+        this.metadata = this.host.renameChannel(old_name, this.name);
     }
 
     /***************************************************************************
