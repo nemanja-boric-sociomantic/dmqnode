@@ -14,7 +14,7 @@ import dmqnode.connection.neo.SharedResources;
 import dmqnode.storage.model.StorageEngine;
 
 import swarm.core.neo.node.ConnectionHandler;
-import swarm.dmq.neo.protocol.Pop;
+import dmqproto.common.Pop;
 import swarm.core.neo.request.Command;
 
 import ocean.transition;
