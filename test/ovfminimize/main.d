@@ -28,7 +28,7 @@ import ocean.stdc.posix.sys.stat: stat_t, fstat;
 import ocean.util.log.Log;
 import ocean.io.Stdout: Stderr;
 
-import ocean.core.Enforce;
+import ocean.core.Test;
 import ocean.transition: getMsg;
 
 /*******************************************************************************
@@ -44,6 +44,7 @@ import ocean.transition: getMsg;
          - `EXIT_FAILURE` if the test failed.
 
 *******************************************************************************/
+
 
 int main ( )
 {
@@ -150,13 +151,13 @@ void run ( )
         auto size = ovf.data.seek(
             0, SEEK_CUR, "unable to seek to tell the data file size"
         );
-        enforce(size >= 0);
+        test!(">=")(size, 0);
 
         stat_t status;
         ovf.data.enforce(
             !fstat(ovf.data.fd, &status), "unable get the data file status"
         );
-        enforce(status.st_size == size);
+        test!("==")(status.st_size, size);
         return cast(ulong)size;
     }
 
@@ -169,19 +170,19 @@ void run ( )
         bool popped = channel.pop(
             delegate void[] (size_t n)
             {
-                enforce(n == pop_result.length);
+                test!("==")(n, pop_result.length);
                 return pop_result;
             }
         );
-        enforce(popped);
-        enforce(pop_result == data);
+        test(popped);
+        test!("==")(pop_result, data);
     }
 
     /*
      * Push 500 records to each channel and verify the data file size.
      * Number of records per channel: 0 => 500
      */
-    enforce(getDataFileSize == 0);
+    test!("==")(getDataFileSize, 0);
 
     for (uint i = 0; i < 500; i++)
     {
@@ -190,7 +191,7 @@ void run ( )
     }
 
     const data_file_size_pushed = calcDataFileSize(500, 500);
-    enforce(getDataFileSize == data_file_size_pushed);
+    test!("==")(getDataFileSize, data_file_size_pushed);
 
     /*
      * Pop 300 records from each channel, and verify that the data file size
@@ -203,7 +204,7 @@ void run ( )
         pop(ch2);
     }
 
-    enforce(getDataFileSize() == data_file_size_pushed);
+    test!("==")(getDataFileSize(), data_file_size_pushed);
 
     /*
      * Now as much space as 300 records * 2 channels are free at the beginning
@@ -220,7 +221,7 @@ void run ( )
     const data_file_size_miminized = data_file_size_pushed - 11 * MiB;
 
     ovf.flush();
-    enforce(getDataFileSize() == data_file_size_miminized);
+    test!("==")(getDataFileSize(), data_file_size_miminized);
 
     /*
      * Push another 100 records to each channel, and verify the data file size.
@@ -235,7 +236,7 @@ void run ( )
     }
 
     const data_file_size_pushed2 = calcDataFileSize(300, 300) + gap_size;
-    enforce(getDataFileSize() == data_file_size_pushed2);
+    test!("==")(getDataFileSize(), data_file_size_pushed2);
 
     /*
      * Pop 250 records from each channel, which includes 200 records pushed
@@ -249,7 +250,7 @@ void run ( )
         pop(ch1);
     }
 
-    enforce(getDataFileSize() == data_file_size_pushed2);
+    test!("==")(getDataFileSize(), data_file_size_pushed2);
 
     /*
      * Now as much space as 250 records * 2 channels plus the gap from
@@ -265,7 +266,7 @@ void run ( )
     static assert(bytes_free2 / MiB == 10);
     const data_file_size_miminized2 = data_file_size_pushed2 - 10 * MiB;
 
-    enforce(getDataFileSize() == data_file_size_miminized2);
+    test!("==")(getDataFileSize(), data_file_size_miminized2);
 
     /*
      * Pop the remaining 50 records to detect possible bugs that manifest
@@ -278,9 +279,9 @@ void run ( )
         pop(ch1);
     }
 
-    enforce(!ch1.num_records, "ch1 still contains records");
-    enforce(!ch2.num_records, "ch2 still contains records");
-    enforce(getDataFileSize() == 0);
+    test!("==")(ch1.num_records, 0);
+    test!("==")(ch2.num_records, 0);
+    test!("==")(getDataFileSize(), 0);
 }
 
 /*******************************************************************************
