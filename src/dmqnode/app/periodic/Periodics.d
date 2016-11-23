@@ -52,7 +52,7 @@ public class Periodics
 
     ***************************************************************************/
 
-    private const IPeriodic.DmqNode node;
+    private IPeriodic.DmqNode node;
 
 
     /***************************************************************************
@@ -61,7 +61,7 @@ public class Periodics
 
     ***************************************************************************/
 
-    private const EpollSelectDispatcher epoll;
+    private EpollSelectDispatcher epoll;
 
 
     /***************************************************************************

@@ -208,7 +208,7 @@ public class ConnectionHandler
 
         ***********************************************************************/
 
-        protected char[][] new_channel_list_buffer ( )
+        override protected char[][] new_channel_list_buffer ( )
         {
             return new char[][this.storage_channels.length];
         }

@@ -39,7 +39,7 @@ public scope class PopRequest : Protocol.Pop
 
     ***************************************************************************/
 
-    private const IDmqRequestResources resources;
+    private IDmqRequestResources resources;
 
     /***************************************************************************
 

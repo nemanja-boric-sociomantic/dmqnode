@@ -1,4 +1,4 @@
-override DFLAGS += -w
+override DFLAGS += -w -v2 -v2=-static-arr-params
 override LDFLAGS += -llzo2 -lebtree -lrt -lgcrypt -lgpg-error -lglib-2.0
 
 # Modules to exclude from testing

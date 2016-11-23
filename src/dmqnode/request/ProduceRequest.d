@@ -52,7 +52,7 @@ public scope class ProduceRequest : Protocol.Produce
 
     ***************************************************************************/
 
-    private const IDmqRequestResources resources;
+    private IDmqRequestResources resources;
 
     /***************************************************************************
 

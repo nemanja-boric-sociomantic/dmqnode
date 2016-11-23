@@ -99,7 +99,7 @@ public class RingNode : StorageChannels
 
         ***********************************************************************/
 
-        public const IQueueInfo memory_info;
+        public IQueueInfo memory_info;
 
         /***********************************************************************
 
@@ -107,7 +107,7 @@ public class RingNode : StorageChannels
 
         ***********************************************************************/
 
-        public const DiskOverflowInfo overflow_info;
+        public DiskOverflowInfo overflow_info;
 
         /***********************************************************************
 
@@ -140,7 +140,7 @@ public class RingNode : StorageChannels
 
         ***********************************************************************/
 
-        private const FilePath file_path;
+        private FilePath file_path;
 
         /***********************************************************************
 
@@ -260,7 +260,7 @@ public class RingNode : StorageChannels
 
         ***********************************************************************/
 
-        public typeof(this) pop ( ref char[] value )
+        override public typeof(this) pop ( ref char[] value )
         {
             void[] allocValue ( size_t n )
             {
@@ -303,7 +303,7 @@ public class RingNode : StorageChannels
 
         ***********************************************************************/
 
-        public typeof(this) clear ( )
+        override public typeof(this) clear ( )
         {
             this.queue.clear;
             this.overflow.clear;
@@ -321,7 +321,7 @@ public class RingNode : StorageChannels
 
         ***********************************************************************/
 
-        public typeof(this) close ( )
+        override public typeof(this) close ( )
         {
             if ( this.file_path.exists )
             {
@@ -441,7 +441,7 @@ public class RingNode : StorageChannels
 
     ***************************************************************************/
 
-    private const IDmqNodeInfo dmqnode;
+    private IDmqNodeInfo dmqnode;
 
 
     /***************************************************************************
@@ -552,7 +552,7 @@ public class RingNode : StorageChannels
 
     ***************************************************************************/
 
-    protected StorageEngine create_ ( char[] id )
+    override protected StorageEngine create_ ( char[] id )
     {
         enforce(!this.shutting_down, "Cannot create channel '" ~ id ~
                                      "' while shutting down");
@@ -573,7 +573,7 @@ public class RingNode : StorageChannels
 
     ***************************************************************************/
 
-    protected size_t pushSize ( size_t additional_size )
+    override protected size_t pushSize ( size_t additional_size )
     {
         return FlexibleByteRingQueue.pushSize(additional_size);
     }
@@ -586,7 +586,7 @@ public class RingNode : StorageChannels
 
     ***************************************************************************/
 
-    public char[] type ( )
+    override public char[] type ( )
     {
         return Ring.stringof;
     }

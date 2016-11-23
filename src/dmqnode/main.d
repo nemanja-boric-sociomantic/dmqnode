@@ -221,7 +221,7 @@ public class DmqNodeServer : DaemonApp
 
     ***************************************************************************/
 
-    protected int run ( Arguments args, ConfigParser config )
+    override protected int run ( Arguments args, ConfigParser config )
     {
         this.startEventHandling();
 

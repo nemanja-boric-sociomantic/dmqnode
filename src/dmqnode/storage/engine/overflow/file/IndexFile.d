@@ -49,7 +49,7 @@ class IndexFile: PosixFile
 
     ***************************************************************************/
 
-    private static const SignalSet fmt_io_signal_blocker;
+    private static SignalSet fmt_io_signal_blocker;
 
     static this ( )
     {
@@ -64,7 +64,7 @@ class IndexFile: PosixFile
 
     ***************************************************************************/
 
-    public const FILE* stream;
+    public FILE* stream;
 
     /**************************************************************************/
 

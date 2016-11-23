@@ -37,7 +37,7 @@ public scope class PushMultiRequest : Protocol.PushMulti
 
     ***************************************************************************/
 
-    private const IDmqRequestResources resources;
+    private IDmqRequestResources resources;
 
     /***************************************************************************
 

@@ -52,7 +52,7 @@ public scope class ConsumeRequest : Protocol.Consume, StorageEngine.IConsumer
 
     ***************************************************************************/
 
-    private const IDmqRequestResources resources;
+    private IDmqRequestResources resources;
 
     /***************************************************************************
 

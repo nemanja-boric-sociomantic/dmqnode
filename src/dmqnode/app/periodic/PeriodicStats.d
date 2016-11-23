@@ -132,7 +132,7 @@ public class PeriodicStats : IPeriodic
 
     ***************************************************************************/
 
-    protected const StatsConfig stats_config;
+    protected StatsConfig stats_config;
 
     /***************************************************************************
 

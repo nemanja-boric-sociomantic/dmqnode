@@ -24,7 +24,7 @@ class HeadTruncationTestFile: DataFile
 
     ***************************************************************************/
 
-    public const bool head_truncation_supported;
+    public bool head_truncation_supported;
 
     /***************************************************************************
 

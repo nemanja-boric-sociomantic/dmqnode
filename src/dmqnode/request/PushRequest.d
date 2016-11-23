@@ -48,7 +48,7 @@ public scope class PushRequest : Protocol.Push
 
     ***************************************************************************/
 
-    private const IDmqRequestResources resources;
+    private IDmqRequestResources resources;
 
     /***************************************************************************
 

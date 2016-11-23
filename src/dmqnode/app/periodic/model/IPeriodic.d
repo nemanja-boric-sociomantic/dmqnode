@@ -86,7 +86,7 @@ public abstract class IPeriodic : ITimerEvent
 
     ***************************************************************************/
 
-    private const char[] id;
+    private char[] id;
 
 
     /***************************************************************************
@@ -95,7 +95,7 @@ public abstract class IPeriodic : ITimerEvent
 
     ***************************************************************************/
 
-    private const EpollSelectDispatcher epoll;
+    private EpollSelectDispatcher epoll;
 
 
     /***************************************************************************

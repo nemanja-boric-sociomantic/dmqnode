@@ -60,7 +60,7 @@ public abstract class StorageEngine : IStorageEngine
     {
         public alias Listener.Code ListenerCode;
 
-        protected void trigger_ ( Listener.Code code )
+        override protected void trigger_ ( Listener.Code code )
         {
             switch ( code )
             {

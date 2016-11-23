@@ -339,7 +339,7 @@ class DiskOverflow: DiskOverflowInfo
 
     ***************************************************************************/
 
-    private const typeof(this).Exception e;
+    private typeof(this).Exception e;
 
     /***************************************************************************
 
@@ -434,7 +434,7 @@ class DiskOverflow: DiskOverflowInfo
 
     ***************************************************************************/
 
-    private static const Logger log;
+    private static Logger log;
 
     static this ( )
     {
@@ -447,8 +447,8 @@ class DiskOverflow: DiskOverflowInfo
 
     ***************************************************************************/
 
-    debug (OvfMinimizeTest) public  const DataFile data;
-    else                    private const DataFile data;
+    debug (OvfMinimizeTest) public  DataFile data;
+    else                    private DataFile data;
 
     /***************************************************************************
 
@@ -456,7 +456,7 @@ class DiskOverflow: DiskOverflowInfo
 
     ***************************************************************************/
 
-    private const IndexFile index;
+    private IndexFile index;
 
     /***************************************************************************
 

@@ -38,7 +38,7 @@ public scope class RemoveChannelRequest : Protocol.RemoveChannel
 
     ***************************************************************************/
 
-    private const IDmqRequestResources resources;
+    private IDmqRequestResources resources;
 
     /***************************************************************************
 
