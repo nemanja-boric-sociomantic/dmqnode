@@ -272,16 +272,19 @@ class DataFile: PosixFile
         if (n < this.head_truncation_chunk_size)
             return 0;
 
-        n /= this.head_truncation_chunk_size;
-        assert(n);
-        n *= this.head_truncation_chunk_size;
+        auto collapse_bytes = n / this.head_truncation_chunk_size;
+        assert(collapse_bytes);
+        collapse_bytes *= this.head_truncation_chunk_size;
+
+        this.log.info("Data file head truncation: Removal of {} bytes " ~
+                      "requested, removing {} bytes.", n, collapse_bytes);
 
         this.allocate(
-            FALLOC_FL.COLLAPSE_RANGE, 0, n,
+            FALLOC_FL.COLLAPSE_RANGE, 0, collapse_bytes,
             "Unable to truncate the file from the beginning", file, line
         );
 
-        return n;
+        return collapse_bytes;
     }
 
     /***************************************************************************
