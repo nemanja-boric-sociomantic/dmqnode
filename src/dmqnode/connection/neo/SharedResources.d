@@ -137,7 +137,8 @@ public final class SharedResources
         {
             void[] newBuffer ( size_t len )
             {
-                auto buffer = this.outer.value_buffers.get(new ubyte[len]);
+                auto buffer =
+                    this.outer.value_buffers.get(cast(ubyte[])new void[len]);
                 buffer.length = 0;
                 enableStomping(buffer);
 
