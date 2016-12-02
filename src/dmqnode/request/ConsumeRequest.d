@@ -92,16 +92,17 @@ public scope class ConsumeRequest : Protocol.Consume, StorageEngine.IConsumer
 
     override protected bool prepareChannel ( char[] channel_name )
     {
-        this.storage_channel = this.resources.storage_channels.getCreate(
-            channel_name);
-
-        if (this.storage_channel is null)
+        if (auto channel = this.resources.storage_channels.getCreate(channel_name))
+        {
+            this.storage_channel = channel.subscribe("");
+            // unregistered in this.finalizeRequest
+            this.storage_channel.registerConsumer(this);
+            return true;
+        }
+        else
+        {
             return false;
-
-        // unregistered in this.finalizeRequest
-        this.storage_channel.registerConsumer(this);
-
-        return true;
+        }
     }
 
     /***************************************************************************

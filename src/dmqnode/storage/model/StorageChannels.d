@@ -457,7 +457,7 @@ abstract class IChannel: IStorageEngine
 *******************************************************************************/
 
 public abstract class StorageChannels :
-    IStorageChannelsTemplate!(StorageEngine)
+    IStorageChannelsTemplate!(IChannel)
 {
     /***************************************************************************
 

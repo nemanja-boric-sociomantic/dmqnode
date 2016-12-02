@@ -109,7 +109,8 @@ private scope class PushImpl_v2 : PushProtocol_v2
         if ( auto storage_channel =
             this.resources.storage_channels.getCreate(channel_name) )
         {
-            storage_channel.push(castFrom!(Const!(void)[]).to!(cstring)(value));
+            foreach (subscriber; storage_channel)
+                subscriber.push(castFrom!(Const!(void)[]).to!(cstring)(value));
             return true;
         }
 

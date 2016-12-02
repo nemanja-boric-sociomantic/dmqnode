@@ -90,6 +90,7 @@ public scope class PushMultiRequest : Protocol.PushMulti
     {
         auto channel = this.resources.storage_channels.getCreate(channel_name);
         assert (channel !is null); // already verified in this.prepareChannels
-        channel.push(cast(char[]) value);
+        foreach (subscriber; channel)
+            subscriber.push(cast(char[]) value);
     }
 }

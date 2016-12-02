@@ -36,7 +36,7 @@ import ocean.io.select.EpollSelectDispatcher;
 *******************************************************************************/
 
 public class DmqNode
-    : ChannelsNodeBase!(StorageEngine, ConnectionHandler), IDmqNodeInfo
+    : ChannelsNodeBase!(IChannel, ConnectionHandler), IDmqNodeInfo
 {
     /***************************************************************************
 
@@ -135,16 +135,21 @@ public class DmqNode
 
     /***************************************************************************
 
-        'foreach' iteration over the channels.
+        'foreach' iteration over the storage i.e. channel subscribers.
 
     ***************************************************************************/
 
     public int opApply ( int delegate ( ref RingNode.Ring channel ) dg )
     {
-        return super.opApply((ref IStorageEngineInfo channel_)
+        return super.opApply((ref IStorageEngineInfo channel)
         {
-            auto channel = downcastAssert!(RingNode.Ring)(channel_);
-            return dg(channel);
+            return downcastAssert!(RingNode.Channel)(channel).opApply(
+                (ref StorageEngine storage_)
+                {
+                    auto storage = downcastAssert!(RingNode.Ring)(storage_);
+                    return dg(storage);
+                }
+            );
         });
     }
 

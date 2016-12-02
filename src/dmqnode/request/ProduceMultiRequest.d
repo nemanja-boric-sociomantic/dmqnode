@@ -67,7 +67,8 @@ public class ProduceMultiRequest : Protocol.ProduceMulti
             if ( auto storage_channel =
                  this.resources.storage_channels.getCreate(channel) )
             {
-                storage_channel.push(value);
+                foreach (subscriber; storage_channel)
+                    subscriber.push(value);
             }
         }
 

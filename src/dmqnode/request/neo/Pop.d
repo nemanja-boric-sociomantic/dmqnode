@@ -113,18 +113,32 @@ private scope class PopImpl_v0 : PopProtocol_v0
 
         Params:
             channel_name = channel to pop from
+            subscribed = `true` if the return value is `false` because the
+                channel has subscribers so it is not possible to pop from it
 
         Returns:
             `true` if the channel may be used
 
     ***************************************************************************/
 
-    override protected bool prepareChannel ( cstring channel_name )
+    override protected bool prepareChannel ( cstring channel_name,
+        out bool subscribed )
+    out (ok)
     {
-        this.storage_engine =
-            this.resources.storage_channels.getCreate(channel_name);
-
-        return this.storage_engine !is null;
+        assert(!(ok && subscribed));
+    }
+    body
+    {
+        if (auto channel = this.resources.storage_channels.getCreate(channel_name))
+        {
+            this.storage_engine = channel.storage_unless_subscribed;
+            subscribed = this.storage_engine is null;
+            return !subscribed;
+        }
+        else
+        {
+            return false;
+        }
     }
 
     /***************************************************************************

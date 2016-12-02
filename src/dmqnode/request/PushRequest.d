@@ -22,13 +22,15 @@ import Protocol = dmqproto.node.request.Push;
 
 public scope class PushRequest : Protocol.Push
 {
+    import dmqnode.storage.model.StorageChannels: IChannel;
+
     /***************************************************************************
 
         Channel storage cache, to avoid re-fetching it from different methods
 
     ***************************************************************************/
 
-    private StorageEngine storage_channel;
+    private IChannel storage_channel;
 
     /***************************************************************************
 
@@ -77,6 +79,7 @@ public scope class PushRequest : Protocol.Push
     {
         assert (this.storage_channel);
         // legacy char[] values :(
-        this.storage_channel.push(cast(char[]) value);
+        foreach (subscriber; this.storage_channel)
+            subscriber.push(cast(char[]) value);
     }
 }

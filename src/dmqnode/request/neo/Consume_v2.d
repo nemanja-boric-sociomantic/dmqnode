@@ -1,79 +1,30 @@
 /*******************************************************************************
 
-    Consume request implementation.
-
     copyright: Copyright (c) 2016 sociomantic labs. All rights reserved
+
+    Consume request implementation.
 
 *******************************************************************************/
 
-module dmqnode.request.neo.Consume;
-
-import dmqnode.request.neo.Consume_v2;
+module dmqnode.request.neo.Consume_v2;
 
 import dmqproto.node.neo.request.Consume;
 
 import dmqnode.connection.neo.SharedResources;
-import dmqnode.storage.model.StorageEngine;
 
 import swarm.core.neo.node.RequestOnConn;
 import swarm.core.neo.request.Command;
 
+import dmqnode.storage.model.StorageEngine;
 import ocean.core.TypeConvert : castFrom, downcast;
 
 /*******************************************************************************
 
-    The request handler for the table of handlers. When called, runs in a fiber
-    that can be controlled via `connection`.
-
-    Params:
-        shared_resources = an opaque object containing resources owned by the
-            node which are required by the request
-        connection  = performs connection socket I/O and manages the fiber
-        cmdver      = the version number of the Consume command as specified by
-                      the client
-        msg_payload = the payload of the first message of this request
+    DMQ node implementation of the v2 Consume request protocol.
 
 *******************************************************************************/
 
-public void handle ( Object shared_resources, RequestOnConn connection,
-    Command.Version cmdver, void[] msg_payload )
-{
-    auto dmq_shared_resources = downcast!(SharedResources)(shared_resources);
-    assert(dmq_shared_resources);
-
-    switch ( cmdver )
-    {
-        case 1:
-            scope rq_resources = dmq_shared_resources.new RequestResources;
-            scope rq = new ConsumeImpl_v1(rq_resources);
-            rq.handle(connection, msg_payload);
-            break;
-
-        case 2:
-            scope rq_resources = dmq_shared_resources.new RequestResources;
-            scope rq = new ConsumeImpl_v2(rq_resources);
-            rq.handle(connection, msg_payload);
-            break;
-
-        default:
-            auto ed = connection.event_dispatcher;
-            ed.send(
-                ( ed.Payload payload )
-                {
-                    payload.addConstant(GlobalStatusCode.RequestVersionNotSupported);
-                }
-            );
-            break;
-    }
-}
-
-/*******************************************************************************
-
-    DMQ node implementation of the v0 Consume request protocol.
-
-*******************************************************************************/
-
-public scope class ConsumeImpl_v1 : ConsumeProtocol_v1, StorageEngine.IConsumer
+public scope class ConsumeImpl_v2 : ConsumeProtocol_v2, StorageEngine.IConsumer
 {
     private SharedResources.RequestResources resources;
 
@@ -103,22 +54,24 @@ public scope class ConsumeImpl_v1 : ConsumeProtocol_v1, StorageEngine.IConsumer
 
     /***************************************************************************
 
-        Performs any logic needed to start consuming from the channel of the
-        given name.
+        Performs any logic needed to subscribe to and start consuming from the
+        channel of the given name.
 
         Params:
             channel_name = channel to consume from
+            subscriber_name = the identifying name of the subscriber
 
         Returns:
             `true` if the channel may be used
 
     ***************************************************************************/
 
-    override protected bool prepareChannel ( cstring channel_name )
+    override protected bool prepareChannel ( cstring channel_name,
+                                             cstring subscriber_name )
     {
         if (auto channel = this.resources.storage_channels.getCreate(channel_name))
         {
-            this.storage_engine = channel.subscribe("");
+            this.storage_engine = channel.subscribe(idup(subscriber_name));
 
             if ( this.storage_engine !is null )
             {

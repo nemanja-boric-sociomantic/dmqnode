@@ -50,10 +50,40 @@ public scope class PopRequest : Protocol.Pop
 
     /***************************************************************************
 
-        Pops the last value from the channel.
+        Pops the last value from the channel. If returning `true` then
+        `getNextValue()` will return that value.
 
         Params:
-            channel_name = name of channel to be queried
+            channel_name = name of channel to pop from
+
+        Return:
+            `true` if popped so it is possible to proceed with this request or
+            `false` if popping from the channel was not possible.
+
+    ***************************************************************************/
+
+    override protected bool prepareChannel ( cstring channel_name )
+    {
+        if (auto channel = channel_name in this.resources.storage_channels)
+        {
+            if (auto storage = channel.storage_unless_subscribed)
+            {
+                storage.pop(*this.resources.value_buffer);
+                return true;
+            }
+        }
+
+        (*this.resources.value_buffer).length = 0;
+        return false;
+    }
+
+    /***************************************************************************
+
+        Returns the popped value, expected to be called only if
+        `prepareChannel()` returned true.
+
+        Params:
+            channel_name = unused, passed to `prepareChannel()`
 
         Returns:
             popped value, empty array if channel is empty
@@ -62,18 +92,6 @@ public scope class PopRequest : Protocol.Pop
 
     override protected void[] getNextValue ( char[] channel_name )
     {
-        auto storage_channel =
-            channel_name in this.resources.storage_channels;
-
-        if ( storage_channel !is null )
-        {
-            storage_channel.pop(*this.resources.value_buffer);
-        }
-        else
-        {
-            (*this.resources.value_buffer).length = 0;
-        }
-
         return *this.resources.value_buffer;
     }
 }

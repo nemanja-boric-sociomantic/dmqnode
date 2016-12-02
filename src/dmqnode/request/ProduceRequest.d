@@ -26,6 +26,8 @@ import swarm.core.common.request.helper.LoopCeder;
 
 public scope class ProduceRequest : Protocol.Produce
 {
+    import dmqnode.storage.model.StorageChannels: IChannel;
+
     /***************************************************************************
 
         Set upon starting valid Produce request, reused when pushing records
@@ -33,7 +35,7 @@ public scope class ProduceRequest : Protocol.Produce
 
     ***************************************************************************/
 
-    private StorageEngine storage_channel;
+    private IChannel storage_channel;
 
     /***************************************************************************
 
@@ -94,7 +96,8 @@ public scope class ProduceRequest : Protocol.Produce
     override protected void pushRecord ( char[] channel_name, char[] value )
     {
         assert (this.storage_channel !is null);
-        this.storage_channel.push(value);
+        foreach (subscriber; this.storage_channel)
+            subscriber.push(value);
         this.resources.loop_ceder.handleCeding();
     }
 }
