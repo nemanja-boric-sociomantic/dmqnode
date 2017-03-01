@@ -28,7 +28,7 @@ module dmqnode.connection.SharedResources;
 
 *******************************************************************************/
 
-private import swarm.core.common.connection.ISharedResources;
+import swarm.core.common.connection.ISharedResources;
 
 public import swarm.core.common.request.helper.LoopCeder;
 

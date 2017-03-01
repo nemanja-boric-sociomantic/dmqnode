@@ -4,29 +4,17 @@
 
     copyright:      Copyright (c) 2011 sociomantic labs. All rights reserved
 
-    version:        April 2011: Initial release
-                    August 2011: Fiber-based version
-
-    authors:        Gavin Norman
-
 *******************************************************************************/
 
 module dmqnode.request.ConsumeRequest;
 
 
+import dmqnode.request.model.IDmqRequestResources;
+import dmqnode.storage.model.StorageEngine;
 
-/*******************************************************************************
+import Protocol = dmqproto.node.request.Consume;
 
-    Imports
-
-*******************************************************************************/
-
-private import dmqnode.storage.model.StorageEngine;
-private import dmqnode.request.model.IDmqRequestResources;
-private import Protocol = dmqproto.node.request.Consume;
-
-private import ocean.core.Array : copy;
-
+import ocean.core.Array : copy;
 
 
 /*******************************************************************************
@@ -92,7 +80,7 @@ public scope class ConsumeRequest : Protocol.Consume, StorageEngine.IConsumer
 
     /***************************************************************************
 
-        Ensures that requested channel exists and can be read from. 
+        Ensures that requested channel exists and can be read from.
 
         Params:
             channel_name = name of channel to be prepared
@@ -229,4 +217,3 @@ public scope class ConsumeRequest : Protocol.Consume, StorageEngine.IConsumer
         }
     }
 }
-

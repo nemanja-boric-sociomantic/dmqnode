@@ -2,12 +2,6 @@
 
     DMQ performance tester
 
-    copyright:      Copyright (c) 2011 sociomantic labs. All rights reserved
-
-    version:        October 2011: Initial release
-
-    authors:        Gavin Norman
-
     Repeatedly performs a series of one or more pushes, followed by an equal
     number of pops. The time taken per request and for the whole group of push /
     pop requests is measured.
@@ -19,36 +13,24 @@
         -p = the number of parallel pushes / pops to perform (default is 1)
         -s = size of record to push / pop (in bytes, default is 1024)
 
+    copyright:      Copyright (c) 2011 sociomantic labs. All rights reserved
+
 *******************************************************************************/
 
 module dmqperformance.main;
 
+import Version;
 
-/*******************************************************************************
+import swarm.dmq.DmqClient;
+import swarm.dmq.DmqConst;
 
-    Imports
-
-*******************************************************************************/
-
-private import ocean.io.select.EpollSelectDispatcher;
-
-private import ocean.text.Arguments;
-
-private import ocean.util.log.StaticTrace;
-
-private import ocean.math.SlidingAverage;
-
-private import ocean.util.app.CliApp;
-
-private import Version;
-
-private import swarm.dmq.DmqClient;
-
-private import swarm.dmq.DmqConst;
-
-private import ocean.io.Stdout;
-
-private import ocean.time.StopWatch;
+import ocean.io.select.EpollSelectDispatcher;
+import ocean.io.Stdout;
+import ocean.math.SlidingAverage;
+import ocean.text.Arguments;
+import ocean.time.StopWatch;
+import ocean.util.app.CliApp;
+import ocean.util.log.StaticTrace;
 
 
 /*******************************************************************************
@@ -372,4 +354,3 @@ public class DmqPerformance : CliApp
         }
     }
 }
-

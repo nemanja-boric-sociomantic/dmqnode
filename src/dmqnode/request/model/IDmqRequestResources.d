@@ -1,11 +1,5 @@
 /*******************************************************************************
 
-    copyright:      Copyright (c) 2012 sociomantic labs. All rights reserved
-
-    version:        13/09/2012: Initial release
-
-    authors:        Gavin Norman
-
     Interface and base scope class containing getter methods to acquire
     resources needed by a DMQ node request. Multiple calls to the same getter
     only result in the acquiring of a single resource of that type, so that the
@@ -13,25 +7,20 @@
     resource instance goes out of scope all required resources are automatically
     relinquished.
 
+    copyright:      Copyright (c) 2012 sociomantic labs. All rights reserved
+
 *******************************************************************************/
 
 module dmqnode.request.model.IDmqRequestResources;
 
 
+import dmqnode.connection.SharedResources;
+import dmqnode.node.IDmqNodeInfo;
+import dmqnode.storage.model.StorageChannels;
 
-/*******************************************************************************
+import dmqproto.node.request.model.DmqCommand;
 
-    Imports
-
-*******************************************************************************/
-
-private import swarm.core.common.request.model.IRequestResources;
-
-private import dmqnode.connection.SharedResources;
-private import dmqnode.storage.model.StorageChannels;
-private import dmqnode.node.IDmqNodeInfo;
-
-private import dmqproto.node.request.model.DmqCommand;
+import swarm.core.common.request.model.IRequestResources;
 
 /*******************************************************************************
 

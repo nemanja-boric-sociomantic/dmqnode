@@ -9,16 +9,7 @@
 module dmqnode.app.periodic.PeriodicDiskOverflowIndexWriter;
 
 
-
-/*******************************************************************************
-
-    Imports
-
-*******************************************************************************/
-
-private import dmqnode.app.periodic.model.IPeriodic;
-
-
+import dmqnode.app.periodic.model.IPeriodic;
 
 /*******************************************************************************
 

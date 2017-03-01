@@ -1,19 +1,17 @@
-
 /*******************************************************************************
-
-    Copyright (c) 2015 sociomantic labs. All rights reserved
 
     The public channel access interface. The DiskOverflow.Channel subclass is
     instantiatable in the public.
+
+    Copyright (c) 2015 sociomantic labs. All rights reserved
 
 *******************************************************************************/
 
 module dmqnode.storage.engine.OverflowChannel;
 
 import dmqnode.storage.engine.DiskOverflow;
-
-import dmqnode.storage.engine.overflow.ChannelMetadata,
-       dmqnode.storage.engine.overflow.RecordHeader;
+import dmqnode.storage.engine.overflow.ChannelMetadata;
+import dmqnode.storage.engine.overflow.RecordHeader;
 
 package class OverflowChannel: DiskOverflowInfo
 {

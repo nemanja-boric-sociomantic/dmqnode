@@ -1,38 +1,22 @@
 /*******************************************************************************
 
-    copyright:      Copyright (c) 2012 sociomantic labs. All rights reserved
-
-    version:        17/02/2012: Initial release
-                    30/05/30: Combined dht and queue project
-
-    authors:        Gavin Norman, Hans Bjerkander
-
     Abstract base class for periodics -- routines which should be invoked
     periodically using an epoll timer.
+
+    copyright:      Copyright (c) 2012 sociomantic labs. All rights reserved
 
 *******************************************************************************/
 
 module dmqnode.app.periodic.model.IPeriodic;
 
 
+import dmqnode.app.util.Terminator;
+import dmqnode.node.DmqNode;
+import dmqnode.node.IDmqNodeInfo;
 
-/*******************************************************************************
-
-    Imports
-
-*******************************************************************************/
-
-private import ocean.io.select.client.TimerEvent;
-
-private import ocean.io.select.EpollSelectDispatcher;
-
-private import dmqnode.app.util.Terminator;
-
-private import dmqnode.node.DmqNode,
-               dmqnode.node.IDmqNodeInfo;
-
-private import ocean.util.log.Log;
-
+import ocean.io.select.client.TimerEvent;
+import ocean.io.select.EpollSelectDispatcher;
+import ocean.util.log.Log;
 
 
 /*******************************************************************************
@@ -201,4 +185,3 @@ public abstract class IPeriodic : ITimerEvent
         }
     }
 }
-

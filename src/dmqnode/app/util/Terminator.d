@@ -1,19 +1,13 @@
 /*******************************************************************************
 
-    copyright:      Copyright (c) 2012 sociomantic labs. All rights reserved
-
-    version:        15/06/2012: Initial release
-                    30/05/2013: Combined dht and dmq project
-
-    authors:        Gavin Norman
-
     Namespace struct containing a global boolean which is set to true when the
     application is terminating (after receiving SIGINT - see IKVNode).
+
+    copyright:      Copyright (c) 2012 sociomantic labs. All rights reserved
 
 *******************************************************************************/
 
 module dmqnode.app.util.Terminator;
-
 
 
 struct Terminator
@@ -23,4 +17,3 @@ struct Terminator
     // FIXME: see FIXME in dmqnode.dht.core.model.IKVNode, nodeError()
     static bool shutdown;
 }
-

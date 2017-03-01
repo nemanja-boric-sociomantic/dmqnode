@@ -1,20 +1,19 @@
 /*******************************************************************************
 
-    copyright: Copyright (c) 2016 sociomantic labs. All rights reserved
-
     Table of request handlers by command.
+
+    copyright: Copyright (c) 2016 sociomantic labs. All rights reserved
 
 *******************************************************************************/
 
 module dmqnode.node.RequestHandlers;
 
-import swarm.core.neo.node.ConnectionHandler;
-
-import swarm.dmq.DmqConst;
-
 import Consume = dmqnode.request.neo.Consume;
-import Push    = dmqnode.request.neo.Push;
 import Pop     = dmqnode.request.neo.Pop;
+import Push    = dmqnode.request.neo.Push;
+
+import swarm.core.neo.node.ConnectionHandler;
+import swarm.dmq.DmqConst;
 
 /*******************************************************************************
 

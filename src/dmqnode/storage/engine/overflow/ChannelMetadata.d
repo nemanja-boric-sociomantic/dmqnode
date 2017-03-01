@@ -1,8 +1,8 @@
 /*******************************************************************************
 
-    Copyright (c) 2015 sociomantic labs. All rights reserved
-
     A struct that constitutes the state of a queue disk channel.
+
+    Copyright (c) 2015 sociomantic labs. All rights reserved
 
 *******************************************************************************/
 
@@ -17,8 +17,8 @@ struct ChannelMetadata
     import dmqnode.storage.engine.overflow.Const;
     import Tracker = dmqnode.storage.engine.overflow.FirstOffsetTracker;
 
-    import ocean.stdc.posix.sys.types: off_t;
     import ocean.core.Enforce: enforce;
+    import ocean.stdc.posix.sys.types: off_t;
 
     /***************************************************************************
 

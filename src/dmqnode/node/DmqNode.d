@@ -4,48 +4,30 @@
 
     copyright:      Copyright (c) 2011 sociomantic labs. All rights reserved
 
-    version:        September 2009: Initial release
-                    April 2011:     Asynchronous version
-
-    authors:        Gavin Norman
-
 *******************************************************************************/
 
 module dmqnode.node.DmqNode;
 
 
-
-/*******************************************************************************
-
-    Imports
-
-*******************************************************************************/
-
-private import swarm.core.node.model.NeoChannelsNode : ChannelsNodeBase;
-
-private import dmqnode.node.IDmqNodeInfo;
-
-private import dmqnode.connection.ConnectionHandler;
-private import dmqnode.node.RequestHandlers;
-
-private import dmqnode.storage.Ring;
-private import dmqnode.storage.model.StorageEngine;
-private import dmqnode.storage.model.StorageChannels;
-
-private import dmqnode.app.config.ServerConfig;
-private import dmqnode.app.config.ChannelSizeConfig;
-
-private import swarm.core.node.storage.model.IStorageEngineInfo;
-
-private import swarm.dmq.DmqConst;
-
-private import Neo = dmqnode.connection.neo.SharedResources;
-
-private import dmqnode.connection.SharedResources;
-
-private import ocean.io.select.EpollSelectDispatcher;
+import dmqnode.app.config.ChannelSizeConfig;
+import dmqnode.app.config.ServerConfig;
+import dmqnode.connection.ConnectionHandler;
+import Neo = dmqnode.connection.neo.SharedResources;
+import dmqnode.connection.SharedResources;
+import dmqnode.node.IDmqNodeInfo;
+import dmqnode.node.RequestHandlers;
+import dmqnode.storage.model.StorageChannels;
+import dmqnode.storage.model.StorageEngine;
+import dmqnode.storage.Ring;
 
 import swarm.core.neo.authentication.HmacDef: Key;
+import swarm.core.node.model.NeoChannelsNode : ChannelsNodeBase;
+import swarm.core.node.storage.model.IStorageEngineInfo;
+import swarm.dmq.DmqConst;
+
+import ocean.io.select.EpollSelectDispatcher;
+
+
 
 /*******************************************************************************
 
@@ -181,4 +163,3 @@ public class DmqNode
         return ["pushed", "popped"];
     }
 }
-

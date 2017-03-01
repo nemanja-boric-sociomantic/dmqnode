@@ -8,17 +8,17 @@
 
 module dmqnode.request.neo.Pop;
 
-import dmqproto.node.neo.request.Pop;
-
 import dmqnode.connection.neo.SharedResources;
 import dmqnode.storage.model.StorageEngine;
 
-import swarm.core.neo.node.ConnectionHandler;
 import dmqproto.common.Pop;
-import swarm.core.neo.request.Command;
+import dmqproto.node.neo.request.Pop;
 
-import ocean.transition;
 import ocean.core.TypeConvert : downcast;
+import ocean.transition;
+
+import swarm.core.neo.node.ConnectionHandler;
+import swarm.core.neo.request.Command;
 
 /*******************************************************************************
 

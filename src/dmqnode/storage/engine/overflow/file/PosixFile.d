@@ -11,19 +11,17 @@ module dmqnode.storage.engine.overflow.file.PosixFile;
 
 class PosixFile
 {
-    import ocean.stdc.posix.fcntl: O_RDWR, O_APPEND, O_CREAT, S_IRUSR, S_IWUSR,
-                                   S_IRGRP, S_IROTH;
-    import fcntl = ocean.stdc.posix.fcntl: open;
-    import ocean.stdc.posix.unistd: lseek, ftruncate, fdatasync;
-    import unistd = ocean.stdc.posix.unistd: close, unlink;
-    import ocean.stdc.posix.sys.types: off_t;
-    import ocean.stdc.stdio: SEEK_SET;
-    import ocean.stdc.errno: EINTR, errno;
-
     import dmqnode.storage.engine.overflow.file.FileException;
 
     import ocean.io.FilePath;
-
+    import ocean.stdc.errno: EINTR, errno;
+    import fcntl = ocean.stdc.posix.fcntl: open;
+    import ocean.stdc.posix.fcntl: O_RDWR, O_APPEND, O_CREAT, S_IRUSR, S_IWUSR,
+                                   S_IRGRP, S_IROTH;
+    import ocean.stdc.posix.sys.types: off_t;
+    import unistd = ocean.stdc.posix.unistd: close, unlink;
+    import ocean.stdc.posix.unistd: lseek, ftruncate, fdatasync;
+    import ocean.stdc.stdio: SEEK_SET;
     import ocean.util.log.Log;
 
     /***************************************************************************

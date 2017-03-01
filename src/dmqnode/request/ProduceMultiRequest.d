@@ -4,25 +4,16 @@
 
     copyright:      Copyright (c) 2012 sociomantic labs. All rights reserved
 
-    version:        30/08/2012: Initial release
-
-    authors:        Gavin Norman
-
 *******************************************************************************/
 
 module dmqnode.request.ProduceMultiRequest;
 
-/*******************************************************************************
 
-    Imports
+import dmqnode.request.model.IDmqRequestResources;
 
-*******************************************************************************/
+import Protocol = dmqproto.node.request.ProduceMulti;
 
-private import Protocol = dmqproto.node.request.ProduceMulti;
-
-private import dmqnode.request.model.IDmqRequestResources;
-
-private import swarm.core.common.request.helper.LoopCeder;
+import swarm.core.common.request.helper.LoopCeder;
 
 /*******************************************************************************
 
@@ -39,7 +30,7 @@ public class ProduceMultiRequest : Protocol.ProduceMulti
     ***************************************************************************/
 
     private IDmqRequestResources resources;
-    
+
     /***************************************************************************
 
         Constructor

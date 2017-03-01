@@ -1,22 +1,22 @@
 /*******************************************************************************
 
-    copyright: Copyright (c) 2016 sociomantic labs. All rights reserved
-
     Push request implementation.
+
+    copyright: Copyright (c) 2016 sociomantic labs. All rights reserved
 
 *******************************************************************************/
 
 module dmqnode.request.neo.Push;
 
+import dmqnode.connection.neo.SharedResources;
+
 import dmqproto.node.neo.request.Push;
 
-import dmqnode.connection.neo.SharedResources;
+import ocean.core.TypeConvert : downcast;
+import ocean.transition;
 
 import swarm.core.neo.node.RequestOnConn;
 import swarm.core.neo.request.Command;
-
-import ocean.transition;
-import ocean.core.TypeConvert : downcast;
 
 /*******************************************************************************
 

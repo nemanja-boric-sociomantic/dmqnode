@@ -1,8 +1,8 @@
 /*******************************************************************************
 
-    Copyright (c) 2015 sociomantic labs. All rights reserved
-
     Constant definitions.
+
+    Copyright (c) 2015 sociomantic labs. All rights reserved
 
 *******************************************************************************/
 

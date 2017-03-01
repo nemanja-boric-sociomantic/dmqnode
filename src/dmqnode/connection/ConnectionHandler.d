@@ -4,48 +4,31 @@
 
     copyright:      Copyright (c) 2011 sociomantic labs. All rights reserved
 
-    version:        April 2011: Initial release
-
-    authors:        Gavin Norman
-
 *******************************************************************************/
 
 module dmqnode.connection.ConnectionHandler;
 
 
+import dmqnode.connection.SharedResources;
+import dmqnode.request.ConsumeRequest;
+import dmqnode.request.GetChannelSizeRequest;
+import dmqnode.request.GetChannelsRequest;
+import dmqnode.request.GetNumConnectionsRequest;
+import dmqnode.request.GetSizeRequest;
+import dmqnode.request.model.IDmqRequestResources;
+import dmqnode.request.PopRequest;
+import dmqnode.request.ProduceMultiRequest;
+import dmqnode.request.ProduceRequest;
+import dmqnode.request.PushMultiRequest;
+import dmqnode.request.PushRequest;
+import dmqnode.request.RemoveChannelRequest;
+import dmqnode.storage.model.StorageChannels;
 
-/*******************************************************************************
+import dmqproto.node.request.model.DmqCommand;
 
-    Imports
-
-*******************************************************************************/
-
-private import Swarm = swarm.core.node.connection.ConnectionHandler;
-private import swarm.core.node.model.INodeInfo;
-
-private import swarm.dmq.DmqConst;
-
-private import dmqproto.node.request.model.DmqCommand;
-
-private import dmqnode.connection.SharedResources;
-
-private import dmqnode.request.model.IDmqRequestResources;
-
-private import dmqnode.request.PopRequest;
-private import dmqnode.request.PushRequest;
-private import dmqnode.request.ProduceRequest;
-private import dmqnode.request.ProduceMultiRequest;
-private import dmqnode.request.GetChannelsRequest;
-private import dmqnode.request.GetChannelSizeRequest;
-private import dmqnode.request.GetSizeRequest;
-private import dmqnode.request.GetNumConnectionsRequest;
-private import dmqnode.request.ConsumeRequest;
-private import dmqnode.request.PushMultiRequest;
-private import dmqnode.request.RemoveChannelRequest;
-
-private import dmqnode.storage.model.StorageChannels;
-
-
+import Swarm = swarm.core.node.connection.ConnectionHandler;
+import swarm.core.node.model.INodeInfo;
+import swarm.dmq.DmqConst;
 
 /*******************************************************************************
 
@@ -516,4 +499,3 @@ public class ConnectionHandler
         this.handleRequest!(ConnectionResources)(handler, resources);
     }
 }
-

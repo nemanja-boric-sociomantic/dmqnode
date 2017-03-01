@@ -1,30 +1,16 @@
 /*******************************************************************************
 
-    copyright:      Copyright (c) 2012 sociomantic labs. All rights reserved
-
-    version:        04/09/2012: Initial release
-                    30/05/2013: Combined dht and queue project
-
-    authors:        Gavin Norman, Hans Bjerkander
-
     Periodic to flush the write buffers of the stream requests the node is
     handling.
+
+    copyright:      Copyright (c) 2012 sociomantic labs. All rights reserved
 
 *******************************************************************************/
 
 module dmqnode.app.periodic.PeriodicWriterFlush;
 
 
-
-/*******************************************************************************
-
-    Imports
-
-*******************************************************************************/
-
-private import dmqnode.app.periodic.model.IPeriodic;
-
-
+import dmqnode.app.periodic.model.IPeriodic;
 
 /*******************************************************************************
 
@@ -65,4 +51,3 @@ public class PeriodicWriterFlush : IPeriodic
         this.node.flush();
     }
 }
-

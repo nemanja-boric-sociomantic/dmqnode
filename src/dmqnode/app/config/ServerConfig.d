@@ -1,29 +1,15 @@
 /*******************************************************************************
 
-    copyright:      Copyright (c) 2012 sociomantic labs. All rights reserved
-
-    version:        04/06/2012: Initial release
-                    30/05/2013: Combined dht and dmq project
-
-    authors:        Gavin Norman, Hans Bjerkander
-
     Server config class for use with ocean.util.config.ClassFiller.
+
+    copyright:      Copyright (c) 2012 sociomantic labs. All rights reserved
 
 *******************************************************************************/
 
 module dmqnode.app.config.ServerConfig;
 
 
-
-/*******************************************************************************
-
-    Imports
-
-*******************************************************************************/
-
-private import ConfigReader = ocean.util.config.ClassFiller;
-
-
+import ConfigReader = ocean.util.config.ClassFiller;
 
 /*******************************************************************************
 

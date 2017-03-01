@@ -1,32 +1,18 @@
 /*******************************************************************************
 
-    copyright:      Copyright (c) 2012 sociomantic labs. All rights reserved
-
-    version:        17/02/2012: Initial release
-                    30/05/2013: Combined dht and queue project
-
-    authors:        Gavin Norman, Hans Bjerkander
-
     Class which manages a set of periodically firing maintenance tasks over the
     swarm node.
+
+    copyright:      Copyright (c) 2012 sociomantic labs. All rights reserved
 
 *******************************************************************************/
 
 module dmqnode.app.periodic.Periodics;
 
 
+import dmqnode.app.periodic.model.IPeriodic;
 
-/*******************************************************************************
-
-    Imports
-
-*******************************************************************************/
-
-private import dmqnode.app.periodic.model.IPeriodic;
-
-private import ocean.io.select.EpollSelectDispatcher;
-
-
+import ocean.io.select.EpollSelectDispatcher;
 
 /*******************************************************************************
 
@@ -129,4 +115,3 @@ public class Periodics
         }
     }
 }
-

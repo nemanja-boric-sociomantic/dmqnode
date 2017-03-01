@@ -21,9 +21,9 @@ module dmqnode.request.GetNumConnectionsRequest;
 
 *******************************************************************************/
 
-private import dmqnode.request.model.IDmqRequestResources;
+import dmqnode.request.model.IDmqRequestResources;
 
-private import Protocol = dmqproto.node.request.GetNumConnections;
+import Protocol = dmqproto.node.request.GetNumConnections;
 
 /*******************************************************************************
 

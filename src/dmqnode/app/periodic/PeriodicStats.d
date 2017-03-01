@@ -2,32 +2,18 @@
 
     copyright:      Copyright (c) 2012 sociomantic labs. All rights reserved
 
-    version:        17/02/2012 2012: Initial release
-                    30/05/2013: Combined dht and queue project
-
-    authors:        Gavin Norman, Hans Bjerkander
-
 *******************************************************************************/
 
 module dmqnode.app.periodic.PeriodicStats;
 
 
+import dmqnode.app.config.StatsConfig;
+import dmqnode.app.periodic.model.IPeriodic;
+import dmqnode.storage.Ring;
 
-/*******************************************************************************
+import swarm.util.node.log.Stats;
 
-    Imports
-
-*******************************************************************************/
-
-private import dmqnode.app.periodic.model.IPeriodic;
-
-private import dmqnode.app.config.StatsConfig;
-
-private import dmqnode.storage.Ring;
-
-private import ocean.util.log.Stats;
-
-private import swarm.util.node.log.Stats;
+import ocean.util.log.Stats;
 
 
 /*******************************************************************************
@@ -352,4 +338,3 @@ public class PeriodicStats : IPeriodic
         }
     }
 }
-

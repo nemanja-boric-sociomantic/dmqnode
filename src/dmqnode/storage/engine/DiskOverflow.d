@@ -2,8 +2,6 @@
 
     Message queue with channels using file storage
 
-    Copyright (c) 2015 sociomantic labs. All rights reserved
-
     The queue operates on one file and uses queue channels. Pushing to any
     channel appends the pushed record to the file so all records of all
     channels are in the file in the order of pushing. Each record consists of
@@ -157,6 +155,8 @@
     user initiates an application shutdown (for example by pressing Ctrl+C) in
     that moment.
 
+    Copyright (c) 2015 sociomantic labs. All rights reserved
+
 *******************************************************************************/
 
 module dmqnode.storage.engine.DiskOverflow;
@@ -188,31 +188,25 @@ interface DiskOverflowInfo
 
 class DiskOverflow: DiskOverflowInfo
 {
+    import dmqnode.storage.engine.overflow.ChannelMetadata;
+    import QConst = dmqnode.storage.engine.overflow.Const;
+    import dmqnode.storage.engine.overflow.file.DataFile;
+    import dmqnode.storage.engine.overflow.file.FileException;
+    import dmqnode.storage.engine.overflow.file.HeadTruncationTestFile;
+    import dmqnode.storage.engine.overflow.file.IndexFile;
+    import dmqnode.storage.engine.overflow.FirstOffsetTracker;
+    import dmqnode.storage.engine.overflow.RecordHeader;
     import dmqnode.storage.engine.OverflowChannel;
 
-    import dmqnode.storage.engine.overflow.ChannelMetadata;
-    import dmqnode.storage.engine.overflow.RecordHeader;
-    import dmqnode.storage.engine.overflow.file.DataFile;
-    import dmqnode.storage.engine.overflow.file.IndexFile;
-    import dmqnode.storage.engine.overflow.file.HeadTruncationTestFile;
-    import dmqnode.storage.engine.overflow.file.FileException;
-
-    import ocean.util.log.Log;
-
-    import QConst = dmqnode.storage.engine.overflow.Const;
-    import dmqnode.storage.engine.overflow.FirstOffsetTracker;
-
-    import ocean.stdc.posix.unistd: read, pread, write, pwrite;
-    import ocean.stdc.posix.sys.uio: iovec, writev;
-    import ocean.stdc.posix.sys.types: off_t;
-    import ocean.stdc.stdio: SEEK_CUR, SEEK_END;
-    import ocean.stdc.errno: errno;
-
-    import ocean.io.FilePath;
-
     import ocean.core.Enforce: enforce;
-
+    import ocean.io.FilePath;
+    import ocean.stdc.errno: errno;
+    import ocean.stdc.posix.sys.types: off_t;
+    import ocean.stdc.posix.sys.uio: iovec, writev;
+    import ocean.stdc.posix.unistd: read, pread, write, pwrite;
+    import ocean.stdc.stdio: SEEK_CUR, SEEK_END;
     import ocean.transition;
+    import ocean.util.log.Log;
 
     /***************************************************************************
 
@@ -1493,5 +1487,3 @@ class DiskOverflow: DiskOverflowInfo
         }
     }
 }
-
-

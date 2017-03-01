@@ -4,66 +4,39 @@
 
     copyright:  Copyright (c) 2011 sociomantic labs. All rights reserved
 
-    version:    October 2010: Initial release
-                May 2013: Combined dht and dmq project
-
-    authors:    David Eckardt, Gavin Norman
-                Thomas Nicolai, Lars Kirchhoff
-                Hans Bjerkander
-
-
 *******************************************************************************/
 
 module dmqnode.main;
 
+import Version;
 
+import dmqnode.app.config.ChannelSizeConfig;
+import dmqnode.app.config.OverflowConfig;
+import dmqnode.app.config.PerformanceConfig;
+import dmqnode.app.config.ServerConfig;
+import dmqnode.app.config.StatsConfig;
+import dmqnode.app.periodic.PeriodicDiskOverflowIndexWriter;
+import dmqnode.app.periodic.Periodics;
+import dmqnode.app.periodic.PeriodicStats;
+import dmqnode.app.periodic.PeriodicWriterFlush;
+import dmqnode.app.util.Terminator;
+import dmqnode.node.DmqNode;
+import dmqnode.storage.Ring;
 
-/*******************************************************************************
+import swarm.core.node.model.ISwarmConnectionHandlerInfo;
+import swarm.dmq.DmqConst;
 
-    Imports
-
-*******************************************************************************/
-
-private import Version;
-
-private import dmqnode.app.config.ServerConfig;
-private import dmqnode.app.config.PerformanceConfig;
-private import dmqnode.app.config.StatsConfig;
-private import dmqnode.app.config.OverflowConfig;
-private import dmqnode.app.config.ChannelSizeConfig;
-
-private import dmqnode.app.util.Terminator;
-
-private import dmqnode.app.periodic.Periodics;
-private import dmqnode.app.periodic.PeriodicStats;
-private import dmqnode.app.periodic.PeriodicWriterFlush;
-private import dmqnode.app.periodic.PeriodicDiskOverflowIndexWriter;
-
-private import dmqnode.storage.Ring;
-private import dmqnode.node.DmqNode;
-
-private import swarm.dmq.DmqConst;
-private import swarm.core.node.model.ISwarmConnectionHandlerInfo;
-
-private import ocean.core.MessageFiber;
-
-private import ocean.io.Stdout;
-
-private import ocean.io.select.EpollSelectDispatcher;
-private import ocean.io.select.protocol.generic.ErrnoIOException : IOWarning;
-private import ocean.io.select.client.model.ISelectClient;
-
-private import ocean.util.app.DaemonApp;
-private import ocean.sys.CpuAffinity;
-
-private import ConfigReader = ocean.util.config.ClassFiller;
-
-private import ocean.core.Exception_tango : IllegalArgumentException, OutOfMemoryException;
-
-private import ocean.stdc.posix.signal: SIGINT, SIGTERM, SIGQUIT;
-
-private import ocean.util.log.Log;
-
+import ocean.core.Exception_tango : OutOfMemoryException;
+import ocean.core.MessageFiber;
+import ocean.io.select.client.model.ISelectClient;
+import ocean.io.select.EpollSelectDispatcher;
+import ocean.io.select.protocol.generic.ErrnoIOException : IOWarning;
+import ocean.io.Stdout;
+import ocean.stdc.posix.signal: SIGINT, SIGTERM, SIGQUIT;
+import ocean.sys.CpuAffinity;
+import ocean.util.app.DaemonApp;
+import ConfigReader = ocean.util.config.ClassFiller;
+import ocean.util.log.Log;
 
 
 /*******************************************************************************
@@ -107,7 +80,6 @@ private int main ( char[][] cl_args )
 public class DmqNodeServer : DaemonApp
 {
     import swarm.core.neo.authentication.Credentials;
-    import ocean.io.Stdout: Stderr;
 
     /***************************************************************************
 
@@ -307,4 +279,3 @@ public class DmqNodeServer : DaemonApp
         this.epoll.shutdown;
     }
 }
-

@@ -4,24 +4,14 @@
 
     copyright:      Copyright (c) 2011 sociomantic labs. All rights reserved
 
-    version:        April 2011: Initial release
-                    August 2011: Fiber-based version
-
-    authors:        Gavin Norman
-
 *******************************************************************************/
 
 module dmqnode.request.PushMultiRequest;
 
-/*******************************************************************************
 
-    Imports
+import dmqnode.request.model.IDmqRequestResources;
 
-*******************************************************************************/
-
-private import dmqnode.request.model.IDmqRequestResources;
-
-private import Protocol = dmqproto.node.request.PushMulti;
+import Protocol = dmqproto.node.request.PushMulti;
 
 /*******************************************************************************
 

@@ -1,21 +1,21 @@
 /*******************************************************************************
 
-    copyright: Copyright (c) 2016 sociomantic labs. All rights reserved
-
     Consume request implementation.
+
+    copyright: Copyright (c) 2016 sociomantic labs. All rights reserved
 
 *******************************************************************************/
 
 module dmqnode.request.neo.Consume;
 
-import dmqproto.node.neo.request.Consume;
-
 import dmqnode.connection.neo.SharedResources;
+import dmqnode.storage.model.StorageEngine;
+
+import dmqproto.node.neo.request.Consume;
 
 import swarm.core.neo.node.RequestOnConn;
 import swarm.core.neo.request.Command;
 
-import dmqnode.storage.model.StorageEngine;
 import ocean.core.TypeConvert : castFrom, downcast;
 
 /*******************************************************************************

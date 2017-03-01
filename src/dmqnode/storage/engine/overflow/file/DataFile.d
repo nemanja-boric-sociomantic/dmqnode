@@ -39,9 +39,9 @@ private
 
 class DataFile: PosixFile
 {
-    import ocean.stdc.posix.unistd: write, pwrite;
-    import ocean.stdc.posix.sys.uio: writev;
     import ocean.stdc.posix.sys.types: off_t, ssize_t;
+    import ocean.stdc.posix.sys.uio: writev;
+    import ocean.stdc.posix.unistd: write, pwrite;
 
     /***************************************************************************
 
@@ -351,8 +351,8 @@ class DataFile: PosixFile
 
 struct IoVec
 {
-    import ocean.stdc.posix.sys.uio: writev, iovec;
     import ocean.core.Exception_tango: onArrayBoundsError;
+    import ocean.stdc.posix.sys.uio: writev, iovec;
 
     /***************************************************************************
 

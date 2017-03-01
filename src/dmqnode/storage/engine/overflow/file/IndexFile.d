@@ -18,19 +18,17 @@
 
 module dmqnode.storage.engine.overflow.file.IndexFile;
 
-import dmqnode.storage.engine.overflow.file.PosixFile,
-       dmqnode.storage.engine.overflow.ChannelMetadata;
+import dmqnode.storage.engine.overflow.ChannelMetadata;
+import dmqnode.storage.engine.overflow.file.PosixFile;
 
 class IndexFile: PosixFile
 {
+    import ocean.core.Enforce: enforceImpl;
+    import ocean.stdc.posix.signal: SIGABRT, SIGSEGV, SIGILL, SIGBUS;
     import ocean.stdc.posix.stdio: fdopen;
     import ocean.stdc.stdio: FILE, EOF, fscanf, fprintf, feof, rewind, clearerr, fflush;
     import ocean.stdc.stdlib: free;
-
     import ocean.sys.SignalMask;
-    import ocean.stdc.posix.signal: SIGABRT, SIGSEGV, SIGILL, SIGBUS;
-
-    import ocean.core.Enforce: enforceImpl;
 
     /***************************************************************************
 
@@ -220,13 +218,13 @@ class IndexFile: PosixFile
                                 name.length, name.ptr,
                                 channel.records, channel.bytes,
                                 channel.first_offset, channel.last_offset);
-        
+
                 this.enforce(n >= 0, "error writing index");
             });
             this.enforce(!fflush(this.stream), "error flushing index");
         }());
     }
-    
+
     /***************************************************************************
 
         Resets the error indicator when the file is truncated to be empty.

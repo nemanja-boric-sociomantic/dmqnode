@@ -21,9 +21,9 @@ module dmqnode.request.GetSizeRequest;
 
 *******************************************************************************/
 
-private import dmqnode.request.model.IDmqRequestResources;
+import dmqnode.request.model.IDmqRequestResources;
 
-private import Protocol = dmqproto.node.request.GetSize;
+import Protocol = dmqproto.node.request.GetSize;
 
 /*******************************************************************************
 

@@ -4,25 +4,14 @@
 
     copyright:      Copyright (c) 2011 sociomantic labs. All rights reserved
 
-    version:        August 2011: Initial release
-
-    authors:        Gavin Norman
-
 *******************************************************************************/
 
 module dmqnode.request.RemoveChannelRequest;
 
 
+import dmqnode.request.model.IDmqRequestResources;
 
-/*******************************************************************************
-
-    Imports
-
-*******************************************************************************/
-
-private import dmqnode.request.model.IDmqRequestResources;
-
-private import Protocol = dmqproto.node.request.RemoveChannel;
+import Protocol = dmqproto.node.request.RemoveChannel;
 
 /*******************************************************************************
 
@@ -33,7 +22,7 @@ private import Protocol = dmqproto.node.request.RemoveChannel;
 public scope class RemoveChannelRequest : Protocol.RemoveChannel
 {
     /***************************************************************************
-    
+
         Shared resource acquirer
 
     ***************************************************************************/

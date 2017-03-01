@@ -2,34 +2,21 @@
 
     Queue Storage Channels manager interface
 
-    copyright:      Copyright (c) 2011 sociomantic labs. All rights reserved
-
-    version:        March 2010: Initial release
-
-    authors:        David Eckardt, Gavin Norman
-
     Extends the core storage channels base class with the following features:
         * A method to get the number of bytes a record will take when stored in
           the storage engine (including any required headers, etc).
         * A per-channel size limit, in addition to the global node size limit.
+
+    copyright:      Copyright (c) 2011 sociomantic labs. All rights reserved
 
 *******************************************************************************/
 
 module dmqnode.storage.model.StorageChannels;
 
 
+import dmqnode.storage.model.StorageEngine;
 
-/*******************************************************************************
-
-    Imports
-
-*******************************************************************************/
-
-private import swarm.core.node.storage.model.IStorageChannels;
-
-private import dmqnode.storage.model.StorageEngine;
-
-
+import swarm.core.node.storage.model.IStorageChannels;
 
 /*******************************************************************************
 
@@ -88,4 +75,3 @@ public abstract class StorageChannels :
 
     abstract public void writeDiskOverflowIndex ( );
 }
-

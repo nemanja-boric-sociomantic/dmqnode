@@ -2,48 +2,29 @@
 
     Queue Storage engine abstract base class
 
-    copyright:      Copyright (c) 2011 sociomantic labs. All rights reserved
-
-    version:        October 2010: Initial release
-
-    authors:        David Eckardt, Gavin Norman
-
-    Description:
-
     The StorageEngine abstract class is the base class for the storage engines
     used in the Queue Node.
 
-    The queue storage engine extends the base storage engine with the following
-    features:
+    The queue storage engine extends the base storage engine with the
+    following features:
         * Methods to push & pop data.
         * A set of consumers -- clients waiting to read data from the channel.
         * A method to register a new consumer with the channel.
+
+    copyright:      Copyright (c) 2011 sociomantic labs. All rights reserved
 
 *******************************************************************************/
 
 module dmqnode.storage.model.StorageEngine;
 
 
+import ocean.core.Array;
+import ocean.io.FilePath;
+import ocean.io.Path : normalize, PathParser;
+import ocean.sys.Environment;
 
-/*******************************************************************************
-
-    Imports
-
-*******************************************************************************/
-
-private import swarm.core.node.storage.model.IStorageEngine;
-
-private import swarm.core.node.storage.listeners.Listeners;
-
-private import ocean.io.FilePath;
-
-private import ocean.core.Array;
-
-private import ocean.io.Path : normalize, PathParser;
-
-private import ocean.sys.Environment;
-
-
+import swarm.core.node.storage.listeners.Listeners;
+import swarm.core.node.storage.model.IStorageEngine;
 
 public abstract class StorageEngine : IStorageEngine
 {
@@ -221,4 +202,3 @@ public abstract class StorageEngine : IStorageEngine
         this.consumers.unregister(consumer);
     }
 }
-

@@ -4,28 +4,16 @@
 
     copyright:      Copyright (c) 2011 sociomantic labs. All rights reserved
 
-    version:        April 2011: Initial release
-                    August 2011: Fiber-based version
-
-    authors:        Gavin Norman
-
 *******************************************************************************/
 
 module dmqnode.request.GetChannelsRequest;
 
 
+import dmqnode.request.model.IDmqRequestResources;
 
-/*******************************************************************************
+import Protocol = dmqproto.node.request.GetChannels;
 
-    Imports
-
-*******************************************************************************/
-
-private import Protocol = dmqproto.node.request.GetChannels;
-
-private import dmqnode.request.model.IDmqRequestResources;
-
-private import ocean.transition;
+import ocean.transition;
 
 
 /*******************************************************************************

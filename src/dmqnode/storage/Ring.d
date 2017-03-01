@@ -4,53 +4,32 @@
 
     copyright:      Copyright (c) 2010 sociomantic labs. All rights reserved
 
-    version:        October 2010: Initial release
-
-    authors:        David Eckardt, Gavin Norman
-
 *******************************************************************************/
 
 module dmqnode.storage.Ring;
 
 
+import dmqnode.app.config.ChannelSizeConfig;
+import dmqnode.storage.engine.DiskOverflow;
+import dmqnode.storage.model.StorageChannels;
+import dmqnode.storage.model.StorageEngine;
+// This import is not ordered, but there is a circular dependency
+// (`IDmqNodeInfo` imports this module) which triggers
+// forward references error when running on the CI.
+import dmqnode.node.IDmqNodeInfo;
 
-/*******************************************************************************
+import swarm.dmq.DmqConst;
 
-    Imports
-
-*******************************************************************************/
-
-private import dmqnode.storage.model.StorageChannels;
-
-private import dmqnode.storage.model.StorageEngine;
-
-private import swarm.dmq.DmqConst;
-
-private import dmqnode.storage.engine.DiskOverflow;
-
-private import dmqnode.node.IDmqNodeInfo;
-
-private import dmqnode.app.config.ChannelSizeConfig;
-
-private import ocean.util.container.queue.FlexibleRingQueue;
-private import ocean.util.container.queue.model.IQueueInfo;
-
-private import ocean.util.container.mem.MemManager;
-
-private import ocean.core.Enforce: enforce;
-
-private import ocean.io.FilePath;
-
-private import ocean.io.device.File;
-
-private import ocean.io.Path : normalize, PathParser;
-
-private import ocean.sys.Environment;
-
-debug private import ocean.io.Stdout : Stderr;
-
-private import ocean.util.log.Log;
-
+import ocean.core.Enforce: enforce;
+import ocean.io.device.File;
+import ocean.io.FilePath;
+import ocean.io.Path : normalize, PathParser;
+debug import ocean.io.Stdout : Stderr;
+import ocean.sys.Environment;
+import ocean.util.container.mem.MemManager;
+import ocean.util.container.queue.FlexibleRingQueue;
+import ocean.util.container.queue.model.IQueueInfo;
+import ocean.util.log.Log;
 
 
 /*******************************************************************************
@@ -755,4 +734,3 @@ public class RingNode : StorageChannels
         }
     }
 }
-

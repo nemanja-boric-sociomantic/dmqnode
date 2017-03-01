@@ -17,19 +17,17 @@ module test.ovminimize.main;
 
 import dmqnode.storage.engine.DiskOverflow;
 import dmqnode.storage.engine.overflow.Const;
-import dmqnode.storage.engine.overflow.RecordHeader;
 import dmqnode.storage.engine.overflow.file.DataFile;
-
-import ocean.stdc.posix.stdlib: srand48, mrand48;
-import ocean.stdc.stdlib: EXIT_SUCCESS, EXIT_FAILURE;
-import ocean.stdc.stdio: SEEK_CUR;
-import ocean.stdc.posix.sys.stat: stat_t, fstat;
-
-import ocean.util.log.Log;
-import ocean.io.Stdout: Stderr;
+import dmqnode.storage.engine.overflow.RecordHeader;
 
 import ocean.core.Test;
+import ocean.io.Stdout: Stderr;
+import ocean.stdc.posix.stdlib: srand48, mrand48;
+import ocean.stdc.posix.sys.stat: stat_t, fstat;
+import ocean.stdc.stdio: SEEK_CUR;
+import ocean.stdc.stdlib: EXIT_SUCCESS, EXIT_FAILURE;
 import ocean.transition: getMsg;
+import ocean.util.log.Log;
 
 /*******************************************************************************
 

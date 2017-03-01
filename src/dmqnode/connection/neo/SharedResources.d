@@ -1,19 +1,13 @@
 /*******************************************************************************
 
-    Copyright (c) 2016 sociomantic labs. All rights reserved
-
     DMQ shared resource manager. Handles acquiring / relinquishing of global
     resources by active request handlers.
+
+    Copyright (c) 2016 sociomantic labs. All rights reserved
 
 *******************************************************************************/
 
 module dmqnode.connection.neo.SharedResources;
-
-/*******************************************************************************
-
-    Imports
-
-*******************************************************************************/
 
 import ocean.transition;
 
@@ -25,9 +19,11 @@ import ocean.transition;
 
 public final class SharedResources
 {
-    import ocean.util.container.pool.FreeList;
     import dmqnode.storage.model.StorageChannels;
+
     import dmqproto.node.neo.request.core.IRequestResources;
+
+    import ocean.util.container.pool.FreeList;
 
     /***************************************************************************
 
