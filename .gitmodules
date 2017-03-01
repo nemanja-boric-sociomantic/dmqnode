@@ -12,4 +12,4 @@
 	url = git@github.com:sociomantic/turtle.git
 [submodule "makd"]
 	path = submodules/makd
-	url = git@github.com:sociomantic/makd.git
+	url = git@github.com:sociomantic-tsunami/makd.git
