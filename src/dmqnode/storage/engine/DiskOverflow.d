@@ -1346,14 +1346,17 @@ class DiskOverflow: DiskOverflowInfo
         this.index.readLines((char[] channel_name, ChannelMetadata channel, uint nline)
         {
             this.index.enforce(filesize, "No data");
-            this.index.enforce(!(channel_name in this.channels), "Duplicate channel name", this.index.name, nline);
-            this.index.enforce(channel.last_offset < filesize, "Position of last record beyond end of data file", this.index.name, nline);
+            this.index.enforce(!(channel_name in this.channels),
+                "Duplicate channel name", "", this.index.name, nline);
+            this.index.enforce(channel.last_offset < filesize,
+                "Position of last record beyond end of data file", "", this.index.name, nline);
+
             /*
              * An empty channel would need a channel ID but
              * this.highest_channel_id is not yet known. Disallowing empty
              * channels in the index makes life a bit easier.
              */
-            this.index.enforce(channel.records, "Empty channel", this.index.name, nline);
+            this.index.enforce(channel.records, "Empty channel", "", this.index.name, nline);
 
             /*
              * Retrieve the channel ID from the first (next to be popped)
@@ -1374,8 +1377,12 @@ class DiskOverflow: DiskOverflowInfo
              *      (channel.last_header.next is 0).
              */
             this.readHeader(channel.last_header, channel.last_offset);
-            this.index.enforce(!channel.last_header.next_offset, "Last record in channel points to a next record", this.index.name, nline);
-            this.index.enforce(channel.last_header.channel == channel.id, "Last record in channel has the wrong channel ID", this.index.name, nline);
+            this.index.enforce(!channel.last_header.next_offset,
+                "Last record in channel points to a next record",
+                "", this.index.name, nline);
+            this.index.enforce(channel.last_header.channel == channel.id,
+                "Last record in channel has the wrong channel ID",
+                "", this.index.name, nline);
 
             /*
              * Add the channel to the registry.
@@ -1396,7 +1403,7 @@ class DiskOverflow: DiskOverflowInfo
                 this.index.enforce(
                     this.first_offset_tracker.track(*channel_ptr),
                     "Multiple channels have the same first offset",
-                    this.index.name, nline
+                    "", this.index.name, nline
                 );
 
                 assert(channel_ptr); // invariant

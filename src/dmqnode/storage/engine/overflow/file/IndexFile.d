@@ -168,11 +168,13 @@ class IndexFile: PosixFile
                     break;
 
                 case EOF:
-                    this.enforce(feof(this.stream), "Error reading channel index");
+                    this.enforce(feof(this.stream), "Error reading channel index",
+                                 "feof", this.name, nline);
                     return;
 
                 default:
-                    this.enforce(!feof(this.stream), "Unexpected end of file", this.name, nline);
+                    this.enforce(!feof(this.stream), "Unexpected end of file",
+                                 "feof", this.name, nline);
                     static const char[][] errmsg =
                     [
                         "Invalid channel name"[],

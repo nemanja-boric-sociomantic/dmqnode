@@ -22,6 +22,7 @@ class PosixFile
     import unistd = ocean.stdc.posix.unistd: close, unlink;
     import ocean.stdc.posix.unistd: lseek, ftruncate, fdatasync;
     import ocean.stdc.stdio: SEEK_SET;
+    import ocean.transition;
     import ocean.util.log.Log;
 
     /***************************************************************************
@@ -158,7 +159,7 @@ class PosixFile
     {
         offset = lseek(this.fd, offset, whence);
 
-        this.enforce(offset >= 0, errmsg, file, line);
+        this.enforce(offset >= 0, errmsg, "lseek", file, line);
 
         return offset;
     }
@@ -245,20 +246,21 @@ class PosixFile
         Params:
             ok   = condition to check
             msg  = exception message
+            name = name of the C function that errored
             file = source code file where the condition is mentioned
             line = source code line where the condition is mentioned
 
         Throws:
-            this.e (IOException) if ok is false/0/null.
+            this.e (FileException) if ok is false/0/null.
 
     ***************************************************************************/
 
-    public void enforce ( T ) ( T ok, char[] msg,
-                                char[] file = __FILE__, long line = __LINE__ )
+    public void enforce ( T ) ( T ok, cstring msg, istring name = "",
+                                istring file = __FILE__, long line = __LINE__ )
     {
         if (!ok)
         {
-            throw this.e.useGlobalErrno(msg, file, cast(int)line);
+            throw this.e.useGlobalErrno(name, file, cast(int)line).addMessage(msg);
         }
     }
 

@@ -127,7 +127,7 @@ class DataFile: PosixFile
         {
             if (ssize_t n = this.restartInterrupted(op(this.fd, data.ptr, data.length, pos)))
             {
-                this.enforce(n > 0, errmsg, file, line);
+                this.enforce(n > 0, errmsg, "", file, line);
                 left = left[n .. $];
                 pos += n;
             }
@@ -181,7 +181,7 @@ class DataFile: PosixFile
         {
             if (ssize_t n = this.restartInterrupted(op(this.fd, left.ptr, left.length)))
             {
-                this.enforce(n > 0, errmsg, file, line);
+                this.enforce(n > 0, errmsg, "", file, line);
                 left = left[n .. $];
             }
             else // end of file for read(); write() should
@@ -231,7 +231,7 @@ class DataFile: PosixFile
         {
             if (ssize_t n = this.restartInterrupted(op(this.fd, data.chunks.ptr, cast(int)data.chunks.length)))
             {
-                this.enforce(n > 0, errmsg, file, line);
+                this.enforce(n > 0, errmsg, "", file, line);
                 data.advance(n);
             }
             else // end of file for read(); write() should
@@ -336,7 +336,7 @@ class DataFile: PosixFile
     {
         this.enforce(
             !this.restartInterrupted(.fallocate(this.fd, mode, offset, len)),
-            errmsg, file, line
+            errmsg, "fallocate", file, line
         );
     }
 }
