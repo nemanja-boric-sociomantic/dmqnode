@@ -1,5 +1,5 @@
-Description
-===========
+Description |BuildStatus|_
+==========================
 
 The queue node is a server which handles requests from the queue client defined
 in swarm (``swarm.queue.QueueClient``). One or more nodes make up a complete
@@ -177,3 +177,5 @@ Dependencies
 :Dependency: tango v1.1
 
 .. _`server layout pages`: https://github.com/sociomantic/backend/wiki/Servers#wiki-server-layout
+.. |BuildStatus| image:: https://ci.sociomantic.com/buildStatus/icon?job=core-team/dmqnode
+.. _BuildStatus: https://ci.sociomantic.com/job/core-team/job/dmqnode/
