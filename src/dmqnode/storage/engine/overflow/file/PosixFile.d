@@ -68,27 +68,6 @@ class PosixFile
 
     /***************************************************************************
 
-        Counter to make the invariant fail after close() or unlink() returned.
-        close() and unlink() set it to 1 upon returning. The invariant expects
-        it to be at most 1. if the invariant detects it is 1, which happens when
-        it is executed after close() or unlink() returned, it sets it to 2.
-
-    ***************************************************************************/
-
-    private uint closed = 0;
-
-    /**************************************************************************/
-
-    invariant ( )
-    {
-        assert(this.closed <= 1, "file " ~ this.name ~ " closed");
-        this.closed *= 2;
-
-        assert(this.fd >= 0, "file " ~ this.name ~ " not opened");
-    }
-
-    /***************************************************************************
-
         Constructor, opens or creates the file using `name` as the file name and
         `dir` as the file directory. `dir` is expected to exist.
 
@@ -151,6 +130,10 @@ class PosixFile
 
     public ulong seek ( off_t offset, int whence, char[] errmsg,
                         char[] file = __FILE__, long line = __LINE__ )
+    in
+    {
+        assert(this.fd >= 0, "File " ~ this.name ~ " not opened");
+    }
     out (pos)
     {
         assert(pos <= off_t.max);
@@ -171,6 +154,11 @@ class PosixFile
     ***************************************************************************/
 
     public void reset ( )
+    in
+    {
+        assert(this.fd >= 0, "File " ~ this.name ~ " not opened");
+    }
+    body
     {
         /*
          * Seek to the beginning because ftruncate() does not change the file
@@ -190,6 +178,11 @@ class PosixFile
     ***************************************************************************/
 
     public void flush ( )
+    in
+    {
+        assert(this.fd >= 0, "File " ~ this.name ~ " not opened");
+    }
+    body
     {
         this.enforce(!fdatasync(this.fd), "flush: unable to synchronise");
     }
@@ -202,9 +195,9 @@ class PosixFile
     ***************************************************************************/
 
     public void close ( )
-    out
+    in
     {
-        this.closed = 1;
+        assert(this.fd >= 0, "File " ~ this.name ~ " not opened");
     }
     body
     {
@@ -212,6 +205,7 @@ class PosixFile
             !this.restartInterrupted(unistd.close(this.fd)),
             "unable to close"
         );
+        this.fd = -1;
         this.log.info("File closed.");
     }
 
@@ -223,9 +217,9 @@ class PosixFile
     ***************************************************************************/
 
     public void remove ( )
-    out
+    in
     {
-        this.closed = 1;
+        assert(this.fd >= 0, "File " ~ this.name ~ " not opened");
     }
     body
     {
@@ -234,6 +228,7 @@ class PosixFile
             !this.restartInterrupted(unistd.close(this.fd)),
             "unable to close"
         );
+        this.fd = -1;
         this.log.info("File deleted.");
     }
 

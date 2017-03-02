@@ -335,24 +335,10 @@ class DiskOverflow: DiskOverflowInfo
 
     private typeof(this).Exception e;
 
-    /***************************************************************************
-
-        Counter to make the invariant fail after close() or unlink() returned.
-        close() and unlink() set it to 1 upon returning. The invariant expects
-        it to be at most 1. if the invariant detects it is 1, which happens when
-        it is executed after close() or unlink() returned, it sets it to 2.
-
-    ***************************************************************************/
-
-    private uint closed = 0;
-
     /**************************************************************************/
 
     invariant ( )
     {
-        assert(this.closed <= 1, "disk overflow was already closed");
-        this.closed *= 2;
-
         if (this.records)
         {
             assert(this.channels.length, "have records but no channels");
@@ -882,11 +868,6 @@ class DiskOverflow: DiskOverflowInfo
     ***************************************************************************/
 
     public void close ( )
-    out
-    {
-        this.closed = 1;
-    }
-    body
     {
         /*
          * Catch all file I/O exceptions and log them so that they don't prevent
