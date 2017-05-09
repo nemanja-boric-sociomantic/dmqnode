@@ -3,7 +3,7 @@
 	url = git@github.com:sociomantic/swarm.git
 [submodule "ocean"]
 	path = submodules/ocean
-	url = git@github.com:sociomantic/ocean.git
+	url = git@github.com:sociomantic-tsunami/ocean.git
 [submodule "dmqproto"]
 	path = submodules/dmqproto
 	url = git@github.com:sociomantic/dmqproto.git
