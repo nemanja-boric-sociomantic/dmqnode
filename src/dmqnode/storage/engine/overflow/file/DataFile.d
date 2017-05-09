@@ -39,9 +39,9 @@ private
 
 class DataFile: PosixFile
 {
-    import ocean.stdc.posix.sys.types: off_t, ssize_t;
-    import ocean.stdc.posix.sys.uio: writev;
-    import ocean.stdc.posix.unistd: write, pwrite;
+    import core.sys.posix.sys.types: off_t, ssize_t;
+    import core.sys.posix.sys.uio: writev;
+    import core.sys.posix.unistd: write, pwrite;
 
     /***************************************************************************
 

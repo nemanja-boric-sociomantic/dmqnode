@@ -14,7 +14,7 @@
 module dmqnode.storage.model.StorageChannels;
 
 
-import swarm.core.node.storage.model.IStorageEngine;
+import swarm.node.storage.model.IStorageEngine;
 
 import ocean.transition;
 
@@ -29,7 +29,8 @@ import ocean.transition;
 
 abstract class IChannel: IStorageEngine
 {
-    import ocean.stdc.string: memchr;
+    import dmqnode.storage.model.StorageEngine;
+    import core.stdc.string: memchr;
 
     /***************************************************************************
 
@@ -455,6 +456,8 @@ abstract class IChannel: IStorageEngine
     StorageChannels base class
 
 *******************************************************************************/
+
+import swarm.node.storage.model.IStorageChannels;
 
 public abstract class StorageChannels :
     IStorageChannelsTemplate!(IChannel)

@@ -21,8 +21,8 @@ module dmqperformance.main;
 
 import Version;
 
-import swarm.dmq.DmqClient;
-import swarm.dmq.DmqConst;
+import dmqproto.client.DmqClient;
+import dmqproto.client.legacy.DmqConst;
 
 import ocean.io.select.EpollSelectDispatcher;
 import ocean.io.Stdout;

@@ -1,6 +1,6 @@
 [submodule "swarm"]
 	path = submodules/swarm
-	url = git@github.com:sociomantic/swarm.git
+	url = git@github.com:sociomantic-tsunami/swarm.git
 [submodule "ocean"]
 	path = submodules/ocean
 	url = git@github.com:sociomantic-tsunami/ocean.git

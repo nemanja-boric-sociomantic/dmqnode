@@ -20,7 +20,7 @@ import dmqnode.storage.model.StorageChannels;
 
 import dmqproto.node.request.model.DmqCommand;
 
-import swarm.core.common.request.model.IRequestResources;
+import swarm.common.request.model.IRequestResources;
 
 /*******************************************************************************
 

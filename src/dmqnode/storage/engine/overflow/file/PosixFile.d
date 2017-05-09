@@ -14,14 +14,14 @@ class PosixFile
     import dmqnode.storage.engine.overflow.file.FileException;
 
     import ocean.io.FilePath;
-    import ocean.stdc.errno: EINTR, errno;
-    import fcntl = ocean.stdc.posix.fcntl: open;
-    import ocean.stdc.posix.fcntl: O_RDWR, O_APPEND, O_CREAT, S_IRUSR, S_IWUSR,
-                                   S_IRGRP, S_IROTH;
-    import ocean.stdc.posix.sys.types: off_t;
-    import unistd = ocean.stdc.posix.unistd: close, unlink;
-    import ocean.stdc.posix.unistd: lseek, ftruncate, fdatasync;
-    import ocean.stdc.stdio: SEEK_SET;
+    import core.stdc.errno: EINTR, errno;
+    import fcntl = core.sys.posix.fcntl: open;
+    import core.sys.posix.fcntl: O_RDWR, O_APPEND, O_CREAT, S_IRUSR, S_IWUSR,
+                                 S_IRGRP, S_IROTH;
+    import core.sys.posix.sys.types: off_t;
+    import unistd = core.sys.posix.unistd: close, unlink;
+    import core.sys.posix.unistd: lseek, ftruncate, fdatasync;
+    import core.stdc.stdio: SEEK_SET;
     import ocean.transition;
     import ocean.util.log.Log;
 

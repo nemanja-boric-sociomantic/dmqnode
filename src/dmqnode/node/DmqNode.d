@@ -20,10 +20,12 @@ import dmqnode.storage.model.StorageChannels;
 import dmqnode.storage.model.StorageEngine;
 import dmqnode.storage.Ring;
 
-import swarm.core.neo.authentication.HmacDef: Key;
-import swarm.core.node.model.NeoChannelsNode : ChannelsNodeBase;
-import swarm.core.node.storage.model.IStorageEngineInfo;
-import swarm.dmq.DmqConst;
+import dmqnode.util.Downcast;
+
+import swarm.neo.authentication.HmacDef: Key;
+import swarm.node.model.NeoChannelsNode : ChannelsNodeBase;
+import swarm.node.storage.model.IStorageEngineInfo;
+import dmqproto.client.legacy.DmqConst;
 
 import ocean.io.select.EpollSelectDispatcher;
 

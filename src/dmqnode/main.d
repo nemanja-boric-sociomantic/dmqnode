@@ -23,19 +23,19 @@ import dmqnode.app.util.Terminator;
 import dmqnode.node.DmqNode;
 import dmqnode.storage.Ring;
 
-import swarm.core.node.model.ISwarmConnectionHandlerInfo;
-import swarm.dmq.DmqConst;
+import swarm.node.model.ISwarmConnectionHandlerInfo;
+import dmqproto.client.legacy.DmqConst;
 
-import ocean.core.Exception_tango : OutOfMemoryException;
+import ocean.core.ExceptionDefinitions : OutOfMemoryException;
 import ocean.core.MessageFiber;
 import ocean.io.select.client.model.ISelectClient;
 import ocean.io.select.EpollSelectDispatcher;
 import ocean.io.select.protocol.generic.ErrnoIOException : IOWarning;
 import ocean.io.Stdout;
-import ocean.stdc.posix.signal: SIGINT, SIGTERM, SIGQUIT;
+import core.sys.posix.signal: SIGINT, SIGTERM, SIGQUIT;
 import ocean.sys.CpuAffinity;
 import ocean.util.app.DaemonApp;
-import ConfigReader = ocean.util.config.ClassFiller;
+import ConfigReader = ocean.util.config.ConfigFiller;
 import ocean.util.log.Log;
 
 
@@ -79,7 +79,7 @@ private int main ( char[][] cl_args )
 
 public class DmqNodeServer : DaemonApp
 {
-    import swarm.core.neo.authentication.Credentials;
+    import swarm.neo.authentication.Credentials;
 
     /***************************************************************************
 
@@ -134,9 +134,9 @@ public class DmqNodeServer : DaemonApp
 
         DaemonApp.OptionalSettings settings;
         settings.signals = [SIGINT, SIGTERM, SIGQUIT];
+        this.epoll = new EpollSelectDispatcher;
 
-        super(this.epoll = new EpollSelectDispatcher,
-              app_name, app_desc, versionInfo, settings);
+        super(app_name, app_desc, versionInfo, settings);
     }
 
 
@@ -195,7 +195,7 @@ public class DmqNodeServer : DaemonApp
 
     override protected int run ( Arguments args, ConfigParser config )
     {
-        this.startEventHandling();
+        this.startEventHandling(this.epoll);
 
         this.periodics.register();
 

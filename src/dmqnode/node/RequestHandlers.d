@@ -12,8 +12,8 @@ import Consume = dmqnode.request.neo.Consume;
 import Pop     = dmqnode.request.neo.Pop;
 import Push    = dmqnode.request.neo.Push;
 
-import swarm.core.neo.node.ConnectionHandler;
-import swarm.dmq.DmqConst;
+import swarm.neo.node.ConnectionHandler;
+import dmqproto.client.legacy.DmqConst;
 
 /*******************************************************************************
 

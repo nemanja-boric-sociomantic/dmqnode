@@ -221,7 +221,7 @@ public class PeriodicStats : IPeriodic
 
     ***************************************************************************/
 
-    import ocean.stdc.stdio;
+    import core.stdc.stdio;
 
     void consoleLog ( )
     {

@@ -19,7 +19,7 @@ import dmqnode.storage.model.StorageEngine;
 import dmqnode.node.IDmqNodeInfo;
 import dmqnode.util.Downcast;
 
-import swarm.dmq.DmqConst;
+import dmqproto.client.legacy.DmqConst;
 
 import ocean.core.Enforce: enforce;
 import ocean.io.device.File;

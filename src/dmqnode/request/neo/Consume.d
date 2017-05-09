@@ -15,8 +15,8 @@ import dmqproto.node.neo.request.Consume;
 import dmqnode.connection.neo.SharedResources;
 import dmqnode.storage.model.StorageEngine;
 
-import swarm.core.neo.node.RequestOnConn;
-import swarm.core.neo.request.Command;
+import swarm.neo.node.RequestOnConn;
+import swarm.neo.request.Command;
 
 import ocean.core.TypeConvert : castFrom, downcast;
 

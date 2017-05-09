@@ -11,7 +11,7 @@ module dmqnode.node.IDmqNodeInfo;
 
 import dmqnode.storage.Ring;
 
-import swarm.core.node.model.IChannelsNodeInfo;
+import swarm.node.model.IChannelsNodeInfo;
 
 interface IDmqNodeInfo : IChannelsNodeInfo
 {

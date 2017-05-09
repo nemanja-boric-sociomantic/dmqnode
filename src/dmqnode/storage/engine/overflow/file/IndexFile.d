@@ -26,10 +26,10 @@ import ocean.transition;
 class IndexFile: PosixFile
 {
     import ocean.core.Enforce: enforceImpl;
-    import ocean.stdc.posix.signal: SIGABRT, SIGSEGV, SIGILL, SIGBUS;
-    import ocean.stdc.posix.stdio: fdopen;
-    import ocean.stdc.stdio: FILE, EOF, fscanf, fprintf, feof, rewind, clearerr, fflush;
-    import ocean.stdc.stdlib: free;
+    import core.sys.posix.signal: SIGABRT, SIGSEGV, SIGILL, SIGBUS;
+    import core.sys.posix.stdio: fdopen;
+    import core.stdc.stdio: FILE, EOF, fscanf, fprintf, feof, rewind, clearerr, fflush;
+    import core.stdc.stdlib: free;
     import ocean.sys.SignalMask;
 
     /***************************************************************************

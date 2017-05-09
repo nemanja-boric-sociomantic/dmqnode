@@ -12,6 +12,7 @@ module dmqtest.main;
 
 
 import dmqtest.TestRunner;
+import turtle.runner.Runner;
 
 import ocean.transition;
 
@@ -23,11 +24,6 @@ import ocean.transition;
 
 private class RealDmqTestRunner : DmqTestRunner
 {
-    this ( )
-    {
-        super("dmqnode");
-    }
-
     /***************************************************************************
 
         Copies the DMQ node's config file to the sandbox before starting the
@@ -52,5 +48,5 @@ private class RealDmqTestRunner : DmqTestRunner
 
 int main ( istring[] args )
 {
-    return (new RealDmqTestRunner).main(args);
+    return (new TurtleRunner!(RealDmqTestRunner)("dmqnode")).main(args);
 }

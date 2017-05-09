@@ -13,7 +13,7 @@ import dmqnode.request.model.IDmqRequestResources;
 
 import Protocol = dmqproto.node.request.ProduceMulti;
 
-import swarm.core.common.request.helper.LoopCeder;
+import swarm.common.request.helper.LoopCeder;
 
 /*******************************************************************************
 

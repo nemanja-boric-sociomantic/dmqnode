@@ -26,9 +26,9 @@ import dmqnode.storage.model.StorageChannels;
 
 import dmqproto.node.request.model.DmqCommand;
 
-import Swarm = swarm.core.node.connection.ConnectionHandler;
-import swarm.core.node.model.INodeInfo;
-import swarm.dmq.DmqConst;
+import Swarm = swarm.node.connection.ConnectionHandler;
+import swarm.node.model.INodeInfo;
+import dmqproto.client.legacy.DmqConst;
 
 import dmqnode.util.Downcast;
 

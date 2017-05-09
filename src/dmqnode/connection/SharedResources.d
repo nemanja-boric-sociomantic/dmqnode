@@ -28,11 +28,11 @@ module dmqnode.connection.SharedResources;
 
 *******************************************************************************/
 
-import swarm.core.common.connection.ISharedResources;
+import swarm.common.connection.ISharedResources;
 
-public import swarm.core.common.request.helper.LoopCeder;
+public import swarm.common.request.helper.LoopCeder;
 
-public import swarm.core.protocol.StringListReader;
+public import swarm.protocol.StringListReader;
 
 public import ocean.io.select.client.FiberSelectEvent;
 

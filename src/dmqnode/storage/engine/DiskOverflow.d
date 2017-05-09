@@ -200,11 +200,11 @@ class DiskOverflow: DiskOverflowInfo
 
     import ocean.core.Enforce: enforce;
     import ocean.io.FilePath;
-    import ocean.stdc.errno: errno;
-    import ocean.stdc.posix.sys.types: off_t;
-    import ocean.stdc.posix.sys.uio: iovec, writev;
-    import ocean.stdc.posix.unistd: read, pread, write, pwrite;
-    import ocean.stdc.stdio: SEEK_CUR, SEEK_END;
+    import core.stdc.errno: errno;
+    import core.sys.posix.sys.types: off_t;
+    import core.sys.posix.sys.uio: iovec, writev;
+    import core.sys.posix.unistd: read, pread, write, pwrite;
+    import core.stdc.stdio: SEEK_CUR, SEEK_END;
     import ocean.transition;
     import ocean.util.log.Log;
 

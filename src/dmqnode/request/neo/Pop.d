@@ -17,8 +17,8 @@ import dmqproto.node.neo.request.Pop;
 import ocean.core.TypeConvert : downcast;
 import ocean.transition;
 
-import swarm.core.neo.node.ConnectionHandler;
-import swarm.core.neo.request.Command;
+import swarm.neo.node.ConnectionHandler;
+import swarm.neo.request.Command;
 
 /*******************************************************************************
 

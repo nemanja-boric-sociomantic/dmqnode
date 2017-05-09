@@ -24,8 +24,8 @@ import ocean.io.Path : normalize, PathParser;
 import ocean.sys.Environment;
 import ocean.transition;
 
-import swarm.core.node.storage.listeners.Listeners;
-import swarm.core.node.storage.model.IStorageEngine;
+import swarm.node.storage.listeners.Listeners;
+import swarm.node.storage.model.IStorageEngine;
 
 public abstract class StorageEngine : IStorageEngine
 {

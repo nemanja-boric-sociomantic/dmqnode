@@ -14,7 +14,7 @@ import dmqnode.storage.model.StorageEngine;
 
 import Protocol = dmqproto.node.request.Produce;
 
-import swarm.core.common.request.helper.LoopCeder;
+import swarm.common.request.helper.LoopCeder;
 
 
 

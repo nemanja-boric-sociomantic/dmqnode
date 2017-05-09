@@ -9,7 +9,7 @@
 module dmqnode.app.config.ServerConfig;
 
 
-import ConfigReader = ocean.util.config.ClassFiller;
+import ConfigReader = ocean.util.config.ConfigFiller;
 
 /*******************************************************************************
 
