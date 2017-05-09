@@ -499,7 +499,7 @@ public class RingNode : StorageChannels
 
     override public void writeDiskOverflowIndex ( )
     {
-        this.overflow.writeIndex();
+        this.overflow.flush();
     }
 
 

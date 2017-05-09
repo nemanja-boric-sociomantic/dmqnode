@@ -292,7 +292,7 @@ public class PeriodicStats : IPeriodic
 
             while (b)
             {
-                d[n++] = cast(ubyte)(b & ((1 << 10) - 1));
+                d[n++] = cast(ushort)(b & ((1 << 10) - 1));
                 b >>= 10;
             }
 
