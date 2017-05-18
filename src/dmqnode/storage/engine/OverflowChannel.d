@@ -181,4 +181,60 @@ package class OverflowChannel: DiskOverflowInfo
     {
         return this.metadata.bytes + this.metadata.records * RecordHeader.sizeof;
     }
+
+    /***************************************************************************
+
+        Removes the channel referred to by `this_`. If the channel contains
+        records they will be inaccessible, but their data will stay in the file
+        until the file data are removed automatically when the file is reset or
+        truncated.
+
+        This function renders `this_` unusable; that is, its invariant will
+        fail. `readd` makes `this_` usable again.
+
+        Params:
+            `this_` = the instance of this class referring to the channel that
+                      should be removed.
+
+    ***************************************************************************/
+
+    public static void remove ( typeof(this) this_ )
+    in
+    {
+        assert(this_);
+    }
+    body
+    {
+        this_.host.removeChannel(this_.name);
+        this_.name = null;
+        this_.metadata = null;
+    }
+
+    /***************************************************************************
+
+        Adds channel `channel_name` and sets up `this_` to refer to that
+        channel. `this_` is expected to have been released by a previous
+        `remove` call.
+
+        Params:
+            `this_` = an instance of this class that does not currently refer to
+                      any channel and should refer to channel `channel_name`
+
+    ***************************************************************************/
+
+    public static void readd ( typeof(this) this_, istring channel_name )
+    in
+    {
+        assert(this_.name is null);
+        assert(this_.metadata is null);
+    }
+    out
+    {
+        assert(this_);
+    }
+    body
+    {
+        this_.name     = channel_name;
+        this_.metadata = this_.host.getChannel(channel_name);
+    }
 }

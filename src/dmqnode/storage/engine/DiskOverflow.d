@@ -892,6 +892,28 @@ class DiskOverflow: DiskOverflowInfo
 
     /***************************************************************************
 
+        Removes the channel referred to by `channel_name`.
+
+        Params:
+            channel_name = the name of the channel to remove
+
+        Throws:
+            Exception if `channel_name` was not found.
+
+    ***************************************************************************/
+
+    package void removeChannel ( cstring channel_name )
+    {
+        ChannelMetadata* channel = channel_name in this.channels;
+        enforce(this.e, channel !is null, "Unable to remove a channel: " ~
+                "Channel not found");
+
+        this.clearChannel(*channel);
+        this.channels.remove(channel_name);
+    }
+
+    /***************************************************************************
+
         Flushes write buffers, minimizes the data file size and writes the index
         file.
 
