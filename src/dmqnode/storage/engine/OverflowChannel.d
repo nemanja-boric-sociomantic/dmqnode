@@ -56,15 +56,6 @@ package class OverflowChannel: DiskOverflowInfo
     ***********************************************************************/
 
     package this ( DiskOverflow host, istring channel_name )
-    in
-    {
-        assert(host);
-    }
-    out
-    {
-        assert(host); // Prevent a crash if we forget to assign this.host.
-    }
-    body
     {
         this.host     = host;
         this.metadata = host.getChannel(channel_name);
