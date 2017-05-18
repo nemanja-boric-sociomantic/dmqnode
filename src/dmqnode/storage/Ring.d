@@ -17,6 +17,7 @@ import dmqnode.storage.model.StorageEngine;
 // (`IDmqNodeInfo` imports this module) which triggers
 // forward references error when running on the CI.
 import dmqnode.node.IDmqNodeInfo;
+import dmqnode.util.Downcast;
 
 import swarm.dmq.DmqConst;
 
@@ -713,9 +714,7 @@ public class RingNode : StorageChannels
 
         foreach (channel_; this)
         {
-            auto channel = cast(Ring)channel_;
-            assert(channel);
-            channel.deleteDumpFile();
+            downcastAssert!(Ring)(storage).deleteDumpFile();
         }
     }
 

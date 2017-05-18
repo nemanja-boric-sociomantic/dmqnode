@@ -30,6 +30,8 @@ import Swarm = swarm.core.node.connection.ConnectionHandler;
 import swarm.core.node.model.INodeInfo;
 import swarm.dmq.DmqConst;
 
+import dmqnode.util.Downcast;
+
 /*******************************************************************************
 
     DMQ node connection handler setup class. Passed to the DMQ connection
@@ -146,7 +148,7 @@ public class ConnectionHandler
 
         override public IDmqNodeInfo node_info ( )
         {
-            return cast(IDmqNodeInfo)this.setup.node_info;
+            return downcastAssert!(IDmqNodeInfo)(this.setup.node_info);
         }
 
 
@@ -290,7 +292,7 @@ public class ConnectionHandler
 
         private ConnectionSetupParams setup ( )
         {
-            return cast(ConnectionSetupParams)this.outer.setup;
+            return downcastAssert!(ConnectionSetupParams)(this.outer.setup);
         }
     }
 

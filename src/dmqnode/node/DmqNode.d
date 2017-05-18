@@ -104,7 +104,7 @@ public class DmqNode
 
     public ulong channelSizeLimit ( )
     {
-        return (cast(StorageChannels)super.channels).channelSizeLimit;
+        return downcastAssert!(StorageChannels)(this.channels).channelSizeLimit;
     }
 
 
@@ -117,7 +117,7 @@ public class DmqNode
 
     public void writeDiskOverflowIndex ( )
     {
-        (cast(StorageChannels)this.channels).writeDiskOverflowIndex();
+        downcastAssert!(StorageChannels)(this.channels).writeDiskOverflowIndex;
     }
 
 
@@ -143,8 +143,7 @@ public class DmqNode
     {
         return super.opApply((ref IStorageEngineInfo channel_)
         {
-            auto channel = cast(RingNode.Ring)channel_;
-            assert(channel);
+            auto channel = downcastAssert!(RingNode.Ring)(channel_);
             return dg(channel);
         });
     }
