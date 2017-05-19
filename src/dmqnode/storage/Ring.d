@@ -145,33 +145,85 @@ public class RingNode : StorageChannels
             constructed (the loading of a dumped channel does not happen once
             the node has started up -- only at initialisation).
 
+            - `channel_id` is the channel name without the subscriber suffix.
+               In this class it is used only to call
+               `channel_size_config.getChannelSize()` in the constructor.
+            - `storage_name == channel_id ~ '@' ~ subscriber_name` is used
+               as the real channel name in this class, for the memory queue dump
+               file path and as the disk overflow channel name.
+            - `this.id` and `this.id_` are `storage_name`.
+
             Params:
-                id  = queue (channel) identifier string
+                channel_id   = queue (channel) identifier string
+                storage_name = the name of this storage
 
         ***********************************************************************/
 
-        public this ( char[] id )
+        public this ( cstring channel_id, cstring storage_name )
         in
         {
             assert(!this.outer.shutting_down, "Attempted to create channel '{}' during shutdown");
         }
         body
         {
-            super(id);
+            // The super constructor calls this.initialise, which uses
+            // this.file_path.
+            this.file_path = new FilePath;
 
-            this.filename = FilePath.join(
-                this.outer.data_dir, id ~ this.outer.DumpFileSuffix
-            );
-
-            this.file_path = new FilePath(this.filename);
-
-            this.overflow = this.outer.overflow.new Channel(idup(id));
+            super(storage_name);
 
             this.queue = new FlexibleByteRingQueue(noScanMallocMemManager,
-                this.outer.channel_size_config.getChannelSize(id));
+                this.outer.channel_size_config.getChannelSize(channel_id));
 
             this.memory_info = this.queue;
-            this.overflow_info = this.overflow;
+        }
+
+        /***********************************************************************
+
+            Creates an overflow channel and the memory dump file path.
+
+            Called from the super constructor and when this instance is taken
+            from the object pool and assigned to a channel again.
+
+            Params:
+                storage_name = the name of this storage, see constructor
+
+        ***********************************************************************/
+
+        override public void initialise ( cstring storage_name )
+        {
+            super.initialise(storage_name);
+            // From this point this.id == storage_name.
+
+            this.filename = FilePath.join(
+                this.outer.data_dir, this.id ~ this.outer.DumpFileSuffix
+            );
+            this.file_path.set(this.filename);
+
+            if (this.overflow is null)
+            {
+                this.overflow = this.outer.overflow.new Channel(this.id);
+                this.overflow_info = this.overflow;
+            }
+            else
+            {
+                this.overflow.readd(this.overflow, this.id);
+            }
+        }
+
+        /***********************************************************************
+
+            Removes the overflow channel.
+
+            Called after the channel has been removed when this instance is put
+            in the object pool.
+
+        ***********************************************************************/
+
+        override public void reset ( )
+        {
+            super.reset();
+            this.overflow.remove(this.overflow);
         }
 
         /***********************************************************************
@@ -190,7 +242,7 @@ public class RingNode : StorageChannels
                 this.outer.data_dir, this.id ~ this.outer.DumpFileSuffix
             );
             this.file_path.set(this.filename);
-            this.initialise(storage_name);
+            super.initialise(storage_name);
         }
 
         /***********************************************************************
@@ -403,6 +455,90 @@ public class RingNode : StorageChannels
 
     /***************************************************************************
 
+        Channel implementation, needs to be a nested class here because it needs
+        to create `Ring` instances.
+
+    ***************************************************************************/
+
+    class Channel: IChannel
+    {
+        /***********************************************************************
+
+            Creates a channel with no subscriber.
+
+            Params:
+                storage = the initial storage for the channel
+
+        ***********************************************************************/
+
+        protected this ( StorageEngine storage )
+        {
+            super(storage);
+        }
+
+        /***********************************************************************
+
+            Creates a channel with one subscriber.
+
+            Params:
+                storage         = the storage for the subscriber
+                subscriber_name = the name of the subscriber
+
+        ***********************************************************************/
+
+        protected this ( StorageEngine storage, cstring channel_id, istring subscriber_name )
+        {
+            super(storage, channel_id, subscriber_name);
+        }
+
+        /***********************************************************************
+
+            Creates a new storage engine for this channel.
+
+            Params:
+                storage_name = the storage name
+
+            Returns:
+                a new storage engine.
+
+        ***********************************************************************/
+
+        override protected Ring newStorageEngine ( cstring storage_name )
+        {
+            return this.outer.newStorageEngine(this.id_, storage_name);
+        }
+
+        /***********************************************************************
+
+            Recycles `storage`, which is an object previously returned by
+            `newStorageEngine` or passed to the constructor.
+
+            Params:
+                storage = the storage engine object to recycle
+
+        ***********************************************************************/
+
+        override protected void recycleStorageEngine ( StorageEngine storage )
+        {
+            auto ring = cast(Ring)storage;
+            assert(ring);
+            this.outer.storage_pool.recycle(ring);
+        }
+    }
+
+    import ocean.util.container.pool.ObjectPool;
+
+    /***************************************************************************
+
+        Pool of storage engines.
+
+    ***************************************************************************/
+
+    private ObjectPool!(Ring) storage_pool;
+
+
+    /***************************************************************************
+
         Disk overflow.
 
     ***************************************************************************/
@@ -441,21 +577,65 @@ public class RingNode : StorageChannels
 
     /***************************************************************************
 
-        Flag indicating whether a scan for dumped ring files or disk overflow
-        channels is being performed (at node startup). The flags is checked by
-        `create_()` to make sure that dumped files are only loaded during node
-        startup, and not when a new channel is created when the node is running.
+        Contains additional `create_()` parameters which cannot be passed to
+        through `super.create()`.
 
     ***************************************************************************/
 
-    enum ScanStatus: uint
+    private struct ChannelsScan
     {
-        NotScanning,
-        DumpFiles,
-        OverflowChannels
+        /***********************************************************************
+
+            Indicates whether a scan for dumped ring files or overflow channels
+            is being performed (at node startup).
+
+        ***********************************************************************/
+
+        enum ScanStatus: uint
+        {
+            NotScanning,
+            DumpFiles,
+            OverflowChannels
+        }
+
+        /***********************************************************************
+
+            Flag indicating whether a scan for dumped ring files or overflow
+            channels is being performed (at node startup). The flag is to make
+            sure that dumped files are only loaded during node startup, and not
+            when a new channel is created when the node is running.
+
+        ***********************************************************************/
+
+        ScanStatus scanning;
+
+        /***********************************************************************
+
+            The storage name for the channel that is currently created from a
+            dumped file.
+
+        ***********************************************************************/
+
+        istring storage_name;
+
+        /***********************************************************************
+
+            The subscriber name for the channel that is currently created from a
+            dumped file.
+
+        ***********************************************************************/
+
+        istring subscriber_name;
     }
 
-    private ScanStatus channels_scan;
+    /***************************************************************************
+
+        Contains additional `create_()` parameters which cannot be passed to
+        through `super.create()`.
+
+    ***************************************************************************/
+
+    private ChannelsScan channels_scan;
 
 
     /***************************************************************************
@@ -504,6 +684,8 @@ public class RingNode : StorageChannels
 
         this.overflow = new DiskOverflow(data_dir);
 
+        this.storage_pool = new typeof(storage_pool);
+
         if ( path.exists() )
         {
             this.loadDumpedChannels(path);
@@ -541,29 +723,68 @@ public class RingNode : StorageChannels
 
     /***************************************************************************
 
-        Creates a new storage engine with the given name.
+        Creates a new channel with the given name.
 
         Params:
-            id = identifier string for new storage engine
+            id = identifier string for the new channel
 
         Returns:
-            new storage engine
+            a new channel.
 
         Throws:
             Exception if the node is shutting down.
 
     ***************************************************************************/
 
-    override protected StorageEngine create_ ( char[] id )
+    override protected Channel create_ ( char[] id )
     {
         enforce(!this.shutting_down, "Cannot create channel '" ~ id ~
                                      "' while shutting down");
 
-        auto storage = this.new Ring(id);
-        if ( this.channels_scan == channels_scan.DumpFiles )
-            storage.loadDumpedChannel();
+        if ( this.channels_scan.scanning )
+        {
+            auto storage = this.newStorageEngine(id, this.channels_scan.storage_name);
+
+            if (this.channels_scan.scanning == channels_scan.scanning.DumpFiles)
+                storage.loadDumpedChannel();
+            return this.new Channel(
+                storage, id, this.channels_scan.subscriber_name
+            );
+        }
+        else
+        {
+            return this.new Channel(this.newStorageEngine(id, id));
+        }
+    }
+
+
+    /***********************************************************************
+
+        Creates a new storage engine.
+
+        Params:
+            channel_id   = identifier string for the channel
+            storage_name = the storage name
+
+        Returns:
+            a new storage engine.
+
+    ***********************************************************************/
+
+    private Ring newStorageEngine ( cstring channel_id, cstring storage_name )
+    {
+        Ring new_storage = null;
+
+        auto storage = this.storage_pool.get(
+            new_storage = this.new Ring(channel_id, storage_name)
+        );
+
+        if (!new_storage)
+            storage.initialise(storage_name);
+
         return storage;
     }
+
 
 
     /***************************************************************************
@@ -677,8 +898,9 @@ public class RingNode : StorageChannels
         debug Stderr.formatln("Scanning {} for queue files", path.toString);
 
        {
-            this.channels_scan = channels_scan.DumpFiles;
-            scope ( exit ) this.channels_scan = channels_scan.NotScanning;
+            this.channels_scan.scanning = channels_scan.scanning.DumpFiles;
+            scope ( exit )
+                this.channels_scan.scanning = channels_scan.scanning.NotScanning;
 
             foreach ( info; path )
             {
@@ -687,9 +909,8 @@ public class RingNode : StorageChannels
                     switch (filename.set(info.name).suffix())
                     {
                         case DumpFileSuffix:
-                            auto id = filename.name.dup;
-                            debug Stderr.formatln("    Loading queue file '{}'", id);
-                            this.create(id);
+                            debug Stderr.formatln("    Loading queue file '{}'", filename.name);
+                            this.createChannelOnStartup(idup(filename.name));
                             break;
 
                         case this.overflow.Const.datafile_suffix,
@@ -711,7 +932,7 @@ public class RingNode : StorageChannels
 
             }
 
-            this.channels_scan = channels_scan.OverflowChannels;
+            this.channels_scan.scanning = channels_scan.scanning.OverflowChannels;
 
             /*
              * Create all channels that are present in the disk overflow but didn't
@@ -721,9 +942,9 @@ public class RingNode : StorageChannels
              * was found for them.
              */
             this.overflow.iterateChannelNames(
-                (ref char[] channel_name)
+                (ref char[] storage_name)
                 {
-                    this.getCreate(channel_name);
+                    this.createChannelOnStartup(storage_name);
                     return 0;
                 }
             );
@@ -731,10 +952,38 @@ public class RingNode : StorageChannels
 
         // Delete the dump files after successful deserialisation.
 
-        foreach (channel_; this)
+        foreach (channel; this)
         {
-            downcastAssert!(Ring)(storage).deleteDumpFile();
+            foreach (storage_; channel)
+            {
+                auto storage = cast(Ring)storage_;
+                assert(storage);
+                downcastAssert!(Ring)(storage).deleteDumpFile();
+            }
         }
+    }
+
+    /***************************************************************************
+
+        Creates a channel, potentially with a subscriber, depending on
+        `storage_name`. Should be called only during the initial channels scan.
+
+        Params:
+            storage_name
+
+    ***************************************************************************/
+
+    private void createChannelOnStartup ( istring storage_name )
+    in
+    {
+        assert(this.channels_scan.scanning);
+    }
+    body
+    {
+        this.getCreate(Channel.splitSubscriberName(
+            this.channels_scan.storage_name = storage_name,
+            this.channels_scan.subscriber_name
+        ));
     }
 
     /***************************************************************************
