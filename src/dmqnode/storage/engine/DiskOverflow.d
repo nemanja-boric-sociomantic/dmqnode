@@ -910,6 +910,9 @@ class DiskOverflow: DiskOverflowInfo
 
         this.clearChannel(*channel);
         this.channels.remove(channel_name);
+
+        if (!this.channels.length)
+            this.highest_channel_id = 0;
     }
 
     /***************************************************************************
