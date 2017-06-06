@@ -403,6 +403,30 @@ public class RingNode : StorageChannels
 
         /***********************************************************************
 
+            Returns the storage identifier, stripping the leading '@' if the
+            subscriber name is empty (i.e. the subscriber used by Consume
+            requests prior to v2 and the default for Consume v2).
+
+            The storage identifier returned by this method is used
+              - by the public API, the stats log for example
+              - internally for the name of the dmq dump file.
+
+            Returns:
+                the storage identifier.
+
+        ***********************************************************************/
+
+        override public cstring id ( )
+        {
+            auto idstr = super.id();
+            if (idstr.length)
+                if (idstr[0] == '@')
+                    return idstr[1 .. $];
+            return idstr;
+        }
+
+        /***********************************************************************
+
             Deletes the channel dump file.
 
         ***********************************************************************/
