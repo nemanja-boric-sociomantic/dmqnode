@@ -510,3 +510,39 @@ public abstract class StorageChannels :
 
     abstract public void writeDiskOverflowIndex ( );
 }
+
+// Test for IChannel.splitSubscriberName.
+
+version (UnitTest) import ocean.core.Test;
+
+unittest
+{
+    // Named test, splits storage_name into subscriber_name and channel_name and
+    // verifies the result. subscriber_name should be null if and only if a
+    // null subscriber name is expected; that is, if storage_name does not
+    // contain '@'. If and only if storage_name starts with '@' then an empty
+    // non-null subscriber name is expected.
+    static void check ( istring test_name, cstring storage_name,
+                        cstring subscriber_name, cstring channel_name )
+    {
+        auto test = new NamedTest(test_name);
+        cstring result_subscriber_name;
+        test.test!("==")(
+            IChannel.splitSubscriberName(storage_name, result_subscriber_name),
+            channel_name
+        );
+        test.test!("==")(result_subscriber_name, subscriber_name);
+        test.test!("==")(result_subscriber_name is null, subscriber_name is null);
+    }
+
+    check("subscriber@channel", "hello@world", "hello", "world");
+    check("@channel", "@world", "", "world");
+    check("plain channel", "hello_world", null, "hello_world");
+    check("subscriber@", "hello@", "hello", "");
+
+    // Also test empty channel names, which are in fact invalid, still
+    // splitSubscriberName should handle them properly.
+    check("only '@'", "@", "", "");
+    check("empty storage name", "", null, "");
+    check("null storage name", "", null, "");
+}
