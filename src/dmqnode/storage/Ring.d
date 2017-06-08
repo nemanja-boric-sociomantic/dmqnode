@@ -30,6 +30,7 @@ import ocean.util.container.mem.MemManager;
 import ocean.util.container.queue.FlexibleRingQueue;
 import ocean.util.container.queue.model.IQueueInfo;
 import ocean.util.log.Log;
+import core.stdc.ctype;
 import ocean.transition;
 
 
@@ -925,7 +926,12 @@ public class RingNode : StorageChannels
                     switch (filename.set(info.name).suffix())
                     {
                         case DumpFileSuffix:
-                            this.createChannelOnStartup(idup(filename.name));
+                            if (validateDumpFileName(filename.name))
+                                this.createChannelOnStartup(idup(filename.name));
+                            else
+                                log.error("Queue file \"{}/{}\" has an " ~
+                                    "invalid name, ignoring it.",
+                                    path, info.name);
                             break;
 
                         case this.overflow.Const.datafile_suffix,
@@ -1022,4 +1028,72 @@ public class RingNode : StorageChannels
             throw e;
         }
     }
+
+
+    /***************************************************************************
+
+        Validates the name of a queue dump file: Only ASCII alphanumeric
+        characters, '-', '_' and '@' are allowed. '@' may appear only once and
+        not as the first or last character.
+
+        Params:
+            filename = queue dump file name without the ".rq" extension
+
+        Returns:
+            true if `filename` is valid or false otherwise.
+
+    ***************************************************************************/
+
+    private static bool validateDumpFileName ( cstring filename )
+    {
+        if (!filename.length)
+            return false;
+
+        bool have_subscriber_separator = false;
+
+        foreach (i, c; filename)
+        {
+            if (!isalnum(c))
+            {
+                switch (c)
+                {
+                    case '_', '-':
+                        break;
+
+                    case '@':
+                        if (i &&
+                            (i < (filename.length - 1)) &&
+                            !have_subscriber_separator)
+                        {
+                            have_subscriber_separator = true;
+                            break;
+                        }
+                        else
+                            return false;
+
+                    default:
+                        return false;
+                }
+            }
+        }
+
+        return true;
+    }
+}
+
+version (UnitTest) import ocean.core.Test;
+
+unittest
+{
+    test(RingNode.validateDumpFileName("helloworld"));
+    test(RingNode.validateDumpFileName("hello_world"));
+    test(RingNode.validateDumpFileName("hello@world"));
+    test(!RingNode.validateDumpFileName("hello.world"));
+    test(!RingNode.validateDumpFileName("hello:world"));
+    test(!RingNode.validateDumpFileName("hello@wor@ld"));
+    test(!RingNode.validateDumpFileName("@world"));
+    test(RingNode.validateDumpFileName("_world"));
+    test(!RingNode.validateDumpFileName("hello@"));
+    test(!RingNode.validateDumpFileName("@"));
+    test(!RingNode.validateDumpFileName(""));
 }
