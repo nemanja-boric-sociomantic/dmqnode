@@ -142,12 +142,13 @@ class IndexFile: PosixFile
                  *   - %m matches a string, stores it in a buffer allocated by
                  *     malloc and stores a pointer to that buffer in the
                  *     argument.
-                 *   - [_0-9a-zA-Z-] makes %m match only strings that consist of
-                 *     the characters '_', '0'-'9', 'a'-'z', 'A'-'Z' or '-',
+                 *   - [_0-9a-zA-Z@-] makes %m match only strings that consist
+                 *     of the characters
+                 *     '_', '0'-'9', 'a'-'z', 'A'-'Z', '@' or '-',
                  *     which ensures the string is a valid queue channel name.
                  */
                 n = fscanf(this.stream,
-                           " %n%m[_0-9a-zA-Z-]%n %lu %llu %lld %lld".ptr,
+                           " %n%m[_0-9a-zA-Z@-]%n %lu %llu %lld %lld".ptr,
                            &name_start, &channel_name, &name_end,
                            &channel.records, &channel.bytes, &channel.first_offset,
                            &channel.last_offset)
