@@ -137,15 +137,15 @@ abstract class IChannel: IStorageEngine
     protected this ( StorageEngine storage, cstring channel_id, istring subscriber_name )
     in
     {
-        auto storage_name = storage.id;
-        assert(storage_name.length == channel_id.length + 1 + subscriber_name.length,
-               "storage ID length inconsistent with channel_id@subscriber_name");
-        assert(storage_name[0 .. channel_id.length] == channel_id,
-               "channel name in storage ID doesn't match channel_id");
-        assert(storage_name[channel_id.length + 1] == '@',
-               "storage ID doesn't match channel_id@subscriber_name");
-        assert(storage_name[$ - subscriber_name.length .. $] == subscriber_name,
+        auto storage_id = storage.id;
+        assert(storage_id.length == subscriber_name.length + 1 + channel_id.length,
+               "storage ID length inconsistent with subscriber_name@channel_id format");
+        assert(storage_id[0 .. subscriber_name.length] == subscriber_name,
                "subscriber name in storage ID doesn't match subscriber_name");
+        assert(storage_id[subscriber_name.length] == '@',
+               "storage ID doesn't match subscriber_name@channel_id format");
+        assert(storage_id[$ - channel_id.length .. $] == channel_id,
+               "channel name in storage ID doesn't match channel_id");
     }
     body
     {
