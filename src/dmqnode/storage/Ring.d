@@ -25,7 +25,6 @@ import ocean.core.Enforce: enforce;
 import ocean.io.device.File;
 import ocean.io.FilePath;
 import ocean.io.Path : normalize, PathParser;
-debug import ocean.io.Stdout : Stderr;
 import ocean.sys.Environment;
 import ocean.util.container.mem.MemManager;
 import ocean.util.container.queue.FlexibleRingQueue;
@@ -140,6 +139,14 @@ public class RingNode : StorageChannels
 
         /***********************************************************************
 
+            Logger
+
+        ***********************************************************************/
+
+        private Logger log;
+
+        /***********************************************************************
+
             Constructor. Creates the ring queue. Also attempts to deserialize
             its contents from the specified path if the RingNode is being
             constructed (the loading of a dumped channel does not happen once
@@ -194,6 +201,8 @@ public class RingNode : StorageChannels
         {
             super.initialise(storage_name);
             // From this point this.id == storage_name.
+
+            this.log = Log.lookup("storage:" ~ this.id);
 
             this.filename = FilePath.join(
                 this.outer.data_dir, this.id ~ this.outer.DumpFileSuffix
@@ -253,20 +262,19 @@ public class RingNode : StorageChannels
 
         private void loadDumpedChannel ( )
         {
-            debug Stderr.formatln("Loading from file {}", this.filename);
+            auto filepath = this.file_path.toString();
 
             if ( this.file_path.exists() )
             {
-                debug Stderr.formatln("(File exists, loading)");
-
-                scope file = new File(this.file_path.toString(), File.ReadExisting);
+                this.log.info("Loading file \"{}\"", filepath);
+                scope file = new File(filepath, File.ReadExisting);
                 scope ( exit ) file.close();
 
                 this.queue.load(file);
             }
             else
             {
-                debug Stderr.formatln("(File doesn't exist)");
+                this.log.error("File \"{}\" not found", filepath);
             }
         }
 
@@ -372,7 +380,7 @@ public class RingNode : StorageChannels
         {
             if ( this.file_path.exists )
             {
-                log.warn("Closing channel '{}' -- will {} existing dump file '{}'",
+                this.log.warn("Closing channel '{}' -- will {} existing dump file '{}'",
                          this.id,
                          this.queue.length? "overwrite" : "delete",
                          this.file_path.toString());
@@ -381,12 +389,12 @@ public class RingNode : StorageChannels
             {
                 if ( this.queue.length )
                 {
-                    log.info("Closing channel '{}' -- saving in file '{}'",
+                    this.log.info("Closing channel '{}' -- saving in file '{}'",
                              this.id, this.file_path.toString());
                 }
                 else
                 {
-                    log.info("Closing channel '{}' -- channel is empty, not saving", this.id);
+                    this.log.info("Closing channel '{}' -- channel is empty, not saving", this.id);
                 }
             }
 
@@ -903,7 +911,7 @@ public class RingNode : StorageChannels
     {
         scope filename = new FilePath;
 
-        debug Stderr.formatln("Scanning {} for queue files", path.toString);
+        log.info("Scanning {} for queue files", path.toString);
 
        {
             this.channels_scan.scanning = channels_scan.scanning.DumpFiles;
@@ -917,7 +925,6 @@ public class RingNode : StorageChannels
                     switch (filename.set(info.name).suffix())
                     {
                         case DumpFileSuffix:
-                            debug Stderr.formatln("    Loading queue file '{}'", filename.name);
                             this.createChannelOnStartup(idup(filename.name));
                             break;
 
@@ -926,18 +933,16 @@ public class RingNode : StorageChannels
                             break;
 
                         default:
-                            log.warn(typeof(this).stringof ~ ": ignoring file '" ~
-                                info.name ~ "' in data directory '" ~
-                                path.toString() ~ "' (unknown suffix)");
+                            log.warn("Ignoring file \"{}/{}\" (unknown suffix)",
+                            path.toString(), info.name);
                     }
                 }
                 else
                 {
-                    log.warn(typeof(this).stringof ~ ": found "
-                        "subdirectory '" ~ info.name ~ "' in data "
-                        "directory '" ~ path.toString() ~ '\'');
+                    log.warn("found subdirectory \"{}\" " ~
+                             "in data directory \"{}\", ignoring it.",
+                        info.name, path.toString());
                 }
-
             }
 
             this.channels_scan.scanning = channels_scan.scanning.OverflowChannels;
