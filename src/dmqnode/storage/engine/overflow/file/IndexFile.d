@@ -31,6 +31,7 @@ class IndexFile: PosixFile
     import core.stdc.stdio: FILE, EOF, fscanf, fprintf, feof, rewind, clearerr, fflush;
     import core.stdc.stdlib: free;
     import ocean.sys.SignalMask;
+    import dmqnode.storage.model.StorageChannels: IChannel;
 
     /***************************************************************************
 
@@ -138,6 +139,10 @@ class IndexFile: PosixFile
             switch (n)
             {
                 case 5:
+                    enforceImpl(this.e,
+                        validateSubscriberSeparator(channel_name),
+                        "Invalid use of subscriber/channel '@' separator",
+                        this.name, nline);
                     /*
                      * Validate channel by checking the same conditions as its
                      * invariant.
@@ -294,6 +299,42 @@ class IndexFile: PosixFile
 
         return n;
     }
+
+    /***************************************************************************
+
+        Validates the occurrences of the subscriber-channel separator '@' in
+        `storage_name`: '@' may occur at most once and not as the first or last
+        character.
+
+        Params:
+            storage_name = a storage name
+
+        Returns:
+            true if `storage_name` contains valid occurrences of '@' or false
+            otherwise.
+
+    ***************************************************************************/
+
+    private static bool validateSubscriberSeparator ( cstring storage_name )
+    {
+        cstring subscriber_name;
+        cstring channel_name =
+            IChannel.splitSubscriberName(storage_name, subscriber_name);
+
+        if (!channel_name.length) // storage_name[0] == '@'
+            return false;
+
+        if (subscriber_name is null) // no '@' in storage_name
+            return true;
+
+        if (!subscriber_name.length) // storage_name[$ - 1] == '@', no other '@'
+            return false;
+
+        // It's subscriber_name@channel_name so check for a second '@' in
+        // channel_name.
+        IChannel.splitSubscriberName(channel_name, subscriber_name);
+        return subscriber_name is null;
+    }
 }
 
 version (UnitTest)
@@ -369,4 +410,17 @@ unittest
             test(!!feof(stream));
         }
     );
+}
+
+unittest
+{
+    test(IndexFile.validateSubscriberSeparator("hello_world"));
+    test(IndexFile.validateSubscriberSeparator("hello@world"));
+    test(!IndexFile.validateSubscriberSeparator("hello@@world"));
+    test(!IndexFile.validateSubscriberSeparator("hello_world@@"));
+    test(!IndexFile.validateSubscriberSeparator("@hello_world"));
+    test(!IndexFile.validateSubscriberSeparator("hello_world@"));
+    test(!IndexFile.validateSubscriberSeparator("hello@wor@ld"));
+    test(!IndexFile.validateSubscriberSeparator("@"));
+    test(!IndexFile.validateSubscriberSeparator("@@"));
 }
