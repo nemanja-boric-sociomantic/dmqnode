@@ -861,24 +861,6 @@ public class RingNode : StorageChannels
 
     /***************************************************************************
 
-        Generates a absolute, normalized path string from path.
-
-        Params:
-            path = file path
-
-        Returns:
-            absolute, normalized path string
-
-     **************************************************************************/
-
-    private char[] getFullPathString ( FilePath path )
-    {
-        return path.set(normalize(path.folder)).toString;
-    }
-
-
-    /***************************************************************************
-
         Creates a FilePath instance set to the absolute path of dir, if dir is
         not null, or to the current working directory of the environment
         otherwise.
@@ -946,14 +928,14 @@ public class RingNode : StorageChannels
                         default:
                             log.warn(typeof(this).stringof ~ ": ignoring file '" ~
                                 info.name ~ "' in data directory '" ~
-                                this.getFullPathString(path) ~ "' (unknown suffix)");
+                                path.toString() ~ "' (unknown suffix)");
                     }
                 }
                 else
                 {
                     log.warn(typeof(this).stringof ~ ": found "
                         "subdirectory '" ~ info.name ~ "' in data "
-                        "directory '" ~ this.getFullPathString(path) ~ '\'');
+                        "directory '" ~ path.toString() ~ '\'');
                 }
 
             }
