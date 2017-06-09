@@ -771,9 +771,11 @@ public class RingNode : StorageChannels
 
             if (this.channels_scan.scanning == channels_scan.scanning.DumpFiles)
                 storage.loadDumpedChannel();
-            return this.new Channel(
-                storage, id, this.channels_scan.subscriber_name
-            );
+
+            return this.channels_scan.subscriber_name.length
+                ? this.new Channel(storage, id,
+                    this.channels_scan.subscriber_name)
+                : this.new Channel(storage);
         }
         else
         {
