@@ -270,6 +270,14 @@ class IndexFile: PosixFile
          *   - The leading ' ' skips leading white space.
          *   - %n stores the current position in the input string in the
          *     argument so that channel_name.length = name_end - name_start.
+         *     Note that the Linux manpage mentions some confusion about whether
+         *     this token increments the `fscanf` return value or not, referring
+         *     to Corrigendum 1 of the C90 standard. However, both C99 and POSIX
+         *     explicitly say %n does not increment the returned count so we
+         *     rely on that here and say, fscanf returns 5 (not 7) on success.
+         *     References:
+         *     http://pubs.opengroup.org/onlinepubs/9699919799/functions/scanf.html
+         *     http://www.open-std.org/jtc1/sc22/wg14/www/docs/n1124.pdf (p.287)
          *   - %m matches a string, stores it in a buffer allocated by malloc
          *     and stores a pointer to that buffer in the argument.
          *   - [_0-9a-zA-Z@-] makes %m match only strings that consist of the
