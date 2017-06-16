@@ -212,12 +212,12 @@ public class RingNode : StorageChannels
 
             if (this.overflow is null)
             {
-                this.overflow = this.outer.overflow.new Channel(this.id);
+                this.overflow = this.outer.overflow.new Channel(idup(this.id));
                 this.overflow_info = this.overflow;
             }
             else
             {
-                this.overflow.readd(this.overflow, this.id);
+                this.overflow.readd(this.overflow, idup(this.id));
             }
         }
 
