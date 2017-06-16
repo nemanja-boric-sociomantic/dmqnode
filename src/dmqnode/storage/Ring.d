@@ -248,6 +248,7 @@ public class RingNode : StorageChannels
         override public void rename ( cstring storage_name )
         {
             super.initialise(storage_name);
+            this.log = Log.lookup("storage:" ~ this.id);
             this.overflow.rename(idup(storage_name));
             this.filename = FilePath.join(
                 this.outer.data_dir, this.id ~ this.outer.DumpFileSuffix
