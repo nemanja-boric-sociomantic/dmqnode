@@ -885,6 +885,8 @@ class DiskOverflow: DiskOverflowInfo
             return new_channel;
         }
 
+        log.info("Renaming channel {} '{}' -> '{}'", channel.id, old_name, new_name);
+
         this.channels[new_name] = *channel;
         this.channels.remove(old_name);
         return new_name in this.channels;
