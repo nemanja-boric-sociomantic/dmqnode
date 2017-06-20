@@ -213,7 +213,7 @@ abstract class IChannel: IStorageEngine
     {
         StorageEngine subscriber;
 
-        auto storage_name = subscriber_name ~ "@" ~ this.id_;
+        istring storage_name ( ) {return subscriber_name ~ "@" ~ this.id_;}
 
         if (this.subscribers.length)
         {
