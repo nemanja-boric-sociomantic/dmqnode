@@ -424,7 +424,7 @@ public class RingNode : StorageChannels
               - internally for the name of the dmq dump file.
 
             Returns:
-                the storage identifier.
+                the storage identifier without a leading '@'.
 
         ***********************************************************************/
 
@@ -435,6 +435,22 @@ public class RingNode : StorageChannels
                 if (idstr[0] == '@')
                     return idstr[1 .. $];
             return idstr;
+        }
+
+        /***********************************************************************
+
+            Returns the storage identifier which will start with '@' if the
+            subscriber name is empty (i.e. the subscriber used by Consume
+            requests prior to v2 and the default for Consume v2).
+
+            Returns:
+                the storage identifier.
+
+        ***********************************************************************/
+
+        override public cstring storage_name ( )
+        {
+            return super.id();
         }
 
         /***********************************************************************
@@ -510,21 +526,6 @@ public class RingNode : StorageChannels
         protected this ( StorageEngine storage )
         {
             super(storage);
-        }
-
-        /***********************************************************************
-
-            Creates a channel with one subscriber.
-
-            Params:
-                storage         = the storage for the subscriber
-                subscriber_name = the name of the subscriber
-
-        ***********************************************************************/
-
-        protected this ( StorageEngine storage, cstring channel_id, istring subscriber_name )
-        {
-            super(storage, channel_id, subscriber_name);
         }
 
         /***********************************************************************
@@ -653,15 +654,6 @@ public class RingNode : StorageChannels
         ***********************************************************************/
 
         istring storage_name;
-
-        /***********************************************************************
-
-            The subscriber name for the channel that is currently created from a
-            dumped file.
-
-        ***********************************************************************/
-
-        istring subscriber_name;
     }
 
     /***************************************************************************
@@ -784,10 +776,7 @@ public class RingNode : StorageChannels
             if (this.channels_scan.scanning == channels_scan.scanning.DumpFiles)
                 storage.loadDumpedChannel();
 
-            return this.channels_scan.subscriber_name.length
-                ? this.new Channel(storage, id,
-                    this.channels_scan.subscriber_name)
-                : this.new Channel(storage);
+            return this.new Channel(storage);
         }
         else
         {
@@ -1001,9 +990,11 @@ public class RingNode : StorageChannels
     }
     body
     {
+        cstring subscriber_name;
+
         this.getCreate(Channel.splitSubscriberName(
             this.channels_scan.storage_name = storage_name,
-            this.channels_scan.subscriber_name
+            subscriber_name
         ));
     }
 

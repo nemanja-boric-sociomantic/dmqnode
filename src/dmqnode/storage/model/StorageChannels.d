@@ -101,58 +101,30 @@ abstract class IChannel: IStorageEngine
 
     /***************************************************************************
 
-        Creates a channel with no subscriber.
+        Creates a channel with one subscriber, if `storage.storage_name`
+        contains a subscriber name, or no subscriber otherwise.
 
         Params:
-            storage = the initial storage for the channel
+            storage = the subscriber or initial storage according to
+                      `storage.storage_name`
 
     ***************************************************************************/
 
     protected this ( StorageEngine storage )
-    in
     {
-        auto channel_id = storage.id;
-        assert(!memchr(channel_id.ptr, '@', channel_id.length),
-               "expected no '@' in plain channel name");
-    }
-    body
-    {
-        super(storage.id);
+        cstring subscriber_name;
+
+        super(splitSubscriberName(storage.storage_name, subscriber_name));
         // Setting the initial storage and this.is_reset must be done after the
         // super constructor has returned or the invariant will fail.
-        this.initial_storage = storage;
-        this.is_reset = false;
-    }
 
-    /***************************************************************************
+        if (subscriber_name is null)
+            this.initial_storage = storage;
+        else
+            // subscriber_name may be a non-null empty string for the default
+            // Consume subscriber.
+            this.subscribers[idup(subscriber_name)] = storage;
 
-        Creates a channel with one subscriber.
-
-        Params:
-            storage         = the storage for the subscriber
-            subscriber_name = the name of the subscriber
-
-    ***************************************************************************/
-
-    protected this ( StorageEngine storage, cstring channel_id, istring subscriber_name )
-    in
-    {
-        auto storage_id = storage.id;
-        assert(storage_id.length == subscriber_name.length + 1 + channel_id.length,
-               "storage ID length inconsistent with subscriber_name@channel_id format");
-        assert(storage_id[0 .. subscriber_name.length] == subscriber_name,
-               "subscriber name in storage ID doesn't match subscriber_name");
-        assert(storage_id[subscriber_name.length] == '@',
-               "storage ID doesn't match subscriber_name@channel_id format");
-        assert(storage_id[$ - channel_id.length .. $] == channel_id,
-               "channel name in storage ID doesn't match channel_id");
-    }
-    body
-    {
-        super(channel_id);
-        // Setting the subscriber and this.is_reset must be done after the super
-        // constructor has returned or the invariant will fail.
-        this.subscribers[subscriber_name] = storage;
         this.is_reset = false;
     }
 
