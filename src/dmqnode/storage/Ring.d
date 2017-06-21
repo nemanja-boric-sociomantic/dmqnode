@@ -153,21 +153,16 @@ public class RingNode : StorageChannels
             constructed (the loading of a dumped channel does not happen once
             the node has started up -- only at initialisation).
 
-            - `channel_id` is the channel name without the subscriber suffix.
-               In this class it is used only to call
-               `channel_size_config.getChannelSize()` in the constructor.
-            - `storage_name == channel_id ~ '@' ~ subscriber_name` is used
-               as the real channel name in this class, for the memory queue dump
-               file path and as the disk overflow channel name.
-            - `this.id` and `this.id_` are `storage_name`.
+            `storage_name == channel_id ~ '@' ~ subscriber_name` is used as the
+            real channel name in this class, for the memory queue dump file path
+            and as the disk overflow channel name.
 
             Params:
-                channel_id   = queue (channel) identifier string
                 storage_name = the name of this storage
 
         ***********************************************************************/
 
-        public this ( cstring channel_id, cstring storage_name )
+        public this ( cstring storage_name )
         in
         {
             assert(!this.outer.shutting_down,
@@ -182,8 +177,14 @@ public class RingNode : StorageChannels
 
             super(storage_name);
 
-            this.queue = new FlexibleByteRingQueue(noScanMallocMemManager,
-                this.outer.channel_size_config.getChannelSize(channel_id));
+            cstring subscriber_name;
+
+            this.queue = new FlexibleByteRingQueue(
+                noScanMallocMemManager,
+                this.outer.channel_size_config.getChannelSize(
+                    Channel.splitSubscriberName(storage_name, subscriber_name)
+                )
+            );
 
             this.memory_info = this.queue;
         }
@@ -541,7 +542,7 @@ public class RingNode : StorageChannels
 
         override protected Ring newStorageEngine ( cstring storage_name )
         {
-            return this.outer.newStorageEngine(this.id_, storage_name);
+            return this.outer.newStorageEngine(storage_name);
         }
 
         /***********************************************************************
@@ -779,7 +780,7 @@ public class RingNode : StorageChannels
 
         if ( this.channels_scan.scanning )
         {
-            auto storage = this.newStorageEngine(id, this.channels_scan.storage_name);
+            auto storage = this.newStorageEngine(this.channels_scan.storage_name);
 
             if (this.channels_scan.scanning == channels_scan.scanning.DumpFiles)
                 storage.loadDumpedChannel();
@@ -791,7 +792,7 @@ public class RingNode : StorageChannels
         }
         else
         {
-            return this.new Channel(this.newStorageEngine(id, id));
+            return this.new Channel(this.newStorageEngine(id));
         }
     }
 
@@ -801,7 +802,6 @@ public class RingNode : StorageChannels
         Creates a new storage engine.
 
         Params:
-            channel_id   = identifier string for the channel
             storage_name = the storage name
 
         Returns:
@@ -809,12 +809,12 @@ public class RingNode : StorageChannels
 
     ***********************************************************************/
 
-    private Ring newStorageEngine ( cstring channel_id, cstring storage_name )
+    private Ring newStorageEngine ( cstring storage_name )
     {
         Ring new_storage = null;
 
         auto storage = this.storage_pool.get(
-            new_storage = this.new Ring(channel_id, storage_name)
+            new_storage = this.new Ring(storage_name)
         );
 
         if (!new_storage)
