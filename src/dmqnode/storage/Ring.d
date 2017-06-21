@@ -170,7 +170,9 @@ public class RingNode : StorageChannels
         public this ( cstring channel_id, cstring storage_name )
         in
         {
-            assert(!this.outer.shutting_down, "Attempted to create channel '{}' during shutdown");
+            assert(!this.outer.shutting_down,
+                   "Attempted to create storage '" ~ storage_name ~
+                   "' during shutdown");
         }
         body
         {
