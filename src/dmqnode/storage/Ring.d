@@ -385,8 +385,7 @@ public class RingNode : StorageChannels
         {
             if ( this.file_path.exists )
             {
-                this.log.warn("Closing channel '{}' -- will {} existing dump file '{}'",
-                         this.id,
+                this.log.warn("Closing -- will {} existing dump file \"{}\"",
                          this.queue.length? "overwrite" : "delete",
                          this.file_path.toString());
             }
@@ -394,12 +393,12 @@ public class RingNode : StorageChannels
             {
                 if ( this.queue.length )
                 {
-                    this.log.info("Closing channel '{}' -- saving in file '{}'",
-                             this.id, this.file_path.toString());
+                    this.log.info("Closing -- saving in file \"{}\"",
+                        this.file_path.toString());
                 }
                 else
                 {
-                    this.log.info("Closing channel '{}' -- channel is empty, not saving", this.id);
+                    this.log.info("Closing -- storage is empty, not saving");
                 }
             }
 
