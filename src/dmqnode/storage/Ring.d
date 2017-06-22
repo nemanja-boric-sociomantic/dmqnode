@@ -853,7 +853,8 @@ public class RingNode : StorageChannels
     {
         scope filename = new FilePath;
 
-        log.info("Scanning {} for queue files", path.toString);
+        auto log = Log.lookup("scan-dumpfiles");
+        log.info("Using directory \"{}\".", path.toString);
 
        {
             foreach ( info; path )
@@ -864,11 +865,14 @@ public class RingNode : StorageChannels
                     {
                         case DumpFileSuffix:
                             if (validateDumpFileName(filename.name))
+                            {
+                                log.info("Found \"{}\".", filename.file);
                                 this.createChannelFromDumpFile(filename.name);
+                            }
                             else
-                                log.error("Queue file \"{}/{}\" has an " ~
-                                    "invalid name, ignoring it.",
-                                    path, info.name);
+                                log.error("Ignoring file \"{}\" " ~
+                                    "(invalid name).",
+                                    info.name);
                             break;
 
                         case this.overflow.Const.datafile_suffix,
@@ -876,15 +880,13 @@ public class RingNode : StorageChannels
                             break;
 
                         default:
-                            log.warn("Ignoring file \"{}/{}\" (unknown suffix)",
-                            path.toString(), info.name);
+                            log.warn("Ignoring file \"{}\" " ~
+                                    "(unknow suffix).", info.name);
                     }
                 }
                 else
                 {
-                    log.warn("found subdirectory \"{}\" " ~
-                             "in data directory \"{}\", ignoring it.",
-                        info.name, path.toString());
+                    log.warn("Ignoring subdirectory \"{}\".", info.name);
                 }
             }
 
