@@ -209,18 +209,18 @@ public class RingNode : StorageChannels
             this.log = Log.lookup("storage:" ~ this.id);
 
             this.filename = FilePath.join(
-                this.outer.data_dir, this.id ~ this.outer.DumpFileSuffix
+                this.outer.data_dir, this.storage_name ~ this.outer.DumpFileSuffix
             );
             this.file_path.set(this.filename);
 
             if (this.overflow is null)
             {
-                this.overflow = this.outer.overflow.new Channel(idup(this.id));
+                this.overflow = this.outer.overflow.new Channel(idup(this.storage_name));
                 this.overflow_info = this.overflow;
             }
             else
             {
-                this.overflow.readd(this.overflow, idup(this.id));
+                this.overflow.readd(this.overflow, idup(this.storage_name));
             }
         }
 
@@ -254,7 +254,7 @@ public class RingNode : StorageChannels
             this.log = Log.lookup("storage:" ~ this.id);
             this.overflow.rename(idup(storage_name));
             this.filename = FilePath.join(
-                this.outer.data_dir, this.id ~ this.outer.DumpFileSuffix
+                this.outer.data_dir, this.storage_name ~ this.outer.DumpFileSuffix
             );
             this.file_path.set(this.filename);
         }
@@ -1082,8 +1082,7 @@ public class RingNode : StorageChannels
                         break;
 
                     case '@':
-                        if (i &&
-                            (i < (filename.length - 1)) &&
+                        if ((i < (filename.length - 1)) &&
                             !have_subscriber_separator)
                         {
                             have_subscriber_separator = true;
@@ -1112,7 +1111,8 @@ unittest
     test(!RingNode.validateDumpFileName("hello.world"));
     test(!RingNode.validateDumpFileName("hello:world"));
     test(!RingNode.validateDumpFileName("hello@wor@ld"));
-    test(!RingNode.validateDumpFileName("@world"));
+    test(RingNode.validateDumpFileName("@world"));
+    test(!RingNode.validateDumpFileName("@hello@world"));
     test(RingNode.validateDumpFileName("_world"));
     test(!RingNode.validateDumpFileName("hello@"));
     test(!RingNode.validateDumpFileName("@"));

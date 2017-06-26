@@ -327,9 +327,6 @@ class IndexFile: PosixFile
         if (subscriber_name is null) // no '@' in storage_name
             return true;
 
-        if (!subscriber_name.length) // storage_name[0] == '@'
-            return false;
-
         // It's subscriber_name@channel_name so check for a second '@' in
         // channel_name.
         IChannel.splitSubscriberName(channel_name, subscriber_name);
@@ -418,7 +415,8 @@ unittest
     test(IndexFile.validateSubscriberSeparator("hello@world"));
     test(!IndexFile.validateSubscriberSeparator("hello@@world"));
     test(!IndexFile.validateSubscriberSeparator("hello_world@@"));
-    test(!IndexFile.validateSubscriberSeparator("@hello_world"));
+    test(IndexFile.validateSubscriberSeparator("@hello_world"));
+    test(!IndexFile.validateSubscriberSeparator("@hello@world"));
     test(!IndexFile.validateSubscriberSeparator("hello_world@"));
     test(!IndexFile.validateSubscriberSeparator("hello@wor@ld"));
     test(!IndexFile.validateSubscriberSeparator("@"));
