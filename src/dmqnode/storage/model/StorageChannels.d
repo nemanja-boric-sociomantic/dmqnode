@@ -511,9 +511,147 @@ public abstract class StorageChannels :
     abstract public void writeDiskOverflowIndex ( );
 }
 
-// Test for IChannel.splitSubscriberName.
+version (UnitTest)
+{
+    import ocean.core.Test;
+    import dmqnode.util.Downcast;
+}
 
-version (UnitTest) import ocean.core.Test;
+// Test for IChannel except splitSubscriberName (separate test below).
+
+unittest
+{
+    static class Storage: IChannel.StorageEngine
+    {
+        bool flushed, cleared, closed, recycled;
+        uint records, bytes;
+
+        this ( char[] id ) { super(id); }
+
+        override void rename ( cstring ch ) { this.initialise(ch); }
+        override cstring storage_name ( ) { return this.id; }
+        override void flush ( ) { this.flushed = true; }
+
+        override typeof(this) clear ( )
+        {
+            this.cleared = true;
+            return this;
+        }
+
+        override typeof(this) close ( )
+        {
+            this.closed = true;
+            return this;
+        }
+
+        ulong num_records ( ) { return this.records; }
+        ulong num_bytes ( ) { return this.bytes; }
+
+        override void push_ ( char[] value ) { }
+        override typeof(this) pop ( ref char[] value ) { return this; }
+    }
+
+    static class Channel: IChannel
+    {
+        this ( StorageEngine storage ) { super(storage); }
+
+        override StorageEngine newStorageEngine ( cstring storage_name )
+        {
+            return new Storage(storage_name);
+        }
+
+        override void recycleStorageEngine ( StorageEngine storage )
+        {
+            (downcastAssert!(Storage)(storage)).recycled = true;
+        }
+    }
+
+    // Test IChannel except addStorage, initialise with subscriberless storage.
+    {
+        scope storage = new Storage("ch");
+        scope channel = new Channel(storage);
+        test!("is")(channel.storage_unless_subscribed, storage);
+        foreach (s; channel) test!("is")(s, storage);
+
+        test!("is")(channel.subscribe("max"), storage);
+        test!("==")(storage.id, "max@ch");
+        test!("is")(channel.storage_unless_subscribed, cast(Object)null);
+        foreach (s; channel) test!("is")(s, storage);
+
+        auto storage2 = downcastAssert!(Storage)(channel.subscribe("moritz"));
+        test!("!is")(storage2, storage);
+        test!("==")(storage2.id, "moritz@ch");
+
+        storage.records = 4700;
+        storage2.records = 11;
+        test!("==")(channel.num_records, 4711);
+
+        storage.bytes = 123000;
+        storage2.bytes = 456;
+        test!("==")(channel.num_bytes, 123456);
+
+        channel.flush();
+        test(storage.flushed);
+        test(storage2.flushed);
+
+        channel.clear();
+        test(storage.cleared);
+        test(storage2.cleared);
+
+        channel.close();
+        test(storage.closed);
+        test(storage2.closed);
+
+        channel.reset();
+        test(storage.recycled);
+        test(storage2.recycled);
+
+        auto storage3 = downcastAssert!(Storage)(channel.storage_unless_subscribed);
+        test!("!is")(storage3, cast(Object)null);
+        test!("==")(storage3.id, "ch");
+
+        channel.reset();
+        test(storage3.recycled);
+        foreach (s; channel)
+        {
+            test!("!is")(s, cast(Object)null);
+            test!("==")(s.id, "ch");
+            test!("is")(channel.storage_unless_subscribed, s);
+        }
+    }
+
+    // Initialise with subscriber.
+    {
+        scope storage = new Storage("fritz@ch");
+        scope channel = new Channel(storage);
+        test!("is")(channel.storage_unless_subscribed, cast(Object)null);
+        test!("is")(channel.subscribe("fritz"), storage);
+    }
+
+    // Initialise with subscriber "".
+    {
+        scope storage = new Storage("@ch");
+        scope channel = new Channel(storage);
+        test!("is")(channel.storage_unless_subscribed, cast(Object)null);
+        test!("is")(channel.subscribe(""), storage);
+    }
+
+    // Test IChannel.addStorage: Initialise with subscriberless storage, then
+    // add subscriber storage. The subscriberless storage should be changed to
+    // subscriber "".
+    {
+        scope storage = new Storage("@ch");
+        scope channel = new Channel(storage);
+        auto storage2 = channel.addSubscriber("fritz@ch");
+        test!("!is")(storage2, cast(Object)null);
+        test!("==")(storage2.id, "fritz@ch");
+        test!("is")(channel.storage_unless_subscribed, cast(Object)null);
+        test!("is")(channel.subscribe(""), storage);
+        test!("is")(channel.subscribe("fritz"), storage2);
+    }
+}
+
+// Test for IChannel.splitSubscriberName.
 
 unittest
 {
