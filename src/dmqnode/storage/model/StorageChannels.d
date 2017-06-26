@@ -31,6 +31,7 @@ abstract class IChannel: IStorageEngine
 {
     import dmqnode.storage.model.StorageEngine;
     import core.stdc.string: memchr;
+    import ocean.core.Enforce;
 
     /***************************************************************************
 
@@ -218,6 +219,70 @@ abstract class IChannel: IStorageEngine
         assert(subscriber);
         this.subscribers[subscriber_name] = subscriber;
         return subscriber;
+    }
+
+    /***************************************************************************
+
+        Adds a new subscriber unless a subscriber with the same name already
+        exists.
+
+        This method is meant to be called on startup only; the following
+        restraints apply:
+
+          - The channel id in `storage_name` must match the id of this channel.
+          - `storage_name` must contain a subscriber name. The subscriber name
+            may be an empty string i.e. `storage_name[0] == '@'`.
+          - This channel must have been created with a subscriber.
+
+        Params:
+            storage_name = the storage name
+
+        Returns:
+            `null` if a subscriber with the same name was found, otherwise the
+            newly created storage engine that has been registered for the
+            subscriber name.
+
+        Throws:
+            `StartupException` if
+              - this channel has no subscribers or
+              - the channel id in `storage_name` does not match the name of this
+                channel or
+              - `storage_name` does not contain a subscriber name.
+
+    ***************************************************************************/
+
+    public StorageEngine addSubscriber ( cstring storage_name )
+    in
+    {
+        assert(!this.is_reset);
+    }
+    body
+    {
+        enforce!(AddSubscriberException)(
+            this.initial_storage is null,
+            "Cannot add \"" ~ storage_name ~ "\": Channel \"" ~ this.id_ ~ "\""~
+            " has no subscribers"
+        );
+
+        cstring subscriber_name;
+        enforce!(AddSubscriberException)(
+            splitSubscriberName(storage_name, subscriber_name) == this.id_,
+            "Channel name in \"" ~ storage_name ~
+            "\" does not match \"" ~ this.id_ ~ "\""
+        );
+        enforce!(AddSubscriberException)(
+            subscriber_name !is null,
+            "Cannot add \"" ~ storage_name ~ "\" as a subscriber: " ~
+            "No subscriber name"
+        );
+        if (!(subscriber_name in this.subscribers))
+        {
+            auto subscriber = this.newStorageEngine(storage_name);
+            this.subscribers[idup(subscriber_name)] = subscriber;
+            return subscriber;
+        }
+        else
+            return null;
     }
 
     /***************************************************************************
@@ -421,6 +486,15 @@ abstract class IChannel: IStorageEngine
     ***************************************************************************/
 
     abstract protected void recycleStorageEngine ( StorageEngine storage );
+
+    /// Thrown by `addSubscriber`.
+    static class AddSubscriberException: Exception
+    {
+        this ( istring msg, istring file = __FILE__, int line = __LINE__ )
+        {
+            super(msg, file, line);
+        }
+    }
 }
 
 /*******************************************************************************
@@ -606,6 +680,20 @@ unittest
         scope channel = new Channel(storage);
         test!("is")(channel.storage_unless_subscribed, cast(Object)null);
         test!("is")(channel.subscribe(""), storage);
+    }
+
+    // Test IChannel.addStorage: Initialise with subscriberless storage, then
+    // add subscriber storage. The subscriberless storage should be changed to
+    // subscriber "".
+    {
+        scope storage = new Storage("@ch");
+        scope channel = new Channel(storage);
+        auto storage2 = channel.addSubscriber("fritz@ch");
+        test!("!is")(storage2, cast(Object)null);
+        test!("==")(storage2.id, "fritz@ch");
+        test!("is")(channel.storage_unless_subscribed, cast(Object)null);
+        test!("is")(channel.subscribe(""), storage);
+        test!("is")(channel.subscribe("fritz"), storage2);
     }
 
     // Test IChannel.addStorage: Initialise with subscriberless storage, then
