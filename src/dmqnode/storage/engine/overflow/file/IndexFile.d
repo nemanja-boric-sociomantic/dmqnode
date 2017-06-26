@@ -321,13 +321,13 @@ class IndexFile: PosixFile
         cstring channel_name =
             IChannel.splitSubscriberName(storage_name, subscriber_name);
 
-        if (!channel_name.length) // storage_name[0] == '@'
+        if (!channel_name.length) // storage_name[$ - 1] == '@', no other '@'
             return false;
 
         if (subscriber_name is null) // no '@' in storage_name
             return true;
 
-        if (!subscriber_name.length) // storage_name[$ - 1] == '@', no other '@'
+        if (!subscriber_name.length) // storage_name[0] == '@'
             return false;
 
         // It's subscriber_name@channel_name so check for a second '@' in
