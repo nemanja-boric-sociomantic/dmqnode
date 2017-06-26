@@ -206,7 +206,7 @@ public class RingNode : StorageChannels
             super.initialise(storage_name);
             // From this point this.id == storage_name.
 
-            this.log = Log.lookup("storage:" ~ this.id);
+            this.log = Log.lookup("storage:" ~ this.storage_name);
 
             this.filename = FilePath.join(
                 this.outer.data_dir, this.storage_name ~ this.outer.DumpFileSuffix
@@ -251,7 +251,7 @@ public class RingNode : StorageChannels
         override public void rename ( cstring storage_name )
         {
             super.initialise(storage_name);
-            this.log = Log.lookup("storage:" ~ this.id);
+            this.log = Log.lookup("storage:" ~ this.storage_name);
             this.overflow.rename(idup(storage_name));
             this.filename = FilePath.join(
                 this.outer.data_dir, this.storage_name ~ this.outer.DumpFileSuffix
