@@ -11,6 +11,7 @@
 module test.loadfiles.cases.checker.CheckedRequests;
 
 import dmqproto.client.DmqClient;
+import ocean.task.Task;
 import ocean.transition;
 
 /*******************************************************************************
@@ -24,6 +25,14 @@ import ocean.transition;
 abstract class RecordChecker
 {
     import Test = ocean.core.Test;
+
+    /***************************************************************************
+
+        Set to `true` when `n_expected_records` have been received.
+
+    ***************************************************************************/
+
+    public bool finished = false;
 
     /***************************************************************************
 
@@ -59,6 +68,15 @@ abstract class RecordChecker
 
     /***************************************************************************
 
+        The task that should be resumed when `n_expected_records` have been
+        received.
+
+    ***************************************************************************/
+
+    protected Task waiting_task;
+
+    /***************************************************************************
+
         Reports and checks for unexpected notifications.
 
     ***************************************************************************/
@@ -79,6 +97,8 @@ abstract class RecordChecker
     protected this ( istring testname, uint n_expected_records,
                      istring expected_record_content )
     {
+        this.waiting_task = Task.getThis();
+        assert(this.waiting_task);
         this.n_expected_records = n_expected_records;
         this.expected_record_content = expected_record_content;
         this.testname = testname;
@@ -111,6 +131,27 @@ abstract class RecordChecker
         this.unex_notification.check(file, line);
     }
 
+    /***************************************************************************
+
+        Appends `record` to the list of received records. Sets `this.finished`
+        to `true` and resumes the waiting task if the number of expected records
+        has been reached.
+
+        Params:
+            record = a received record
+
+    ***************************************************************************/
+
+    protected void received ( in void[] record )
+    {
+        this.received_records ~= idup(cast(cstring)record);
+        if (this.received_records.length == this.n_expected_records)
+        {
+            this.finished = true;
+            if (this.waiting_task.suspended)
+                this.waiting_task.resume();
+        }
+    }
 }
 
 /*******************************************************************************
@@ -219,6 +260,14 @@ class Consume: RecordChecker
 {
     /***************************************************************************
 
+        Set to `true` when receiving a `stopped` notification.
+
+    ***************************************************************************/
+
+    public bool stopped = false;
+
+    /***************************************************************************
+
         The request ID, used by `stop`.
 
     ***************************************************************************/
@@ -236,10 +285,10 @@ class Consume: RecordChecker
     /***************************************************************************
 
         Constructor, starts the Consume request. The caller needs to
-         - suspend the running task for some time, 500ms for example, to allow
-           for it to run,
-         - then call `checkInfo` to check if an error has been reported,
-         - then call `check` to check the received records.
+         - suspend the current task while the `finished` (base class) member is
+           `false`,
+         - then call `checkNotification` to check if an error has been reported,
+         - then call `checkRecords` to check the received records.
 
         Params:
             dmq = the DMQ client to use
@@ -252,7 +301,7 @@ class Consume: RecordChecker
     ***************************************************************************/
 
     public this ( DmqClient dmq, cstring channel, cstring subscriber,
-           uint n_expected_records, istring expected_record_content )
+        uint n_expected_records, istring expected_record_content )
     {
         super("consume " ~ subscriber ~ "@" ~ channel,
             n_expected_records, expected_record_content);
@@ -264,10 +313,8 @@ class Consume: RecordChecker
 
     /***************************************************************************
 
-        Stops the request. The caller needs to suspend the running task for some
-        time, 500ms for example, to allow for it to run, then it may want to
-        check if `info` contains the `stopped` notification or an error or some
-        other unexpected notification.
+        Stops the request. The caller needs to suspend the running task while
+        the `stopped` (base class) member is `false`.
 
     ***************************************************************************/
 
@@ -276,7 +323,12 @@ class Consume: RecordChecker
         this.dmq.neo.control(this.id,
             (DmqClient.Neo.Consume.IController controller)
             {
-                controller.stop();
+                if (controller.stop())
+                {
+                    this.stopped = true;
+                    if (this.waiting_task.suspended)
+                        this.waiting_task.resume();
+                }
             }
         );
     }
@@ -284,9 +336,8 @@ class Consume: RecordChecker
     /***************************************************************************
 
         Consume notifier.
-        If a receiving a recotrd, appends it to `super.received_records`,
-        otherwise sets `this.info` to `info` unless `info` reports that the
-        request has been started.
+        If a receiving a record, passes it to the super class, or reports an
+        unexpected notification.
 
     ***************************************************************************/
 
@@ -302,7 +353,7 @@ class Consume: RecordChecker
                 break;
 
             case active.received:
-                this.received_records ~= idup(cast(char[])info.received.value);
+                this.received(info.received.value);
                 break;
 
             default:
@@ -332,10 +383,10 @@ class Pop: RecordChecker
 
         Constructor, starts `n_expected_records` Pop requests. The caller needs
         to
-          - suspend the running task for some time, 500ms for example, to allow
-           for it to run,
-         - then call `checkInfo` to check if an error has been reported,
-         - then call `check` to check the received records.
+         - suspend the current task while the `finished` (base class) member is
+           `false`,
+         - then call `checkNotification` to check if an error has been reported,
+         - then call `checkRecords` to check the received records.
 
         Params:
             dmq = the DMQ client to use
@@ -347,7 +398,7 @@ class Pop: RecordChecker
     ***************************************************************************/
 
     public this ( DmqClient dmq, cstring channel, uint n_expected_records,
-                  istring expected_record_content )
+        istring expected_record_content )
     {
         super("pop " ~ channel, n_expected_records, expected_record_content);
         for (uint i = 0; i < n_expected_records; i++)
@@ -357,8 +408,8 @@ class Pop: RecordChecker
     /***************************************************************************
 
         Pop notifier.
-        If receiving a record, appends it to `super.received_records`,
-        otherwise sets `this.info` to `info`.
+        If receiving a record, passes it to the super class, otherwise reports
+        an unexpected notification.
 
     ***************************************************************************/
 
@@ -368,7 +419,7 @@ class Pop: RecordChecker
         with (info) switch (active)
         {
             case active.received:
-                this.received_records ~= idup(cast(char[])info.received.value);
+                this.received(info.received.value);
                 break;
 
             default:
@@ -387,6 +438,23 @@ class PopEmpty
 {
     /***************************************************************************
 
+        Set to `true` when receiving the "channel empty" notification.
+
+    ***************************************************************************/
+
+    public bool finished;
+
+    /***************************************************************************
+
+        The task that should be resumed when the "channel empty" notification
+        has been received.
+
+    ***************************************************************************/
+
+    private Task waiting_task;
+
+    /***************************************************************************
+
         The message of the last unexpected notification. Only "channel empty"
         notifications are expected.
 
@@ -397,8 +465,8 @@ class PopEmpty
     /***************************************************************************
 
         Constructor, starts one Pop requests. The caller needs to
-          - suspend the running task for some time, 500ms for example, to allow
-           for it to run,
+         - suspend the current task while the `finished` (base class) member is
+           `false`,
          - then check if `info` contains a notification, which it does if the
            channel wasn't empty or an error or other unexpected notification has
            been reported.
@@ -411,6 +479,8 @@ class PopEmpty
 
     public this ( DmqClient dmq, istring channel )
     {
+        this.waiting_task = Task.getThis();
+        assert(this.waiting_task);
         this.unex_notification =
             new UnexpectedNotification("pop from empty channel " ~ channel);
         dmq.neo.pop(channel, &this.notifier);
@@ -434,6 +504,10 @@ class PopEmpty
             default:
                 this.unex_notification.report(info);
         }
+
+        this.finished = true;
+        if (this.waiting_task.suspended)
+            this.waiting_task.resume();
     }
 
     /***************************************************************************

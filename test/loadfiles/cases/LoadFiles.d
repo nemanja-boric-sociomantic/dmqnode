@@ -41,7 +41,7 @@ class LoadFiles: TestCase
     import dmqproto.client.DmqClient;
     import swarm.neo.authentication.HmacDef: Key;
     import ocean.task.Scheduler;
-    import Timer = ocean.task.util.Timer;
+    import ocean.task.Task;
     import Test = ocean.core.Test;
     import ocean.util.log.Log;
     import ocean.transition;
@@ -99,8 +99,13 @@ class LoadFiles: TestCase
             new Pop(this.dmq, "ch4",     1, "Hello ch4!")
         ];
 
-        // Wait 500ms for the assigned requests to run.
-        Timer.wait(500_000);
+        foreach (consume; consumes)
+            while (!consume.finished)
+                Task.getThis.suspend();
+
+        foreach (pop; pops)
+            while (!pop.finished)
+                Task.getThis.suspend();
 
         // Check for unexpected notifications for any of the requests.
         foreach (consume; consumes)
@@ -120,9 +125,14 @@ class LoadFiles: TestCase
             new PopEmpty(this.dmq, "ch4")
         ];
 
-        // Wait another 500ms for the requests to run, then we are finished with
-        // the DMQ node.
-        Timer.wait(500_000);
+        foreach (pop_empty; pop_emptys)
+            while (!pop_empty.finished)
+                Task.getThis.suspend();
+
+        foreach (consume; consumes)
+            while (!consume.stopped)
+                Task.getThis.suspend();
+
         this.dmq.neo.shutdown();
 
         // Verify that the channels we popped from are now empty and there were
