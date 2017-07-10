@@ -55,7 +55,7 @@ abstract class RecordChecker
 
     ***************************************************************************/
 
-    protected Immut!(char[])[] received_records;
+    private Immut!(char[])[] received_records;
 
     /***************************************************************************
 
