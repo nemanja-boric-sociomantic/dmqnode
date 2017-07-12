@@ -25,12 +25,12 @@ import ocean.core.Enforce: enforce;
 import ocean.io.device.File;
 import ocean.io.FilePath;
 import ocean.io.Path : normalize, PathParser;
-debug import ocean.io.Stdout : Stderr;
 import ocean.sys.Environment;
 import ocean.util.container.mem.MemManager;
 import ocean.util.container.queue.FlexibleRingQueue;
 import ocean.util.container.queue.model.IQueueInfo;
 import ocean.util.log.Log;
+import core.stdc.ctype;
 import ocean.transition;
 
 
@@ -140,29 +140,34 @@ public class RingNode : StorageChannels
 
         /***********************************************************************
 
+            Logger
+
+        ***********************************************************************/
+
+        private Logger log;
+
+        /***********************************************************************
+
             Constructor. Creates the ring queue. Also attempts to deserialize
             its contents from the specified path if the RingNode is being
             constructed (the loading of a dumped channel does not happen once
             the node has started up -- only at initialisation).
 
-            - `channel_id` is the channel name without the subscriber suffix.
-               In this class it is used only to call
-               `channel_size_config.getChannelSize()` in the constructor.
-            - `storage_name == channel_id ~ '@' ~ subscriber_name` is used
-               as the real channel name in this class, for the memory queue dump
-               file path and as the disk overflow channel name.
-            - `this.id` and `this.id_` are `storage_name`.
+            `storage_name == channel_id ~ '@' ~ subscriber_name` is used as the
+            real channel name in this class, for the memory queue dump file path
+            and as the disk overflow channel name.
 
             Params:
-                channel_id   = queue (channel) identifier string
                 storage_name = the name of this storage
 
         ***********************************************************************/
 
-        public this ( cstring channel_id, cstring storage_name )
+        public this ( cstring storage_name )
         in
         {
-            assert(!this.outer.shutting_down, "Attempted to create channel '{}' during shutdown");
+            assert(!this.outer.shutting_down,
+                   "Attempted to create storage '" ~ storage_name ~
+                   "' during shutdown");
         }
         body
         {
@@ -172,8 +177,14 @@ public class RingNode : StorageChannels
 
             super(storage_name);
 
-            this.queue = new FlexibleByteRingQueue(noScanMallocMemManager,
-                this.outer.channel_size_config.getChannelSize(channel_id));
+            cstring subscriber_name;
+
+            this.queue = new FlexibleByteRingQueue(
+                noScanMallocMemManager,
+                this.outer.channel_size_config.getChannelSize(
+                    Channel.splitSubscriberName(storage_name, subscriber_name)
+                )
+            );
 
             this.memory_info = this.queue;
         }
@@ -195,19 +206,21 @@ public class RingNode : StorageChannels
             super.initialise(storage_name);
             // From this point this.id == storage_name.
 
+            this.log = Log.lookup("storage:" ~ this.storage_name);
+
             this.filename = FilePath.join(
-                this.outer.data_dir, this.id ~ this.outer.DumpFileSuffix
+                this.outer.data_dir, this.storage_name ~ this.outer.DumpFileSuffix
             );
             this.file_path.set(this.filename);
 
             if (this.overflow is null)
             {
-                this.overflow = this.outer.overflow.new Channel(this.id);
+                this.overflow = this.outer.overflow.new Channel(idup(this.storage_name));
                 this.overflow_info = this.overflow;
             }
             else
             {
-                this.overflow.readd(this.overflow, this.id);
+                this.overflow.readd(this.overflow, idup(this.storage_name));
             }
         }
 
@@ -237,12 +250,13 @@ public class RingNode : StorageChannels
 
         override public void rename ( cstring storage_name )
         {
+            super.initialise(storage_name);
+            this.log = Log.lookup("storage:" ~ this.storage_name);
             this.overflow.rename(idup(storage_name));
             this.filename = FilePath.join(
-                this.outer.data_dir, this.id ~ this.outer.DumpFileSuffix
+                this.outer.data_dir, this.storage_name ~ this.outer.DumpFileSuffix
             );
             this.file_path.set(this.filename);
-            super.initialise(storage_name);
         }
 
         /***********************************************************************
@@ -253,20 +267,19 @@ public class RingNode : StorageChannels
 
         private void loadDumpedChannel ( )
         {
-            debug Stderr.formatln("Loading from file {}", this.filename);
+            auto filepath = this.file_path.toString();
 
             if ( this.file_path.exists() )
             {
-                debug Stderr.formatln("(File exists, loading)");
-
-                scope file = new File(this.file_path.toString(), File.ReadExisting);
+                this.log.info("Loading file \"{}\"", filepath);
+                scope file = new File(filepath, File.ReadExisting);
                 scope ( exit ) file.close();
 
                 this.queue.load(file);
             }
             else
             {
-                debug Stderr.formatln("(File doesn't exist)");
+                this.log.error("File \"{}\" not found", filepath);
             }
         }
 
@@ -372,8 +385,7 @@ public class RingNode : StorageChannels
         {
             if ( this.file_path.exists )
             {
-                log.warn("Closing channel '{}' -- will {} existing dump file '{}'",
-                         this.id,
+                this.log.warn("Closing -- will {} existing dump file \"{}\"",
                          this.queue.length? "overwrite" : "delete",
                          this.file_path.toString());
             }
@@ -381,12 +393,12 @@ public class RingNode : StorageChannels
             {
                 if ( this.queue.length )
                 {
-                    log.info("Closing channel '{}' -- saving in file '{}'",
-                             this.id, this.file_path.toString());
+                    this.log.info("Closing -- saving in file \"{}\"",
+                        this.file_path.toString());
                 }
                 else
                 {
-                    log.info("Closing channel '{}' -- channel is empty, not saving", this.id);
+                    this.log.info("Closing -- storage is empty, not saving");
                 }
             }
 
@@ -399,6 +411,46 @@ public class RingNode : StorageChannels
             }
 
             return this;
+        }
+
+        /***********************************************************************
+
+            Returns the storage identifier, stripping the leading '@' if the
+            subscriber name is empty (i.e. the subscriber used by Consume
+            requests prior to v2 and the default for Consume v2).
+
+            The storage identifier returned by this method is used
+              - by the public API, the stats log for example
+              - internally for the name of the dmq dump file.
+
+            Returns:
+                the storage identifier without a leading '@'.
+
+        ***********************************************************************/
+
+        override public cstring id ( )
+        {
+            auto idstr = super.id();
+            if (idstr.length)
+                if (idstr[0] == '@')
+                    return idstr[1 .. $];
+            return idstr;
+        }
+
+        /***********************************************************************
+
+            Returns the storage identifier which will start with '@' if the
+            subscriber name is empty (i.e. the subscriber used by Consume
+            requests prior to v2 and the default for Consume v2).
+
+            Returns:
+                the storage identifier.
+
+        ***********************************************************************/
+
+        override public cstring storage_name ( )
+        {
+            return super.id();
         }
 
         /***********************************************************************
@@ -478,21 +530,6 @@ public class RingNode : StorageChannels
 
         /***********************************************************************
 
-            Creates a channel with one subscriber.
-
-            Params:
-                storage         = the storage for the subscriber
-                subscriber_name = the name of the subscriber
-
-        ***********************************************************************/
-
-        protected this ( StorageEngine storage, cstring channel_id, istring subscriber_name )
-        {
-            super(storage, channel_id, subscriber_name);
-        }
-
-        /***********************************************************************
-
             Creates a new storage engine for this channel.
 
             Params:
@@ -505,7 +542,7 @@ public class RingNode : StorageChannels
 
         override protected Ring newStorageEngine ( cstring storage_name )
         {
-            return this.outer.newStorageEngine(this.id_, storage_name);
+            return this.outer.newStorageEngine(storage_name);
         }
 
         /***********************************************************************
@@ -577,65 +614,11 @@ public class RingNode : StorageChannels
 
     /***************************************************************************
 
-        Contains additional `create_()` parameters which cannot be passed to
-        through `super.create()`.
+        This is a parameter passed from `createChannelOnStartup` to `create_()`.
 
     ***************************************************************************/
 
-    private struct ChannelsScan
-    {
-        /***********************************************************************
-
-            Indicates whether a scan for dumped ring files or overflow channels
-            is being performed (at node startup).
-
-        ***********************************************************************/
-
-        enum ScanStatus: uint
-        {
-            NotScanning,
-            DumpFiles,
-            OverflowChannels
-        }
-
-        /***********************************************************************
-
-            Flag indicating whether a scan for dumped ring files or overflow
-            channels is being performed (at node startup). The flag is to make
-            sure that dumped files are only loaded during node startup, and not
-            when a new channel is created when the node is running.
-
-        ***********************************************************************/
-
-        ScanStatus scanning;
-
-        /***********************************************************************
-
-            The storage name for the channel that is currently created from a
-            dumped file.
-
-        ***********************************************************************/
-
-        istring storage_name;
-
-        /***********************************************************************
-
-            The subscriber name for the channel that is currently created from a
-            dumped file.
-
-        ***********************************************************************/
-
-        istring subscriber_name;
-    }
-
-    /***************************************************************************
-
-        Contains additional `create_()` parameters which cannot be passed to
-        through `super.create()`.
-
-    ***************************************************************************/
-
-    private ChannelsScan channels_scan;
+    private Ring storage_for_create;
 
 
     /***************************************************************************
@@ -741,20 +724,14 @@ public class RingNode : StorageChannels
         enforce(!this.shutting_down, "Cannot create channel '" ~ id ~
                                      "' while shutting down");
 
-        if ( this.channels_scan.scanning )
-        {
-            auto storage = this.newStorageEngine(id, this.channels_scan.storage_name);
-
-            if (this.channels_scan.scanning == channels_scan.scanning.DumpFiles)
-                storage.loadDumpedChannel();
-            return this.new Channel(
-                storage, id, this.channels_scan.subscriber_name
-            );
-        }
-        else
-        {
-            return this.new Channel(this.newStorageEngine(id, id));
-        }
+        // During startup this.storage_for_create contains the storage to
+        // use for this channel, which is set by this.createChannelOnStartup
+        // before calling super.getCreate, which calls this method.
+        return this.new Channel(
+            (this.storage_for_create is null)
+                ? this.newStorageEngine(id) // normal operation
+                : this.storage_for_create   // channel creation on startup
+        );
     }
 
 
@@ -763,7 +740,6 @@ public class RingNode : StorageChannels
         Creates a new storage engine.
 
         Params:
-            channel_id   = identifier string for the channel
             storage_name = the storage name
 
         Returns:
@@ -771,12 +747,12 @@ public class RingNode : StorageChannels
 
     ***********************************************************************/
 
-    private Ring newStorageEngine ( cstring channel_id, cstring storage_name )
+    private Ring newStorageEngine ( cstring storage_name )
     {
         Ring new_storage = null;
 
         auto storage = this.storage_pool.get(
-            new_storage = this.new Ring(channel_id, storage_name)
+            new_storage = this.new Ring(storage_name)
         );
 
         if (!new_storage)
@@ -835,24 +811,6 @@ public class RingNode : StorageChannels
 
     /***************************************************************************
 
-        Generates a absolute, normalized path string from path.
-
-        Params:
-            path = file path
-
-        Returns:
-            absolute, normalized path string
-
-     **************************************************************************/
-
-    private char[] getFullPathString ( FilePath path )
-    {
-        return path.set(normalize(path.folder)).toString;
-    }
-
-
-    /***************************************************************************
-
         Creates a FilePath instance set to the absolute path of dir, if dir is
         not null, or to the current working directory of the environment
         otherwise.
@@ -895,13 +853,10 @@ public class RingNode : StorageChannels
     {
         scope filename = new FilePath;
 
-        debug Stderr.formatln("Scanning {} for queue files", path.toString);
+        auto log = Log.lookup("scan-dumpfiles");
+        log.info("Using directory \"{}\".", path.toString);
 
        {
-            this.channels_scan.scanning = channels_scan.scanning.DumpFiles;
-            scope ( exit )
-                this.channels_scan.scanning = channels_scan.scanning.NotScanning;
-
             foreach ( info; path )
             {
                 if ( !info.folder )
@@ -909,8 +864,15 @@ public class RingNode : StorageChannels
                     switch (filename.set(info.name).suffix())
                     {
                         case DumpFileSuffix:
-                            debug Stderr.formatln("    Loading queue file '{}'", filename.name);
-                            this.createChannelOnStartup(idup(filename.name));
+                            if (validateDumpFileName(filename.name))
+                            {
+                                log.info("Found \"{}\".", filename.file);
+                                this.createChannelFromDumpFile(filename.name);
+                            }
+                            else
+                                log.error("Ignoring file \"{}\" " ~
+                                    "(invalid name).",
+                                    info.name);
                             break;
 
                         case this.overflow.Const.datafile_suffix,
@@ -918,21 +880,15 @@ public class RingNode : StorageChannels
                             break;
 
                         default:
-                            log.warn(typeof(this).stringof ~ ": ignoring file '" ~
-                                info.name ~ "' in data directory '" ~
-                                this.getFullPathString(path) ~ "' (unknown suffix)");
+                            log.warn("Ignoring file \"{}\" " ~
+                                    "(unknow suffix).", info.name);
                     }
                 }
                 else
                 {
-                    log.warn(typeof(this).stringof ~ ": found "
-                        "subdirectory '" ~ info.name ~ "' in data "
-                        "directory '" ~ this.getFullPathString(path) ~ '\'');
+                    log.warn("Ignoring subdirectory \"{}\".", info.name);
                 }
-
             }
-
-            this.channels_scan.scanning = channels_scan.scanning.OverflowChannels;
 
             /*
              * Create all channels that are present in the disk overflow but didn't
@@ -944,7 +900,7 @@ public class RingNode : StorageChannels
             this.overflow.iterateChannelNames(
                 (ref char[] storage_name)
                 {
-                    this.createChannelOnStartup(storage_name);
+                    this.createChannelFromDiskOverflow(storage_name);
                     return 0;
                 }
             );
@@ -965,25 +921,111 @@ public class RingNode : StorageChannels
 
     /***************************************************************************
 
-        Creates a channel, potentially with a subscriber, depending on
-        `storage_name`. Should be called only during the initial channels scan.
+        Creates a channel, potentially with a subscriber, or adds a subscriber
+        to an  existing channel, depending on storage_name`; finally loads the
+        queue dump file. The subscriber/channel combination is expected to not
+        already exist.
 
         Params:
-            storage_name
+            storage_name = the storage name, determines the channel id and
+                           subscriber name
+
+        Throws:
+            `StartupException` if the channel/subscriber combination already
+            exists or a sanity check for `storage_name` fails.
 
     ***************************************************************************/
 
-    private void createChannelOnStartup ( istring storage_name )
-    in
+    private void createChannelFromDumpFile ( cstring storage_name )
     {
-        assert(this.channels_scan.scanning);
+        auto log = Log.lookup("scan-dumpfiles");
+        Ring storage;
+
+        cstring subscriber_name;
+        cstring channel_id = Channel.splitSubscriberName(
+            storage_name, subscriber_name
+        );
+
+        if (auto channel_ = channel_id in this)
+        {
+            auto channel = downcastAssert!(Channel)(*channel_);
+            if (auto storage_ = channel.addSubscriber(storage_name))
+            {
+                storage = downcastAssert!(Ring)(storage_);
+                log.info("Added storage \"{}\" to channel \"{}\".",
+                         storage.storage_name, channel_id);
+            }
+            else
+                throw new Channel.AddSubscriberException(
+                    "Duplicate storage name \"" ~ storage_name ~ '"'
+                );
+        }
+        else
+        {
+            log.info("Creating channel \"{}\" with storage \"{}\".",
+                     channel_id, storage_name);
+            storage = this.newStorageEngine(storage_name);
+            this.storage_for_create = storage;
+            scope (exit) this.storage_for_create = null;
+            this.getCreate(channel_id);
+        }
+
+        assert(storage);
+        storage.loadDumpedChannel();
     }
-    body
+
+    /***************************************************************************
+
+        Creates a channel, potentially with a subscriber, or adds a subscriber
+        to an  existing channel, depending on storage_name`. Does nothing if the
+        subscriber/channel combination already exists.
+
+        Params:
+            storage_name = the storage name, determines the channel id and
+                           subscriber name
+
+    ***************************************************************************/
+
+    private void createChannelFromDiskOverflow ( cstring storage_name )
     {
-        this.getCreate(Channel.splitSubscriberName(
-            this.channels_scan.storage_name = storage_name,
-            this.channels_scan.subscriber_name
-        ));
+        auto log = Log.lookup("scan-diskoverflow");
+
+        cstring subscriber_name;
+        cstring channel_id = Channel.splitSubscriberName(
+            storage_name, subscriber_name
+        );
+
+        if (auto channel_ = channel_id in this)
+        {
+            auto channel = downcastAssert!(Channel)(*channel_);
+            if (subscriber_name !is null)
+            {
+                if (auto storage = channel.addSubscriber(storage_name))
+                {
+                    // This happens only if there is a disk overflow channel but
+                    // no memory dump file for this subscriber. With a memory
+                    // dump file, which is likely to be there, the subscriber
+                    // already exists so channel.addSubscriberOnStartup returns
+                    // null.
+                    log.info("Added storage \"{}\" to channel \"{}\".",
+                        storage.storage_name, channel_id);
+                }
+            }
+            else
+                enforce!(Channel.AddSubscriberException)(
+                    channel.storage_unless_subscribed !is null,
+                    "Found disk overflow channel \"" ~ storage_name ~
+                    "\", but the channel has a subscriber"
+                );
+        }
+        else
+        {
+            log.info("Creating channel \"{}\" with storage \"{}\".",
+                channel_id, storage_name);
+            this.storage_for_create = this.newStorageEngine(storage_name);
+            scope (exit) this.storage_for_create = null;
+            this.getCreate(channel_id);
+        }
     }
 
     /***************************************************************************
@@ -1009,4 +1051,72 @@ public class RingNode : StorageChannels
             throw e;
         }
     }
+
+
+    /***************************************************************************
+
+        Validates the name of a queue dump file: Only ASCII alphanumeric
+        characters, '-', '_' and '@' are allowed. '@' may appear only once and
+        not as the first or last character.
+
+        Params:
+            filename = queue dump file name without the ".rq" extension
+
+        Returns:
+            true if `filename` is valid or false otherwise.
+
+    ***************************************************************************/
+
+    private static bool validateDumpFileName ( cstring filename )
+    {
+        if (!filename.length)
+            return false;
+
+        bool have_subscriber_separator = false;
+
+        foreach (i, c; filename)
+        {
+            if (!isalnum(c))
+            {
+                switch (c)
+                {
+                    case '_', '-':
+                        break;
+
+                    case '@':
+                        if ((i < (filename.length - 1)) &&
+                            !have_subscriber_separator)
+                        {
+                            have_subscriber_separator = true;
+                            break;
+                        }
+                        else
+                            return false;
+
+                    default:
+                        return false;
+                }
+            }
+        }
+
+        return true;
+    }
+}
+
+version (UnitTest) import ocean.core.Test;
+
+unittest
+{
+    test(RingNode.validateDumpFileName("helloworld"));
+    test(RingNode.validateDumpFileName("hello_world"));
+    test(RingNode.validateDumpFileName("hello@world"));
+    test(!RingNode.validateDumpFileName("hello.world"));
+    test(!RingNode.validateDumpFileName("hello:world"));
+    test(!RingNode.validateDumpFileName("hello@wor@ld"));
+    test(RingNode.validateDumpFileName("@world"));
+    test(!RingNode.validateDumpFileName("@hello@world"));
+    test(RingNode.validateDumpFileName("_world"));
+    test(!RingNode.validateDumpFileName("hello@"));
+    test(!RingNode.validateDumpFileName("@"));
+    test(!RingNode.validateDumpFileName(""));
 }

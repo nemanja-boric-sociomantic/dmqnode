@@ -31,6 +31,7 @@ abstract class IChannel: IStorageEngine
 {
     import dmqnode.storage.model.StorageEngine;
     import core.stdc.string: memchr;
+    import ocean.core.Enforce;
 
     /***************************************************************************
 
@@ -101,58 +102,30 @@ abstract class IChannel: IStorageEngine
 
     /***************************************************************************
 
-        Creates a channel with no subscriber.
+        Creates a channel with one subscriber, if `storage.storage_name`
+        contains a subscriber name, or no subscriber otherwise.
 
         Params:
-            storage = the initial storage for the channel
+            storage = the subscriber or initial storage according to
+                      `storage.storage_name`
 
     ***************************************************************************/
 
     protected this ( StorageEngine storage )
-    in
     {
-        auto channel_id = storage.id;
-        assert(!memchr(channel_id.ptr, '@', channel_id.length),
-               "expected no '@' in plain channel name");
-    }
-    body
-    {
-        super(storage.id);
+        cstring subscriber_name;
+
+        super(splitSubscriberName(storage.storage_name, subscriber_name));
         // Setting the initial storage and this.is_reset must be done after the
         // super constructor has returned or the invariant will fail.
-        this.initial_storage = storage;
-        this.is_reset = false;
-    }
 
-    /***************************************************************************
+        if (subscriber_name is null)
+            this.initial_storage = storage;
+        else
+            // subscriber_name may be a non-null empty string for the default
+            // Consume subscriber.
+            this.subscribers[idup(subscriber_name)] = storage;
 
-        Creates a channel with one subscriber.
-
-        Params:
-            storage         = the storage for the subscriber
-            subscriber_name = the name of the subscriber
-
-    ***************************************************************************/
-
-    protected this ( StorageEngine storage, cstring channel_id, istring subscriber_name )
-    in
-    {
-        auto storage_name = storage.id;
-        assert(storage_name.length == channel_id.length + 1 + subscriber_name.length,
-               "storage ID length inconsistent with channel_id@subscriber_name");
-        assert(storage_name[0 .. channel_id.length] == channel_id,
-               "channel name in storage ID doesn't match channel_id");
-        assert(storage_name[channel_id.length + 1] == '@',
-               "storage ID doesn't match channel_id@subscriber_name");
-        assert(storage_name[$ - subscriber_name.length .. $] == subscriber_name,
-               "subscriber name in storage ID doesn't match subscriber_name");
-    }
-    body
-    {
-        super(channel_id);
-        // Setting the subscriber and this.is_reset must be done after the super
-        // constructor has returned or the invariant will fail.
-        this.subscribers[subscriber_name] = storage;
         this.is_reset = false;
     }
 
@@ -213,7 +186,7 @@ abstract class IChannel: IStorageEngine
     {
         StorageEngine subscriber;
 
-        auto storage_name = subscriber_name ~ "@" ~ this.id_;
+        istring storage_name ( ) {return subscriber_name ~ "@" ~ this.id_;}
 
         if (this.subscribers.length)
         {
@@ -246,6 +219,70 @@ abstract class IChannel: IStorageEngine
         assert(subscriber);
         this.subscribers[subscriber_name] = subscriber;
         return subscriber;
+    }
+
+    /***************************************************************************
+
+        Adds a new subscriber unless a subscriber with the same name already
+        exists.
+
+        This method is meant to be called on startup only; the following
+        restraints apply:
+
+          - The channel id in `storage_name` must match the id of this channel.
+          - `storage_name` must contain a subscriber name. The subscriber name
+            may be an empty string i.e. `storage_name[0] == '@'`.
+          - This channel must have been created with a subscriber.
+
+        Params:
+            storage_name = the storage name
+
+        Returns:
+            `null` if a subscriber with the same name was found, otherwise the
+            newly created storage engine that has been registered for the
+            subscriber name.
+
+        Throws:
+            `StartupException` if
+              - this channel has no subscribers or
+              - the channel id in `storage_name` does not match the name of this
+                channel or
+              - `storage_name` does not contain a subscriber name.
+
+    ***************************************************************************/
+
+    public StorageEngine addSubscriber ( cstring storage_name )
+    in
+    {
+        assert(!this.is_reset);
+    }
+    body
+    {
+        enforce!(AddSubscriberException)(
+            this.initial_storage is null,
+            "Cannot add \"" ~ storage_name ~ "\": Channel \"" ~ this.id_ ~ "\""~
+            " has no subscribers"
+        );
+
+        cstring subscriber_name;
+        enforce!(AddSubscriberException)(
+            splitSubscriberName(storage_name, subscriber_name) == this.id_,
+            "Channel name in \"" ~ storage_name ~
+            "\" does not match \"" ~ this.id_ ~ "\""
+        );
+        enforce!(AddSubscriberException)(
+            subscriber_name !is null,
+            "Cannot add \"" ~ storage_name ~ "\" as a subscriber: " ~
+            "No subscriber name"
+        );
+        if (!(subscriber_name in this.subscribers))
+        {
+            auto subscriber = this.newStorageEngine(storage_name);
+            this.subscribers[idup(subscriber_name)] = subscriber;
+            return subscriber;
+        }
+        else
+            return null;
     }
 
     /***************************************************************************
@@ -449,6 +486,15 @@ abstract class IChannel: IStorageEngine
     ***************************************************************************/
 
     abstract protected void recycleStorageEngine ( StorageEngine storage );
+
+    /// Thrown by `addSubscriber`.
+    static class AddSubscriberException: Exception
+    {
+        this ( istring msg, istring file = __FILE__, int line = __LINE__ )
+        {
+            super(msg, file, line);
+        }
+    }
 }
 
 /*******************************************************************************
@@ -509,4 +555,192 @@ public abstract class StorageChannels :
     ***************************************************************************/
 
     abstract public void writeDiskOverflowIndex ( );
+}
+
+version (UnitTest)
+{
+    import ocean.core.Test;
+    import dmqnode.util.Downcast;
+}
+
+// Test for IChannel except splitSubscriberName (separate test below).
+
+unittest
+{
+    static class Storage: IChannel.StorageEngine
+    {
+        bool flushed, cleared, closed, recycled;
+        uint records, bytes;
+
+        this ( char[] id ) { super(id); }
+
+        override void rename ( cstring ch ) { this.initialise(ch); }
+        override cstring storage_name ( ) { return this.id; }
+        override void flush ( ) { this.flushed = true; }
+
+        override typeof(this) clear ( )
+        {
+            this.cleared = true;
+            return this;
+        }
+
+        override typeof(this) close ( )
+        {
+            this.closed = true;
+            return this;
+        }
+
+        ulong num_records ( ) { return this.records; }
+        ulong num_bytes ( ) { return this.bytes; }
+
+        override void push_ ( char[] value ) { }
+        override typeof(this) pop ( ref char[] value ) { return this; }
+    }
+
+    static class Channel: IChannel
+    {
+        this ( StorageEngine storage ) { super(storage); }
+
+        override StorageEngine newStorageEngine ( cstring storage_name )
+        {
+            return new Storage(storage_name);
+        }
+
+        override void recycleStorageEngine ( StorageEngine storage )
+        {
+            (downcastAssert!(Storage)(storage)).recycled = true;
+        }
+    }
+
+    // Test IChannel except addStorage, initialise with subscriberless storage.
+    {
+        scope storage = new Storage("ch");
+        scope channel = new Channel(storage);
+        test!("is")(channel.storage_unless_subscribed, storage);
+        foreach (s; channel) test!("is")(s, storage);
+
+        test!("is")(channel.subscribe("max"), storage);
+        test!("==")(storage.id, "max@ch");
+        test!("is")(channel.storage_unless_subscribed, cast(Object)null);
+        foreach (s; channel) test!("is")(s, storage);
+
+        auto storage2 = downcastAssert!(Storage)(channel.subscribe("moritz"));
+        test!("!is")(storage2, storage);
+        test!("==")(storage2.id, "moritz@ch");
+
+        storage.records = 4700;
+        storage2.records = 11;
+        test!("==")(channel.num_records, 4711);
+
+        storage.bytes = 123000;
+        storage2.bytes = 456;
+        test!("==")(channel.num_bytes, 123456);
+
+        channel.flush();
+        test(storage.flushed);
+        test(storage2.flushed);
+
+        channel.clear();
+        test(storage.cleared);
+        test(storage2.cleared);
+
+        channel.close();
+        test(storage.closed);
+        test(storage2.closed);
+
+        channel.reset();
+        test(storage.recycled);
+        test(storage2.recycled);
+
+        auto storage3 = downcastAssert!(Storage)(channel.storage_unless_subscribed);
+        test!("!is")(storage3, cast(Object)null);
+        test!("==")(storage3.id, "ch");
+
+        channel.reset();
+        test(storage3.recycled);
+        foreach (s; channel)
+        {
+            test!("!is")(s, cast(Object)null);
+            test!("==")(s.id, "ch");
+            test!("is")(channel.storage_unless_subscribed, s);
+        }
+    }
+
+    // Initialise with subscriber.
+    {
+        scope storage = new Storage("fritz@ch");
+        scope channel = new Channel(storage);
+        test!("is")(channel.storage_unless_subscribed, cast(Object)null);
+        test!("is")(channel.subscribe("fritz"), storage);
+    }
+
+    // Initialise with subscriber "".
+    {
+        scope storage = new Storage("@ch");
+        scope channel = new Channel(storage);
+        test!("is")(channel.storage_unless_subscribed, cast(Object)null);
+        test!("is")(channel.subscribe(""), storage);
+    }
+
+    // Test IChannel.addStorage: Initialise with subscriberless storage, then
+    // add subscriber storage. The subscriberless storage should be changed to
+    // subscriber "".
+    {
+        scope storage = new Storage("@ch");
+        scope channel = new Channel(storage);
+        auto storage2 = channel.addSubscriber("fritz@ch");
+        test!("!is")(storage2, cast(Object)null);
+        test!("==")(storage2.id, "fritz@ch");
+        test!("is")(channel.storage_unless_subscribed, cast(Object)null);
+        test!("is")(channel.subscribe(""), storage);
+        test!("is")(channel.subscribe("fritz"), storage2);
+    }
+
+    // Test IChannel.addStorage: Initialise with subscriberless storage, then
+    // add subscriber storage. The subscriberless storage should be changed to
+    // subscriber "".
+    {
+        scope storage = new Storage("@ch");
+        scope channel = new Channel(storage);
+        auto storage2 = channel.addSubscriber("fritz@ch");
+        test!("!is")(storage2, cast(Object)null);
+        test!("==")(storage2.id, "fritz@ch");
+        test!("is")(channel.storage_unless_subscribed, cast(Object)null);
+        test!("is")(channel.subscribe(""), storage);
+        test!("is")(channel.subscribe("fritz"), storage2);
+    }
+}
+
+// Test for IChannel.splitSubscriberName.
+
+unittest
+{
+    // Named test, splits storage_name into subscriber_name and channel_name and
+    // verifies the result. subscriber_name should be null if and only if a
+    // null subscriber name is expected; that is, if storage_name does not
+    // contain '@'. If and only if storage_name starts with '@' then an empty
+    // non-null subscriber name is expected.
+    static void check ( istring test_name, cstring storage_name,
+                        cstring subscriber_name, cstring channel_name )
+    {
+        auto test = new NamedTest(test_name);
+        cstring result_subscriber_name;
+        test.test!("==")(
+            IChannel.splitSubscriberName(storage_name, result_subscriber_name),
+            channel_name
+        );
+        test.test!("==")(result_subscriber_name, subscriber_name);
+        test.test!("==")(result_subscriber_name is null, subscriber_name is null);
+    }
+
+    check("subscriber@channel", "hello@world", "hello", "world");
+    check("@channel", "@world", "", "world");
+    check("plain channel", "hello_world", null, "hello_world");
+    check("subscriber@", "hello@", "hello", "");
+
+    // Also test empty channel names, which are in fact invalid, still
+    // splitSubscriberName should handle them properly.
+    check("only '@'", "@", "", "");
+    check("empty storage name", "", null, "");
+    check("null storage name", "", null, "");
 }

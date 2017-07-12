@@ -209,4 +209,20 @@ public abstract class StorageEngine : IStorageEngine
     ***************************************************************************/
 
     abstract public void rename ( cstring channel_name );
+
+    /***************************************************************************
+
+        Returns the storage identifier which will start with '@' if the
+        subscriber name is empty (i.e. the subscriber used by Consume
+        requests prior to v2 and the default for Consume v2).
+
+        This method is necessary because `id()` needs to strip a leading '@'
+        because it is used for logging.
+
+        Returns:
+            the storage identifier.
+
+    ***************************************************************************/
+
+    abstract public cstring storage_name ( );
 }

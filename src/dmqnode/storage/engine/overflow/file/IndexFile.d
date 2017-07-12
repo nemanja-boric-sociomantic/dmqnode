@@ -31,6 +31,7 @@ class IndexFile: PosixFile
     import core.stdc.stdio: FILE, EOF, fscanf, fprintf, feof, rewind, clearerr, fflush;
     import core.stdc.stdlib: free;
     import ocean.sys.SignalMask;
+    import dmqnode.storage.model.StorageChannels: IChannel;
 
     /***************************************************************************
 
@@ -119,8 +120,7 @@ class IndexFile: PosixFile
         for (uint nline = 1;; nline++)
         {
             ChannelMetadata channel;
-            int name_start, name_end;
-            char* channel_name = null;
+            char[] channel_name = null;
 
             scope (exit)
             {
@@ -128,34 +128,21 @@ class IndexFile: PosixFile
                  * fscanf() allocates channel_name via malloc() on a match or
                  * leaves it untouched (null) on mismatch.
                  */
-                if (channel_name) free(channel_name);
+                if (channel_name) free(channel_name.ptr);
             }
 
             int n;
             this.fmt_io_signal_blocker.callBlocked(
-                /*
-                 * Special fscanf format tokens:
-                 *   - The leading ' ' skips leading white space.
-                 *   - %n stores the current position in the input string in the
-                 *     argument so that
-                 *     channel_name.length = name_end - name_start.
-                 *   - %m matches a string, stores it in a buffer allocated by
-                 *     malloc and stores a pointer to that buffer in the
-                 *     argument.
-                 *   - [_0-9a-zA-Z-] makes %m match only strings that consist of
-                 *     the characters '_', '0'-'9', 'a'-'z', 'A'-'Z' or '-',
-                 *     which ensures the string is a valid queue channel name.
-                 */
-                n = fscanf(this.stream,
-                           " %n%m[_0-9a-zA-Z-]%n %lu %llu %lld %lld".ptr,
-                           &name_start, &channel_name, &name_end,
-                           &channel.records, &channel.bytes, &channel.first_offset,
-                           &channel.last_offset)
+                n = readLine(this.stream, channel_name, channel)
             );
 
             switch (n)
             {
                 case 5:
+                    enforceImpl(this.e,
+                        validateSubscriberSeparator(channel_name),
+                        "Invalid use of subscriber/channel '@' separator",
+                        this.name, nline);
                     /*
                      * Validate channel by checking the same conditions as its
                      * invariant.
@@ -166,7 +153,7 @@ class IndexFile: PosixFile
                             enforceImpl(this.e, good, msg, this.name, nline);
                         });
 
-                    got_channel(channel_name[0 .. name_end - name_start], channel, nline);
+                    got_channel(channel_name, channel, nline);
                     break;
 
                 case EOF:
@@ -240,4 +227,198 @@ class IndexFile: PosixFile
         super.reset();
         clearerr(this.stream);
     }
+
+    /***************************************************************************
+
+        Reads one line from the index file and parses it, using `fscanf(3)` and
+        expecting the following tokens, separated and possibly surrounded by
+        white space in that order:
+
+            - `channel_name`: a string, allowed characters are ASCII
+                              alphanumeric, '_', '-' and '@'
+            - `channel.records`: decimal `uint` value
+            - `channel.bytes`: decimal `ulong` value
+            - `channel.first_offset`: decimal `off_t` value
+            - `channel.last_offset`: decimal `off_t` value
+
+        If a valid channel name was read from `stream` then `channel_name`
+        outputs a string, otherwise it outputs `null`. If it does output a
+        string then the string buffer will have been allocated via `malloc` so
+        the caller needs to deallocate it via `free(channel_name.ptr)`.
+
+        Params:
+            stream       = the input stream
+            channel_name = channel name output, either `malloc`-allocated or
+                           `null`
+            channel      = channel metadata output
+
+        Returns:
+            - 5 on success (i.e. all five tokens were parsed successfully).
+            - a value less than 5 if that number of tokens was successfully
+              parsed before a token mismatch, end-of-file condition or I/O error
+              occurred. Use `feof(stream)` and `ferror(stream)` to find the
+              exact cause.
+            - `EOF` if an end-of-file condition or I/O error occurred before the
+              first non-whitespace character was read. Use `feof(stream)` and
+              `ferror(stream)` to find the exact cause. End-of-file means that
+              there was white space at the end of the file.
+
+    ***************************************************************************/
+
+    private static int readLine ( FILE* stream,
+        out char[] channel_name, out ChannelMetadata channel )
+    {
+        char* channel_name_ptr;
+        int name_start, name_end;
+        /*
+         * Special fscanf format tokens:
+         *   - The leading ' ' skips leading white space.
+         *   - %n stores the current position in the input string in the
+         *     argument so that channel_name.length = name_end - name_start.
+         *     Note that the Linux manpage mentions some confusion about whether
+         *     this token increments the `fscanf` return value or not, referring
+         *     to Corrigendum 1 of the C90 standard. However, both C99 and POSIX
+         *     explicitly say %n does not increment the returned count so we
+         *     rely on that here and say, fscanf returns 5 (not 7) on success.
+         *     References:
+         *     http://pubs.opengroup.org/onlinepubs/9699919799/functions/scanf.html
+         *     http://www.open-std.org/jtc1/sc22/wg14/www/docs/n1124.pdf (p.287)
+         *   - %m matches a string, stores it in a buffer allocated by malloc
+         *     and stores a pointer to that buffer in the argument.
+         *   - [_0-9a-zA-Z@-] makes %m match only strings that consist of the
+         *     characters '_', '0'-'9', 'a'-'z', 'A'-'Z', '@' or '-',
+         *     which ensures the string is a valid queue channel name.
+         */
+        int n = fscanf(stream, " %n%m[_0-9a-zA-Z@-]%n %lu %llu %lld %lld".ptr,
+                       &name_start, &channel_name_ptr, &name_end,
+                       &channel.records, &channel.bytes, &channel.first_offset,
+                       &channel.last_offset);
+
+        if (channel_name_ptr !is null)
+            channel_name = channel_name_ptr[0 .. name_end - name_start];
+
+        return n;
+    }
+
+    /***************************************************************************
+
+        Validates the occurrences of the subscriber-channel separator '@' in
+        `storage_name`: '@' may occur at most once and not as the first or last
+        character.
+
+        Params:
+            storage_name = a storage name
+
+        Returns:
+            true if `storage_name` contains valid occurrences of '@' or false
+            otherwise.
+
+    ***************************************************************************/
+
+    private static bool validateSubscriberSeparator ( cstring storage_name )
+    {
+        cstring subscriber_name;
+        cstring channel_name =
+            IChannel.splitSubscriberName(storage_name, subscriber_name);
+
+        if (!channel_name.length) // storage_name[$ - 1] == '@', no other '@'
+            return false;
+
+        if (subscriber_name is null) // no '@' in storage_name
+            return true;
+
+        // It's subscriber_name@channel_name so check for a second '@' in
+        // channel_name.
+        IChannel.splitSubscriberName(channel_name, subscriber_name);
+        return subscriber_name is null;
+    }
+}
+
+version (UnitTest)
+{
+    import core.stdc.stdio;
+    import core.stdc.stdlib;
+    import ocean.core.Test;
+    import ocean.sys.ErrnoException;
+    extern (C) private FILE* fmemopen(void* buf, size_t size, Const!(char)* mode);
+}
+
+unittest
+{
+    // Parses line and calls check(), passing the input stream (for feof
+    //  checking) and the readLine return and output values.
+    static void checkLine ( cstring line, void delegate ( FILE* stream,
+        int n, cstring channel_name, ChannelMetadata channel ) check )
+    {
+        FILE* stream = fmemopen(line.ptr, line.length, "r".ptr);
+        if (stream is null)
+            throw (new ErrnoException).useGlobalErrno("fmemopen");
+
+        scope (exit) fclose(stream);
+
+        char[] channel_name = null;
+        ChannelMetadata channel;
+        int n = IndexFile.readLine(stream, channel_name, channel);
+        scope (exit) if (channel_name) free(channel_name.ptr);
+        check(stream, n, channel_name, channel);
+    }
+
+    checkLine(
+        "hello_world4711 2 3 5 7",
+        (FILE* stream, int n, cstring channel_name, ChannelMetadata channel)
+        {
+            test!("==")(n, 5);
+            test!("==")(channel_name, "hello_world4711");
+            test!("==")(channel.records, 2);
+            test!("==")(channel.bytes, 3);
+            test!("==")(channel.first_offset, 5);
+            test!("==")(channel.last_offset, 7);
+        }
+    );
+
+    checkLine(
+        "hello_4711@world 11 13 17 19",
+        (FILE* stream, int n, cstring channel_name, ChannelMetadata channel)
+        {
+            test!("==")(n, 5);
+            test!("==")(channel_name, "hello_4711@world");
+            test!("==")(channel.records, 11);
+            test!("==")(channel.bytes, 13);
+            test!("==")(channel.first_offset, 17);
+            test!("==")(channel.last_offset, 19);
+        }
+    );
+
+    checkLine(
+        "hello.world_4711 11 13 17 19",
+        (FILE* stream, int n, cstring channel_name, ChannelMetadata channel)
+        {
+            test!("!=")(n, 5);
+        }
+    );
+
+    // Verify end-of-file is correctly reported if the line contains only
+    // white space.
+    checkLine(
+        "   \t  ",
+        (FILE* stream, int n, cstring channel_name, ChannelMetadata channel)
+        {
+            test!("==")(n, EOF);
+            test(!!feof(stream));
+        }
+    );
+}
+
+unittest
+{
+    test(IndexFile.validateSubscriberSeparator("hello_world"));
+    test(IndexFile.validateSubscriberSeparator("hello@world"));
+    test(!IndexFile.validateSubscriberSeparator("hello@@world"));
+    test(!IndexFile.validateSubscriberSeparator("hello_world@@"));
+    test(IndexFile.validateSubscriberSeparator("@hello_world"));
+    test(!IndexFile.validateSubscriberSeparator("@hello@world"));
+    test(!IndexFile.validateSubscriberSeparator("hello_world@"));
+    test(!IndexFile.validateSubscriberSeparator("hello@wor@ld"));
+    test(!IndexFile.validateSubscriberSeparator("@"));
+    test(!IndexFile.validateSubscriberSeparator("@@"));
 }
