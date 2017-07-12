@@ -37,6 +37,7 @@ import ocean.sys.CpuAffinity;
 import ocean.util.app.DaemonApp;
 import ConfigReader = ocean.util.config.ConfigFiller;
 import ocean.util.log.Log;
+import ocean.transition;
 
 
 /*******************************************************************************
@@ -237,7 +238,7 @@ public class DmqNodeServer : DaemonApp
         else
         {
             log.error("Exception caught in eventLoop: '{}' @ {}:{}",
-                    exception.msg, exception.file, exception.line);
+                    getMsg(exception), exception.file, exception.line);
         }
     }
 
