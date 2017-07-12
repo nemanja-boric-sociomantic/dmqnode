@@ -23,3 +23,6 @@ $O/test-loadfiles: override LDFLAGS += -lpcre
 
 # Additional flags needed when unittesting
 #$O/%unittests: override LDFLAGS += 
+
+# Package dependencies
+$O/pkg-dmqnode.stamp: $B/dmqnode README.rst deploy/upstart/dmq.conf
