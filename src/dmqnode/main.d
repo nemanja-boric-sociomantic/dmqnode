@@ -31,6 +31,7 @@ import ocean.core.MessageFiber;
 import ocean.io.select.client.model.ISelectClient;
 import ocean.io.select.EpollSelectDispatcher;
 import ocean.io.select.protocol.generic.ErrnoIOException : IOWarning;
+import ocean.io.select.selector.EpollException;
 import ocean.io.Stdout;
 import core.sys.posix.signal: SIGINT, SIGTERM, SIGQUIT;
 import ocean.sys.CpuAffinity;
@@ -226,7 +227,8 @@ public class DmqNodeServer : DaemonApp
         ISwarmConnectionHandlerInfo.IConnectionHandlerInfo conn )
     {
         if ( cast(MessageFiber.KilledException)exception ||
-             cast(IOWarning)exception )
+             cast(IOWarning)exception ||
+             cast(EpollException)exception )
         {
             // Don't log these exception types, which only occur on the normal
             // disconnection of a client.
