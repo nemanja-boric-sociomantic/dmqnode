@@ -14,6 +14,7 @@ import dmqnode.storage.Ring;
 import swarm.util.node.log.Stats;
 
 import ocean.util.log.Stats;
+import ocean.util.log.Log;
 
 
 /*******************************************************************************
@@ -211,6 +212,7 @@ public class PeriodicStats : IPeriodic
             this.log.addObject!("channel")(channel.id, ChannelStats.set(channel));
         }
 
+        this.log.add(Log.stats);
         this.log.flush();
         this.node_info.resetCounters();
     }
