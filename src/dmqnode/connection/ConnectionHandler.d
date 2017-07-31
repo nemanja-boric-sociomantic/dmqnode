@@ -335,7 +335,7 @@ public class ConnectionHandler
 
     override protected void handlePush ( )
     {
-        this.handleCommand!(PushRequest);
+        this.handleCommand!(PushRequest, RequestStatsTracking.TimeAndCount);
     }
 
     /***************************************************************************
@@ -346,7 +346,7 @@ public class ConnectionHandler
 
     override protected void handlePop ( )
     {
-        this.handleCommand!(PopRequest);
+        this.handleCommand!(PopRequest, RequestStatsTracking.TimeAndCount);
     }
 
 
@@ -394,7 +394,7 @@ public class ConnectionHandler
 
     override protected void handleConsume ( )
     {
-        this.handleCommand!(ConsumeRequest);
+        this.handleCommand!(ConsumeRequest, RequestStatsTracking.Count);
     }
 
 
@@ -430,7 +430,7 @@ public class ConnectionHandler
 
     override protected void handlePushMulti ( )
     {
-        this.handleCommand!(PushMultiRequest);
+        this.handleCommand!(PushMultiRequest, RequestStatsTracking.TimeAndCount);
     }
 
 
@@ -454,7 +454,7 @@ public class ConnectionHandler
 
     override protected void handleProduce ( )
     {
-        this.handleCommand!(ProduceRequest);
+        this.handleCommand!(ProduceRequest, RequestStatsTracking.Count);
     }
 
 
@@ -466,7 +466,7 @@ public class ConnectionHandler
 
     override protected void handleProduceMulti ( )
     {
-        this.handleCommand!(ProduceMultiRequest);
+        this.handleCommand!(ProduceMultiRequest, RequestStatsTracking.Count);
     }
 
 
@@ -488,16 +488,19 @@ public class ConnectionHandler
 
         Template params:
             Handler = type of request handler
+            stats_tracking = specifies which stats should be tracked
 
     ***************************************************************************/
 
-    private void handleCommand ( Handler : DmqCommand ) ( )
+    private void handleCommand ( Handler : DmqCommand,
+        RequestStatsTracking stats_tracking = RequestStatsTracking.None ) ( )
     {
         scope resources = new DmqRequestResources;
         scope handler = new Handler(this.reader, this.writer, resources);
 
         // calls handler.handle() and checks memory and buffer allocation after
         // request finishes
-        this.handleRequest!(ConnectionResources)(handler, resources);
+        this.handleRequest!(ConnectionResources, DmqRequestResources,
+            stats_tracking)(handler, resources);
     }
 }
