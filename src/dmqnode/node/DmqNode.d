@@ -81,6 +81,16 @@ public class DmqNode
         super(DmqConst.NodeItem(server_config.address(), server_config.port()),
             server_config.neoport(), ringnode, conn_setup_params, options,
             server_config.backlog);
+
+        auto command = DmqConst.Command();
+        const cmd_codes =
+        [
+            command.E.Push, command.E.PushMulti,
+            command.E.Produce, command.E.ProduceMulti,
+            command.E.Pop, command.E.Consume
+        ];
+        foreach (cmd_code; cmd_codes)
+            this.request_stats.init(command[cmd_code]);
     }
 
 
