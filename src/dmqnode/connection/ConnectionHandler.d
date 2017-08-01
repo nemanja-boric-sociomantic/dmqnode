@@ -501,6 +501,6 @@ public class ConnectionHandler
         // calls handler.handle() and checks memory and buffer allocation after
         // request finishes
         this.handleRequest!(ConnectionResources, DmqRequestResources,
-            stats_tracking)(handler, resources);
+            stats_tracking)(handler, resources, handler.command_name);
     }
 }
