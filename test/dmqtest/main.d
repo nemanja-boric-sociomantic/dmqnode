@@ -7,6 +7,9 @@
     copyright:
         Copyright (c) 2015-2017 sociomantic labs GmbH. All rights reserved
 
+    License:
+        Boost Software License Version 1.0. See LICENSE.txt for details.
+
 *******************************************************************************/
 
 module dmqtest.main;
