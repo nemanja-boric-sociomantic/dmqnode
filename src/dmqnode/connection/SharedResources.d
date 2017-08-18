@@ -2,10 +2,6 @@
 
     copyright:      Copyright (c) 2012 sociomantic labs. All rights reserved
 
-    version:        06/09/2012: Initial release
-
-    authors:        Gavin Norman
-
     DMQ shared resource manager. Handles acquiring / relinquishing of global
     resources by active request handlers.
 

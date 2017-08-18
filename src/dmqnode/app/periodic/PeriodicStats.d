@@ -20,8 +20,7 @@ import ocean.util.log.Log;
 /*******************************************************************************
 
     Periodic stats class. Displays a message line to the console and writes
-    lines to a stats log. Contains shared methods which both the dht and the
-    queue can use.
+    lines to a stats log.
 
 *******************************************************************************/
 
