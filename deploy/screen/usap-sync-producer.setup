@@ -1,5 +1,0 @@
-# Screen setup file for AP->US sync
-
-# window title    path             command
-user_yield        /srv/dhtcopy/    ./run-user-yield-sync-producer.sh
-other             /srv/dhtcopy/    ./run-sync-producer.sh
