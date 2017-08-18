@@ -1,8 +1,9 @@
 /*******************************************************************************
 
-    Copyright (c) 2015 sociomantic labs. All rights reserved
-
     Disk overflow config class for use with ocean.util.config.ClassFiller.
+
+    copyright:
+        Copyright (c) 2015-2017 sociomantic labs GmbH. All rights reserved
 
 *******************************************************************************/
 

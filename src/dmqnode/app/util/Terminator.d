@@ -3,7 +3,8 @@
     Namespace struct containing a global boolean which is set to true when the
     application is terminating (after receiving SIGINT - see IKVNode).
 
-    copyright:      Copyright (c) 2012 sociomantic labs. All rights reserved
+    copyright:
+        Copyright (c) 2012-2017 sociomantic labs GmbH. All rights reserved
 
 *******************************************************************************/
 

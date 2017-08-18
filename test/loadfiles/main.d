@@ -2,7 +2,8 @@
 
     Test runner for loading memory dump and disk overflow files.
 
-    copyright: Copyright (c) 2017 sociomantic labs. All rights reserved
+    copyright:
+        Copyright (c) 2017 sociomantic labs GmbH. All rights reserved
 
 *******************************************************************************/
 

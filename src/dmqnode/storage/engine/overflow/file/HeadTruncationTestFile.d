@@ -2,7 +2,8 @@
 
     Run-time test if truncating the head of a file is supported.
 
-    copyright: Copyright (c) 2016 sociomantic labs. All rights reserved
+    copyright:
+        Copyright (c) 2016-2017 sociomantic labs GmbH. All rights reserved
 
 *******************************************************************************/
 

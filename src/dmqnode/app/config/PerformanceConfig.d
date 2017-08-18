@@ -1,8 +1,9 @@
 /*******************************************************************************
 
-    copyright:      Copyright (c) 2012 sociomantic labs. All rights reserved
-
     Performance config class for use with ocean.util.config.ClassFiller.
+
+    copyright:
+        Copyright (c) 2012-2017 sociomantic labs GmbH. All rights reserved
 
 *******************************************************************************/
 

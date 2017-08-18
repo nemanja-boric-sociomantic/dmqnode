@@ -3,7 +3,8 @@
     Periodic to flush the write buffers of the stream requests the node is
     handling.
 
-    copyright:      Copyright (c) 2012 sociomantic labs. All rights reserved
+    copyright:
+        Copyright (c) 2012-2017 sociomantic labs GmbH. All rights reserved
 
 *******************************************************************************/
 

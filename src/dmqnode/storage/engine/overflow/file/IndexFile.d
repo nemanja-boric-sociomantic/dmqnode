@@ -12,7 +12,8 @@
     The index file is a text file for the sake of easy inspection. It should be
     written only by the IndexFile.writeLines() method.
 
-    copyright: Copyright (c) 2016 sociomantic labs. All rights reserved
+    copyright:
+        Copyright (c) 2016-2017 sociomantic labs GmbH. All rights reserved
 
 *******************************************************************************/
 

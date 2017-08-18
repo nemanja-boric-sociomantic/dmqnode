@@ -7,7 +7,8 @@
           the storage engine (including any required headers, etc).
         * A per-channel size limit, in addition to the global node size limit.
 
-    copyright:      Copyright (c) 2011 sociomantic labs. All rights reserved
+    copyright:
+        Copyright (c) 2011-2017 sociomantic labs GmbH. All rights reserved
 
 *******************************************************************************/
 

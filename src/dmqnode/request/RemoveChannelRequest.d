@@ -2,7 +2,8 @@
 
     RemoveChannel request.
 
-    copyright:      Copyright (c) 2011 sociomantic labs. All rights reserved
+    copyright:
+        Copyright (c) 2011-2017 sociomantic labs GmbH. All rights reserved
 
 *******************************************************************************/
 

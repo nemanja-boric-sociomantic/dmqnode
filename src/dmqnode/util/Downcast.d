@@ -2,9 +2,8 @@
 
     Object downcast asserting the result is in a sane state.
 
-    Copyright:
-        Copyright (c) 2017 Sociomantic Labs GmbH.
-        All rights reserved.
+    copyright:
+        Copyright (c) 2017 sociomantic labs GmbH. All rights reserved
 
     License:
         Boost Software License Version 1.0. See LICENSE_BOOST.txt for details.

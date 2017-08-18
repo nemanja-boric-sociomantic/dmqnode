@@ -1,11 +1,12 @@
 /*******************************************************************************
 
-    Copyright (c) 2015 sociomantic labs. All rights reserved
-
     The header of each disk overflow record.
 
     The first RecordHeader.sizeof bytes of a disk overflow record are
     RecordHeader data, which are immediately followed by the record payload.
+
+    copyright:
+        Copyright (c) 2015-2017 sociomantic labs GmbH. All rights reserved
 
 *******************************************************************************/
 

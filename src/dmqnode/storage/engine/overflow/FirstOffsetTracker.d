@@ -2,7 +2,8 @@
 
     Tracks `ChannelMetadata` items in ascending order of their `first_offset`.
 
-    Copyright (c) 2016 sociomantic labs. All rights reserved
+    copyright:
+        Copyright (c) 2016-2017 sociomantic labs GmbH. All rights reserved
 
 *******************************************************************************/
 

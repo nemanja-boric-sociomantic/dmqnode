@@ -13,7 +13,8 @@
         -p = the number of parallel pushes / pops to perform (default is 1)
         -s = size of record to push / pop (in bytes, default is 1024)
 
-    copyright:      Copyright (c) 2011 sociomantic labs. All rights reserved
+    copyright:
+        Copyright (c) 2011-2017 sociomantic labs GmbH. All rights reserved
 
 *******************************************************************************/
 

@@ -2,7 +2,8 @@
 
     Ring queue Storage engine
 
-    copyright:      Copyright (c) 2010 sociomantic labs. All rights reserved
+    copyright:
+        Copyright (c) 2010-2017 sociomantic labs GmbH. All rights reserved
 
 *******************************************************************************/
 

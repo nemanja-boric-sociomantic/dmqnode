@@ -4,7 +4,8 @@
     a subscriber (Consume) or in a channel (Pop) and comparing the number of the
     received records and their contents with expected values.
 
-    copyright: Copyright (c) 2017 sociomantic labs. All rights reserved
+    copyright:
+        Copyright (c) 2017 sociomantic labs GmbH. All rights reserved
 
 *******************************************************************************/
 

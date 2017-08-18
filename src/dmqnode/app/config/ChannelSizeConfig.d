@@ -4,7 +4,8 @@
     associated with a channel prefix, plus a default size for channels with an
     id that doesn't start with any of the prefixes in the list.
 
-    Copyright (c) 2016 sociomantic labs. All rights reserved
+    copyright:
+        Copyright (c) 2016-2017 sociomantic labs GmbH. All rights reserved
 
 *******************************************************************************/
 

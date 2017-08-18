@@ -3,7 +3,8 @@
     Abstract base class for periodics -- routines which should be invoked
     periodically using an epoll timer.
 
-    copyright:      Copyright (c) 2012 sociomantic labs. All rights reserved
+    copyright:
+        Copyright (c) 2012-2017 sociomantic labs GmbH. All rights reserved
 
 *******************************************************************************/
 

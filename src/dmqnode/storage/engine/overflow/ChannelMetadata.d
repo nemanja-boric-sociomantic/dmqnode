@@ -2,7 +2,8 @@
 
     A struct that constitutes the state of a queue disk channel.
 
-    Copyright (c) 2015 sociomantic labs. All rights reserved
+    copyright:
+        Copyright (c) 2015-2017 sociomantic labs GmbH. All rights reserved
 
 *******************************************************************************/
 

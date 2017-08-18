@@ -26,7 +26,8 @@
     The records in each channel are composed from the channel name as
     `"Hello " ~ channel_name ~ "!"`.
 
-    copyright: Copyright (c) 2017 sociomantic labs. All rights reserved
+    copyright:
+        Copyright (c) 2017 sociomantic labs GmbH. All rights reserved
 
 *******************************************************************************/
 

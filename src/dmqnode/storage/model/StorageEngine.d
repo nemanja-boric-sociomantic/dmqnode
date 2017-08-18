@@ -11,7 +11,8 @@
         * A set of consumers -- clients waiting to read data from the channel.
         * A method to register a new consumer with the channel.
 
-    copyright:      Copyright (c) 2011 sociomantic labs. All rights reserved
+    copyright:
+        Copyright (c) 2011-2017 sociomantic labs GmbH. All rights reserved
 
 *******************************************************************************/
 

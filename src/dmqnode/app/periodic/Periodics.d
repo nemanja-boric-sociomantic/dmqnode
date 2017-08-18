@@ -3,7 +3,8 @@
     Class which manages a set of periodically firing maintenance tasks over the
     swarm node.
 
-    copyright:      Copyright (c) 2012 sociomantic labs. All rights reserved
+    copyright:
+        Copyright (c) 2012-2017 sociomantic labs GmbH. All rights reserved
 
 *******************************************************************************/
 
