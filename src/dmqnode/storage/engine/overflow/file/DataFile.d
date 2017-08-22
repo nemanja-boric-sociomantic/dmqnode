@@ -355,7 +355,7 @@ class DataFile: PosixFile
 
 struct IoVec
 {
-    import ocean.core.Exception_tango: onArrayBoundsError;
+    import ocean.core.ExceptionDefinitions: onArrayBoundsError;
     import ocean.stdc.posix.sys.uio: writev, iovec;
 
     /***************************************************************************

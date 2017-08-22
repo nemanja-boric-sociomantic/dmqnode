@@ -17,7 +17,7 @@ module dmqnode.app.config.ChannelSizeConfig;
 public struct ChannelSizeConfig
 {
     import ocean.core.Enforce;
-    import ocean.core.Exception_tango: IllegalArgumentException;
+    import ocean.core.ExceptionDefinitions: IllegalArgumentException;
     import ocean.math.Math: min;
 
     /***************************************************************************
