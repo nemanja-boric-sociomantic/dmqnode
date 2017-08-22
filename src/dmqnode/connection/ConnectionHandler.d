@@ -404,18 +404,6 @@ public class ConnectionHandler
 
     /***************************************************************************
 
-        Command code 'GetSizeLimit' handler.
-
-    ***************************************************************************/
-
-    override protected void handleGetSizeLimit ( )
-    {
-        this.handleInvalidCommand();
-    }
-
-
-    /***************************************************************************
-
         Command code 'GetNumConnections' handler.
 
     ***************************************************************************/
@@ -435,18 +423,6 @@ public class ConnectionHandler
     override protected void handlePushMulti ( )
     {
         this.handleCommand!(PushMultiRequest, RequestStatsTracking.TimeAndCount);
-    }
-
-
-    /***************************************************************************
-
-        Command code 'PushMulti2' handler.
-
-    ***************************************************************************/
-
-    override protected void handlePushMulti2 ( )
-    {
-        this.handleInvalidCommand();
     }
 
 
