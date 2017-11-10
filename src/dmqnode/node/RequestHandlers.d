@@ -31,7 +31,7 @@ public ConnectionHandler.CmdHandlers request_handlers;
 
 static this ( )
 {
-    request_handlers[DmqConst.Command.E.Consume] = &Consume.handle;
-    request_handlers[DmqConst.Command.E.Push]    = &Push.handle;
-    request_handlers[DmqConst.Command.E.Pop]     = &Pop.handle;
+    request_handlers.add(DmqConst.Command.E.Consume, "consume", &Consume.handle, false);
+    request_handlers.add(DmqConst.Command.E.Push, "push", &Push.handle);
+    request_handlers.add(DmqConst.Command.E.Pop, "pop", &Pop.handle);
 }

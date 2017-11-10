@@ -76,7 +76,7 @@ public class DmqNode
         // Neo node / connection handler settings
         Options options;
         options.epoll = epoll;
-        options.cmd_handlers = request_handlers;
+        options.requests = request_handlers;
         options.shared_resources = new Neo.SharedResources(ringnode);
         options.no_delay = no_delay;
         options.unix_socket_path = server_config.unix_socket_path();
