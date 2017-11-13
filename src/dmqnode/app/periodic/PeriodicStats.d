@@ -12,8 +12,8 @@ module dmqnode.app.periodic.PeriodicStats;
 
 
 import dmqnode.app.config.StatsConfig;
-import dmqnode.app.periodic.model.IPeriodic;
 import dmqnode.storage.Ring;
+import dmqnode.node.IDmqNodeInfo;
 
 import swarm.util.node.log.Stats;
 
@@ -28,7 +28,7 @@ import ocean.util.log.Log;
 
 *******************************************************************************/
 
-public class PeriodicStats : IPeriodic
+public class PeriodicStats
 {
     /***************************************************************************
 
@@ -118,6 +118,14 @@ public class PeriodicStats : IPeriodic
 
     /***************************************************************************
 
+        Interface to the DMQ node.
+
+    ***************************************************************************/
+
+    protected IDmqNodeInfo node_info;
+
+    /***************************************************************************
+
         Stats config object, passed into constructor.
 
     ***************************************************************************/
@@ -157,45 +165,46 @@ public class PeriodicStats : IPeriodic
         Constructor.
 
         Params:
-            node = DMQ node
-            epoll = epoll select dispatcher to register this periodic with (the
-                registration of periodics is usually dealt with by the Periodics
-                class, but an individual periodic can also reregister itself
-                with epoll in the situation where an error occurs)
+            node_info = DMQ node info
             stats_config = class containing configuration settings for stats
 
     ***************************************************************************/
 
-    public this ( DmqNode node, EpollSelectDispatcher epoll, StatsConfig stats_config )
+    public this ( IDmqNodeInfo node_info, StatsConfig stats_config )
     {
-        // When removing the console log output, multiply the 1000 with
-        // this.log.default_period.
-        super(node, epoll, 1000, typeof(this).stringof);
+        this.node_info = node_info;
 
         this.stats_config = stats_config;
 
         this.log = new StatsLog(stats_config);
 
-        this.basic_channel_stats = new ChannelsNodeStats(node, this.log);
+        this.basic_channel_stats = new ChannelsNodeStats(node_info, this.log);
     }
 
     /***************************************************************************
 
-        Called once every second by the base class. Updates the console display,
-        and write a line to the stats log if the write period (30s as specified
-        by StatsLog.default_period) has passed.
+        Should be called once every second by a timer. Updates the console
+        display, and writes a line to the stats log if the write period (30s as
+        specified by StatsLog.default_period) has passed.
+
+        Returns:
+            always true to stay registered with TimerExt
 
     ***************************************************************************/
 
-    override protected void run ( )
+    public bool run ( )
     {
         this.consoleLog();
 
+        // When removing the console log output, call this method every
+        // this.log.default_period * 1000 seconds.
         if (++this.seconds >= this.log.default_period)
         {
             this.seconds = 0;
             this.writeStatsLog();
         }
+
+        return true;
     }
 
     /***************************************************************************

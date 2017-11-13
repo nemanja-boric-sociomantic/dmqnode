@@ -19,11 +19,7 @@ import dmqnode.app.config.OverflowConfig;
 import dmqnode.app.config.PerformanceConfig;
 import dmqnode.app.config.ServerConfig;
 import dmqnode.app.config.StatsConfig;
-import dmqnode.app.periodic.PeriodicDiskOverflowIndexWriter;
-import dmqnode.app.periodic.Periodics;
 import dmqnode.app.periodic.PeriodicStats;
-import dmqnode.app.periodic.PeriodicWriterFlush;
-import dmqnode.app.util.Terminator;
 import dmqnode.node.DmqNode;
 import dmqnode.storage.Ring;
 
@@ -107,15 +103,6 @@ public class DmqNodeServer : DaemonApp
 
     /***************************************************************************
 
-        Periodic processes manager
-
-    ***************************************************************************/
-
-    private Periodics periodics;
-
-
-    /***************************************************************************
-
         Instances of each config class to be read.
 
     ***************************************************************************/
@@ -179,12 +166,13 @@ public class DmqNodeServer : DaemonApp
         this.node.error_callback = &this.nodeError;
         this.node.connection_limit = this.server_config.connection_limit;
 
-        this.periodics = new Periodics(this.node, this.epoll);
-        this.periodics.add!(PeriodicStats)(this.stats_config);
-        this.periodics.add!(PeriodicWriterFlush)(this.performance_config.write_flush_ms);
-        this.periodics.add!(PeriodicDiskOverflowIndexWriter)(this.overflow_config.write_index_ms);
+        auto stats = new PeriodicStats(this.node, this.stats_config);
+        this.timer_ext.register(&stats.run, 1);
+        this.timer_ext.register(&this.flushNode,
+            this.performance_config.write_flush_ms / 1000.0);
+        this.timer_ext.register(&this.flushNode,
+            this.overflow_config.write_index_ms / 1000.0);
     }
-
 
     /***************************************************************************
 
@@ -202,8 +190,6 @@ public class DmqNodeServer : DaemonApp
     override protected int run ( Arguments args, ConfigParser config )
     {
         this.startEventHandling(this.epoll);
-
-        this.periodics.register();
 
         this.node.register(this.epoll);
 
@@ -271,18 +257,39 @@ public class DmqNodeServer : DaemonApp
 
     override public void onSignal ( int signal )
     {
-        // Due to this delegate being called from epoll, we know that none of
-        // the periodics are currently active. (The dump periodic may have
-        // caused the memory storage channels to fork, however.)
-        // Setting the terminating flag to true prevents any periodics which
-        // fire from now on from doing anything (see IPeriodics).
-        Terminator.terminating = true;
-
-        this.periodics.shutdown();
-
         this.node.stopListener(this.epoll);
         this.node.shutdown;
 
         this.epoll.shutdown;
+    }
+
+    /***************************************************************************
+
+        TimerExt callback to send pending output data.
+
+        Returns:
+            always true to stay registered with TimerExt
+
+    ***************************************************************************/
+
+    private bool flushNode ( )
+    {
+        this.node.flush();
+        return true;
+    }
+
+    /***************************************************************************
+
+        TimerExt callback to write the disk overflow index to disk.
+
+        Returns:
+            always true to stay registered with TimerExt
+
+    ***************************************************************************/
+
+    private bool writeDiskOverflowIndex ( )
+    {
+        this.node.writeDiskOverflowIndex();
+        return true;
     }
 }
