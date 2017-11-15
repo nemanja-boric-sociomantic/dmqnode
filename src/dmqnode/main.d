@@ -146,32 +146,12 @@ public class DmqNodeServer : DaemonApp
         ConfigReader.fill("Performance", this.performance_config, config);
         ConfigReader.fill("Overflow", this.overflow_config, config);
 
-        auto cpu = server_config.cpu();
-
-        if (cpu >= 0)
-        {
-            CpuAffinity.set(cast(uint)cpu);
-        }
-
         this.channel_size_config.default_size_limit = this.server_config.channel_size_limit();
 
         foreach (key; config.iterateCategory("ChannelSizeById"))
         {
             this.channel_size_config.add(key, config.getStrict!(ulong)("ChannelSizeById", key));
         }
-
-        this.node = new DmqNode(this.server_config, this.channel_size_config,
-            epoll, this.performance_config.no_delay);
-
-        this.node.error_callback = &this.nodeError;
-        this.node.connection_limit = this.server_config.connection_limit;
-
-        auto stats = new PeriodicStats(this.node, this.stats_config);
-        this.timer_ext.register(&stats.run, 1);
-        this.timer_ext.register(&this.flushNode,
-            this.performance_config.write_flush_ms / 1000.0);
-        this.timer_ext.register(&this.flushNode,
-            this.overflow_config.write_index_ms / 1000.0);
     }
 
     /***************************************************************************
@@ -189,7 +169,29 @@ public class DmqNodeServer : DaemonApp
 
     override protected int run ( Arguments args, ConfigParser config )
     {
+        auto cpu = server_config.cpu();
+
+        if (cpu >= 0)
+        {
+            CpuAffinity.set(cast(uint)cpu);
+        }
+
         this.startEventHandling(this.epoll);
+
+        this.node = new DmqNode(this.server_config, this.channel_size_config,
+            epoll, this.performance_config.no_delay);
+
+        this.node.error_callback = &this.nodeError;
+        this.node.connection_limit = this.server_config.connection_limit;
+
+        // This needs to be done after `startEventHandling` has been called
+        // because `startEventHandling` creates `this.timer_ext`.
+        auto stats = new PeriodicStats(this.node, this.stats_config);
+        this.timer_ext.register(&stats.run, 1);
+        this.timer_ext.register(&this.flushNode,
+            this.performance_config.write_flush_ms / 1000.0);
+        this.timer_ext.register(&this.flushNode,
+            this.overflow_config.write_index_ms / 1000.0);
 
         this.node.register(this.epoll);
 
