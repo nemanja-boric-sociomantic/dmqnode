@@ -32,7 +32,6 @@ import ocean.io.select.client.model.ISelectClient;
 import ocean.io.select.EpollSelectDispatcher;
 import ocean.io.select.protocol.generic.ErrnoIOException : IOWarning;
 import ocean.io.select.selector.EpollException;
-import ocean.io.Stdout;
 import core.sys.posix.signal: SIGINT, SIGTERM, SIGQUIT;
 import ocean.sys.CpuAffinity;
 import ocean.util.app.DaemonApp;
@@ -194,11 +193,7 @@ public class DmqNodeServer : DaemonApp
             this.overflow_config.write_index_ms / 1000.0);
 
         this.node.register(this.epoll);
-
-        Stdout.formatln("Starting event loop");
         this.epoll.eventLoop();
-        Stdout.formatln("Event loop exited");
-
         return 0;
     }
 

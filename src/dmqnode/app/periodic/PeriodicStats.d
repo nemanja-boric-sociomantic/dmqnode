@@ -183,9 +183,9 @@ public class PeriodicStats
 
     /***************************************************************************
 
-        Should be called once every second by a timer. Updates the console
-        display, and writes a line to the stats log if the write period (30s as
-        specified by StatsLog.default_period) has passed.
+        Should be called once every second by a timer. Writes a line to the
+        stats log if the write period (30s as specified by
+        StatsLog.default_period) has passed.
 
         Returns:
             always true to stay registered with TimerExt
@@ -194,8 +194,6 @@ public class PeriodicStats
 
     public bool run ( )
     {
-        this.consoleLog();
-
         // When removing the console log output, call this method every
         // this.log.default_period * 1000 seconds.
         if (++this.seconds >= this.log.default_period)
@@ -227,128 +225,5 @@ public class PeriodicStats
         this.log.add(Log.stats);
         this.log.flush();
         this.node_info.resetCounters();
-    }
-
-    /***************************************************************************
-
-        Temporary, will be removed when making this application a demon.
-
-    ***************************************************************************/
-
-    import core.stdc.stdio;
-
-    void consoleLog ( )
-    {
-        if (this.stats_config.console_stats_enabled)
-        {
-            uint i = 0;
-
-            foreach (channel; this.node_info)
-            {
-                char[] id = channel.id;
-                fwrite(id.ptr, id[0].sizeof, id.length, stderr);
-                fputs(" records: ".ptr, stderr);
-                this.printRecords(cast(uint)channel.memory_info.length);
-                fputs(" mem ".ptr, stderr);
-                this.printRecords(channel.overflow_info.num_records);
-                fputs(" ovf".ptr, stderr);
-                if (auto n = channel.records_pushed)
-                {
-                    fputs(" +".ptr, stderr);
-                    this.printRecords(n);
-                    channel.records_pushed = 0;
-                }
-
-                if (auto n = channel.records_popped)
-                {
-                    fputs(" -".ptr, stderr);
-                    this.printRecords(n);
-                    channel.records_popped = 0;
-                }
-
-                fputs("; bytes: ".ptr, stderr);
-                this.printBytes(channel.memory_info.used_space);
-                fputs(" mem ".ptr, stderr);
-                this.printBytes(channel.overflow_info.num_bytes);
-                fputs(" ovf".ptr, stderr);
-                if (auto n = channel.bytes_pushed)
-                {
-                    fputs(" +".ptr, stderr);
-                    this.printBytes(n);
-                    channel.bytes_pushed = 0;
-                }
-
-                if (auto n = channel.bytes_popped)
-                {
-                    fputs(" -".ptr, stderr);
-                    this.printBytes(n);
-                    channel.bytes_popped = 0;
-                }
-
-                fputs("\x1B[K\n".ptr, stderr);
-
-                i++;
-            }
-
-            if (i) fprintf(stderr, "\x1B[%uA\r".ptr, i);
-        }
-    }
-
-    /// Prints b to stderr using 1024 based digit grouping.
-
-    static void printBytes ( size_t b )
-    {
-        if (b)
-        {
-            ushort[7] d;
-
-            uint n = 0;
-
-            while (b)
-            {
-                d[n++] = cast(ushort)(b & ((1 << 10) - 1));
-                b >>= 10;
-            }
-
-            fprintf(stderr, "%hu".ptr, d[--n]);
-
-            foreach_reverse (digit; d[0 .. n])
-            {
-                fprintf(stderr, ",%03hu".ptr, digit);
-            }
-        }
-        else
-        {
-            fputc('0', stderr);
-        }
-    }
-
-    /// Prints b to stderr using 1000 based digit grouping.
-
-    static void printRecords ( uint r )
-    {
-        if (r)
-        {
-            ushort[10] d;
-
-            uint n = 0;
-
-            while (r)
-            {
-                d[n++] = cast(ushort)(r % 1000);
-                r /= 1000;
-            }
-
-            fprintf(stderr, "%hu".ptr, d[--n]);
-
-            foreach_reverse (digit; d[0 .. n])
-            {
-                fprintf(stderr, ",%03hu".ptr, digit);
-            }
-        }
-        else
-        {
-            fputc('0', stderr);
-        }
     }
 }
