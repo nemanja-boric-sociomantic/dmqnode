@@ -19,12 +19,14 @@ import dmqnode.app.config.OverflowConfig;
 import dmqnode.app.config.PerformanceConfig;
 import dmqnode.app.config.ServerConfig;
 import dmqnode.app.config.StatsConfig;
-import dmqnode.app.periodic.PeriodicStats;
+import dmqnode.app.stats.ChannelStats;
 import dmqnode.node.DmqNode;
 import dmqnode.storage.Ring;
 
 import swarm.node.model.ISwarmConnectionHandlerInfo;
 import dmqproto.client.legacy.DmqConst;
+
+import swarm.util.node.log.Stats;
 
 import ocean.core.ExceptionDefinitions : OutOfMemoryException;
 import ocean.core.MessageFiber;
@@ -98,6 +100,16 @@ public class DmqNodeServer : DaemonApp
      **************************************************************************/
 
     private DmqNode node;
+
+
+    /***************************************************************************
+
+        Logger for the node and basic per-channel stats. The additional
+        per-channel stats in ChannelStats are logged separately.
+
+    ***************************************************************************/
+
+    private ChannelsNodeStats dmq_stats;
 
 
     /***************************************************************************
@@ -183,10 +195,10 @@ public class DmqNodeServer : DaemonApp
         this.node.error_callback = &this.nodeError;
         this.node.connection_limit = this.server_config.connection_limit;
 
+        this.dmq_stats = new ChannelsNodeStats(this.node, this.stats_ext.stats_log);
+
         // This needs to be done after `startEventHandling` has been called
         // because `startEventHandling` creates `this.timer_ext`.
-        auto stats = new PeriodicStats(this.node, this.stats_config);
-        this.timer_ext.register(&stats.run, 1);
         this.timer_ext.register(&this.flushNode,
             this.performance_config.write_flush_ms / 1000.0);
         this.timer_ext.register(&this.flushNode,
@@ -258,6 +270,29 @@ public class DmqNodeServer : DaemonApp
         this.node.shutdown;
 
         this.epoll.shutdown;
+    }
+
+
+    /**************************************************************************
+
+        Writes the stats to the log.
+
+    ***************************************************************************/
+
+    override protected void onStatsTimer ( )
+    {
+        this.dmq_stats.log();
+
+        auto stats_log = this.stats_ext.stats_log;
+
+        foreach (channel; this.node)
+        {
+            stats_log.addObject!("channel")(channel.id, ChannelStats.set(channel));
+        }
+
+        stats_log.add(Log.stats);
+        stats_log.flush();
+        this.node.resetCounters();
     }
 
     /***************************************************************************
