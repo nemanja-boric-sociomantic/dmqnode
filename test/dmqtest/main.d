@@ -42,6 +42,20 @@ private class RealDmqTestRunner : DmqTestRunner
             CopyFileEntry("test/dmqtest/etc/credentials", "etc/credentials")
         ];
     }
+
+    /***************************************************************************
+
+        Override the super class' method to specify the dhtnode's required
+        arguments.
+
+    ***************************************************************************/
+
+    override protected void configureTestedApplication ( out double delay,
+        out istring[] args, out istring[istring] env )
+    {
+        super.configureTestedApplication(delay, args, env);
+        args = ["--config=etc/config.ini"];
+    }
 }
 
 /*******************************************************************************

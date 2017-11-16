@@ -244,6 +244,23 @@ public class DmqNodeServer : DaemonApp
     }
 
 
+     /***************************************************************************
+
+        Override default DaemonApp arguments parsing, specifying that --config
+        is required.
+
+        Params:
+            app = application instance
+            args = arguments parser instance
+
+    ***************************************************************************/
+
+    override public void setupArgs ( IApplication app, Arguments args )
+    {
+        super.setupArgs(app, args);
+        args("config").required;
+    }
+
     /***************************************************************************
 
         SIGINT handler.

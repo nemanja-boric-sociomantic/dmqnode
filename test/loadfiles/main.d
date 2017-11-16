@@ -72,6 +72,7 @@ private class LoadFilesTestRunner : TurtleRunnerTask!(TestedAppKind.Daemon)
         delay = 1.0;
         args  = null;
         env   = null;
+        args = ["--config=etc/config.ini"];
     }
 }
 
