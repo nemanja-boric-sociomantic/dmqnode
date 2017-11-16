@@ -13,8 +13,8 @@
 module dmqnode.node.DmqNode;
 
 
-import dmqnode.app.config.ChannelSizeConfig;
-import dmqnode.app.config.ServerConfig;
+import dmqnode.config.ChannelSizeConfig;
+import dmqnode.config.ServerConfig;
 import dmqnode.connection.ConnectionHandler;
 import Neo = dmqnode.connection.neo.SharedResources;
 import dmqnode.connection.SharedResources;

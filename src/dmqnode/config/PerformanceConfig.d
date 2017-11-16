@@ -10,7 +10,7 @@
 
 *******************************************************************************/
 
-module dmqnode.app.config.PerformanceConfig;
+module dmqnode.config.PerformanceConfig;
 
 
 

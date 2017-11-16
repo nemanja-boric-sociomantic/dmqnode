@@ -1,27 +1,27 @@
 /*******************************************************************************
 
-    Stats config class for use with ocean.util.config.ClassFiller.
+    Disk overflow config class for use with ocean.util.config.ClassFiller.
 
     copyright:
-        Copyright (c) 2012-2017 sociomantic labs GmbH. All rights reserved
+        Copyright (c) 2015-2017 sociomantic labs GmbH. All rights reserved
 
     License:
         Boost Software License Version 1.0. See LICENSE.txt for details.
 
 *******************************************************************************/
 
-module dmqnode.app.config.StatsConfig;
+module dmqnode.config.OverflowConfig;
 
 
-import ocean.util.log.Stats;
 
 /*******************************************************************************
 
-    Stats logging config values
+    Overflow config values
 
 *******************************************************************************/
 
-public class StatsConfig: StatsLog.Config
+public class OverflowConfig
 {
-    bool console_stats_enabled = false;
+    uint write_index_ms = 60_000;
 }
+

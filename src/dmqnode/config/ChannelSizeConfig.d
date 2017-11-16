@@ -12,7 +12,7 @@
 
 *******************************************************************************/
 
-module dmqnode.app.config.ChannelSizeConfig;
+module dmqnode.config.ChannelSizeConfig;
 
 public struct ChannelSizeConfig
 {

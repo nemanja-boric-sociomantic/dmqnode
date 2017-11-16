@@ -13,7 +13,7 @@
 module dmqnode.storage.Ring;
 
 
-import dmqnode.app.config.ChannelSizeConfig;
+import dmqnode.config.ChannelSizeConfig;
 import dmqnode.storage.engine.DiskOverflow;
 import dmqnode.storage.model.StorageChannels;
 import dmqnode.storage.model.StorageEngine;

@@ -11,7 +11,7 @@
 
 *******************************************************************************/
 
-module dmqnode.app.stats.ChannelStats;
+module dmqnode.node.ChannelStats;
 
 /// ditto
 struct ChannelStats

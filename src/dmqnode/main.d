@@ -14,12 +14,12 @@ module dmqnode.main;
 
 import Version;
 
-import dmqnode.app.config.ChannelSizeConfig;
-import dmqnode.app.config.OverflowConfig;
-import dmqnode.app.config.PerformanceConfig;
-import dmqnode.app.config.ServerConfig;
-import dmqnode.app.config.StatsConfig;
-import dmqnode.app.stats.ChannelStats;
+import dmqnode.config.ChannelSizeConfig;
+import dmqnode.config.OverflowConfig;
+import dmqnode.config.PerformanceConfig;
+import dmqnode.config.ServerConfig;
+import dmqnode.config.StatsConfig;
+import dmqnode.node.ChannelStats;
 import dmqnode.node.DmqNode;
 import dmqnode.storage.Ring;
 
