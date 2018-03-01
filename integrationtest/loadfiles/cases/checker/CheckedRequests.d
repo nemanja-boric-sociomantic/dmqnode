@@ -266,6 +266,8 @@ class UnexpectedNotification
 
 class Consume: RecordChecker
 {
+    import dmqproto.client.request.Consume;
+
     /***************************************************************************
 
         Set to `true` when receiving a `stopped` notification.
@@ -329,7 +331,7 @@ class Consume: RecordChecker
     public void stop ( )
     {
         this.dmq.neo.control(this.id,
-            (DmqClient.Neo.Consume.IController controller)
+            (Consume.IController controller)
             {
                 if (controller.stop())
                 {
@@ -349,8 +351,8 @@ class Consume: RecordChecker
 
     ***************************************************************************/
 
-    private void notifier ( DmqClient.Neo.Consume.Notification info,
-                            Const!(DmqClient.Neo.Consume.Args) args )
+    private void notifier ( Consume.Notification info,
+                            Const!(Consume.Args) args )
     {
         with (info) switch (active)
         {
@@ -376,13 +378,15 @@ class Consume: RecordChecker
 
 class Pop: RecordChecker
 {
+    import dmqproto.client.request.Pop;
+
     /***************************************************************************
 
         The last notification information that is not `received`.
 
     ***************************************************************************/
 
-    DmqClient.Neo.Pop.Notification info;
+    Pop.Notification info;
 
     /***************************************************************************
 
@@ -419,8 +423,7 @@ class Pop: RecordChecker
 
     ***************************************************************************/
 
-    private void notifier ( DmqClient.Neo.Pop.Notification info,
-                            Const!(DmqClient.Neo.Pop.Args) args )
+    private void notifier ( Pop.Notification info, Const!(Pop.Args) args )
     {
         with (info) switch (active)
         {
@@ -442,6 +445,8 @@ class Pop: RecordChecker
 
 class PopEmpty
 {
+    import dmqproto.client.request.Pop;
+
     /***************************************************************************
 
         Set to `true` when receiving the "channel empty" notification.
@@ -499,8 +504,7 @@ class PopEmpty
 
     ***************************************************************************/
 
-    private void notifier ( DmqClient.Neo.Pop.Notification info,
-                            Const!(DmqClient.Neo.Pop.Args) args )
+    private void notifier ( Pop.Notification info, Const!(Pop.Args) args )
     {
         with (info) switch (active)
         {
