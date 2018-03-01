@@ -159,7 +159,7 @@ abstract class IChannel: IStorageEngine
     {
         if (auto sep_ptr = memchr(storage_name.ptr, '@', storage_name.length))
         {
-            auto sep = sep_ptr - storage_name.ptr;
+            auto sep = sep_ptr - cast(void*)storage_name.ptr;
             subscriber_name = storage_name[0 .. sep];
             return storage_name[sep + 1 .. $];
         }
