@@ -219,6 +219,7 @@ class DiskOverflow: DiskOverflowInfo
     import core.stdc.stdio: SEEK_CUR, SEEK_END;
     import ocean.transition;
     import ocean.util.log.Logger;
+    import ocean.core.array.Mutation;
 
     /***************************************************************************
 
@@ -388,7 +389,7 @@ class DiskOverflow: DiskOverflowInfo
             assert(bytes == this.bytes, "numbers of bytes mismatch");
 
             auto channel = mthis.first_offset_tracker.first;
-            foreach (i, n; first_offsets.sort)
+            foreach (i, n; sort(first_offsets))
             {
                 assert(channel !is null,
                        "less tracked channels than channels with records");
@@ -1531,9 +1532,9 @@ class DiskOverflow: DiskOverflowInfo
         assert(this.num_bytes   == num_bytes);
         assert(filesize         >= num_bytes + num_records * RecordHeader.sizeof);
 
-        channel_ids.sort;
-        first_positions.sort;
-        last_positions.sort;
+        sort(channel_ids);
+        sort(first_positions);
+        sort(last_positions);
 
         while (i > 1)
         {
